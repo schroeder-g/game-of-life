@@ -1,0 +1,25 @@
+{
+  "name": "game-of-life",
+  "version": "2.0.0",
+  "scripts": {
+    "dev": "bun --watch run src/server.ts",
+    "build": "bun build src/public/index.tsx --outdir dist"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@react-three/fiber": "^8.15.0",
+    "@react-three/drei": "^9.88.0",
+    "three": "^0.159.0",
+    "leva": "^0.9.35",
+    "chroma-js": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/three": "^0.159.0",
+    "@types/chroma-js": "^2.4.0",
+    "typescript": "^5.0.0"
+  }
+}
