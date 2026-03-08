@@ -8,6 +8,25 @@ import { ShapeType, SHAPES, generateShape, supportsHollow } from "./shapes";
 
 // LocalStorage helpers
 const STORAGE_KEY = "game-of-life-settings";
+const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
+
+// Genesis configuration type
+interface GenesisConfig {
+  name: string;
+  cells: Array<[number, number, number]>;
+  settings: {
+    speed: number;
+    density: number;
+    surviveMin: number;
+    surviveMax: number;
+    birthMin: number;
+    birthMax: number;
+    birthMargin: number;
+    cellMargin: number;
+    gridSize: number;
+  };
+  createdAt: string;
+}
 
 function loadSettings(): Record<string, number> {
   try {
@@ -29,6 +48,67 @@ function saveSettings(settings: Record<string, number>) {
   }
 }
 
+// Genesis config storage helpers
+function loadGenesisConfigs(): Record<string, GenesisConfig> {
+  try {
+    const stored = localStorage.getItem(GENESIS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to load genesis configs:", e);
+  }
+  return {};
+}
+
+function saveGenesisConfigs(configs: Record<string, GenesisConfig>) {
+  try {
+    localStorage.setItem(GENESIS_STORAGE_KEY, JSON.stringify(configs));
+  } catch (e) {
+    console.error("Failed to save genesis configs:", e);
+  }
+}
+
+function exportGenesisConfig(config: GenesisConfig) {
+  const json = JSON.stringify(config, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${config.name.replace(/[^a-z0-9]/gi, "_")}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importGenesisConfig(): Promise<GenesisConfig | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) {
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const config = JSON.parse(event.target?.result as string) as GenesisConfig;
+          resolve(config);
+        } catch (err) {
+          console.error("Failed to parse genesis config:", err);
+          resolve(null);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+}
+
 // Load settings once at startup
 const initialSettings = loadSettings();
 console.log("Loaded from localStorage:", initialSettings);
@@ -40,6 +120,7 @@ const defaults = {
   surviveMax: 4,
   birthMin: 5,
   birthMax: 5,
+  birthMargin: 0,
   cellMargin: 0.2,
   gridSize: 20,
 };
@@ -127,8 +208,56 @@ class Grid3D {
     return count;
   }
 
-  tick(surviveMin: number, surviveMax: number, birthMin: number, birthMax: number): void {
+  // Get all communities as a map from cell key to community ID
+  getAllCommunities(): Map<string, number> {
+    const communityMap = new Map<string, number>();
+    const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
+    let communityId = 0;
+
+    for (let z = 0; z < this.size; z++) {
+      for (let y = 0; y < this.size; y++) {
+        for (let x = 0; x < this.size; x++) {
+          if (!this.cells[z][y][x]) continue;
+          if (communityMap.has(key(x, y, z))) continue;
+
+          // Flood fill to find all cells in this community
+          const queue: Array<[number, number, number]> = [[x, y, z]];
+          while (queue.length > 0) {
+            const [cx, cy, cz] = queue.shift()!;
+            const k = key(cx, cy, cz);
+            if (communityMap.has(k)) continue;
+            if (!this.get(cx, cy, cz)) continue;
+
+            communityMap.set(k, communityId);
+
+            // Check all 18 neighbors (face + edge, no corners)
+            for (let dz = -1; dz <= 1; dz++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  if (dx === 0 && dy === 0 && dz === 0) continue;
+                  if (dx !== 0 && dy !== 0 && dz !== 0) continue;
+                  const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+                  if (!communityMap.has(key(nx, ny, nz))) {
+                    queue.push([nx, ny, nz]);
+                  }
+                }
+              }
+            }
+          }
+          communityId++;
+        }
+      }
+    }
+    return communityMap;
+  }
+
+  tick(surviveMin: number, surviveMax: number, birthMin: number, birthMax: number, birthMargin: number = 0): void {
     const newCells = this.createEmptyGrid();
+
+    // Pre-compute community map if birth margin is active
+    const communityMap = birthMargin > 0 ? this.getAllCommunities() : null;
+    const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
+
     for (let z = 0; z < this.size; z++) {
       for (let y = 0; y < this.size; y++) {
         for (let x = 0; x < this.size; x++) {
@@ -137,7 +266,63 @@ class Grid3D {
           if (alive) {
             newCells[z][y][x] = neighbors >= surviveMin && neighbors <= surviveMax;
           } else {
-            newCells[z][y][x] = neighbors >= birthMin && neighbors <= birthMax;
+            // Check birth conditions
+            const wouldBeBorn = neighbors >= birthMin && neighbors <= birthMax;
+
+            if (wouldBeBorn && birthMargin > 0 && communityMap) {
+              // Find the community of the neighboring cells that would cause birth
+              let parentCommunityId: number | null = null;
+              for (let dz = -1; dz <= 1; dz++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0 && dz === 0) continue;
+                    if (dx !== 0 && dy !== 0 && dz !== 0) continue;
+                    const nk = key(x + dx, y + dy, z + dz);
+                    if (communityMap.has(nk)) {
+                      parentCommunityId = communityMap.get(nk)!;
+                      break;
+                    }
+                  }
+                  if (parentCommunityId !== null) break;
+                }
+                if (parentCommunityId !== null) break;
+              }
+
+              // Check if any cell from a different community is within birthMargin distance
+              let tooCloseToOtherCommunity = false;
+              const margin = birthMargin;
+              const marginSq = margin * margin;
+
+              // Search within bounding box of birth margin
+              for (let cz = Math.max(0, Math.floor(z - margin)); cz <= Math.min(this.size - 1, Math.ceil(z + margin)); cz++) {
+                for (let cy = Math.max(0, Math.floor(y - margin)); cy <= Math.min(this.size - 1, Math.ceil(y + margin)); cy++) {
+                  for (let cx = Math.max(0, Math.floor(x - margin)); cx <= Math.min(this.size - 1, Math.ceil(x + margin)); cx++) {
+                    const ck = key(cx, cy, cz);
+                    if (!communityMap.has(ck)) continue;
+
+                    const cellCommunityId = communityMap.get(ck)!;
+                    if (cellCommunityId === parentCommunityId) continue;
+
+                    // Calculate euclidean distance
+                    const dx = cx - x;
+                    const dy = cy - y;
+                    const dz = cz - z;
+                    const distSq = dx * dx + dy * dy + dz * dz;
+
+                    if (distSq <= marginSq) {
+                      tooCloseToOtherCommunity = true;
+                      break;
+                    }
+                  }
+                  if (tooCloseToOtherCommunity) break;
+                }
+                if (tooCloseToOtherCommunity) break;
+              }
+
+              newCells[z][y][x] = !tooCloseToOtherCommunity;
+            } else {
+              newCells[z][y][x] = wouldBeBorn;
+            }
           }
         }
       }
@@ -322,6 +507,49 @@ function BoundingBox({ size }: { size: number }) {
   );
 }
 
+// Rotate shape offsets so a face is perpendicular to camera view
+// Takes both azimuth (horizontal) and polar (vertical) angles
+function rotateOffsets(
+  offsets: Array<[number, number, number]>,
+  azimuth: number,
+  polar: number
+): Array<[number, number, number]> {
+  // Quantize polar angle to determine vertical orientation
+  // polar near 0 = looking from above, π/2 = side view, π = from below
+  const isTopView = polar < Math.PI / 4;           // Looking from above
+  const isBottomView = polar > (3 * Math.PI) / 4;  // Looking from below
+  const isSideView = !isTopView && !isBottomView;  // Looking from side
+
+  // Quantize azimuth to nearest 90 degrees
+  const azimuthQuadrant = Math.round((azimuth / (Math.PI / 2))) % 4;
+  const normalizedAzimuth = ((azimuthQuadrant % 4) + 4) % 4;
+
+  return offsets.map(([x, y, z]) => {
+    let rx = x, ry = y, rz = z;
+
+    if (isSideView) {
+      // Rotate shape to stand vertical (swap Y and Z)
+      // This makes flat shapes (y=0) become vertical walls
+      rx = x;
+      ry = z;  // Z becomes Y (height)
+      rz = -y; // Y becomes -Z (depth)
+    } else if (isBottomView) {
+      // Flip for bottom view
+      ry = -y;
+    }
+    // Top view: keep original orientation (flat on XZ plane)
+
+    // Then apply azimuth rotation around Y axis
+    switch (normalizedAzimuth) {
+      case 0: return [rx, ry, rz];           // Camera at +Z
+      case 1: return [rz, ry, -rx];          // Camera at +X
+      case 2: return [-rx, ry, -rz];         // Camera at -Z
+      case 3: return [-rz, ry, rx];          // Camera at -X
+      default: return [rx, ry, rz];
+    }
+  });
+}
+
 // Shape preview component
 function ShapePreview({
   selectorPos,
@@ -329,21 +557,38 @@ function ShapePreview({
   selectedShape,
   shapeSize,
   isHollow,
+  controlsRef,
 }: {
   selectorPos: [number, number, number];
   gridSize: number;
   selectedShape: ShapeType;
   shapeSize: number;
   isHollow: boolean;
+  controlsRef: React.RefObject<any>;
 }) {
   const offset = gridSize / 2;
+  const [azimuth, setAzimuth] = useState(0);
+  const [polar, setPolar] = useState(Math.PI / 4);
 
-  // Generate preview cells
+  // Update angles periodically for preview rotation
+  useFrame(() => {
+    const newAzimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+    const newPolar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+    if (Math.abs(newAzimuth - azimuth) > 0.1) {
+      setAzimuth(newAzimuth);
+    }
+    if (Math.abs(newPolar - polar) > 0.1) {
+      setPolar(newPolar);
+    }
+  });
+
+  // Generate preview cells with camera-relative rotation
   const previewCells = useMemo(() => {
     if (selectedShape === "None") return [];
 
     const offsets = generateShape(selectedShape, shapeSize, isHollow);
-    return offsets
+    const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+    return rotatedOffsets
       .map(([dx, dy, dz]) => [
         selectorPos[0] + dx,
         selectorPos[1] + dy,
@@ -355,7 +600,7 @@ function ShapePreview({
           y >= 0 && y < gridSize &&
           z >= 0 && z < gridSize
       );
-  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize]);
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, azimuth, polar]);
 
   if (previewCells.length === 0) return null;
 
@@ -393,6 +638,7 @@ function KeyboardSelector({
   isHollow,
   onToggle,
   onSetCells,
+  onDeleteCells,
   onClearShape,
   onSizeChange,
   onCommunityChange,
@@ -406,6 +652,7 @@ function KeyboardSelector({
   isHollow: boolean;
   onToggle: (x: number, y: number, z: number) => void;
   onSetCells: (cells: Array<[number, number, number]>) => void;
+  onDeleteCells: (cells: Array<[number, number, number]>) => void;
   onClearShape: () => void;
   onSizeChange: (delta: number) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
@@ -474,9 +721,12 @@ function KeyboardSelector({
       if (e.code === 'Space') {
         e.preventDefault();
         if (selectedShape !== "None") {
-          // Shape mode: place shape
+          // Shape mode: place shape with camera-relative rotation
+          const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+          const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
           const offsets = generateShape(selectedShape, shapeSize, isHollow);
-          const cells = offsets
+          const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+          const cells = rotatedOffsets
             .map(([dx, dy, dz]) => [
               selectorPos[0] + dx,
               selectorPos[1] + dy,
@@ -496,6 +746,35 @@ function KeyboardSelector({
             lastPaintedPos.current = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
             onToggle(selectorPos[0], selectorPos[1], selectorPos[2]);
           }
+        }
+        return;
+      }
+
+      // Handle Backspace for deletion
+      if (e.code === 'Backspace') {
+        e.preventDefault();
+        if (selectedShape !== "None") {
+          // Shape mode: delete cells in shape area
+          const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+          const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+          const offsets = generateShape(selectedShape, shapeSize, isHollow);
+          const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+          const cells = rotatedOffsets
+            .map(([dx, dy, dz]) => [
+              selectorPos[0] + dx,
+              selectorPos[1] + dy,
+              selectorPos[2] + dz,
+            ] as [number, number, number])
+            .filter(
+              ([x, y, z]) =>
+                x >= 0 && x < gridSize &&
+                y >= 0 && y < gridSize &&
+                z >= 0 && z < gridSize
+            );
+          onDeleteCells(cells);
+        } else {
+          // Single cell mode: delete cell at selector
+          onDeleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
         }
         return;
       }
@@ -581,6 +860,7 @@ function KeyboardSelector({
         selectedShape={selectedShape}
         shapeSize={shapeSize}
         isHollow={isHollow}
+        controlsRef={controlsRef}
       />
       {/* Selector cube */}
       <mesh position={[selectorPos[0] - offset, selectorPos[1] - offset, selectorPos[2] - offset]}>
@@ -611,6 +891,7 @@ function Scene({
   onTick,
   onToggleCell,
   onSetCells,
+  onDeleteCells,
   onClearShape,
   onSizeChange,
   onCommunityChange,
@@ -630,6 +911,7 @@ function Scene({
   onTick: () => void;
   onToggleCell: (x: number, y: number, z: number) => void;
   onSetCells: (cells: Array<[number, number, number]>) => void;
+  onDeleteCells: (cells: Array<[number, number, number]>) => void;
   onClearShape: () => void;
   onSizeChange: (delta: number) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
@@ -670,6 +952,7 @@ function Scene({
           isHollow={isHollow}
           onToggle={onToggleCell}
           onSetCells={onSetCells}
+          onDeleteCells={onDeleteCells}
           onClearShape={onClearShape}
           onSizeChange={onSizeChange}
           onCommunityChange={onCommunityChange}
@@ -796,6 +1079,11 @@ export default function App() {
   const [shapeSize, setShapeSize] = useState<number>(3);
   const [isHollow, setIsHollow] = useState<boolean>(false);
 
+  // Genesis config state
+  const [savedConfigs, setSavedConfigs] = useState<Record<string, GenesisConfig>>(() => loadGenesisConfigs());
+  const [selectedConfigName, setSelectedConfigName] = useState<string>("");
+  const [newConfigName, setNewConfigName] = useState<string>("");
+
   // Handle grid size changes
   const handleGridSizeChange = useCallback((newSize: number) => {
     setRunning(false);
@@ -851,6 +1139,7 @@ export default function App() {
     surviveMax: { value: storedSettings.surviveMax, min: 0, max: 18, step: 1, label: "Survive Max" },
     birthMin: { value: storedSettings.birthMin, min: 0, max: 18, step: 1, label: "Birth Min" },
     birthMax: { value: storedSettings.birthMax, min: 0, max: 18, step: 1, label: "Birth Max" },
+    birthMargin: { value: storedSettings.birthMargin, min: 0, max: 10, step: 1, label: "Birth Margin" },
   });
 
   // Shape Brush panel
@@ -865,7 +1154,7 @@ export default function App() {
       Size: {
         value: shapeSize,
         min: 1,
-        max: 10,
+        max: gridSize,
         step: 1,
         onChange: (v: number) => setShapeSize(v),
       },
@@ -875,7 +1164,7 @@ export default function App() {
         render: () => supportsHollow(selectedShape),
       },
     },
-    [selectedShape, shapeSize, isHollow]
+    [selectedShape, shapeSize, isHollow, gridSize]
   );
 
   // Persist settings to localStorage (skip initial render)
@@ -893,10 +1182,11 @@ export default function App() {
       surviveMax: rules.surviveMax,
       birthMin: rules.birthMin,
       birthMax: rules.birthMax,
+      birthMargin: rules.birthMargin,
     };
     console.log("Saving settings:", settings);
     saveSettings(settings);
-  }, [speed, density, cellMargin, gridSize, rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax]);
+  }, [speed, density, cellMargin, gridSize, rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax, rules.birthMargin]);
 
   useControls("Actions", {
     [running ? "Stop" : "Play"]: button(() => {
@@ -912,7 +1202,7 @@ export default function App() {
           // Save initial state before first step
           initialStateRef.current = gridRef.current.saveState();
         }
-        gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
+        gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax, rules.birthMargin);
         setGeneration((g) => g + 1);
         setCellCount(gridRef.current.getLivingCells().length);
       }
@@ -921,12 +1211,14 @@ export default function App() {
       gridRef.current.randomize(density);
       initialStateRef.current = gridRef.current.saveState();
       setGeneration(0);
+      setRenderKey((k) => k + 1);
       setCellCount(gridRef.current.getLivingCells().length);
     }),
     "Reset": button(() => {
       setRunning(false);
       gridRef.current.restoreState(initialStateRef.current);
       setGeneration(0);
+      setRenderKey((k) => k + 1);
       setCellCount(gridRef.current.getLivingCells().length);
     }),
     "Clear": button(() => {
@@ -934,12 +1226,118 @@ export default function App() {
       gridRef.current.clear();
       initialStateRef.current = [];
       setGeneration(0);
+      setRenderKey((k) => k + 1);
       setCellCount(0);
     }),
   }, [running, generation]);
 
+  // Create current genesis config from current state
+  const createCurrentGenesisConfig = useCallback((name: string): GenesisConfig => {
+    return {
+      name,
+      cells: initialStateRef.current.length > 0
+        ? initialStateRef.current
+        : gridRef.current.getLivingCells(),
+      settings: {
+        speed,
+        density,
+        surviveMin: rules.surviveMin,
+        surviveMax: rules.surviveMax,
+        birthMin: rules.birthMin,
+        birthMax: rules.birthMax,
+        birthMargin: rules.birthMargin,
+        cellMargin,
+        gridSize,
+      },
+      createdAt: new Date().toISOString(),
+    };
+  }, [speed, density, rules, cellMargin, gridSize]);
+
+  // Apply a genesis config
+  const applyGenesisConfig = useCallback((config: GenesisConfig) => {
+    setRunning(false);
+
+    // Update grid size if different
+    if (config.settings.gridSize !== gridSize) {
+      gridRef.current = new Grid3D(config.settings.gridSize);
+      setGridSize(config.settings.gridSize);
+    } else {
+      gridRef.current.clear();
+    }
+
+    // Restore cells
+    gridRef.current.restoreState(config.cells);
+    initialStateRef.current = config.cells;
+
+    setGeneration(0);
+    setRenderKey((k) => k + 1);
+    setCellCount(config.cells.length);
+    setCommunity([]);
+  }, [gridSize]);
+
+  // Genesis Config panel
+  const configOptions = useMemo(() => {
+    const options: Record<string, string> = { "": "Select a config..." };
+    Object.keys(savedConfigs).forEach(name => {
+      options[name] = name;
+    });
+    return options;
+  }, [savedConfigs]);
+
+  useControls("Genesis Config", {
+    "Load Config": {
+      value: selectedConfigName,
+      options: configOptions,
+      onChange: (name: string) => {
+        setSelectedConfigName(name);
+        if (name && savedConfigs[name]) {
+          applyGenesisConfig(savedConfigs[name]);
+        }
+      },
+    },
+    "Config Name": {
+      value: newConfigName,
+      onChange: (v: string) => setNewConfigName(v),
+    },
+    "Save Current": button(() => {
+      const name = newConfigName.trim() || `Config ${Date.now()}`;
+      const config = createCurrentGenesisConfig(name);
+      const newConfigs = { ...savedConfigs, [name]: config };
+      setSavedConfigs(newConfigs);
+      saveGenesisConfigs(newConfigs);
+      setSelectedConfigName(name);
+      setNewConfigName("");
+    }),
+    "Export": button(() => {
+      const name = selectedConfigName || newConfigName.trim() || "export";
+      const config = selectedConfigName && savedConfigs[selectedConfigName]
+        ? savedConfigs[selectedConfigName]
+        : createCurrentGenesisConfig(name);
+      exportGenesisConfig(config);
+    }),
+    "Import": button(async () => {
+      const config = await importGenesisConfig();
+      if (config) {
+        const newConfigs = { ...savedConfigs, [config.name]: config };
+        setSavedConfigs(newConfigs);
+        saveGenesisConfigs(newConfigs);
+        setSelectedConfigName(config.name);
+        applyGenesisConfig(config);
+      }
+    }),
+    "Delete Selected": button(() => {
+      if (selectedConfigName && savedConfigs[selectedConfigName]) {
+        const newConfigs = { ...savedConfigs };
+        delete newConfigs[selectedConfigName];
+        setSavedConfigs(newConfigs);
+        saveGenesisConfigs(newConfigs);
+        setSelectedConfigName("");
+      }
+    }),
+  }, [savedConfigs, selectedConfigName, newConfigName, createCurrentGenesisConfig, applyGenesisConfig, configOptions]);
+
   const handleTick = useCallback(() => {
-    gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
+    gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax, rules.birthMargin);
     setGeneration((g) => g + 1);
     setCellCount(gridRef.current.getLivingCells().length);
   }, [rules]);
@@ -958,13 +1356,21 @@ export default function App() {
     setCellCount(gridRef.current.getLivingCells().length);
   }, []);
 
+  const handleDeleteCells = useCallback((cells: Array<[number, number, number]>) => {
+    for (const [x, y, z] of cells) {
+      gridRef.current.set(x, y, z, false);
+    }
+    setRenderKey((k) => k + 1);
+    setCellCount(gridRef.current.getLivingCells().length);
+  }, []);
+
   const handleClearShape = useCallback(() => {
     setSelectedShape("None");
   }, []);
 
   const handleSizeChange = useCallback((delta: number) => {
-    setShapeSize((prev) => Math.max(1, Math.min(10, prev + delta)));
-  }, []);
+    setShapeSize((prev) => Math.max(1, Math.min(gridSize, prev + delta)));
+  }, [gridSize]);
 
   return (
     <div className="app">
@@ -986,6 +1392,7 @@ export default function App() {
             onTick={handleTick}
             onToggleCell={handleToggleCell}
             onSetCells={handleSetCells}
+            onDeleteCells={handleDeleteCells}
             onClearShape={handleClearShape}
             onSizeChange={handleSizeChange}
             onCommunityChange={handleCommunityChange}
@@ -1019,12 +1426,12 @@ export default function App() {
           {rotationMode
             ? "Drag to rotate. Scroll to zoom."
             : selectedShape !== "None"
-            ? "Space: place shape. Scroll: size. Escape: cancel."
-            : "Arrows: move/height. Shift+Arrows: depth. Space: toggle/paint."}
+            ? "Space: place. Backspace: delete. Scroll: size. Esc: cancel."
+            : "Arrows: move. Space: toggle. Backspace: delete."}
         </p>
       </div>
 
-      <CommunitySidebar community={community} />
+      {!running && <CommunitySidebar community={community} />}
     </div>
   );
 }
