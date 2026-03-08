@@ -87,6 +87,19 @@ class Grid3D {
     this.cells = this.createEmptyGrid();
   }
 
+  // Save current state as array of living cell coordinates
+  saveState(): Array<[number, number, number]> {
+    return this.getLivingCells();
+  }
+
+  // Restore state from array of living cell coordinates
+  restoreState(cells: Array<[number, number, number]>): void {
+    this.cells = this.createEmptyGrid();
+    for (const [x, y, z] of cells) {
+      this.set(x, y, z, true);
+    }
+  }
+
   randomize(density: number = 0.08): void {
     for (let z = 0; z < this.size; z++) {
       for (let y = 0; y < this.size; y++) {
@@ -307,175 +320,125 @@ function BoundingBox({ size }: { size: number }) {
   );
 }
 
-// Interactive grid for cell selection
-function InteractiveGrid({
+// Keyboard-based selector for cell editing
+function KeyboardSelector({
   gridSize,
   grid,
+  controlsRef,
   onToggle,
-  onSetCell,
   onCommunityChange,
+  onSelectorChange,
 }: {
   gridSize: number;
   grid: Grid3D;
+  controlsRef: React.RefObject<any>;
   onToggle: (x: number, y: number, z: number) => void;
-  onSetCell: (x: number, y: number, z: number, alive: boolean) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
+  onSelectorChange: (pos: [number, number, number]) => void;
 }) {
-  const [hovered, setHovered] = useState<[number, number, number] | null>(null);
-  const [depthOffset, setDepthOffset] = useState(0);
-  const rayInfoRef = useRef<{ point: THREE.Vector3; direction: THREE.Vector3 } | null>(null);
-  const isDragging = useRef(false);
-  const dragMode = useRef<'place' | 'remove' | null>(null);
-  const affectedCells = useRef<Set<string>>(new Set());
+  const center = Math.floor(gridSize / 2);
+  const [selectorPos, setSelectorPos] = useState<[number, number, number]>([center, center, center]);
   const offset = gridSize / 2;
 
-  // Calculate cell position from ray and depth
-  const calculateCell = useCallback((point: THREE.Vector3, direction: THREE.Vector3, depth: number) => {
-    const adjustedPoint = point.clone().add(direction.clone().multiplyScalar(depth));
-    const x = Math.floor(adjustedPoint.x + offset);
-    const y = Math.floor(adjustedPoint.y + offset);
-    const z = Math.floor(adjustedPoint.z + offset);
+  // Notify parent of selector position changes
+  useEffect(() => {
+    onSelectorChange(selectorPos);
+  }, [selectorPos, onSelectorChange]);
 
-    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize) {
-      return [x, y, z] as [number, number, number];
-    }
-    return null;
-  }, [gridSize, offset]);
-
-  const cellKey = (x: number, y: number, z: number) => `${x},${y},${z}`;
-
-  const handlePointerDown = useCallback((e: any) => {
-    e.stopPropagation();
-    isDragging.current = true;
-    affectedCells.current.clear();
-
-    if (hovered) {
-      const key = cellKey(hovered[0], hovered[1], hovered[2]);
-      // Determine mode based on shift key: shift = remove, normal = place
-      dragMode.current = e.shiftKey ? 'remove' : 'place';
-      affectedCells.current.add(key);
-      onSetCell(hovered[0], hovered[1], hovered[2], dragMode.current === 'place');
-    }
-  }, [hovered, onSetCell]);
-
-  const handlePointerUp = useCallback(() => {
-    isDragging.current = false;
-    dragMode.current = null;
-    affectedCells.current.clear();
-  }, []);
-
-  const handlePointerMove = useCallback((e: any) => {
-    e.stopPropagation();
-    const point = e.point.clone();
-    const direction = e.ray.direction.clone().normalize();
-    rayInfoRef.current = { point, direction };
-
-    const cell = calculateCell(point, direction, depthOffset);
-    setHovered(cell);
-
-    // Get community if hovering over a live cell
-    if (cell && grid.get(cell[0], cell[1], cell[2])) {
-      onCommunityChange(grid.getCommunity(cell[0], cell[1], cell[2]));
+  // Update community when selector moves over a live cell
+  useEffect(() => {
+    if (grid.get(selectorPos[0], selectorPos[1], selectorPos[2])) {
+      onCommunityChange(grid.getCommunity(selectorPos[0], selectorPos[1], selectorPos[2]));
     } else {
       onCommunityChange([]);
     }
+  }, [selectorPos, grid, onCommunityChange]);
 
-    // If dragging, place/remove cells
-    if (isDragging.current && cell && dragMode.current) {
-      const key = cellKey(cell[0], cell[1], cell[2]);
-      if (!affectedCells.current.has(key)) {
-        affectedCells.current.add(key);
-        onSetCell(cell[0], cell[1], cell[2], dragMode.current === 'place');
-      }
-    }
-  }, [calculateCell, depthOffset, onSetCell, grid, onCommunityChange]);
-
-  const handleClick = useCallback((e: any) => {
-    e.stopPropagation();
-    // Only toggle on click if we weren't dragging
-    if (hovered && affectedCells.current.size <= 1) {
-      onToggle(hovered[0], hovered[1], hovered[2]);
-    }
-  }, [hovered, onToggle]);
-
-  const handlePointerLeave = useCallback(() => {
-    setHovered(null);
-    onCommunityChange([]);
-    rayInfoRef.current = null;
-    setDepthOffset(0);
-    isDragging.current = false;
-    dragMode.current = null;
-    affectedCells.current.clear();
-  }, [onCommunityChange]);
-
-  // Handle scroll for depth adjustment
+  // Keyboard event handler
   useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (!rayInfoRef.current) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
 
-      // Check if we're over the canvas
-      const target = e.target as HTMLElement;
-      if (!target.closest('canvas')) return;
+      // Handle Space to toggle cell
+      if (e.code === 'Space') {
+        e.preventDefault();
+        onToggle(selectorPos[0], selectorPos[1], selectorPos[2]);
+        return;
+      }
 
-      // Shift + scroll = decrease depth, scroll = increase depth
-      const delta = e.shiftKey ? -1 : 1;
-      const scrollDirection = e.deltaY > 0 ? 1 : -1;
-      const change = delta * scrollDirection;
-
-      setDepthOffset((prev) => {
-        const newDepth = prev + change;
-        // Clamp to reasonable bounds
-        return Math.max(-gridSize, Math.min(gridSize, newDepth));
-      });
-
+      // Handle arrow keys for movement
+      if (!e.key.startsWith('Arrow')) return;
       e.preventDefault();
+
+      // Get camera's azimuthal angle (Y-axis rotation)
+      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+
+      // Camera right vector (XZ plane)
+      const rightX = Math.cos(azimuth);
+      const rightZ = Math.sin(azimuth);
+
+      // Camera forward vector (XZ plane) - points away from camera
+      const forwardX = Math.sin(azimuth);
+      const forwardZ = -Math.cos(azimuth);
+
+      // Quantize to nearest axis for grid movement
+      const quantizeToAxis = (x: number, z: number): [number, number, number] => {
+        if (Math.abs(x) >= Math.abs(z)) {
+          return [Math.sign(x), 0, 0];
+        } else {
+          return [0, 0, Math.sign(z)];
+        }
+      };
+
+      let dx = 0, dy = 0, dz = 0;
+
+      if (e.shiftKey) {
+        // Shift + Up/Down moves in depth (forward/back relative to camera)
+        if (e.key === 'ArrowUp') {
+          [dx, dy, dz] = quantizeToAxis(forwardX, forwardZ);
+        } else if (e.key === 'ArrowDown') {
+          [dx, dy, dz] = quantizeToAxis(-forwardX, -forwardZ);
+        }
+      } else {
+        // Left/Right moves horizontally relative to camera
+        if (e.key === 'ArrowRight') {
+          [dx, dy, dz] = quantizeToAxis(rightX, rightZ);
+        } else if (e.key === 'ArrowLeft') {
+          [dx, dy, dz] = quantizeToAxis(-rightX, -rightZ);
+        // Up/Down moves in Y direction (height)
+        } else if (e.key === 'ArrowUp') {
+          dy = 1;
+        } else if (e.key === 'ArrowDown') {
+          dy = -1;
+        }
+      }
+
+      if (dx !== 0 || dy !== 0 || dz !== 0) {
+        setSelectorPos((prev) => {
+          const newX = Math.max(0, Math.min(gridSize - 1, prev[0] + dx));
+          const newY = Math.max(0, Math.min(gridSize - 1, prev[1] + dy));
+          const newZ = Math.max(0, Math.min(gridSize - 1, prev[2] + dz));
+          return [newX, newY, newZ];
+        });
+      }
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleWheel);
-  }, [gridSize]);
-
-  // Global pointer up listener
-  useEffect(() => {
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => window.removeEventListener('pointerup', handlePointerUp);
-  }, [handlePointerUp]);
-
-  // Update hovered cell when depth changes
-  useEffect(() => {
-    if (rayInfoRef.current) {
-      const cell = calculateCell(rayInfoRef.current.point, rayInfoRef.current.direction, depthOffset);
-      setHovered(cell);
-    }
-  }, [depthOffset, calculateCell]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectorPos, gridSize, controlsRef, onToggle]);
 
   return (
     <group>
-      {/* Invisible box for raycasting */}
-      <mesh
-        visible={false}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onClick={handleClick}
-        onPointerLeave={handlePointerLeave}
-      >
-        <boxGeometry args={[gridSize, gridSize, gridSize]} />
-        <meshBasicMaterial transparent opacity={0} />
+      {/* Selector cube */}
+      <mesh position={[selectorPos[0] - offset, selectorPos[1] - offset, selectorPos[2] - offset]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
       </mesh>
-
-      {/* Highlight cube for hovered cell */}
-      {hovered && (
-        <mesh position={[hovered[0] - offset + 0.5, hovered[1] - offset + 0.5, hovered[2] - offset + 0.5]}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial color="#ffffff" transparent opacity={0.3} wireframe={false} />
-        </mesh>
-      )}
-      {hovered && (
-        <lineSegments position={[hovered[0] - offset + 0.5, hovered[1] - offset + 0.5, hovered[2] - offset + 0.5]}>
-          <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />
-          <lineBasicMaterial color="#ffffff" linewidth={2} />
-        </lineSegments>
-      )}
+      <lineSegments position={[selectorPos[0] - offset, selectorPos[1] - offset, selectorPos[2] - offset]}>
+        <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />
+        <lineBasicMaterial color="#ffffff" linewidth={2} />
+      </lineSegments>
     </group>
   );
 }
@@ -491,8 +454,8 @@ function Scene({
   rotationMode,
   onTick,
   onToggleCell,
-  onSetCell,
-  onCommunityChange
+  onCommunityChange,
+  onSelectorChange
 }: {
   grid: Grid3D;
   running: boolean;
@@ -503,10 +466,11 @@ function Scene({
   rotationMode: boolean;
   onTick: () => void;
   onToggleCell: (x: number, y: number, z: number) => void;
-  onSetCell: (x: number, y: number, z: number, alive: boolean) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
+  onSelectorChange: (pos: [number, number, number]) => void;
 }) {
   const lastTick = useRef(0);
+  const controlsRef = useRef<any>(null);
   const [cells, setCells] = useState<Array<[number, number, number]>>([]);
 
   useEffect(() => {
@@ -530,8 +494,8 @@ function Scene({
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
       <Cells cells={cells} gridSize={grid.size} margin={cellMargin} />
       <BoundingBox size={grid.size} />
-      {!rotationMode && <InteractiveGrid gridSize={grid.size} grid={grid} onToggle={onToggleCell} onSetCell={onSetCell} onCommunityChange={onCommunityChange} />}
-      <OrbitControls makeDefault enableDamping dampingFactor={0.05} enabled={rotationMode} />
+      {!rotationMode && <KeyboardSelector gridSize={grid.size} grid={grid} controlsRef={controlsRef} onToggle={onToggleCell} onCommunityChange={onCommunityChange} onSelectorChange={onSelectorChange} />}
+      <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.05} enabled={rotationMode} />
       <PerspectiveCamera makeDefault position={[30, 25, 30]} />
     </>
   );
@@ -635,15 +599,21 @@ function CommunitySidebar({ community }: { community: Array<[number, number, num
 
 export default function App() {
   const gridRef = useRef(new Grid3D(20));
+  const initialStateRef = useRef<Array<[number, number, number]>>([]);
   const [running, setRunning] = useState(false);
   const [generation, setGeneration] = useState(0);
   const [cellCount, setCellCount] = useState(0);
   const [rotationMode, setRotationMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>([]);
+  const [selectorPos, setSelectorPos] = useState<[number, number, number] | null>(null);
   const hasMounted = useRef(false);
 
   const handleCommunityChange = useCallback((newCommunity: Array<[number, number, number]>) => {
     setCommunity(newCommunity);
+  }, []);
+
+  const handleSelectorChange = useCallback((pos: [number, number, number]) => {
+    setSelectorPos(pos);
   }, []);
 
   // Toggle rotation mode with 'r' key
@@ -693,7 +663,7 @@ export default function App() {
   }, [speed, density, cellMargin, rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax]);
 
   useControls("Actions", {
-    "Start / Pause": button(() => setRunning((r) => !r)),
+    [running ? "Stop" : "Play"]: button(() => setRunning((r) => !r)),
     "Step": button(() => {
       if (!running) {
         gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
@@ -703,16 +673,24 @@ export default function App() {
     }),
     "Random": button(() => {
       gridRef.current.randomize(density);
-      setGeneration((g) => g + 1);
+      initialStateRef.current = gridRef.current.saveState();
+      setGeneration(0);
       setCellCount(gridRef.current.getLivingCells().length);
     }),
     "Reset": button(() => {
       setRunning(false);
+      gridRef.current.restoreState(initialStateRef.current);
+      setGeneration(0);
+      setCellCount(gridRef.current.getLivingCells().length);
+    }),
+    "Clear": button(() => {
+      setRunning(false);
       gridRef.current.clear();
+      initialStateRef.current = [];
       setGeneration(0);
       setCellCount(0);
     }),
-  });
+  }, [running]);
 
   const handleTick = useCallback(() => {
     gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
@@ -722,12 +700,6 @@ export default function App() {
 
   const handleToggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
-    setGeneration((g) => g + 1);
-    setCellCount(gridRef.current.getLivingCells().length);
-  }, []);
-
-  const handleSetCell = useCallback((x: number, y: number, z: number, alive: boolean) => {
-    gridRef.current.set(x, y, z, alive);
     setGeneration((g) => g + 1);
     setCellCount(gridRef.current.getLivingCells().length);
   }, []);
@@ -747,8 +719,8 @@ export default function App() {
             rotationMode={rotationMode}
             onTick={handleTick}
             onToggleCell={handleToggleCell}
-            onSetCell={handleSetCell}
             onCommunityChange={handleCommunityChange}
+            onSelectorChange={handleSelectorChange}
           />
         </Canvas>
       </div>
@@ -763,10 +735,15 @@ export default function App() {
         <div className="mode-indicator">
           Mode: {rotationMode ? "Rotate" : "Edit"} <span className="hint">(press R to toggle)</span>
         </div>
+        {!rotationMode && selectorPos && (
+          <div className="selector-pos">
+            Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
+          </div>
+        )}
         <p className="instructions">
           {rotationMode
             ? "Drag to rotate. Scroll to zoom."
-            : "Click to place/remove. Drag to paint. Scroll for depth."}
+            : "Arrows: move/height. Shift+Arrows: depth. Space: toggle."}
         </p>
       </div>
 
