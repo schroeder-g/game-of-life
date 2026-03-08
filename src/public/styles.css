@@ -169,3 +169,14 @@ input[type="range"] {
   border-radius: 8px;
   overflow: hidden;
 }
+
+/* Shape info styling */
+.shape-info {
+  font-size: 13px;
+  color: #ffaa00;
+  font-weight: 500;
+  padding: 4px 8px;
+  background: rgba(255, 170, 0, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+}

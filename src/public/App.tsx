@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { useControls, button, Leva } from "leva";
+import { useControls, button, Leva, folder } from "leva";
 import * as THREE from "three";
 import chroma from "chroma-js";
+import { ShapeType, SHAPES, generateShape, supportsHollow } from "./shapes";
 
 // LocalStorage helpers
 const STORAGE_KEY = "game-of-life-settings";
@@ -40,6 +41,7 @@ const defaults = {
   birthMin: 5,
   birthMax: 5,
   cellMargin: 0.2,
+  gridSize: 20,
 };
 
 // Merge with defaults
@@ -293,7 +295,7 @@ function Cells({ cells, gridSize, margin }: { cells: Array<[number, number, numb
 
   return (
     <group key={`cells-${margin}`}>
-      <instancedMesh ref={meshRef} args={[undefined, undefined, 8000]}>
+      <instancedMesh ref={meshRef} args={[undefined, undefined, 50000]}>
         <boxGeometry args={[cellSize, cellSize, cellSize]} />
         <shaderMaterial
           vertexShader={cellShaderMaterial.vertexShader}
@@ -302,7 +304,7 @@ function Cells({ cells, gridSize, margin }: { cells: Array<[number, number, numb
           vertexColors
         />
       </instancedMesh>
-      <instancedMesh ref={edgesRef} args={[undefined, undefined, 8000]}>
+      <instancedMesh ref={edgesRef} args={[undefined, undefined, 50000]}>
         <boxGeometry args={[edgeSize, edgeSize, edgeSize]} />
         <meshBasicMaterial wireframe vertexColors />
       </instancedMesh>
@@ -320,25 +322,100 @@ function BoundingBox({ size }: { size: number }) {
   );
 }
 
+// Shape preview component
+function ShapePreview({
+  selectorPos,
+  gridSize,
+  selectedShape,
+  shapeSize,
+  isHollow,
+}: {
+  selectorPos: [number, number, number];
+  gridSize: number;
+  selectedShape: ShapeType;
+  shapeSize: number;
+  isHollow: boolean;
+}) {
+  const offset = gridSize / 2;
+
+  // Generate preview cells
+  const previewCells = useMemo(() => {
+    if (selectedShape === "None") return [];
+
+    const offsets = generateShape(selectedShape, shapeSize, isHollow);
+    return offsets
+      .map(([dx, dy, dz]) => [
+        selectorPos[0] + dx,
+        selectorPos[1] + dy,
+        selectorPos[2] + dz,
+      ] as [number, number, number])
+      .filter(
+        ([x, y, z]) =>
+          x >= 0 && x < gridSize &&
+          y >= 0 && y < gridSize &&
+          z >= 0 && z < gridSize
+      );
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize]);
+
+  if (previewCells.length === 0) return null;
+
+  return (
+    <group>
+      {previewCells.map((cell, i) => (
+        <mesh
+          key={i}
+          position={[cell[0] - offset, cell[1] - offset, cell[2] - offset]}
+        >
+          <boxGeometry args={[0.9, 0.9, 0.9]} />
+          <meshBasicMaterial color="#ffaa00" transparent opacity={0.35} />
+        </mesh>
+      ))}
+      {previewCells.map((cell, i) => (
+        <lineSegments
+          key={`edge-${i}`}
+          position={[cell[0] - offset, cell[1] - offset, cell[2] - offset]}
+        >
+          <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
+          <lineBasicMaterial color="#ffaa00" />
+        </lineSegments>
+      ))}
+    </group>
+  );
+}
+
 // Keyboard-based selector for cell editing
 function KeyboardSelector({
   gridSize,
   grid,
   controlsRef,
+  selectedShape,
+  shapeSize,
+  isHollow,
   onToggle,
+  onSetCells,
+  onClearShape,
+  onSizeChange,
   onCommunityChange,
   onSelectorChange,
 }: {
   gridSize: number;
   grid: Grid3D;
   controlsRef: React.RefObject<any>;
+  selectedShape: ShapeType;
+  shapeSize: number;
+  isHollow: boolean;
   onToggle: (x: number, y: number, z: number) => void;
+  onSetCells: (cells: Array<[number, number, number]>) => void;
+  onClearShape: () => void;
+  onSizeChange: (delta: number) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
   onSelectorChange: (pos: [number, number, number]) => void;
 }) {
   const center = Math.floor(gridSize / 2);
   const [selectorPos, setSelectorPos] = useState<[number, number, number]>([center, center, center]);
   const offset = gridSize / 2;
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const lastPaintedPos = useRef<string | null>(null);
 
   // Notify parent of selector position changes
   useEffect(() => {
@@ -354,16 +431,72 @@ function KeyboardSelector({
     }
   }, [selectorPos, grid, onCommunityChange]);
 
+  // Continuous painting: toggle cell when moving with space held
+  useEffect(() => {
+    if (spaceHeld && selectedShape === "None") {
+      const posKey = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
+      if (lastPaintedPos.current !== posKey) {
+        lastPaintedPos.current = posKey;
+        onToggle(selectorPos[0], selectorPos[1], selectorPos[2]);
+      }
+    }
+  }, [selectorPos, spaceHeld, selectedShape, onToggle]);
+
+  // Wheel event handler for shape size (capture phase)
+  useEffect(() => {
+    if (selectedShape === "None") return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const delta = e.deltaY < 0 ? 1 : -1;
+      onSizeChange(delta);
+    };
+
+    window.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+    return () => window.removeEventListener('wheel', handleWheel, { capture: true });
+  }, [selectedShape, onSizeChange]);
+
   // Keyboard event handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Skip if typing in an input
       if ((e.target as HTMLElement).tagName === 'INPUT') return;
 
-      // Handle Space to toggle cell
+      // Handle Escape to clear shape
+      if (e.code === 'Escape' && selectedShape !== "None") {
+        e.preventDefault();
+        onClearShape();
+        return;
+      }
+
+      // Handle Space
       if (e.code === 'Space') {
         e.preventDefault();
-        onToggle(selectorPos[0], selectorPos[1], selectorPos[2]);
+        if (selectedShape !== "None") {
+          // Shape mode: place shape
+          const offsets = generateShape(selectedShape, shapeSize, isHollow);
+          const cells = offsets
+            .map(([dx, dy, dz]) => [
+              selectorPos[0] + dx,
+              selectorPos[1] + dy,
+              selectorPos[2] + dz,
+            ] as [number, number, number])
+            .filter(
+              ([x, y, z]) =>
+                x >= 0 && x < gridSize &&
+                y >= 0 && y < gridSize &&
+                z >= 0 && z < gridSize
+            );
+          onSetCells(cells);
+        } else {
+          // Paint mode: toggle single cell and start continuous painting
+          if (!spaceHeld) {
+            setSpaceHeld(true);
+            lastPaintedPos.current = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
+            onToggle(selectorPos[0], selectorPos[1], selectorPos[2]);
+          }
+        }
         return;
       }
 
@@ -424,12 +557,31 @@ function KeyboardSelector({
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setSpaceHeld(false);
+        lastPaintedPos.current = null;
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectorPos, gridSize, controlsRef, onToggle]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [selectorPos, gridSize, controlsRef, onToggle, selectedShape, shapeSize, isHollow, onSetCells, onClearShape, spaceHeld]);
 
   return (
     <group>
+      {/* Shape preview */}
+      <ShapePreview
+        selectorPos={selectorPos}
+        gridSize={gridSize}
+        selectedShape={selectedShape}
+        shapeSize={shapeSize}
+        isHollow={isHollow}
+      />
       {/* Selector cube */}
       <mesh position={[selectorPos[0] - offset, selectorPos[1] - offset, selectorPos[2] - offset]}>
         <boxGeometry args={[1, 1, 1]} />
@@ -450,10 +602,17 @@ function Scene({
   speed,
   rules,
   generation,
+  renderKey,
   cellMargin,
   rotationMode,
+  selectedShape,
+  shapeSize,
+  isHollow,
   onTick,
   onToggleCell,
+  onSetCells,
+  onClearShape,
+  onSizeChange,
   onCommunityChange,
   onSelectorChange
 }: {
@@ -462,10 +621,17 @@ function Scene({
   speed: number;
   rules: { surviveMin: number; surviveMax: number; birthMin: number; birthMax: number };
   generation: number;
+  renderKey: number;
   cellMargin: number;
   rotationMode: boolean;
+  selectedShape: ShapeType;
+  shapeSize: number;
+  isHollow: boolean;
   onTick: () => void;
   onToggleCell: (x: number, y: number, z: number) => void;
+  onSetCells: (cells: Array<[number, number, number]>) => void;
+  onClearShape: () => void;
+  onSizeChange: (delta: number) => void;
   onCommunityChange: (community: Array<[number, number, number]>) => void;
   onSelectorChange: (pos: [number, number, number]) => void;
 }) {
@@ -475,7 +641,7 @@ function Scene({
 
   useEffect(() => {
     setCells(grid.getLivingCells());
-  }, [generation]);
+  }, [generation, renderKey]);
 
   useFrame((state) => {
     if (running) {
@@ -494,7 +660,22 @@ function Scene({
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
       <Cells cells={cells} gridSize={grid.size} margin={cellMargin} />
       <BoundingBox size={grid.size} />
-      {!rotationMode && <KeyboardSelector gridSize={grid.size} grid={grid} controlsRef={controlsRef} onToggle={onToggleCell} onCommunityChange={onCommunityChange} onSelectorChange={onSelectorChange} />}
+      {!rotationMode && (
+        <KeyboardSelector
+          gridSize={grid.size}
+          grid={grid}
+          controlsRef={controlsRef}
+          selectedShape={selectedShape}
+          shapeSize={shapeSize}
+          isHollow={isHollow}
+          onToggle={onToggleCell}
+          onSetCells={onSetCells}
+          onClearShape={onClearShape}
+          onSizeChange={onSizeChange}
+          onCommunityChange={onCommunityChange}
+          onSelectorChange={onSelectorChange}
+        />
+      )}
       <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.05} enabled={rotationMode} />
       <PerspectiveCamera makeDefault position={[30, 25, 30]} />
     </>
@@ -598,15 +779,33 @@ function CommunitySidebar({ community }: { community: Array<[number, number, num
 }
 
 export default function App() {
-  const gridRef = useRef(new Grid3D(20));
+  const [gridSize, setGridSize] = useState(storedSettings.gridSize);
+  const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
   const [running, setRunning] = useState(false);
   const [generation, setGeneration] = useState(0);
+  const [renderKey, setRenderKey] = useState(0); // For triggering re-renders on cell edits
   const [cellCount, setCellCount] = useState(0);
   const [rotationMode, setRotationMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>([]);
   const [selectorPos, setSelectorPos] = useState<[number, number, number] | null>(null);
   const hasMounted = useRef(false);
+
+  // Shape brush state
+  const [selectedShape, setSelectedShape] = useState<ShapeType>("None");
+  const [shapeSize, setShapeSize] = useState<number>(3);
+  const [isHollow, setIsHollow] = useState<boolean>(false);
+
+  // Handle grid size changes
+  const handleGridSizeChange = useCallback((newSize: number) => {
+    setRunning(false);
+    gridRef.current = new Grid3D(newSize);
+    initialStateRef.current = [];
+    setGridSize(newSize);
+    setGeneration(0);
+    setCellCount(0);
+    setCommunity([]);
+  }, []);
 
   const handleCommunityChange = useCallback((newCommunity: Array<[number, number, number]>) => {
     setCommunity(newCommunity);
@@ -636,12 +835,48 @@ export default function App() {
     cellMargin: { value: storedSettings.cellMargin, min: 0, max: 0.45, step: 0.05, label: "Cell Margin" },
   });
 
+  // Grid size control
+  useControls("Environment", {
+    "Grid Size": {
+      value: gridSize,
+      min: 10,
+      max: 40,
+      step: 10,
+      onChange: handleGridSizeChange,
+    },
+  }, [gridSize, handleGridSizeChange]);
+
   const rules = useControls("Rules (18 neighbors)", {
     surviveMin: { value: storedSettings.surviveMin, min: 0, max: 18, step: 1, label: "Survive Min" },
     surviveMax: { value: storedSettings.surviveMax, min: 0, max: 18, step: 1, label: "Survive Max" },
     birthMin: { value: storedSettings.birthMin, min: 0, max: 18, step: 1, label: "Birth Min" },
     birthMax: { value: storedSettings.birthMax, min: 0, max: 18, step: 1, label: "Birth Max" },
   });
+
+  // Shape Brush panel
+  useControls(
+    "Shape Brush",
+    {
+      Shape: {
+        value: selectedShape,
+        options: SHAPES.reduce((acc, shape) => ({ ...acc, [shape]: shape }), {}),
+        onChange: (v: ShapeType) => setSelectedShape(v),
+      },
+      Size: {
+        value: shapeSize,
+        min: 1,
+        max: 10,
+        step: 1,
+        onChange: (v: number) => setShapeSize(v),
+      },
+      Hollow: {
+        value: isHollow,
+        onChange: (v: boolean) => setIsHollow(v),
+        render: () => supportsHollow(selectedShape),
+      },
+    },
+    [selectedShape, shapeSize, isHollow]
+  );
 
   // Persist settings to localStorage (skip initial render)
   useEffect(() => {
@@ -653,6 +888,7 @@ export default function App() {
       speed,
       density,
       cellMargin,
+      gridSize,
       surviveMin: rules.surviveMin,
       surviveMax: rules.surviveMax,
       birthMin: rules.birthMin,
@@ -660,12 +896,22 @@ export default function App() {
     };
     console.log("Saving settings:", settings);
     saveSettings(settings);
-  }, [speed, density, cellMargin, rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax]);
+  }, [speed, density, cellMargin, gridSize, rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax]);
 
   useControls("Actions", {
-    [running ? "Stop" : "Play"]: button(() => setRunning((r) => !r)),
+    [running ? "Stop" : "Play"]: button(() => {
+      if (!running && generation === 0) {
+        // Save initial state when starting from generation 0
+        initialStateRef.current = gridRef.current.saveState();
+      }
+      setRunning((r) => !r);
+    }),
     "Step": button(() => {
       if (!running) {
+        if (generation === 0) {
+          // Save initial state before first step
+          initialStateRef.current = gridRef.current.saveState();
+        }
         gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
         setGeneration((g) => g + 1);
         setCellCount(gridRef.current.getLivingCells().length);
@@ -690,7 +936,7 @@ export default function App() {
       setGeneration(0);
       setCellCount(0);
     }),
-  }, [running]);
+  }, [running, generation]);
 
   const handleTick = useCallback(() => {
     gridRef.current.tick(rules.surviveMin, rules.surviveMax, rules.birthMin, rules.birthMax);
@@ -700,8 +946,24 @@ export default function App() {
 
   const handleToggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
-    setGeneration((g) => g + 1);
+    setRenderKey((k) => k + 1);
     setCellCount(gridRef.current.getLivingCells().length);
+  }, []);
+
+  const handleSetCells = useCallback((cells: Array<[number, number, number]>) => {
+    for (const [x, y, z] of cells) {
+      gridRef.current.set(x, y, z, true);
+    }
+    setRenderKey((k) => k + 1);
+    setCellCount(gridRef.current.getLivingCells().length);
+  }, []);
+
+  const handleClearShape = useCallback(() => {
+    setSelectedShape("None");
+  }, []);
+
+  const handleSizeChange = useCallback((delta: number) => {
+    setShapeSize((prev) => Math.max(1, Math.min(10, prev + delta)));
   }, []);
 
   return (
@@ -715,10 +977,17 @@ export default function App() {
             speed={speed}
             rules={rules}
             generation={generation}
+            renderKey={renderKey}
             cellMargin={cellMargin}
             rotationMode={rotationMode}
+            selectedShape={selectedShape}
+            shapeSize={shapeSize}
+            isHollow={isHollow}
             onTick={handleTick}
             onToggleCell={handleToggleCell}
+            onSetCells={handleSetCells}
+            onClearShape={handleClearShape}
+            onSizeChange={handleSizeChange}
             onCommunityChange={handleCommunityChange}
             onSelectorChange={handleSelectorChange}
           />
@@ -740,10 +1009,18 @@ export default function App() {
             Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
           </div>
         )}
+        {!rotationMode && selectedShape !== "None" && (
+          <div className="shape-info">
+            Shape: {selectedShape} ({shapeSize}x{shapeSize}{supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
+            {isHollow && supportsHollow(selectedShape) && " (hollow)"}
+          </div>
+        )}
         <p className="instructions">
           {rotationMode
             ? "Drag to rotate. Scroll to zoom."
-            : "Arrows: move/height. Shift+Arrows: depth. Space: toggle."}
+            : selectedShape !== "None"
+            ? "Space: place shape. Scroll: size. Escape: cancel."
+            : "Arrows: move/height. Shift+Arrows: depth. Space: toggle/paint."}
         </p>
       </div>
 
