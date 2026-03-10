@@ -34,14 +34,47 @@ const defaults = {
 const storedSettings = { ...defaults, ...initialSettings };
 console.log("Using settings:", storedSettings);
 
+function SimulationStats({
+  grid,
+  running,
+}: {
+  grid: Grid3D;
+  running: boolean;
+}) {
+  const [stats, setStats] = useState({
+    generation: grid.generation,
+    cells: grid.getLivingCells().length,
+  });
+
+  const lastVersionRef = useRef(grid.version);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (grid.version !== lastVersionRef.current) {
+        lastVersionRef.current = grid.version;
+        setStats({
+          generation: grid.generation,
+          cells: grid.getLivingCells().length,
+        });
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [grid]);
+
+  return (
+    <div className="stats">
+      <span>Generation: {stats.generation}</span>
+      <span>Cells: {stats.cells}</span>
+      <span>{running ? "Running" : "Paused"}</span>
+    </div>
+  );
+}
+
 export default function App() {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
   const [running, setRunning] = useState(false);
-  const [generation, setGeneration] = useState(0);
-  const [renderKey, setRenderKey] = useState(0); // For triggering re-renders on cell edits
-  const [cellCount, setCellCount] = useState(0);
   const [rotationMode, setRotationMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
     [],
@@ -69,8 +102,6 @@ export default function App() {
     gridRef.current = new Grid3D(newSize);
     initialStateRef.current = [];
     setGridSize(newSize);
-    setGeneration(0);
-    setCellCount(0);
     setCommunity([]);
   }, []);
 
@@ -239,7 +270,7 @@ export default function App() {
     "Actions",
     {
       [running ? "Stop" : "Play"]: button(() => {
-        if (!running && generation === 0) {
+        if (!running && gridRef.current.generation === 0) {
           // Save initial state when starting from generation 0
           initialStateRef.current = gridRef.current.saveState();
         }
@@ -247,7 +278,7 @@ export default function App() {
       }),
       Step: button(() => {
         if (!running) {
-          if (generation === 0) {
+          if (gridRef.current.generation === 0) {
             // Save initial state before first step
             initialStateRef.current = gridRef.current.saveState();
           }
@@ -258,34 +289,23 @@ export default function App() {
             rules.birthMax,
             rules.birthMargin,
           );
-          setGeneration((g) => g + 1);
-          setCellCount(gridRef.current.getLivingCells().length);
         }
       }),
       Random: button(() => {
         gridRef.current.randomize(density);
         initialStateRef.current = gridRef.current.saveState();
-        setGeneration(0);
-        setRenderKey((k) => k + 1);
-        setCellCount(gridRef.current.getLivingCells().length);
       }),
       Reset: button(() => {
         setRunning(false);
         gridRef.current.restoreState(initialStateRef.current);
-        setGeneration(0);
-        setRenderKey((k) => k + 1);
-        setCellCount(gridRef.current.getLivingCells().length);
       }),
       Clear: button(() => {
         setRunning(false);
         gridRef.current.clear();
         initialStateRef.current = [];
-        setGeneration(0);
-        setRenderKey((k) => k + 1);
-        setCellCount(0);
       }),
     },
-    [running, generation],
+    [running, density, rules],
   );
 
   // Create current genesis config from current state
@@ -331,9 +351,6 @@ export default function App() {
       gridRef.current.restoreState(config.cells);
       initialStateRef.current = config.cells;
 
-      setGeneration(0);
-      setRenderKey((k) => k + 1);
-      setCellCount(config.cells.length);
       setCommunity([]);
     },
     [gridSize],
@@ -420,14 +437,10 @@ export default function App() {
       rules.birthMax,
       rules.birthMargin,
     );
-    setGeneration((g) => g + 1);
-    setCellCount(gridRef.current.getLivingCells().length);
   }, [rules]);
 
   const handleToggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
-    setRenderKey((k) => k + 1);
-    setCellCount(gridRef.current.getLivingCells().length);
   }, []);
 
   const handleSetCells = useCallback(
@@ -435,8 +448,6 @@ export default function App() {
       for (const [x, y, z] of cells) {
         gridRef.current.set(x, y, z, true);
       }
-      setRenderKey((k) => k + 1);
-      setCellCount(gridRef.current.getLivingCells().length);
     },
     [],
   );
@@ -446,8 +457,6 @@ export default function App() {
       for (const [x, y, z] of cells) {
         gridRef.current.set(x, y, z, false);
       }
-      setRenderKey((k) => k + 1);
-      setCellCount(gridRef.current.getLivingCells().length);
     },
     [],
   );
@@ -472,9 +481,6 @@ export default function App() {
             grid={gridRef.current}
             running={running}
             speed={speed}
-            rules={rules}
-            generation={generation}
-            renderKey={renderKey}
             cellMargin={cellMargin}
             rotationMode={rotationMode}
             selectedShape={selectedShape}
@@ -494,11 +500,7 @@ export default function App() {
 
       <div className="ui-overlay">
         <h1>3D Game of Life</h1>
-        <div className="stats">
-          <span>Generation: {generation}</span>
-          <span>Cells: {cellCount}</span>
-          <span>{running ? "Running" : "Paused"}</span>
-        </div>
+        <SimulationStats grid={gridRef.current} running={running} />
         <div className="mode-indicator">
           Mode: {rotationMode ? "Rotate" : "Edit"}{" "}
           <span className="hint">(press R to toggle)</span>

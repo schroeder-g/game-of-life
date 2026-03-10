@@ -420,9 +420,6 @@ export function Scene({
   grid,
   running,
   speed,
-  rules,
-  generation,
-  renderKey,
   cellMargin,
   rotationMode,
   selectedShape,
@@ -440,14 +437,6 @@ export function Scene({
   grid: Grid3D;
   running: boolean;
   speed: number;
-  rules: {
-    surviveMin: number;
-    surviveMax: number;
-    birthMin: number;
-    birthMax: number;
-  };
-  generation: number;
-  renderKey: number;
   cellMargin: number;
   rotationMode: boolean;
   selectedShape: ShapeType;
@@ -464,11 +453,6 @@ export function Scene({
 }) {
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
-  const [cells, setCells] = useState<Array<[number, number, number]>>([]);
-
-  useEffect(() => {
-    setCells(grid.getLivingCells());
-  }, [generation, renderKey]);
 
   useFrame((state) => {
     if (running) {
@@ -485,7 +469,7 @@ export function Scene({
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <Cells cells={cells} gridSize={grid.size} margin={cellMargin} />
+      <Cells grid={grid} margin={cellMargin} />
       <BoundingBox size={grid.size} />
       {!rotationMode && (
         <KeyboardSelector

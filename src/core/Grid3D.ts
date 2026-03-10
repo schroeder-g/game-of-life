@@ -1,6 +1,8 @@
 export class Grid3D {
   size: number;
   private cells: boolean[][][];
+  public generation: number = 0;
+  public version: number = 0;
 
   constructor(size: number = 20) {
     this.size = size;
@@ -38,7 +40,10 @@ export class Grid3D {
       z >= 0 &&
       z < this.size
     ) {
-      this.cells[z][y][x] = alive;
+      if (this.cells[z][y][x] !== alive) {
+        this.cells[z][y][x] = alive;
+        this.version++;
+      }
     }
   }
 
@@ -52,11 +57,14 @@ export class Grid3D {
       z < this.size
     ) {
       this.cells[z][y][x] = !this.cells[z][y][x];
+      this.version++;
     }
   }
 
   clear(): void {
     this.cells = this.createEmptyGrid();
+    this.generation = 0;
+    this.version++;
   }
 
   // Save current state as array of living cell coordinates
@@ -68,17 +76,37 @@ export class Grid3D {
   restoreState(cells: Array<[number, number, number]>): void {
     this.cells = this.createEmptyGrid();
     for (const [x, y, z] of cells) {
-      this.set(x, y, z, true);
+      if (
+        x >= 0 &&
+        x < this.size &&
+        y >= 0 &&
+        y < this.size &&
+        z >= 0 &&
+        z < this.size
+      ) {
+        this.cells[z][y][x] = true;
+      }
     }
+    this.generation = 0;
+    this.version++;
   }
 
   randomize(density: number = 0.08): void {
+    let changed = false;
     for (let z = 0; z < this.size; z++) {
       for (let y = 0; y < this.size; y++) {
         for (let x = 0; x < this.size; x++) {
-          this.cells[z][y][x] = Math.random() < density;
+          const alive = Math.random() < density;
+          if (this.cells[z][y][x] !== alive) {
+            this.cells[z][y][x] = alive;
+            changed = true;
+          }
         }
       }
+    }
+    if (changed) {
+      this.generation = 0;
+      this.version++;
     }
   }
 
@@ -238,6 +266,8 @@ export class Grid3D {
       }
     }
     this.cells = newCells;
+    this.generation++;
+    this.version++;
   }
 
   getLivingCells(): Array<[number, number, number]> {

@@ -1,6 +1,8 @@
+import { useFrame } from "@react-three/fiber";
 import chroma from "chroma-js";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
+import { Grid3D } from "../core/Grid3D";
 
 // Custom shader material for per-instance color and opacity
 const cellShaderMaterial = {
@@ -26,32 +28,32 @@ const cellShaderMaterial = {
   `,
 };
 
-export function Cells({
-  cells,
-  gridSize,
-  margin,
-}: {
-  cells: Array<[number, number, number]>;
-  gridSize: number;
-  margin: number;
-}) {
+export function Cells({ grid, margin }: { grid: Grid3D; margin: number }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
+  const lastVersion = useRef(-1);
 
   // Setup colors and matrices
-  const { colorScale, offset, center } = useMemo(() => {
+  const { colorScale, offset, center, gridSize } = useMemo(() => {
     return {
       colorScale: chroma
         .scale(["blue", "cyan", "green", "yellow", "red"])
-        .domain([0, gridSize]),
-      offset: gridSize / 2,
-      center: gridSize / 2,
+        .domain([0, grid.size]),
+      offset: grid.size / 2,
+      center: grid.size / 2,
+      gridSize: grid.size,
     };
-  }, [gridSize]);
+  }, [grid]);
 
-  useEffect(() => {
+  // Use useFrame to natively poll the Grid3D instance without triggering React re-renders
+  useFrame(() => {
     if (!meshRef.current || !edgesRef.current) return;
 
+    // Only update buffers if the version changed
+    if (grid.version === lastVersion.current) return;
+    lastVersion.current = grid.version;
+
+    const cells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();
     const colors = new Float32Array(cells.length * 3);
     const opacities = new Float32Array(cells.length);
@@ -112,7 +114,7 @@ export function Cells({
     meshRef.current.count = cells.length;
     edgesRef.current.instanceMatrix.needsUpdate = true;
     edgesRef.current.count = cells.length;
-  }, [cells, offset, center, gridSize]);
+  });
 
   const cellSize = 1 - margin;
   const edgeSize = cellSize + 0.05;
