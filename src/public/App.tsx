@@ -1,10 +1,10 @@
 import { Canvas } from "@react-three/fiber";
-import { button, Leva, useControls } from "leva";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CommunitySidebar } from "../components/Controls";
 import { Scene } from "../components/Grid";
+import { MainMenu } from "../components/MainMenu";
 import { Grid3D } from "../core/Grid3D";
-import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
+import { ShapeType, supportsHollow } from "../core/shapes";
 import {
   exportGenesisConfig,
   GenesisConfig,
@@ -96,6 +96,16 @@ export default function App() {
   const [selectedConfigName, setSelectedConfigName] = useState<string>("");
   const [newConfigName, setNewConfigName] = useState<string>("");
 
+  // Simulation parameters previously in Leva
+  const [speed, setSpeed] = useState(storedSettings.speed);
+  const [density, setDensity] = useState(storedSettings.density);
+  const [cellMargin, setCellMargin] = useState(storedSettings.cellMargin);
+  const [surviveMin, setSurviveMin] = useState(storedSettings.surviveMin);
+  const [surviveMax, setSurviveMax] = useState(storedSettings.surviveMax);
+  const [birthMin, setBirthMin] = useState(storedSettings.birthMin);
+  const [birthMax, setBirthMax] = useState(storedSettings.birthMax);
+  const [birthMargin, setBirthMargin] = useState(storedSettings.birthMargin);
+
   // Handle grid size changes
   const handleGridSizeChange = useCallback((newSize: number) => {
     setRunning(false);
@@ -129,112 +139,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Leva controls with localStorage persistence
-  const { speed, density, cellMargin } = useControls("Simulation", {
-    speed: {
-      value: storedSettings.speed,
-      min: 1,
-      max: 30,
-      step: 1,
-      label: "Speed (fps)",
-    },
-    density: {
-      value: storedSettings.density,
-      min: 0.01,
-      max: 0.3,
-      step: 0.01,
-      label: "Random Density",
-    },
-    cellMargin: {
-      value: storedSettings.cellMargin,
-      min: 0,
-      max: 0.45,
-      step: 0.05,
-      label: "Cell Margin",
-    },
-  });
-
-  // Grid size control
-  useControls(
-    "Environment",
-    {
-      "Grid Size": {
-        value: gridSize,
-        min: 10,
-        max: 40,
-        step: 10,
-        onChange: handleGridSizeChange,
-      },
-    },
-    [gridSize, handleGridSizeChange],
-  );
-
-  const rules = useControls("Rules (18 neighbors)", {
-    surviveMin: {
-      value: storedSettings.surviveMin,
-      min: 0,
-      max: 18,
-      step: 1,
-      label: "Survive Min",
-    },
-    surviveMax: {
-      value: storedSettings.surviveMax,
-      min: 0,
-      max: 18,
-      step: 1,
-      label: "Survive Max",
-    },
-    birthMin: {
-      value: storedSettings.birthMin,
-      min: 0,
-      max: 18,
-      step: 1,
-      label: "Birth Min",
-    },
-    birthMax: {
-      value: storedSettings.birthMax,
-      min: 0,
-      max: 18,
-      step: 1,
-      label: "Birth Max",
-    },
-    birthMargin: {
-      value: storedSettings.birthMargin,
-      min: 0,
-      max: 10,
-      step: 1,
-      label: "Birth Margin",
-    },
-  });
-
-  // Shape Brush panel
-  useControls(
-    "Shape Brush",
-    {
-      Shape: {
-        value: selectedShape,
-        options: SHAPES.reduce(
-          (acc, shape) => ({ ...acc, [shape]: shape }),
-          {},
-        ),
-        onChange: (v: ShapeType) => setSelectedShape(v),
-      },
-      Size: {
-        value: shapeSize,
-        min: 1,
-        max: gridSize,
-        step: 1,
-        onChange: (v: number) => setShapeSize(v),
-      },
-      Hollow: {
-        value: isHollow,
-        onChange: (v: boolean) => setIsHollow(v),
-        render: () => supportsHollow(selectedShape),
-      },
-    },
-    [selectedShape, shapeSize, isHollow, gridSize],
-  );
-
   // Persist settings to localStorage (skip initial render)
   useEffect(() => {
     if (!hasMounted.current) {
@@ -246,11 +150,11 @@ export default function App() {
       density,
       cellMargin,
       gridSize,
-      surviveMin: rules.surviveMin,
-      surviveMax: rules.surviveMax,
-      birthMin: rules.birthMin,
-      birthMax: rules.birthMax,
-      birthMargin: rules.birthMargin,
+      surviveMin,
+      surviveMax,
+      birthMin,
+      birthMax,
+      birthMargin,
     };
     console.log("Saving settings:", settings);
     saveSettings(settings);
@@ -259,54 +163,52 @@ export default function App() {
     density,
     cellMargin,
     gridSize,
-    rules.surviveMin,
-    rules.surviveMax,
-    rules.birthMin,
-    rules.birthMax,
-    rules.birthMargin,
+    surviveMin,
+    surviveMax,
+    birthMin,
+    birthMax,
+    birthMargin,
   ]);
 
-  useControls(
-    "Actions",
-    {
-      [running ? "Stop" : "Play"]: button(() => {
-        if (!running && gridRef.current.generation === 0) {
-          // Save initial state when starting from generation 0
-          initialStateRef.current = gridRef.current.saveState();
-        }
-        setRunning((r) => !r);
-      }),
-      Step: button(() => {
-        if (!running) {
-          if (gridRef.current.generation === 0) {
-            // Save initial state before first step
-            initialStateRef.current = gridRef.current.saveState();
-          }
-          gridRef.current.tick(
-            rules.surviveMin,
-            rules.surviveMax,
-            rules.birthMin,
-            rules.birthMax,
-            rules.birthMargin,
-          );
-        }
-      }),
-      Random: button(() => {
-        gridRef.current.randomize(density);
+  const handlePlayStop = () => {
+    if (!running && gridRef.current.generation === 0) {
+      // Save initial state when starting from generation 0
+      initialStateRef.current = gridRef.current.saveState();
+    }
+    setRunning((r) => !r);
+  };
+
+  const handleStep = () => {
+    if (!running) {
+      if (gridRef.current.generation === 0) {
+        // Save initial state before first step
         initialStateRef.current = gridRef.current.saveState();
-      }),
-      Reset: button(() => {
-        setRunning(false);
-        gridRef.current.restoreState(initialStateRef.current);
-      }),
-      Clear: button(() => {
-        setRunning(false);
-        gridRef.current.clear();
-        initialStateRef.current = [];
-      }),
-    },
-    [running, density, rules],
-  );
+      }
+      gridRef.current.tick(
+        surviveMin,
+        surviveMax,
+        birthMin,
+        birthMax,
+        birthMargin,
+      );
+    }
+  };
+
+  const handleRandom = () => {
+    gridRef.current.randomize(density);
+    initialStateRef.current = gridRef.current.saveState();
+  };
+
+  const handleReset = () => {
+    setRunning(false);
+    gridRef.current.restoreState(initialStateRef.current);
+  };
+
+  const handleClear = () => {
+    setRunning(false);
+    gridRef.current.clear();
+    initialStateRef.current = [];
+  };
 
   // Create current genesis config from current state
   const createCurrentGenesisConfig = useCallback(
@@ -320,18 +222,28 @@ export default function App() {
         settings: {
           speed,
           density,
-          surviveMin: rules.surviveMin,
-          surviveMax: rules.surviveMax,
-          birthMin: rules.birthMin,
-          birthMax: rules.birthMax,
-          birthMargin: rules.birthMargin,
+          surviveMin,
+          surviveMax,
+          birthMin,
+          birthMax,
+          birthMargin,
           cellMargin,
           gridSize,
         },
         createdAt: new Date().toISOString(),
       };
     },
-    [speed, density, rules, cellMargin, gridSize],
+    [
+      speed,
+      density,
+      surviveMin,
+      surviveMax,
+      birthMin,
+      birthMax,
+      birthMargin,
+      cellMargin,
+      gridSize,
+    ],
   );
 
   // Apply a genesis config
@@ -356,88 +268,60 @@ export default function App() {
     [gridSize],
   );
 
-  // Genesis Config panel
-  const configOptions = React.useMemo(() => {
-    const options: Record<string, string> = { "": "Select a config..." };
-    Object.keys(savedConfigs).forEach((name) => {
-      options[name] = name;
-    });
-    return options;
-  }, [savedConfigs]);
+  const handleSaveConfig = useCallback(() => {
+    const name = newConfigName.trim() || `Config ${Date.now()}`;
+    const config = createCurrentGenesisConfig(name);
+    const newConfigs = { ...savedConfigs, [name]: config };
+    setSavedConfigs(newConfigs);
+    saveGenesisConfigs(newConfigs);
+    setSelectedConfigName(name);
+    setNewConfigName("");
+  }, [newConfigName, createCurrentGenesisConfig, savedConfigs]);
 
-  useControls(
-    "Genesis Config",
-    {
-      "Load Config": {
-        value: selectedConfigName,
-        options: configOptions,
-        onChange: (name: string) => {
-          setSelectedConfigName(name);
-          if (name && savedConfigs[name]) {
-            applyGenesisConfig(savedConfigs[name]);
-          }
-        },
-      },
-      "Config Name": {
-        value: newConfigName,
-        onChange: (v: string) => setNewConfigName(v),
-      },
-      "Save Current": button(() => {
-        const name = newConfigName.trim() || `Config ${Date.now()}`;
-        const config = createCurrentGenesisConfig(name);
-        const newConfigs = { ...savedConfigs, [name]: config };
-        setSavedConfigs(newConfigs);
-        saveGenesisConfigs(newConfigs);
-        setSelectedConfigName(name);
-        setNewConfigName("");
-      }),
-      Export: button(() => {
-        const name = selectedConfigName || newConfigName.trim() || "export";
-        const config =
-          selectedConfigName && savedConfigs[selectedConfigName]
-            ? savedConfigs[selectedConfigName]
-            : createCurrentGenesisConfig(name);
-        exportGenesisConfig(config);
-      }),
-      Import: button(async () => {
-        const config = await importGenesisConfig();
-        if (config) {
-          const newConfigs = { ...savedConfigs, [config.name]: config };
-          setSavedConfigs(newConfigs);
-          saveGenesisConfigs(newConfigs);
-          setSelectedConfigName(config.name);
-          applyGenesisConfig(config);
-        }
-      }),
-      "Delete Selected": button(() => {
-        if (selectedConfigName && savedConfigs[selectedConfigName]) {
-          const newConfigs = { ...savedConfigs };
-          delete newConfigs[selectedConfigName];
-          setSavedConfigs(newConfigs);
-          saveGenesisConfigs(newConfigs);
-          setSelectedConfigName("");
-        }
-      }),
-    },
-    [
-      savedConfigs,
-      selectedConfigName,
-      newConfigName,
-      createCurrentGenesisConfig,
-      applyGenesisConfig,
-      configOptions,
-    ],
-  );
+  const handleExportConfig = useCallback(() => {
+    const name = selectedConfigName || newConfigName.trim() || "export";
+    const config =
+      selectedConfigName && savedConfigs[selectedConfigName]
+        ? savedConfigs[selectedConfigName]
+        : createCurrentGenesisConfig(name);
+    exportGenesisConfig(config);
+  }, [
+    selectedConfigName,
+    newConfigName,
+    savedConfigs,
+    createCurrentGenesisConfig,
+  ]);
+
+  const handleImportConfig = useCallback(async () => {
+    const config = await importGenesisConfig();
+    if (config) {
+      const newConfigs = { ...savedConfigs, [config.name]: config };
+      setSavedConfigs(newConfigs);
+      saveGenesisConfigs(newConfigs);
+      setSelectedConfigName(config.name);
+      applyGenesisConfig(config);
+    }
+  }, [savedConfigs, applyGenesisConfig]);
+
+  const handleDeleteConfig = useCallback(() => {
+    if (selectedConfigName && savedConfigs[selectedConfigName]) {
+      const newConfigs = { ...savedConfigs };
+      delete newConfigs[selectedConfigName];
+      setSavedConfigs(newConfigs);
+      saveGenesisConfigs(newConfigs);
+      setSelectedConfigName("");
+    }
+  }, [selectedConfigName, savedConfigs]);
 
   const handleTick = useCallback(() => {
     gridRef.current.tick(
-      rules.surviveMin,
-      rules.surviveMax,
-      rules.birthMin,
-      rules.birthMax,
-      rules.birthMargin,
+      surviveMin,
+      surviveMax,
+      birthMin,
+      birthMax,
+      birthMargin,
     );
-  }, [rules]);
+  }, [surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
 
   const handleToggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
@@ -474,7 +358,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <Leva collapsed={false} />
       <div className="canvas-container">
         <Canvas>
           <Scene
@@ -500,6 +383,17 @@ export default function App() {
 
       <div className="ui-overlay">
         <h1>3D Game of Life</h1>
+        <p className="explainer">
+          Explore a 3D adaptation of{" "}
+          <a
+            href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Conway's Game of Life
+          </a>{" "}
+          by placing cells in the grid and watching them evolve.
+        </p>
         <SimulationStats grid={gridRef.current} running={running} />
         <div className="mode-indicator">
           Mode: {rotationMode ? "Rotate" : "Edit"}{" "}
@@ -525,6 +419,52 @@ export default function App() {
               : "Arrows: move. Space: toggle. Backspace: delete."}
         </p>
       </div>
+
+      <MainMenu
+        running={running}
+        onPlayStop={handlePlayStop}
+        onStep={handleStep}
+        onRandom={handleRandom}
+        onReset={handleReset}
+        onClear={handleClear}
+        gridSize={gridSize}
+        onGridSizeChange={handleGridSizeChange}
+        speed={speed}
+        onSpeedChange={setSpeed}
+        density={density}
+        onDensityChange={setDensity}
+        cellMargin={cellMargin}
+        onCellMarginChange={setCellMargin}
+        surviveMin={surviveMin}
+        onSurviveMinChange={setSurviveMin}
+        surviveMax={surviveMax}
+        onSurviveMaxChange={setSurviveMax}
+        birthMin={birthMin}
+        onBirthMinChange={setBirthMin}
+        birthMax={birthMax}
+        onBirthMaxChange={setBirthMax}
+        birthMargin={birthMargin}
+        onBirthMarginChange={setBirthMargin}
+        selectedShape={selectedShape}
+        onShapeChange={setSelectedShape}
+        shapeSize={shapeSize}
+        onShapeSizeChange={setShapeSize}
+        isHollow={isHollow}
+        onHollowChange={setIsHollow}
+        savedConfigs={savedConfigs}
+        selectedConfigName={selectedConfigName}
+        onSelectConfig={(name) => {
+          setSelectedConfigName(name);
+          if (name && savedConfigs[name])
+            applyGenesisConfig(savedConfigs[name]);
+        }}
+        newConfigName={newConfigName}
+        onNewConfigNameChange={setNewConfigName}
+        onSaveConfig={handleSaveConfig}
+        onExportConfig={handleExportConfig}
+        onImportConfig={handleImportConfig}
+        onDeleteConfig={handleDeleteConfig}
+      />
 
       {!running && <CommunitySidebar community={community} />}
     </div>

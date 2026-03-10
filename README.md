@@ -1,6 +1,6 @@
 # Game of Life
 
-A stunning, interactive 3D implementation of Conway's Game of Life built with React, Three.js, and React Three Fiber. This project brings the classic mathematical cellular automaton into the modern era with a beautiful, high-performance WebGL rendering engine. Leveraging Bun as an ultra-fast all-in-one JavaScript runtime and bundler, it provides a seamless development and build experience. The visualization features intuitive interactive parameter controls powered by Leva and dynamic, aesthetically pleasing color schemes using chroma-js. This allows users to easily explore the fascinating emergent behaviors, intricate structures, and complex historical patterns of the Game of Life in a rich, immersive three-dimensional environment.
+An interactive 3D implementation of Conway's Game of Life built with React, Three.js, and React Three Fiber. This project brings the classic mathematical cellular automaton into the modern era with a beautiful, high-performance WebGL rendering engine. Leveraging Bun as an ultra-fast all-in-one JavaScript runtime and bundler, the visualization features interactive parameter controls. This allows users to easily explore the fascinating emergent behaviors, intricate structures, and complex patterns of the Game of Life in a three-dimensional environment.
 
 ## Prerequisites
 
@@ -55,4 +55,4 @@ Contributions are always welcome! If you'd like to help improve the project, ple
 2. Create your feature branch (`git checkout -b feature/amazing-feature`).
 3. Commit your changes (`git commit -m 'feat: add some amazing feature'`).
 4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
+5. Open a Pull Request (`gh pr create --title "feat: add some amazing feature" --body "Add some amazing feature"`).

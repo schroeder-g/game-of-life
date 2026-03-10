@@ -6,13 +6,12 @@
     "build": "bun build src/public/index.tsx --outdir dist"
   },
   "dependencies": {
+    "@react-three/drei": "^9.88.0",
+    "@react-three/fiber": "^8.15.0",
+    "chroma-js": "^2.4.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@react-three/fiber": "^8.15.0",
-    "@react-three/drei": "^9.88.0",
-    "three": "^0.159.0",
-    "leva": "^0.9.35",
-    "chroma-js": "^2.4.2"
+    "three": "^0.159.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
