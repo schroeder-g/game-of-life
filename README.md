@@ -2,6 +2,10 @@
 
 An interactive 3D implementation of Conway's Game of Life built with React, Three.js, and React Three Fiber. This project brings the classic mathematical cellular automaton into the modern era with a beautiful, high-performance WebGL rendering engine. Leveraging Bun as an ultra-fast all-in-one JavaScript runtime and bundler, the visualization features interactive parameter controls. This allows users to easily explore the fascinating emergent behaviors, intricate structures, and complex patterns of the Game of Life in a three-dimensional environment.
 
+Users can also customize which neighbors count toward the rule evaluation (faces, edges, and corners) via checkboxes in the rules panel — at least one must always be selected. The engine persists these settings between sessions.
+
+The brush panel has a **Hollow** checkbox that toggles whether generated shapes (Cube, Sphere, Pyramid) are filled or just shells. It's always visible and grayed out for shapes that don't support hollowing, and the preference is cleared when switching to an unsupported shape.
+
 ## Prerequisites
 
 This project uses [Bun](https://bun.sh/) as its JavaScript runtime and package manager. You must have Bun installed to run the application.

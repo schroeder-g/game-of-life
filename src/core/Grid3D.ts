@@ -110,14 +110,22 @@ export class Grid3D {
     }
   }
 
+  // neighbor inclusion flags (set externally by SimulationContext)
+  neighborFaces: boolean = true;
+  neighborEdges: boolean = true;
+  neighborCorners: boolean = false;
+
   private countNeighbors(x: number, y: number, z: number): number {
     let count = 0;
     for (let dz = -1; dz <= 1; dz++) {
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0 && dz === 0) continue;
-          // Exclude corner neighbors (where all 3 coordinates differ)
-          if (dx !== 0 && dy !== 0 && dz !== 0) continue;
+          // determine type by Manhattan distance
+          const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+          if (sum === 1 && !this.neighborFaces) continue;
+          if (sum === 2 && !this.neighborEdges) continue;
+          if (sum === 3 && !this.neighborCorners) continue;
           if (this.get(x + dx, y + dy, z + dz)) count++;
         }
       }
@@ -147,12 +155,15 @@ export class Grid3D {
 
             communityMap.set(k, communityId);
 
-            // Check all 18 neighbors (face + edge, no corners)
+            // Check neighbors respecting configuration
             for (let dz = -1; dz <= 1; dz++) {
               for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                   if (dx === 0 && dy === 0 && dz === 0) continue;
-                  if (dx !== 0 && dy !== 0 && dz !== 0) continue;
+                  const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+                  if (sum === 1 && !this.neighborFaces) continue;
+                  if (sum === 2 && !this.neighborEdges) continue;
+                  if (sum === 3 && !this.neighborCorners) continue;
                   const nx = cx + dx,
                     ny = cy + dy,
                     nz = cz + dz;
@@ -196,22 +207,29 @@ export class Grid3D {
             const wouldBeBorn = neighbors >= birthMin && neighbors <= birthMax;
 
             if (wouldBeBorn && birthMargin > 0 && communityMap) {
-              // Find the community of the neighboring cells that would cause birth
+              // Find the community of a neighboring cell that would cause birth.
+              // We must use the same neighbour rules (faces/edges/corners) as the rest
+              // of the simulation; previously we only looked at faces, which meant
+              // corner‑only births left parentCommunityId null and the margin logic
+              // killed the birth.
               let parentCommunityId: number | null = null;
-              for (let dz = -1; dz <= 1; dz++) {
+              neighbour_search: for (let dz = -1; dz <= 1; dz++) {
                 for (let dy = -1; dy <= 1; dy++) {
                   for (let dx = -1; dx <= 1; dx++) {
                     if (dx === 0 && dy === 0 && dz === 0) continue;
-                    if (dx !== 0 && dy !== 0 && dz !== 0) continue;
+                    // determine type by Manhattan distance
+                    const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+                    if (sum === 1 && !this.neighborFaces) continue;
+                    if (sum === 2 && !this.neighborEdges) continue;
+                    if (sum === 3 && !this.neighborCorners) continue;
+
                     const nk = key(x + dx, y + dy, z + dz);
                     if (communityMap.has(nk)) {
                       parentCommunityId = communityMap.get(nk)!;
-                      break;
+                      break neighbour_search;
                     }
                   }
-                  if (parentCommunityId !== null) break;
                 }
-                if (parentCommunityId !== null) break;
               }
 
               // Check if any cell from a different community is within birthMargin distance

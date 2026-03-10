@@ -22,6 +22,9 @@ const defaults = {
   birthMargin: 0,
   cellMargin: 0.2,
   gridSize: 24,
+  neighborFaces: 1,
+  neighborEdges: 1,
+  neighborCorners: 0,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -39,6 +42,9 @@ export interface SimulationState {
   running: boolean;
   community: Array<[number, number, number]>;
   rotationMode: boolean;
+  neighborFaces: boolean;
+  neighborEdges: boolean;
+  neighborCorners: boolean;
 }
 
 export interface SimulationActions {
@@ -51,6 +57,9 @@ export interface SimulationActions {
   setBirthMin: (val: number) => void;
   setBirthMax: (val: number) => void;
   setBirthMargin: (val: number) => void;
+  setNeighborFaces: (val: boolean) => void;
+  setNeighborEdges: (val: boolean) => void;
+  setNeighborCorners: (val: boolean) => void;
   setCommunity: (community: Array<[number, number, number]>) => void;
   setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
 
@@ -120,7 +129,24 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [birthMax, setBirthMax] = useState(storedSettings.birthMax);
   const [birthMargin, setBirthMargin] = useState(storedSettings.birthMargin);
 
+  const [neighborFaces, setNeighborFaces] = useState(
+    Boolean(storedSettings.neighborFaces),
+  );
+  const [neighborEdges, setNeighborEdges] = useState(
+    Boolean(storedSettings.neighborEdges),
+  );
+  const [neighborCorners, setNeighborCorners] = useState(
+    Boolean(storedSettings.neighborCorners),
+  );
+
   const hasMounted = useRef(false);
+
+  // keep grid's neighbor flags in sync
+  useEffect(() => {
+    gridRef.current.neighborFaces = neighborFaces;
+    gridRef.current.neighborEdges = neighborEdges;
+    gridRef.current.neighborCorners = neighborCorners;
+  }, [neighborFaces, neighborEdges, neighborCorners]);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -137,6 +163,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       birthMin,
       birthMax,
       birthMargin,
+      neighborFaces: neighborFaces ? 1 : 0,
+      neighborEdges: neighborEdges ? 1 : 0,
+      neighborCorners: neighborCorners ? 1 : 0,
     };
     saveSettings(settings);
   }, [
@@ -149,15 +178,22 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     birthMin,
     birthMax,
     birthMargin,
+    neighborFaces,
+    neighborEdges,
+    neighborCorners,
   ]);
 
   const handleGridSizeChange = useCallback((newSize: number) => {
     setRunning(false);
     gridRef.current = new Grid3D(newSize);
+    // propagate neighbor settings
+    gridRef.current.neighborFaces = neighborFaces;
+    gridRef.current.neighborEdges = neighborEdges;
+    gridRef.current.neighborCorners = neighborCorners;
     initialStateRef.current = [];
     setGridSize(newSize);
     setCommunity([]);
-  }, []);
+  }, [neighborFaces, neighborEdges, neighborCorners]);
 
   const playStop = useCallback(() => {
     if (!running && gridRef.current.generation === 0) {
@@ -171,6 +207,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       if (gridRef.current.generation === 0) {
         initialStateRef.current = gridRef.current.saveState();
       }
+      // ensure grid uses current neighbor settings (fixes stale values)
+      gridRef.current.neighborFaces = neighborFaces;
+      gridRef.current.neighborEdges = neighborEdges;
+      gridRef.current.neighborCorners = neighborCorners;
       gridRef.current.tick(
         surviveMin,
         surviveMax,
@@ -179,7 +219,17 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         birthMargin,
       );
     }
-  }, [running, surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
+  }, [
+    running,
+    surviveMin,
+    surviveMax,
+    birthMin,
+    birthMax,
+    birthMargin,
+    neighborFaces,
+    neighborEdges,
+    neighborCorners,
+  ]);
 
   const randomize = useCallback(() => {
     gridRef.current.randomize(density);
@@ -198,6 +248,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const tick = useCallback(() => {
+    // keep the grid flags current in case effect hasn't run yet
+    gridRef.current.neighborFaces = neighborFaces;
+    gridRef.current.neighborEdges = neighborEdges;
+    gridRef.current.neighborCorners = neighborCorners;
     gridRef.current.tick(
       surviveMin,
       surviveMax,
@@ -205,7 +259,16 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       birthMax,
       birthMargin,
     );
-  }, [surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
+  }, [
+    surviveMin,
+    surviveMax,
+    birthMin,
+    birthMax,
+    birthMargin,
+    neighborFaces,
+    neighborEdges,
+    neighborCorners,
+  ]);
 
   const toggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
@@ -228,6 +291,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRunning(false);
       if (updateGridSize !== undefined && updateGridSize !== gridSize) {
         gridRef.current = new Grid3D(updateGridSize);
+        // propagate neighbor settings
+        gridRef.current.neighborFaces = neighborFaces;
+        gridRef.current.neighborEdges = neighborEdges;
+        gridRef.current.neighborCorners = neighborCorners;
         setGridSize(updateGridSize);
       } else {
         gridRef.current.clear();
@@ -253,6 +320,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       running,
       community,
       rotationMode,
+      neighborFaces,
+      neighborEdges,
+      neighborCorners,
     },
     actions: {
       setSpeed,
@@ -272,6 +342,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       reset,
       clear,
       tick,
+      setNeighborFaces,
+      setNeighborEdges,
+      setNeighborCorners,
       toggleCell,
       setCells,
       deleteCells,

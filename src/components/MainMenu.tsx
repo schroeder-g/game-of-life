@@ -6,29 +6,77 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 
 function ActionsSection() {
   const {
-    state: { running },
-    actions: { playStop, step, randomize, reset, clear },
+    state: { running, rotationMode, speed, density },
+    actions: { playStop, step, randomize, reset, clear, setSpeed, setDensity },
   } = useSimulation();
   return (
     <section className="menu-section actions-section">
       <h3>Actions</h3>
+      {rotationMode && (
+        <label className="control-label">
+          <span>Speed (fps): {speed}</span>
+          <input
+            type="range"
+            min={1}
+            max={30}
+            step={1}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+          />
+        </label>
+      )}
       <div className="button-group actions-grid">
-        <button className="glass-button primary" onClick={playStop}>
+        <button
+          className="glass-button primary"
+          onClick={playStop}
+          disabled={!rotationMode}
+          title={
+            !rotationMode ? "Switch to View mode to play/stop" : undefined
+          }
+        >
           {running ? "Stop" : "Play"}
         </button>
         <button className="glass-button" onClick={step} disabled={running}>
           Step
         </button>
-        <button className="glass-button" onClick={randomize}>
-          Random
-        </button>
-        <button className="glass-button" onClick={reset}>
+        <button
+          className="glass-button"
+          onClick={reset}
+          disabled={running}
+          title={running ? "Pause simulation to reset" : undefined}
+        >
           Reset
         </button>
-        <button className="glass-button danger" onClick={clear}>
+        <button
+          className="glass-button"
+          onClick={randomize}
+          disabled={rotationMode}
+          title={rotationMode ? "Switch to Edit mode to randomize" : undefined}
+        >
+          Random
+        </button>
+        <button
+          className="glass-button danger"
+          onClick={clear}
+          disabled={rotationMode}
+          title={rotationMode ? "Switch to Edit mode to clear" : undefined}
+        >
           Clear
         </button>
       </div>
+      {!rotationMode && (
+        <label className="control-label">
+          <span>Random Density: {density.toFixed(2)}</span>
+          <input
+            type="range"
+            min={0.01}
+            max={0.3}
+            step={0.01}
+            value={density}
+            onChange={(e) => setDensity(Number(e.target.value))}
+          />
+        </label>
+      )}
     </section>
   );
 }
@@ -58,34 +106,12 @@ function EnvironmentSection() {
 
 function SimulationSection() {
   const {
-    state: { speed, density, cellMargin },
-    actions: { setSpeed, setDensity, setCellMargin },
+    state: { cellMargin, rotationMode },
+    actions: { setCellMargin },
   } = useSimulation();
   return (
     <section className="menu-section">
       <h3>Simulation</h3>
-      <label className="control-label">
-        <span>Speed (fps): {speed}</span>
-        <input
-          type="range"
-          min={1}
-          max={30}
-          step={1}
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-        />
-      </label>
-      <label className="control-label">
-        <span>Random Density: {density.toFixed(2)}</span>
-        <input
-          type="range"
-          min={0.01}
-          max={0.3}
-          step={0.01}
-          value={density}
-          onChange={(e) => setDensity(Number(e.target.value))}
-        />
-      </label>
       <label className="control-label">
         <span>Cell Margin: {cellMargin.toFixed(2)}</span>
         <input
@@ -103,19 +129,57 @@ function SimulationSection() {
 
 function RulesSection() {
   const {
-    state: { surviveMin, surviveMax, birthMin, birthMax, birthMargin },
+    state: { surviveMin, surviveMax, birthMin, birthMax, birthMargin,
+      neighborFaces, neighborEdges, neighborCorners },
     actions: {
       setSurviveMin,
       setSurviveMax,
       setBirthMin,
       setBirthMax,
       setBirthMargin,
+      setNeighborFaces,
+      setNeighborEdges,
+      setNeighborCorners,
     },
   } = useSimulation();
 
+  // calculate disable flags for checkboxes
+  const onlyFaces = neighborFaces && !neighborEdges && !neighborCorners;
+  const onlyEdges = neighborEdges && !neighborFaces && !neighborCorners;
+  const onlyCorners = neighborCorners && !neighborFaces && !neighborEdges;
+
   return (
     <section className="menu-section">
-      <h3>Rules (18 neighbors)</h3>
+      <h3>Rules (neighbors)</h3>
+      <div className="neighbor-controls">
+        <label className="control-label row">
+          <input
+            type="checkbox"
+            checked={neighborFaces}
+            disabled={onlyFaces}
+            onChange={(e) => setNeighborFaces(e.target.checked)}
+          />
+          <span>Face neighbors</span>
+        </label>
+        <label className="control-label row">
+          <input
+            type="checkbox"
+            checked={neighborEdges}
+            disabled={onlyEdges}
+            onChange={(e) => setNeighborEdges(e.target.checked)}
+          />
+          <span>Edge neighbors</span>
+        </label>
+        <label className="control-label row">
+          <input
+            type="checkbox"
+            checked={neighborCorners}
+            disabled={onlyCorners}
+            onChange={(e) => setNeighborCorners(e.target.checked)}
+          />
+          <span>Corner neighbors</span>
+        </label>
+      </div>
       <div className="rules-grid">
         <label className="control-label mini">
           <span>Survive Min: {surviveMin}</span>
@@ -214,17 +278,16 @@ function ShapeBrushSection() {
           onChange={(e) => setShapeSize(Number(e.target.value))}
         />
       </label>
-      {supportsHollow(selectedShape) && (
-        <label className="control-label row">
-          <span>Hollow</span>
-          <input
-            type="checkbox"
-            className="glass-checkbox"
-            checked={isHollow}
-            onChange={(e) => setIsHollow(e.target.checked)}
-          />
-        </label>
-      )}
+      <label className="control-label row">
+        <span>Hollow</span>
+        <input
+          type="checkbox"
+          className="glass-checkbox"
+          checked={isHollow}
+          disabled={!supportsHollow(selectedShape)}
+          onChange={(e) => setIsHollow(e.target.checked)}
+        />
+      </label>
     </section>
   );
 }
@@ -254,7 +317,17 @@ function GenesisConfigSection() {
       cellMargin,
       gridSize,
     },
-    actions: { applyCells },
+    actions: {
+      applyCells,
+      setSpeed,
+      setDensity,
+      setSurviveMin,
+      setSurviveMax,
+      setBirthMin,
+      setBirthMax,
+      setBirthMargin,
+      setCellMargin,
+    },
     meta: { gridRef, initialStateRef },
   } = useSimulation();
 
@@ -316,6 +389,15 @@ function GenesisConfigSection() {
   const handleImportConfig = () => {
     importConfig((config) => {
       applyCells(config.cells, config.settings.gridSize);
+      // also apply saved settings
+      setSpeed(config.settings.speed);
+      setDensity(config.settings.density);
+      setSurviveMin(config.settings.surviveMin);
+      setSurviveMax(config.settings.surviveMax);
+      setBirthMin(config.settings.birthMin);
+      setBirthMax(config.settings.birthMax);
+      setBirthMargin(config.settings.birthMargin);
+      setCellMargin(config.settings.cellMargin);
     });
   };
 
@@ -324,6 +406,15 @@ function GenesisConfigSection() {
     if (name && savedConfigs[name]) {
       const config = savedConfigs[name];
       applyCells(config.cells, config.settings.gridSize);
+      // apply saved settings as well
+      setSpeed(config.settings.speed);
+      setDensity(config.settings.density);
+      setSurviveMin(config.settings.surviveMin);
+      setSurviveMax(config.settings.surviveMax);
+      setBirthMin(config.settings.birthMin);
+      setBirthMax(config.settings.birthMax);
+      setBirthMargin(config.settings.birthMargin);
+      setCellMargin(config.settings.cellMargin);
     }
   };
 
@@ -427,7 +518,8 @@ function FloatingActions() {
 
 export function MainMenu() {
   const {
-    state: { running },
+    state: { running, rotationMode },
+    actions: { setRotationMode },
   } = useSimulation();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -436,6 +528,18 @@ export function MainMenu() {
       <aside
         className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${!running ? "has-sidebar" : ""}`}
       >
+        <div className="mode-indicator above-menu">
+          <button
+            className="mode-toggle-button glass-button"
+            onClick={() => setRotationMode((prev) => !prev)}
+            aria-label="Toggle mode"
+          >
+            Mode:
+          </button>{" "}
+          <span className="mode-label">
+            {rotationMode ? "View" : "Edit"}
+          </span>
+        </div>
         <div className="menu-sticky-container">
           <header
             className="menu-header"
@@ -454,11 +558,11 @@ export function MainMenu() {
         </div>
 
         <div className="menu-scrollable-content">
-          <EnvironmentSection />
+          {!rotationMode && <EnvironmentSection />}
           <SimulationSection />
           <RulesSection />
-          <ShapeBrushSection />
-          <GenesisConfigSection />
+          {!rotationMode && <ShapeBrushSection />}
+          {!rotationMode && <GenesisConfigSection />}
         </div>
       </aside>
 
