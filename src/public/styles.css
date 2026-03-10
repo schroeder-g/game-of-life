@@ -19,6 +19,17 @@ body {
   color: #c9d1d9;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
 .app {
   width: 100%;
   height: 100%;
