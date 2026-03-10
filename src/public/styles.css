@@ -15,8 +15,8 @@ body,
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #0a0a15;
-  color: #e0e0e0;
+  background: #0d1117;
+  color: #c9d1d9;
 }
 
 .app {
@@ -51,19 +51,19 @@ body {
 h1 {
   font-size: 1.6rem;
   font-weight: 600;
-  color: #00ff88;
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+  color: #8ab4f8;
+  text-shadow: 0 0 20px rgba(138, 180, 248, 0.3);
 }
 
 .explainer {
   font-size: 14px;
-  color: #aaa;
+  color: #8b949e;
   max-width: 300px;
   line-height: 1.4;
 }
 
 .explainer a {
-  color: #00ff88;
+  color: #8ab4f8;
   text-decoration: none;
 }
 
@@ -91,13 +91,13 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  background: #00ff88;
-  color: #0a0a15;
+  background: #8ab4f8;
+  color: #0d1117;
   transition: all 0.2s ease;
 }
 
 button:hover:not(:disabled) {
-  background: #00cc6a;
+  background: #aecbfa;
   transform: translateY(-1px);
 }
 
@@ -115,17 +115,17 @@ label {
   flex-direction: column;
   gap: 6px;
   font-size: 14px;
-  color: #aaa;
+  color: #8b949e;
 }
 
 input[type="range"] {
   width: 150px;
-  accent-color: #00ff88;
+  accent-color: #8ab4f8;
 }
 
 .mode-indicator {
   font-size: 14px;
-  color: #00ff88;
+  color: #8ab4f8;
   font-weight: 500;
 }
 
@@ -149,9 +149,11 @@ input[type="range"] {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background: rgba(10, 10, 21, 0.9);
-  border: 1px solid #333366;
-  border-radius: 8px;
+  background: rgba(22, 27, 34, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   padding: 16px;
   min-width: 200px;
   z-index: 100;
@@ -160,12 +162,12 @@ input[type="range"] {
 .community-sidebar h3 {
   margin: 0 0 12px 0;
   font-size: 14px;
-  color: #00ff88;
+  color: #8ab4f8;
   font-weight: 600;
 }
 
 .community-sidebar .no-community {
-  color: #666;
+  color: #8b949e;
   font-size: 12px;
   font-style: italic;
 }
@@ -175,13 +177,13 @@ input[type="range"] {
   gap: 16px;
   margin-bottom: 12px;
   font-size: 12px;
-  color: #aaa;
+  color: #8b949e;
 }
 
 .community-3d {
   width: 180px;
   height: 180px;
-  background: #0a0a15;
+  background: #0d1117;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -212,7 +214,7 @@ input[type="range"] {
 }
 
 .main-menu.has-sidebar {
-  max-height: calc(100vh - 180px);
+  max-height: calc(100vh - 320px);
 }
 
 .menu-sticky-container {
@@ -221,7 +223,7 @@ input[type="range"] {
   flex-direction: column;
   gap: 20px;
   flex-shrink: 0;
-  background: rgba(10, 10, 20, 0.2);
+  background: rgba(22, 27, 34, 0.3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -238,12 +240,12 @@ input[type="range"] {
 }
 
 .glass-panel {
-  background: rgba(20, 20, 35, 0.35);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(22, 27, 34, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 .menu-scrollable-content::-webkit-scrollbar {
@@ -270,14 +272,14 @@ input[type="range"] {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
-  color: #00ff88;
-  text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  color: #8ab4f8;
+  text-shadow: 0 0 10px rgba(138, 180, 248, 0.2);
 }
 
 .collapse-toggle {
   background: none;
   border: none;
-  color: #00ff88;
+  color: #8ab4f8;
   font-size: 0.8rem;
   cursor: pointer;
   padding: 4px 8px;
@@ -366,21 +368,21 @@ input[type="range"] {
 }
 
 .glass-button.primary {
-  background: rgba(0, 255, 136, 0.2);
-  border-color: rgba(0, 255, 136, 0.4);
-  color: #00ff88;
+  background: rgba(138, 180, 248, 0.15);
+  border-color: rgba(138, 180, 248, 0.3);
+  color: #8ab4f8;
 }
 .glass-button.primary:hover:not(:disabled) {
-  background: rgba(0, 255, 136, 0.3);
+  background: rgba(138, 180, 248, 0.25);
 }
 
 .glass-button.danger {
-  background: rgba(255, 60, 60, 0.2);
-  border-color: rgba(255, 60, 60, 0.4);
-  color: #ff6666;
+  background: rgba(242, 139, 130, 0.15);
+  border-color: rgba(242, 139, 130, 0.3);
+  color: #f28b82;
 }
 .glass-button.danger:hover:not(:disabled) {
-  background: rgba(255, 60, 60, 0.3);
+  background: rgba(242, 139, 130, 0.25);
 }
 
 .control-label {
@@ -421,10 +423,10 @@ input[type="range"]::-webkit-slider-thumb {
   height: 12px;
   width: 12px;
   border-radius: 50%;
-  background: #00ff88;
+  background: #8ab4f8;
   cursor: pointer;
   margin-top: -4px;
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 10px rgba(138, 180, 248, 0.4);
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
@@ -450,16 +452,16 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 .glass-select:focus,
 .glass-input:focus {
-  border-color: rgba(0, 255, 136, 0.5);
+  border-color: rgba(138, 180, 248, 0.5);
 }
 .glass-select option {
-  background: #1a1a2e;
+  background: #0d1117;
   color: #fff;
 }
 
 .glass-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #00ff88;
+  accent-color: #8ab4f8;
   cursor: pointer;
 }

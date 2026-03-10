@@ -113,7 +113,7 @@ export function MainMenu(props: MainMenuProps) {
               type="range"
               min={10}
               max={40}
-              step={10}
+              step={1}
               value={props.gridSize}
               onChange={(e) => props.onGridSizeChange(Number(e.target.value))}
             />

@@ -21,13 +21,13 @@ console.log("Loaded from localStorage:", initialSettings);
 const defaults = {
   speed: 5,
   density: 0.08,
-  surviveMin: 3,
-  surviveMax: 4,
-  birthMin: 5,
-  birthMax: 5,
+  surviveMin: 2,
+  surviveMax: 2,
+  birthMin: 3,
+  birthMax: 3,
   birthMargin: 0,
   cellMargin: 0.2,
-  gridSize: 20,
+  gridSize: 24,
 };
 
 // Merge with defaults
@@ -74,6 +74,23 @@ export default function App() {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
+  const isFirstLoadRef = useRef(true);
+
+  if (isFirstLoadRef.current) {
+    isFirstLoadRef.current = false;
+    if (Object.keys(initialSettings).length === 0) {
+      const mid = Math.floor(storedSettings.gridSize / 2);
+      for (let x = mid - 1; x <= mid; x++) {
+        for (let y = mid - 1; y <= mid; y++) {
+          for (let z = mid - 1; z <= mid; z++) {
+            gridRef.current.set(x, y, z, true);
+            initialStateRef.current.push([x, y, z]);
+          }
+        }
+      }
+    }
+  }
+
   const [running, setRunning] = useState(false);
   const [rotationMode, setRotationMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
