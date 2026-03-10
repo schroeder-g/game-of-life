@@ -1,4 +1,4 @@
-// Shape generation utilities for 3D Game of Life bulk editor
+// Shape generation utilities for Cube of Life bulk editor
 
 export type ShapeType = "None" | "Cube" | "Square" | "Circle" | "Sphere" | "Triangle" | "Pyramid";
 

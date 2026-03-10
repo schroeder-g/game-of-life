@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CommunitySidebar } from "../components/Controls";
 import { Scene } from "../components/Grid";
 import { MainMenu } from "../components/MainMenu";
+import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { Grid3D } from "../core/Grid3D";
 import { ShapeType, supportsHollow } from "../core/shapes";
 import {
@@ -93,6 +94,7 @@ export default function App() {
 
   const [running, setRunning] = useState(false);
   const [rotationMode, setRotationMode] = useState(true);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
     [],
   );
@@ -143,13 +145,22 @@ export default function App() {
     setSelectorPos(pos);
   }, []);
 
-  // Toggle rotation mode with 'r' key
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "r" || e.key === "R") {
-        // Don't toggle if typing in an input
-        if ((e.target as HTMLElement).tagName === "INPUT") return;
+      // Don't trigger shortcuts if typing in an input
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+
+      if (e.key === "t" || e.key === "T") {
         setRotationMode((prev) => !prev);
+      }
+      if (e.key === "Enter") {
+        setRunning((r) => {
+          if (!r && gridRef.current.generation === 0) {
+            initialStateRef.current = gridRef.current.saveState();
+          }
+          return !r;
+        });
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -399,7 +410,7 @@ export default function App() {
       </div>
 
       <div className="ui-overlay">
-        <h1>3D Game of Life</h1>
+        <h1>Cube of Life</h1>
         <p className="explainer">
           Explore a 3D adaptation of{" "}
           <a
@@ -413,8 +424,8 @@ export default function App() {
         </p>
         <SimulationStats grid={gridRef.current} running={running} />
         <div className="mode-indicator">
-          Mode: {rotationMode ? "Rotate" : "Edit"}{" "}
-          <span className="hint">(press R to toggle)</span>
+          Mode: {rotationMode ? "View" : "Edit"}{" "}
+          <span className="hint">(press T to toggle)</span>
         </div>
         {!rotationMode && selectorPos && (
           <div className="selector-pos">
@@ -428,14 +439,18 @@ export default function App() {
             {isHollow && supportsHollow(selectedShape) && " (hollow)"}
           </div>
         )}
-        <p className="instructions">
-          {rotationMode
-            ? "Drag to rotate. Scroll to zoom."
-            : selectedShape !== "None"
-              ? "Space: place. Backspace: delete. Scroll: size. Esc: cancel."
-              : "Arrows: move. Space: toggle. Backspace: delete."}
-        </p>
+        <button
+          className="glass-button shortcuts-toggle"
+          onClick={() => setShowShortcuts(true)}
+        >
+          ⌘ Shortcuts
+        </button>
       </div>
+
+      <ShortcutOverlay
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
 
       <MainMenu
         running={running}

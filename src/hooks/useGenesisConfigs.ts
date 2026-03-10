@@ -17,16 +17,45 @@ export interface GenesisConfig {
 
 const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
 
+const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
+  "squid gun": {
+    name: "squid gun",
+    cells: [
+      [11, 11, 11],
+      [11, 11, 12],
+      [11, 12, 11],
+      [11, 12, 12],
+      [12, 11, 11],
+      [12, 11, 12],
+      [12, 12, 11],
+      [12, 12, 12],
+    ],
+    settings: {
+      speed: 5,
+      density: 0.08,
+      surviveMin: 2,
+      surviveMax: 2,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+    },
+    createdAt: new Date("2026-03-09T00:00:00Z").toISOString(),
+  },
+};
+
 export function loadGenesisConfigs(): Record<string, GenesisConfig> {
+  let configs = { ...DEFAULT_CONFIGS };
   try {
     const stored = localStorage.getItem(GENESIS_STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      configs = { ...configs, ...JSON.parse(stored) };
     }
   } catch (e) {
     console.error("Failed to load genesis configs:", e);
   }
-  return {};
+  return configs;
 }
 
 export function saveGenesisConfigs(configs: Record<string, GenesisConfig>) {
