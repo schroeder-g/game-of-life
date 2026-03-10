@@ -309,8 +309,8 @@ function KeyboardSelector({
       const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
 
       const rightX = Math.cos(azimuth);
-      const rightZ = Math.sin(azimuth);
-      const forwardX = Math.sin(azimuth);
+      const rightZ = -Math.sin(azimuth);
+      const forwardX = -Math.sin(azimuth);
       const forwardZ = -Math.cos(azimuth);
 
       const quantizeToAxis = (
