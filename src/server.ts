@@ -1,4 +1,5 @@
 import { join } from "path";
+import { watch } from "fs";
 
 // Read version from package.json for dev mode display
 const packageJson = await Bun.file(join(process.cwd(), "package.json")).json();
@@ -10,12 +11,23 @@ const publicDir = join(process.cwd(), "src", "public");
 const mainJsEntrypoint = join(publicDir, "index.tsx");
 const hotReloadClients = new Set<any>();
 
+// Watch public directory for changes to static files (e.g., index.html, styles.css)
+// that are not part of the module dependency graph watched by `bun --hot`.
+watch(publicDir, { recursive: true }, (event, filename) => {
+  if (filename && filename.endsWith(".tsx")) return; // .tsx files are natively handled by `bun --hot` via `reload()` hook.
+  
+  console.log(`Public file changed: ${filename}, notifying clients...`);
+  for (const ws of hotReloadClients) {
+    ws.send("reload");
+  }
+});
+
 // This function builds the entrypoint and stores the result in our cache.
 async function buildMainJs() {
   console.log("Building index.tsx for development...");
 
-  // Update the version timestamp on every build so the client sees it's new
-  currentVersion = `${baseVersion}.${Math.floor(Date.now() / 1000)}`;
+  // Update the version timestamp to the current build time
+  currentVersion = new Date().toLocaleString() + " (Dev build)";
 
   const build = await Bun.build({
     entrypoints: [mainJsEntrypoint],

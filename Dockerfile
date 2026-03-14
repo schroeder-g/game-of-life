@@ -18,12 +18,8 @@ RUN bun run build
 # This is more robust than copying files individually.
 COPY src/public/ /app/dist/
 
-# Automatically set the version in index.html
-# It combines the version from package.json with the current unix timestamp as a build number.
-RUN VERSION=$(bun -e "console.log(require('./package.json').version)") && \
-    BUILD_NUMBER=$(date +%s) && \
-    sed -i "s|__VERSION__|$VERSION.$BUILD_NUMBER|g" /app/dist/index.html
-
+# Automatically set the version/build date in index.html
+RUN BUILD_DATE=$(date "+%Y-%m-%d %H:%M:%S %Z") && sed -i "s/__VERSION__/$BUILD_DATE/g" /app/dist/index.html
 # Stage 2: Create the production image
 FROM oven/bun:latest
 WORKDIR /app

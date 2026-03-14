@@ -19,6 +19,16 @@ body {
   color: #c9d1d9;
 }
 
+.version-info {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 10px;
+  color: #444;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 h1,
 h2,
 h3,
