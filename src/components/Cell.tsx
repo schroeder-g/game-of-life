@@ -116,6 +116,7 @@ export function Cells({ grid, margin }: { grid: Grid3D; margin: number }) {
     edgesRef.current.count = cells.length;
   });
 
+
   const cellSize = 1 - margin;
   const edgeSize = cellSize + 0.05;
 

@@ -46,6 +46,7 @@ function SimulationStats() {
 export default function App() {
   const {
     state: { rotationMode, community, running },
+    actions: { setRotationMode },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -76,10 +77,6 @@ export default function App() {
           by placing cells in the grid and watching them evolve.
         </p>
         <SimulationStats />
-        <div className="mode-indicator">
-          Mode: {rotationMode ? "View" : "Edit"}{" "}
-          <span className="hint">(press T to toggle)</span>
-        </div>
         {!rotationMode && selectorPos && (
           <div className="selector-pos">
             Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
@@ -98,6 +95,13 @@ export default function App() {
         >
           ⌘ Shortcuts
         </button>
+
+        {/* community panel only in edit mode, below shortcuts */}
+        {!rotationMode && !running && (
+          <div className="community-under-shortcuts">
+            <CommunitySidebar className="left" community={community} />
+          </div>
+        )}
       </div>
 
       <ShortcutOverlay
@@ -107,7 +111,7 @@ export default function App() {
 
       <MainMenu />
 
-      {!running && <CommunitySidebar community={community} />}
+      {/* bottom-right panel removed; now handled inside overlay */}
     </div>
   );
 }

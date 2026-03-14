@@ -145,6 +145,30 @@ input[type="range"] {
   font-weight: normal;
   font-size: 12px;
 }
+.mode-toggle-button {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.mode-toggle-button {
+  /* use glass-button styles via class; reset text decoration */
+  text-decoration: none;
+  padding: 0 4px;
+  font-size: 0.85rem;
+}
+
+/* mode indicator placed above configuration menu header */
+.mode-indicator.above-menu {
+  margin: 0 20px 8px 20px;
+  text-align: center;
+}
+}
+.mode-toggle-button:hover {
+  /* no extra hover styling beyond glass-button */
+}
 
 .instructions {
   font-size: 12px;
@@ -158,8 +182,6 @@ input[type="range"] {
 /* Community sidebar */
 .community-sidebar {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
   background: rgba(22, 27, 34, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -168,6 +190,20 @@ input[type="range"] {
   padding: 16px;
   min-width: 200px;
   z-index: 100;
+}
+.community-sidebar.right {
+  bottom: 20px;
+  right: 20px;
+}
+.community-sidebar.left {
+  top: 100px;
+  left: 20px;
+}
+
+/* ensure panel sits directly below shortcuts toggle when wrapped */
+.community-under-shortcuts {
+  position: relative;
+  margin-top: 8px;
 }
 
 .community-sidebar h3 {
@@ -231,6 +267,16 @@ input[type="range"] {
   max-height: calc(100vh - 320px);
 }
 
+/* On taller displays, make the configuration panel stretch to the bottom of the viewport. */
+@media (min-height: 720px) {
+  .main-menu,
+  .main-menu.has-sidebar {
+    bottom: 20px;
+    max-height: none;
+  }
+}
+
+
 .menu-sticky-container {
   padding: 20px;
   display: flex;
@@ -257,7 +303,7 @@ input[type="range"] {
   background: rgba(22, 27, 34, 0.5);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid silver;
   border-radius: 12px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
@@ -297,7 +343,7 @@ input[type="range"] {
   font-size: 0.8rem;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: background 0.2s;
 }
 
@@ -410,6 +456,16 @@ input[type="range"] {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+}
+
+/* neighbor controls layout */
+.neighbor-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.neighbor-controls .control-label {
+  font-size: 0.85rem;
 }
 .control-label span {
   display: flex;

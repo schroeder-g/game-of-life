@@ -12,7 +12,7 @@ export function BoundingBox({ size }: { size: number }) {
   return (
     <lineSegments>
       <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
-      <lineBasicMaterial color="#333366" />
+      <lineBasicMaterial color="silver" />
     </lineSegments>
   );
 }
@@ -180,7 +180,7 @@ export function Scene() {
         makeDefault
         enableDamping
         dampingFactor={0.05}
-        enabled={rotationMode}
+        enabled={true} // always allow dragging/zooming even in edit mode
       />
       <PerspectiveCamera makeDefault position={[30, 25, 30]} />
     </>

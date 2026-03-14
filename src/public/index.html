@@ -7,21 +7,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  Version __VERSION__
   <div id="root"></div>
-  <script type="module" src="index.tsx"></script>
-  <script>
-    // Hot reload
-    (function() {
-      let ws;
-      function connect() {
-        ws = new WebSocket(`ws://${location.host}/__reload`);
-        ws.onclose = () => setTimeout(() => {
-          connect();
-          location.reload();
-        }, 300);
-      }
-      connect();
-    })();
-  </script>
+  <script type="module" src="index.js"></script> 
+ 
+  
 </body>
 </html>

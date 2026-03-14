@@ -1,5 +1,5 @@
-import { createContext, ReactNode, useContext, useState } from "react";
-import { ShapeType } from "../core/shapes";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { ShapeType, supportsHollow } from "../core/shapes";
 
 export interface BrushState {
   selectedShape: ShapeType;
@@ -31,6 +31,13 @@ export function BrushProvider({ children }: { children: ReactNode }) {
   const [selectorPos, setSelectorPos] = useState<
     [number, number, number] | null
   >(null);
+
+  // clear hollow when switching to an unsupported shape
+  useEffect(() => {
+    if (!supportsHollow(selectedShape) && isHollow) {
+      setIsHollow(false);
+    }
+  }, [selectedShape, isHollow]);
 
   const clearShape = () => setSelectedShape("None");
 

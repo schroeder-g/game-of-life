@@ -22,7 +22,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             <div className="shortcut-row">
               <span className="shortcut-desc">Toggle View/Edit Mode</span>
               <div className="shortcut-keys">
-                <kbd>T</kbd>
+                <kbd>M</kbd>
               </div>
             </div>
             <div className="shortcut-row">
@@ -31,10 +31,16 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                 <kbd>Enter</kbd>
               </div>
             </div>
+            <div className="shortcut-row">
+              <span className="shortcut-desc">Step (when paused in View mode)</span>
+              <div className="shortcut-keys">
+                <kbd>⇧ Shift</kbd> <span>+</span> <kbd>Enter</kbd>
+              </div>
+            </div>
           </div>
 
           <div className="shortcut-section">
-            <h3>View Mode</h3>
+            <h3>View/Edit Modes</h3>
             <div className="shortcut-row">
               <span className="shortcut-desc">Rotate Camera</span>
               <div className="shortcut-keys">
@@ -77,13 +83,19 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
               </div>
             </div>
             <div className="shortcut-row">
-              <span className="shortcut-desc">Toggle cell</span>
+              <span className="shortcut-desc">Activate cell (set alive)</span>
               <div className="shortcut-keys">
                 <kbd>␣ Space</kbd>
               </div>
             </div>
             <div className="shortcut-row">
-              <span className="shortcut-desc">Paint Cell</span>
+              <span className="shortcut-desc">Deactivate cell (set dead)</span>
+              <div className="shortcut-keys">
+                <kbd>⇧ Shift</kbd> <span>+</span> <kbd>␣ Space</kbd>
+              </div>
+            </div>
+            <div className="shortcut-row">
+              <span className="shortcut-desc">Paint cells on hold</span>
               <div className="shortcut-keys">
                 <kbd>␣ Space</kbd> <span>(Hold)</span>
               </div>
