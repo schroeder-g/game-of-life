@@ -767,12 +767,36 @@ kbd {
    Mobile & Responsive Tweaks 
 ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  /* Let the UI overlay span the whole screen width */
+  html, body, #root {
+    overflow: auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .canvas-container {
+    position: relative;
+    width: 100%;
+    height: 50vh;
+    min-height: 350px;
+    flex-shrink: 0;
+  }
+
+  /* Let the UI flow naturally below the canvas */
   .ui-overlay {
-    width: calc(100% - 40px);
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
+    position: relative;
+    width: 100%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    padding: 20px;
+    pointer-events: auto;
   }
 
   /* Make sure titles fit */
