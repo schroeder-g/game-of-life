@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -522,6 +522,13 @@ export function MainMenu() {
     actions: { setRotationMode },
   } = useSimulation();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Default to collapsed on mobile devices
+  useEffect(() => {
+    if (window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
+      setCollapsed(true);
+    }
+  }, []);
 
   return (
     <>

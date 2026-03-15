@@ -193,7 +193,7 @@ input[type="range"] {
 
 /* Community sidebar */
 .community-sidebar {
-  position: absolute;
+  position: relative;
   background: rgba(22, 27, 34, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -202,36 +202,9 @@ input[type="range"] {
   padding: 16px;
   min-width: 200px;
   z-index: 100;
+  margin-top: 8px; /* Breathing room against the shortcut button */
 }
-.community-sidebar.right {
-  bottom: 20px;
-  right: 20px;
-}
-.community-sidebar.left {
-  top: 100px;
-  left: 20px;
-}
-
-/* ensure panel sits directly below shortcuts toggle when wrapped */
-.community-under-shortcuts {
-  position: relative;
-  margin-top: 8px;
-}
-
-/* Force relative position so it takes up space and follows vertically */
-.community-under-shortcuts .community-sidebar {
-  position: relative;
-  top: 0;
-  left: 0;
-  bottom: auto;
-  right: auto;
-}
-
-@media (max-width: 768px) {
-  .community-sidebar {
-    position: relative;
-  }
-}
+/* No longer used explicitly absolute left/right positions since it flows in overlay */
 
 .community-sidebar h3 {
   margin: 0 0 12px 0;

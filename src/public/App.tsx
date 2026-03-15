@@ -98,9 +98,7 @@ export default function App() {
 
         {/* community panel only in edit mode, below shortcuts */}
         {!rotationMode && !running && (
-          <div className="community-under-shortcuts">
-            <CommunitySidebar community={community} />
-          </div>
+          <CommunitySidebar community={community} />
         )}
         
         <MainMenu />
