@@ -11,6 +11,9 @@ export interface GenesisConfig {
     birthMargin: number;
     cellMargin: number;
     gridSize: number;
+    neighborFaces?: boolean;
+    neighborEdges?: boolean;
+    neighborCorners?: boolean;
   };
   createdAt: string;
 }
@@ -42,6 +45,30 @@ const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
       gridSize: 24,
     },
     createdAt: new Date("2026-03-09T00:00:00Z").toISOString(),
+  },
+  "3d glider": {
+    name: "3d glider",
+    cells: [
+      [11, 11, 13], 
+      [12, 12, 11], 
+      [12, 11, 13], 
+      [12, 12, 12]
+    ],
+    settings: {
+      speed: 6,
+      density: 0.08,
+      surviveMin: 4,
+      surviveMax: 4,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
   },
 };
 

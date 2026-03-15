@@ -338,6 +338,9 @@ function GenesisConfigSection() {
       setBirthMax,
       setBirthMargin,
       setCellMargin,
+      setNeighborFaces,
+      setNeighborEdges,
+      setNeighborCorners,
     },
     meta: { gridRef, initialStateRef },
   } = useSimulation();
@@ -409,6 +412,15 @@ function GenesisConfigSection() {
       setBirthMax(config.settings.birthMax);
       setBirthMargin(config.settings.birthMargin);
       setCellMargin(config.settings.cellMargin);
+      if (config.settings.neighborFaces !== undefined) {
+        setNeighborFaces(config.settings.neighborFaces);
+      }
+      if (config.settings.neighborEdges !== undefined) {
+        setNeighborEdges(config.settings.neighborEdges);
+      }
+      if (config.settings.neighborCorners !== undefined) {
+        setNeighborCorners(config.settings.neighborCorners);
+      }
     });
   };
 
@@ -426,6 +438,15 @@ function GenesisConfigSection() {
       setBirthMax(config.settings.birthMax);
       setBirthMargin(config.settings.birthMargin);
       setCellMargin(config.settings.cellMargin);
+      if (config.settings.neighborFaces !== undefined) {
+        setNeighborFaces(config.settings.neighborFaces);
+      }
+      if (config.settings.neighborEdges !== undefined) {
+        setNeighborEdges(config.settings.neighborEdges);
+      }
+      if (config.settings.neighborCorners !== undefined) {
+        setNeighborCorners(config.settings.neighborCorners);
+      }
     }
   };
 
