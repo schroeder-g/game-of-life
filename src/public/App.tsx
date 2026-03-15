@@ -99,17 +99,17 @@ export default function App() {
         {/* community panel only in edit mode, below shortcuts */}
         {!rotationMode && !running && (
           <div className="community-under-shortcuts">
-            <CommunitySidebar className="left" community={community} />
+            <CommunitySidebar community={community} />
           </div>
         )}
+        
+        <MainMenu />
       </div>
 
       <ShortcutOverlay
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
-
-      <MainMenu />
 
       {/* bottom-right panel removed; now handled inside overlay */}
     </div>

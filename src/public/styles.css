@@ -58,6 +58,8 @@ h6 {
   position: absolute;
   top: 20px;
   left: 20px;
+  bottom: 20px; /* Constrain height to viewport */
+  width: 320px; /* Fixed width on desktop */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -275,32 +277,20 @@ input[type="range"] {
 }
 
 .main-menu {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 320px;
-  max-height: calc(100vh - 40px);
+  position: relative; /* Changed from absolute to flow inside ui-overlay */
+  width: 100%;
+  flex: 1 1 auto; /* Allow it to grow and fill remaining vertical space */
   display: flex;
   flex-direction: column;
   z-index: 1000;
   color: #fff;
-  transition: max-height 0.3s ease;
+  transition: all 0.3s ease;
   overflow: hidden;
+  margin-top: 8px; /* Give it some breathing room from elements above it */
 }
 
-.main-menu.has-sidebar {
-  max-height: calc(100vh - 320px);
-}
-
-/* On large or tall displays, make the configuration panel stretch to the bottom of the viewport. */
-@media (min-width: 1024px), (min-height: 720px) {
-  .main-menu,
-  .main-menu.has-sidebar {
-    bottom: 20px;
-    height: calc(100vh - 40px);
-    max-height: none;
-  }
-}
+/* On large or tall displays, old layout rules for absolute positioning are removed
+   since main-menu is now inside ui-overlay flexbox */
 
 
 .menu-sticky-container {
@@ -732,12 +722,10 @@ kbd {
   }
 }
 
-/* Floating Actions */
+/* Floating Actions (When Menu Collapsed) */
 .floating-actions {
-  position: absolute;
-  top: 96px;
-  right: 20px;
-  width: 320px;
+  position: relative;
+  width: 100%;
   display: flex;
   justify-content: center;
   gap: 10px;
@@ -799,5 +787,47 @@ kbd {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mobile & Responsive Tweaks 
+----------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Let the UI overlay span the whole screen width */
+  .ui-overlay {
+    width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+
+  /* Make sure titles fit */
+  h1 {
+    font-size: 1.3rem;
+  }
+  
+  .explainer, .stats, .shape-info {
+    font-size: 12px;
+  }
+
+  /* Reduce paddings in menu layout */
+  .menu-sticky-container {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .menu-scrollable-content {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .glass-button {
+    padding: 10px 14px; /* Larger tap targets on phone */
+  }
+
+  /* Ensure the config menu handles height gracefully */
+  .main-menu {
+    border-radius: 12px;
   }
 }
