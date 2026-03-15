@@ -7,17 +7,17 @@ const baseVersion = packageJson.version;
 let currentVersion = baseVersion;
 
 let buildOutput: any; 
-const publicDir = join(process.cwd(), "src", "public");
+const srcDir = join(process.cwd(), "src");
+const publicDir = join(srcDir, "public");
 const mainJsEntrypoint = join(publicDir, "index.tsx");
 const hotReloadClients = new Set<any>();
 
-watch(publicDir, { recursive: true }, (event, filename) => {
-  if (filename && filename.endsWith(".tsx")) return; // .tsx files are natively handled by `bun --hot` via `reload()` hook.
+watch(srcDir, { recursive: true }, async (event, filename) => {
   
-  // Update version string so HTML gets the fresh timestamp
-  currentVersion = new Date().toLocaleString() + " (Dev build)";
+  // Rebuild the frontend bundle and inject new version
+  await buildMainJs();
   
-  console.log(`Public file changed: ${filename}, notifying clients...`);
+  console.log(`File changed: ${filename}, notifying clients...`);
   for (const ws of hotReloadClients) {
     ws.send("reload");
   }
@@ -118,19 +118,6 @@ const server = Bun.serve({
       console.log("Hot reload client disconnected. Total:", hotReloadClients.size);
     },
     message() {},
-  },
-
-  // This hook is called by `bun --hot` when a file changes.
-  // It prevents the server from restarting and gives us control over the reload.
-  async reload() {
-    console.log("File change detected, rebuilding...");
-    await buildMainJs();
-    
-    // Notify all connected clients to reload
-    console.log(`Notifying ${hotReloadClients.size} clients to reload...`);
-    for (const ws of hotReloadClients) {
-      ws.send("reload");
-    }
   },
 });
 

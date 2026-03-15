@@ -66,7 +66,7 @@ h6 {
 }
 
 .ui-overlay {
-  width: 360px; /* Fixed width on desktop */
+  width: 400px; /* Fixed width on desktop */
   padding: 20px;
   height: calc(100% - 70px); /* Leave room for the top bar */
   margin-top: 70px;

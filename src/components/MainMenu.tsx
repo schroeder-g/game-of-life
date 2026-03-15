@@ -6,8 +6,33 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 
 function ActionsSection() {
   const {
-    state: { running, rotationMode, speed, density },
-    actions: { playStop, step, randomize, reset, clear, setSpeed, setDensity },
+    state: { rotationMode, speed },
+    actions: { setSpeed },
+  } = useSimulation();
+
+  if (!rotationMode) return null;
+
+  return (
+    <section className="menu-section actions-section">
+      <label className="control-label">
+        <span>Speed (fps): {speed}</span>
+        <input
+          type="range"
+          min={1}
+          max={30}
+          step={1}
+          value={speed}
+          onChange={(e) => setSpeed(Number(e.target.value))}
+        />
+      </label>
+    </section>
+  );
+}
+
+function EnvironmentSection() {
+  const {
+    state: { gridSize, running, rotationMode, density },
+    actions: { setGridSize, reset, clear, randomize, setDensity },
     meta: { gridRef },
   } = useSimulation();
 
@@ -15,29 +40,27 @@ function ActionsSection() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // getLivingCells() returns an array, we just check its length
       setHasLiveCells(gridRef.current.getLivingCells().length > 0);
     }, 200);
     return () => clearInterval(interval);
   }, [gridRef]);
 
   return (
-    <section className="menu-section actions-section">
-      {rotationMode && (
-        <label className="control-label">
-          <span>Speed (fps): {speed}</span>
-          <input
-            type="range"
-            min={1}
-            max={30}
-            step={1}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-          />
-        </label>
-      )}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <section className="menu-section">
+      <h3>Environment</h3>
+      <label className="control-label">
+        <span>Grid Size: {gridSize}</span>
+        <input
+          type="range"
+          min={10}
+          max={60}
+          step={1}
+          value={gridSize}
+          onChange={(e) => setGridSize(Number(e.target.value))}
+        />
+      </label>
 
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             className="glass-button"
@@ -88,29 +111,6 @@ function ActionsSection() {
   );
 }
 
-function EnvironmentSection() {
-  const {
-    state: { gridSize },
-    actions: { setGridSize },
-  } = useSimulation();
-  return (
-    <section className="menu-section">
-      <h3>Environment</h3>
-      <label className="control-label">
-        <span>Grid Size: {gridSize}</span>
-        <input
-          type="range"
-          min={10}
-          max={40}
-          step={1}
-          value={gridSize}
-          onChange={(e) => setGridSize(Number(e.target.value))}
-        />
-      </label>
-    </section>
-  );
-}
-
 function SimulationSection() {
   const {
     state: { cellMargin, rotationMode },
@@ -157,34 +157,38 @@ function RulesSection() {
 
   return (
     <section className="menu-section">
-      <h3>Rules (neighbors)</h3>
-      <div className="neighbor-controls">
-        <label className="control-label row">
+      <h3>Rules</h3>
+      <div className="neighbor-controls" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#8b949e", flexWrap: "wrap", marginBottom: "8px" }}>
+        <span>Neighbors:</span>
+        <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
           <input
             type="checkbox"
+            className="glass-checkbox"
             checked={neighborFaces}
             disabled={onlyFaces}
             onChange={(e) => setNeighborFaces(e.target.checked)}
           />
-          <span>Face neighbors</span>
+          Faces
         </label>
-        <label className="control-label row">
+        <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
           <input
             type="checkbox"
+            className="glass-checkbox"
             checked={neighborEdges}
             disabled={onlyEdges}
             onChange={(e) => setNeighborEdges(e.target.checked)}
           />
-          <span>Edge neighbors</span>
+          Edges
         </label>
-        <label className="control-label row">
+        <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
           <input
             type="checkbox"
+            className="glass-checkbox"
             checked={neighborCorners}
             disabled={onlyCorners}
             onChange={(e) => setNeighborCorners(e.target.checked)}
           />
-          <span>Corner neighbors</span>
+          Corners
         </label>
       </div>
       <div className="rules-grid">
@@ -244,7 +248,7 @@ function RulesSection() {
           />
         </label>
       </div>
-    </section>
+    </section >
   );
 }
 
