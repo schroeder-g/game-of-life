@@ -27,19 +27,6 @@ body {
   overflow: hidden;
 }
 
-.notice-container {
-  margin-top: 70px; /* leaves room for top bar */
-  padding: 10px 20px;
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.notice-container H1 {
-  font-size: 1.8rem;
-  color: #ffcc00;
-  text-shadow: none;
-}
-
 .version-info {
   position: absolute;
   bottom: 5px;
@@ -88,7 +75,25 @@ h6 {
   flex-direction: column;
   gap: 12px;
   z-index: 100;
-  min-height: 0; /* Important: allow flex children to shrink and scroll */
+  
+  /* Make the entire left layout scroll gracefully on smaller heights */
+  overflow-y: auto;
+  min-height: 0; 
+
+  /* Customize scrollbar for the overlay */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.ui-overlay::-webkit-scrollbar {
+  width: 6px;
+}
+.ui-overlay::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ui-overlay::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 h1 {
@@ -271,17 +276,15 @@ input[type="range"] {
 }
 
 .main-menu {
-  position: relative; /* Changed from absolute to flow inside ui-overlay */
+  position: relative; /* Flows inside ui-overlay */
   width: 100%;
-  flex: 1 1 auto; /* Allow it to grow and fill remaining vertical space */
+  flex: 0 0 auto; /* Don't stretch/shrink, just fit content height naturally */
   display: flex;
   flex-direction: column;
   z-index: 1000;
   color: #fff;
   transition: all 0.3s ease;
-  overflow: hidden;
   margin-top: 8px; /* Give it some breathing room from elements above it */
-  min-height: 0; /* Allow the container to shrink smaller than its contents */
 }
 
 /* On large or tall displays, old layout rules for absolute positioning are removed
@@ -303,13 +306,11 @@ input[type="range"] {
 }
 
 .menu-scrollable-content {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto; /* Allow natural content height rather than forcing a scrollbox */
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
 }
 
 .glass-panel {
@@ -321,17 +322,7 @@ input[type="range"] {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-.menu-scrollable-content::-webkit-scrollbar {
-  width: 6px;
-}
-.menu-scrollable-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-.menu-scrollable-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
+
 
 .menu-header {
   display: flex;
@@ -839,6 +830,7 @@ kbd {
     height: auto;
     margin-top: 0; /* Reset top margin on mobile */
     padding: 20px;
+    overflow-y: visible; /* Back to normal document scroll */
   }
 
   /* Make sure titles fit */

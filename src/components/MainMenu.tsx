@@ -8,10 +8,21 @@ function ActionsSection() {
   const {
     state: { running, rotationMode, speed, density },
     actions: { playStop, step, randomize, reset, clear, setSpeed, setDensity },
+    meta: { gridRef },
   } = useSimulation();
+
+  const [hasLiveCells, setHasLiveCells] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // getLivingCells() returns an array, we just check its length
+      setHasLiveCells(gridRef.current.getLivingCells().length > 0);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [gridRef]);
+
   return (
     <section className="menu-section actions-section">
-      <h3>Actions</h3>
       {rotationMode && (
         <label className="control-label">
           <span>Speed (fps): {speed}</span>
@@ -25,58 +36,54 @@ function ActionsSection() {
           />
         </label>
       )}
-      <div className="button-group actions-grid">
-        <button
-          className="glass-button primary"
-          onClick={playStop}
-          disabled={!rotationMode}
-          title={
-            !rotationMode ? "Switch to View mode to play/stop" : undefined
-          }
-        >
-          {running ? "Stop" : "Play"}
-        </button>
-        <button className="glass-button" onClick={step} disabled={running}>
-          Step
-        </button>
-        <button
-          className="glass-button"
-          onClick={reset}
-          disabled={running}
-          title={running ? "Pause simulation to reset" : undefined}
-        >
-          Reset
-        </button>
-        <button
-          className="glass-button"
-          onClick={randomize}
-          disabled={rotationMode}
-          title={rotationMode ? "Switch to Edit mode to randomize" : undefined}
-        >
-          Random
-        </button>
-        <button
-          className="glass-button danger"
-          onClick={clear}
-          disabled={rotationMode}
-          title={rotationMode ? "Switch to Edit mode to clear" : undefined}
-        >
-          Clear
-        </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            className="glass-button"
+            style={{ flex: 1 }}
+            onClick={reset}
+            disabled={running}
+            title={running ? "Pause simulation to reset" : undefined}
+          >
+            Reset
+          </button>
+          <button
+            className="glass-button danger"
+            style={{ flex: 1 }}
+            onClick={clear}
+            disabled={rotationMode || !hasLiveCells}
+            title={rotationMode ? "Switch to Edit mode to clear" : !hasLiveCells ? "No live cells to clear" : undefined}
+          >
+            Clear
+          </button>
+        </div>
+
+        {!rotationMode && (
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <button
+              className="glass-button"
+              onClick={randomize}
+              disabled={rotationMode || hasLiveCells}
+              title={rotationMode ? "Switch to Edit mode to randomize" : hasLiveCells ? "Clear board to randomize" : undefined}
+              style={{ flexShrink: 0 }}
+            >
+              Random
+            </button>
+            <label className="control-label" style={{ margin: 0, flex: 1 }}>
+              <span style={{ fontSize: "12px" }}>Density: {density.toFixed(2)}</span>
+              <input
+                type="range"
+                min={0.01}
+                max={0.3}
+                step={0.01}
+                value={density}
+                onChange={(e) => setDensity(Number(e.target.value))}
+              />
+            </label>
+          </div>
+        )}
       </div>
-      {!rotationMode && (
-        <label className="control-label">
-          <span>Random Density: {density.toFixed(2)}</span>
-          <input
-            type="range"
-            min={0.01}
-            max={0.3}
-            step={0.01}
-            value={density}
-            onChange={(e) => setDensity(Number(e.target.value))}
-          />
-        </label>
-      )}
     </section>
   );
 }
@@ -486,7 +493,7 @@ export function AppHeaderPanel() {
           aria-label="Toggle mode"
           data-tooltip-bottom="Switch Mode"
         >
-          Mode: {rotationMode ? "View" : "Edit"}
+          {rotationMode ? "Viewing" : "Editing"}
         </button>
         <button
           className="glass-button primary"
