@@ -28,7 +28,7 @@ body {
 }
 
 .version-info {
-  position: absolute;
+  position: fixed;
   bottom: 5px;
   right: 5px;
   font-size: 10px;
