@@ -70,6 +70,56 @@ const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
     },
     createdAt: new Date().toISOString(),
   },
+  "gemini glider 2": {
+    name: "gemini glider 2",
+    cells: [
+      [11, 12, 12],
+      [11, 12, 11],
+      [12, 12, 13],
+      [12, 11, 13]
+    ],
+    settings: {
+      speed: 6,
+      density: 0.08,
+      surviveMin: 5,
+      surviveMax: 5,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
+  "gemini glider 3": {
+    name: "gemini glider 3",
+    cells: [
+      [12, 11, 11],
+      [11, 12, 11],
+      [13, 12, 11],
+      [12, 13, 11],
+      [11, 11, 12],
+      [13, 13, 13],
+    ],
+    settings: {
+      speed: 10,
+      density: 0.08,
+      surviveMin: 5,
+      surviveMax: 5,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
 };
 
 export function loadGenesisConfigs(): Record<string, GenesisConfig> {
