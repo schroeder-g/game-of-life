@@ -521,17 +521,17 @@ export function MainMenu() {
     state: { running, rotationMode },
     actions: { setRotationMode },
   } = useSimulation();
-  const [collapsed, setCollapsed] = useState(false);
-
-  // Default to collapsed on mobile devices
-  useEffect(() => {
-    if (window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
-      setCollapsed(true);
+  const [collapsed, setCollapsed] = useState(() => {
+    // Default to collapsed if starting on small screen
+    if (typeof window !== "undefined") {
+      return window.innerWidth <= 768;
     }
-  }, []);
+    return false;
+  });
 
   return (
     <>
+      {collapsed && <FloatingActions />}
       <aside
         className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${!running ? "has-sidebar" : ""}`}
       >
@@ -572,8 +572,6 @@ export function MainMenu() {
           {!rotationMode && <GenesisConfigSection />}
         </div>
       </aside>
-
-      {collapsed && <FloatingActions />}
     </>
   );
 }

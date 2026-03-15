@@ -775,7 +775,7 @@ kbd {
 
   .app {
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse; /* Put canvas at bottom on mobile */
     height: auto;
   }
 
@@ -826,5 +826,9 @@ kbd {
   /* Ensure the config menu handles height gracefully */
   .main-menu {
     border-radius: 12px;
+  }
+  
+  .main-menu.collapsed {
+    flex: 0 0 auto; /* Prevent stretching to bottom of screen when collapsed */
   }
 }
