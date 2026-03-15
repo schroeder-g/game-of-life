@@ -5,18 +5,39 @@
 }
 
 html,
-body,
-#root {
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
 body {
+  display: flex;
+  flex-direction: column;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #0d1117;
   color: #c9d1d9;
+}
+
+#root {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.notice-container {
+  margin-top: 70px; /* leaves room for top bar */
+  padding: 10px 20px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.notice-container H1 {
+  font-size: 1.8rem;
+  color: #ffcc00;
+  text-shadow: none;
 }
 
 .version-info {
@@ -43,38 +64,38 @@ h6 {
 .app {
   width: 100%;
   height: 100%;
-  position: relative;
+  display: flex;
+  flex-direction: row;
 }
 
 .canvas-container {
-  width: 100%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  min-width: 0;
+  min-height: 0;
   height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
 }
 
 .ui-overlay {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  bottom: 20px; /* Constrain height to viewport */
-  width: 320px; /* Fixed width on desktop */
+  width: 360px; /* Fixed width on desktop */
+  padding: 20px;
+  height: calc(100% - 70px); /* Leave room for the top bar */
+  margin-top: 70px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  pointer-events: none;
   z-index: 100;
-}
-
-.ui-overlay > * {
-  pointer-events: auto;
+  min-height: 0; /* Important: allow flex children to shrink and scroll */
 }
 
 h1 {
   font-size: 1.6rem;
   font-weight: 600;
   color: #8ab4f8;
+  margin: 0;
   text-shadow: 0 0 20px rgba(138, 180, 248, 0.3);
 }
 
@@ -260,6 +281,7 @@ input[type="range"] {
   transition: all 0.3s ease;
   overflow: hidden;
   margin-top: 8px; /* Give it some breathing room from elements above it */
+  min-height: 0; /* Allow the container to shrink smaller than its contents */
 }
 
 /* On large or tall displays, old layout rules for absolute positioning are removed
@@ -281,6 +303,8 @@ input[type="range"] {
 }
 
 .menu-scrollable-content {
+  flex: 1;
+  min-height: 0;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -695,19 +719,30 @@ kbd {
   }
 }
 
-/* Floating Actions (When Menu Collapsed) */
-.floating-actions {
-  position: relative;
-  width: 100%;
+/* App Header Panel (Always visible top bar) */
+.app-header-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px 0;
-  z-index: 1000;
-  animation: slideInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  z-index: 1500;
+  background: rgba(13, 17, 23, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: auto;
 }
 
-.floating-actions button {
+.app-header-panel .button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.app-header-panel button {
   padding: 8px 12px;
   font-size: 1.1rem;
   line-height: 1;
@@ -767,36 +802,43 @@ kbd {
    Mobile & Responsive Tweaks 
 ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  html, body, #root {
-    overflow: auto;
+  html, body {
+    overflow: visible;
+    overflow-x: hidden;
     height: auto;
     min-height: 100%;
+    display: block; /* Reset from flex column */
+  }
+
+  #root {
+    overflow: visible;
+    height: auto;
+    min-height: 100%;
+    display: block;
   }
 
   .app {
-    display: flex;
-    flex-direction: column-reverse; /* Put canvas at bottom on mobile */
+    display: block; /* Break out of flexbox to allow native document scrolling */
     height: auto;
+    min-height: 100%;
+    /* Add padding-top to account for the fixed header panel */
+    padding-top: 70px;
   }
 
   .canvas-container {
     position: relative;
-    width: 100%;
-    height: 50vh;
-    min-height: 350px;
+    width: 100vw;
+    height: 100vw; /* Keep 1:1 aspect ratio on mobile */
+    min-height: auto;
     flex-shrink: 0;
   }
 
   /* Let the UI flow naturally below the canvas */
   .ui-overlay {
-    position: relative;
     width: 100%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: 0;
+    height: auto;
+    margin-top: 0; /* Reset top margin on mobile */
     padding: 20px;
-    pointer-events: auto;
   }
 
   /* Make sure titles fit */
@@ -821,6 +863,14 @@ kbd {
 
   .glass-button {
     padding: 10px 14px; /* Larger tap targets on phone */
+  }
+
+  /* Sticky shortcuts toggle button */
+  .shortcuts-toggle {
+    position: sticky;
+    top: 10px;
+    align-self: flex-start; /* Fixes sticky scrolling inside flex containers */
+    z-index: 1001; /* Keep above main menu content */
   }
 
   /* Ensure the config menu handles height gracefully */

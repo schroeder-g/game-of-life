@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { CommunitySidebar } from "../components/Controls";
 import { Scene } from "../components/Grid";
-import { MainMenu } from "../components/MainMenu";
+import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -57,14 +57,10 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="canvas-container">
-        <Canvas>
-          <Scene />
-        </Canvas>
-      </div>
+
+      <AppHeaderPanel />
 
       <div className="ui-overlay">
-        <h1>Cube of Life</h1>
         <p className="explainer">
           Explore a 3D adaptation of{" "}
           <a
@@ -110,6 +106,12 @@ export default function App() {
       />
 
       {/* bottom-right panel removed; now handled inside overlay */}
+      
+      <div className="canvas-container">
+        <Canvas>
+          <Scene />
+        </Canvas>
+      </div>
     </div>
   );
 }

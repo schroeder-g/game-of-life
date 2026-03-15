@@ -468,50 +468,49 @@ function GenesisConfigSection() {
   );
 }
 
-function FloatingActions() {
+export function AppHeaderPanel() {
   const {
-    state: { running },
-    actions: { playStop, step, randomize, reset, clear },
+    state: { running, rotationMode },
+    actions: { playStop, step, reset, setRotationMode },
   } = useSimulation();
 
   return (
-    <div className="floating-actions">
-      <button
-        className="glass-button primary"
-        onClick={playStop}
-        data-tooltip-bottom={running ? "Pause" : "Play"}
-      >
-        {running ? "⏸" : "▶"}
-      </button>
-      <button
-        className="glass-button"
-        onClick={step}
-        disabled={running}
-        data-tooltip-bottom="Step"
-      >
-        ⏭
-      </button>
-      <button
-        className="glass-button"
-        onClick={randomize}
-        data-tooltip-bottom="Random"
-      >
-        ?
-      </button>
-      <button
-        className="glass-button"
-        onClick={reset}
-        data-tooltip-bottom="Reset"
-      >
-        ↺
-      </button>
-      <button
-        className="glass-button danger"
-        onClick={clear}
-        data-tooltip-bottom="Clear"
-      >
-        ✕
-      </button>
+    <div className="app-header-panel">
+      <div className="title-section">
+        <h1>Cube of Life</h1>
+      </div>
+      <div className="button-group panel-actions">
+        <button
+          className="glass-button mode-toggle-button"
+          onClick={() => setRotationMode((prev) => !prev)}
+          aria-label="Toggle mode"
+          data-tooltip-bottom="Switch Mode"
+        >
+          Mode: {rotationMode ? "View" : "Edit"}
+        </button>
+        <button
+          className="glass-button primary"
+          onClick={playStop}
+          data-tooltip-bottom={running ? "Pause" : "Play"}
+        >
+          {running ? "⏸" : "▶"}
+        </button>
+        <button
+          className="glass-button"
+          onClick={step}
+          disabled={running}
+          data-tooltip-bottom="Step"
+        >
+          ⏭
+        </button>
+        <button
+          className="glass-button"
+          onClick={reset}
+          data-tooltip-bottom="Reset"
+        >
+          ↺
+        </button>
+      </div>
     </div>
   );
 }
@@ -531,22 +530,9 @@ export function MainMenu() {
 
   return (
     <>
-      {collapsed && <FloatingActions />}
       <aside
         className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${!running ? "has-sidebar" : ""}`}
       >
-        <div className="mode-indicator above-menu">
-          <button
-            className="mode-toggle-button glass-button"
-            onClick={() => setRotationMode((prev) => !prev)}
-            aria-label="Toggle mode"
-          >
-            Mode:
-          </button>{" "}
-          <span className="mode-label">
-            {rotationMode ? "View" : "Edit"}
-          </span>
-        </div>
         <div className="menu-sticky-container">
           <header
             className="menu-header"
@@ -582,4 +568,4 @@ MainMenu.SimulationSection = SimulationSection;
 MainMenu.RulesSection = RulesSection;
 MainMenu.ShapeBrushSection = ShapeBrushSection;
 MainMenu.GenesisConfigSection = GenesisConfigSection;
-MainMenu.FloatingActions = FloatingActions;
+MainMenu.AppHeaderPanel = AppHeaderPanel;
