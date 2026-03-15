@@ -216,6 +216,21 @@ input[type="range"] {
   margin-top: 8px;
 }
 
+/* Force relative position so it takes up space and follows vertically */
+.community-under-shortcuts .community-sidebar {
+  position: relative;
+  top: 0;
+  left: 0;
+  bottom: auto;
+  right: auto;
+}
+
+@media (max-width: 768px) {
+  .community-sidebar {
+    position: relative;
+  }
+}
+
 .community-sidebar h3 {
   margin: 0 0 12px 0;
   font-size: 14px;
