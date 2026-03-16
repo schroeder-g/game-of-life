@@ -28,13 +28,11 @@ body {
 }
 
 .version-info {
-  position: fixed;
-  bottom: 5px;
-  right: 5px;
-  font-size: 10px;
-  color: #444;
-  z-index: 9999;
-  pointer-events: none;
+  font-size: 11px;
+  color: #4f5b66;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
 }
 
 h1,

@@ -536,6 +536,9 @@ export function AppHeaderPanel() {
     <div className="app-header-panel">
       <div className="title-section">
         <h1>Cube of Life</h1>
+        <div className="version-info">
+          {typeof document !== "undefined" ? document.getElementById("version-data")?.textContent : ""}
+        </div>
       </div>
       <div className="button-group panel-actions">
         <button
