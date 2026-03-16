@@ -47,18 +47,20 @@ h6 {
 }
 
 .app {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto; /* Container A grows vertically as needed */
+  background: #0d1117;
 }
 
 .main-content-layout {
-  flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: row; /* Default Row (Widescreen) */
+  flex: 1; /* Fills remaining space in Container A */
   min-height: 0;
-  overflow: hidden;
 }
 
 .ui-overlay {
@@ -205,9 +207,6 @@ input[type="range"] {
   text-align: center;
 }
 
-.mode-toggle-button:hover {
-  /* no extra hover styling beyond glass-button */
-}
 
 .instructions {
   font-size: 12px;
@@ -490,6 +489,7 @@ input[type="range"] {
 input[type="range"] {
   width: 100%;
   -webkit-appearance: none;
+  appearance: none;
   background: transparent;
 }
 
@@ -713,11 +713,14 @@ kbd {
 
 /* App Header Panel (Always visible top bar) */
 .app-header-panel {
+  position: sticky;
+  top: 0;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background: rgba(13, 17, 23, 0.9);
+  background: rgba(13, 17, 23, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -790,44 +793,35 @@ kbd {
    Mobile & Responsive Tweaks 
 ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-  html, body {
-    overflow: visible;
-    overflow-x: hidden;
-    height: auto;
-    min-height: 100%;
-    display: block; /* Reset from flex column */
+  .main-content-layout {
+    flex-direction: column; /* Small Screen: Stack vertically */
+    flex: none; /* Allow Container A to scroll naturally */
   }
 
-  #root {
-    overflow: visible;
-    height: auto;
-    min-height: 100%;
-    display: block;
-  }
-
-  .app {
-    display: block; /* Break out of flexbox to allow native document scrolling */
-    height: auto;
-    min-height: 100%;
-    /* Add padding-top to account for the fixed header panel */
-    padding-top: 70px;
+  .ui-overlay {
+    width: 100%;
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(13, 17, 23, 0.8);
+    overflow-y: visible; /* Let the main document handle scroll */
   }
 
   .canvas-container {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Make it square */
+    flex: none;
     position: relative;
-    width: 100vw;
-    height: 100vw; /* Keep 1:1 aspect ratio on mobile */
-    min-height: auto;
-    flex-shrink: 0;
+    height: auto;
+    overflow: hidden; /* Ensure canvas doesn't bleed out */
+    display: block;
   }
 
-  /* Let the UI flow naturally below the canvas */
-  .ui-overlay {
-    width: 100%;
-    height: auto;
-    margin-top: 0; /* Reset top margin on mobile */
-    padding: 20px;
-    overflow-y: visible; /* Back to normal document scroll */
+  .app-header-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px;
   }
 
   /* Make sure titles fit */
@@ -854,20 +848,12 @@ kbd {
     padding: 10px 14px; /* Larger tap targets on phone */
   }
 
-  /* Sticky shortcuts toggle button */
-  .shortcuts-toggle {
-    position: sticky;
-    top: 10px;
-    align-self: flex-start; /* Fixes sticky scrolling inside flex containers */
-    z-index: 1001; /* Keep above main menu content */
-  }
-
   /* Ensure the config menu handles height gracefully */
   .main-menu {
     border-radius: 12px;
   }
   
   .main-menu.collapsed {
-    flex: 0 0 auto; /* Prevent stretching to bottom of screen when collapsed */
+    flex: 0 0 auto;
   }
 }

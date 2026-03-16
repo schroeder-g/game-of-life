@@ -166,8 +166,12 @@ export function Scene() {
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!controlsRef.current || !cameraRef.current) return;
+        
+        // Ensure we calculate from the origin for symmetric centering
+        controlsRef.current.target.set(0, 0, 0);
+        
         const size = gridRef.current.size;
-        const padding = 1.1;
+        const padding = 1.3; // Increased padding for safer framing on mobile/square screens
         
         // Sphere that encompasses the entire cube
         const radius = (size / 2) * Math.sqrt(3);
@@ -183,9 +187,9 @@ export function Scene() {
         
         distance = Math.max(distance, distanceH);
         
-        const direction = new THREE.Vector3().subVectors(cameraRef.current.position, controlsRef.current.target).normalize();
+        const direction = new THREE.Vector3().subVectors(cameraRef.current.position, new THREE.Vector3(0, 0, 0)).normalize();
         cameraRef.current.position.copy(direction.multiplyScalar(distance));
-        controlsRef.current.target.set(0, 0, 0);
+        cameraRef.current.lookAt(0, 0, 0);
         controlsRef.current.update();
       },
       recenter: () => {

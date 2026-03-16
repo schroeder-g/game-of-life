@@ -47,8 +47,8 @@ export function Cells({
       colorScale: chroma
         .scale(["blue", "cyan", "green", "yellow", "red"])
         .domain([0, grid.size]),
-      offset: grid.size / 2,
-      center: grid.size / 2,
+      offset: (grid.size - 1) / 2,
+      center: (grid.size - 1) / 2,
       gridSize: grid.size,
     };
   }, [grid]);
