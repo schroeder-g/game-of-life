@@ -25,8 +25,7 @@ function ShapePreview({ controlsRef }: { controlsRef: React.RefObject<any> }) {
     state: { selectedShape, shapeSize, isHollow, selectorPos },
   } = useBrush();
   const { rotateOffsets } = useKeyboardSelector(controlsRef as any);
-
-  const offset = gridSize / 2;
+  const offset = (gridSize - 1) / 2;
   const [azimuth, setAzimuth] = useState(0);
   const [polar, setPolar] = useState(Math.PI / 4);
 
