@@ -78,11 +78,21 @@ export interface SimulationActions {
     cells: Array<[number, number, number]>,
     updateGridSize?: number,
   ) => void;
+
+  // Camera Actions
+  fitDisplay: () => void;
+  recenter: () => void;
+  squareUp: () => void;
 }
 
 export interface SimulationMeta {
   gridRef: React.MutableRefObject<Grid3D>;
   initialStateRef: React.MutableRefObject<Array<[number, number, number]>>;
+  cameraActionsRef: React.MutableRefObject<{
+    fitDisplay: () => void;
+    recenter: () => void;
+    squareUp: () => void;
+  } | null>;
 }
 
 export interface SimulationContextValue {
@@ -97,6 +107,11 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
+  const cameraActionsRef = useRef<{
+    fitDisplay: () => void;
+    recenter: () => void;
+    squareUp: () => void;
+  } | null>(null);
   const isFirstLoadRef = useRef(true);
 
   if (isFirstLoadRef.current) {
@@ -306,6 +321,24 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [gridSize],
   );
 
+  const handleSetRotationMode = useCallback(
+    (mode: boolean | ((prev: boolean) => boolean)) => {
+      setRotationMode((prev) => {
+        const next = typeof mode === "function" ? mode(prev) : mode;
+        // When entering edit mode (next === false), pause simulation
+        if (next === false) {
+          setRunning(false);
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
+  const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
+  const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
+
   const value: SimulationContextValue = {
     state: {
       speed,
@@ -335,7 +368,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setBirthMax,
       setBirthMargin,
       setCommunity,
-      setRotationMode,
+      setRotationMode: handleSetRotationMode,
       playStop,
       step,
       randomize,
@@ -349,10 +382,14 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCells,
       deleteCells,
       applyCells,
+      fitDisplay,
+      recenter,
+      squareUp,
     },
     meta: {
       gridRef,
       initialStateRef,
+      cameraActionsRef,
     },
   };
 

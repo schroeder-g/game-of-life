@@ -1,6 +1,6 @@
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -156,6 +156,76 @@ export function Scene() {
 
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+
+  const {
+    meta: { cameraActionsRef },
+  } = useSimulation();
+
+  useEffect(() => {
+    cameraActionsRef.current = {
+      fitDisplay: () => {
+        if (!controlsRef.current || !cameraRef.current) return;
+        const size = gridRef.current.size;
+        const padding = 1.1;
+        
+        // Sphere that encompasses the entire cube
+        const radius = (size / 2) * Math.sqrt(3);
+        
+        const fov = cameraRef.current.fov;
+        const aspect = cameraRef.current.aspect;
+        const viewportHeight = window.innerHeight;
+        const availableHeightRatio = (viewportHeight - 70) / viewportHeight;
+        
+        const tanFOV = Math.tan((Math.PI * fov) / 360);
+        let distance = (radius * padding) / (tanFOV * availableHeightRatio);
+        
+        const hFov = 2 * Math.atan(tanFOV * aspect);
+        const distanceH = (radius * padding) / Math.tan(hFov / 2);
+        
+        distance = Math.max(distance, distanceH);
+        
+        // Shift the target down so it's centered in the area below the 70px header
+        const vOffsetNDC = -70 / viewportHeight;
+        const verticalOffset = distance * tanFOV * vOffsetNDC;
+        
+        const direction = new THREE.Vector3().subVectors(cameraRef.current.position, controlsRef.current.target).normalize();
+        cameraRef.current.position.copy(direction.multiplyScalar(distance).add(new THREE.Vector3(0, verticalOffset, 0)));
+        controlsRef.current.target.set(0, verticalOffset, 0);
+        controlsRef.current.update();
+      },
+      recenter: () => {
+        if (!controlsRef.current) return;
+        const offset = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), controlsRef.current.target);
+        cameraRef.current?.position.add(offset);
+        controlsRef.current.target.set(0, 0, 0);
+        controlsRef.current.update();
+      },
+      squareUp: () => {
+        if (!controlsRef.current) return;
+        // Snap to nearest 90 degree azimuthal and 90 degree polar
+        const azimuth = controlsRef.current.getAzimuthalAngle();
+        const snappedAzimuth = Math.round(azimuth / (Math.PI / 2)) * (Math.PI / 2);
+        
+        // We want front face at 90 degrees to camera. 
+        // OrbitControls use polar and azimuthal. 
+        // Polar PI/2 is level.
+        
+        const distance = cameraRef.current?.position.distanceTo(controlsRef.current.target) ?? 30;
+        
+        // Calculate new position based on snapped angles
+        const x = distance * Math.sin(snappedAzimuth) * Math.sin(Math.PI / 2);
+        const y = distance * Math.cos(Math.PI / 2);
+        const z = distance * Math.cos(snappedAzimuth) * Math.sin(Math.PI / 2);
+        
+        cameraRef.current?.position.set(x, y, z).add(controlsRef.current.target);
+        controlsRef.current.update();
+      },
+    };
+    return () => {
+      cameraActionsRef.current = null;
+    };
+  }, [cameraActionsRef, gridRef]);
 
   useFrame((state) => {
     if (running) {
@@ -182,7 +252,7 @@ export function Scene() {
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
       />
-      <PerspectiveCamera makeDefault position={[30, 25, 30]} />
+      <PerspectiveCamera ref={cameraRef} makeDefault position={[30, 25, 30]} />
     </>
   );
 }

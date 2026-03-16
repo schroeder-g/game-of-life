@@ -4,6 +4,32 @@ import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 
+const FitIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" strokeOpacity="0.3" />
+    <path d="M12 8v8M8 12h8" />
+    <path d="M12 8l-2 2M12 8l2 2M12 16l-2-2M12 16l2-2" />
+    <path d="M8 12l2-2M8 12l2 2M16 12l-2-2M16 12l2 2" />
+    <path d="M2 2l4 4M22 22l-4-4M2 22l4-4M22 2l-4 4" />
+  </svg>
+);
+
+const RecenterIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const SquareUpIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+    <path d="M12 16V8h4" />
+    <path d="M13 11a2 2 0 0 1 2 2" />
+  </svg>
+);
+
 function ActionsSection() {
   const {
     state: { rotationMode, speed },
@@ -503,7 +529,7 @@ function GenesisConfigSection() {
 export function AppHeaderPanel() {
   const {
     state: { running, rotationMode },
-    actions: { playStop, step, reset, setRotationMode },
+    actions: { playStop, step, reset, setRotationMode, fitDisplay, recenter, squareUp },
   } = useSimulation();
 
   return (
@@ -520,10 +546,37 @@ export function AppHeaderPanel() {
         >
           {rotationMode ? "Viewing" : "Editing"}
         </button>
+
+        <button
+          className="glass-button"
+          onClick={fitDisplay}
+          aria-label="Fit"
+          data-tooltip-bottom="Fit"
+        >
+          <FitIcon />
+        </button>
+        <button
+          className="glass-button"
+          onClick={recenter}
+          aria-label="Recenter"
+          data-tooltip-bottom="Recenter"
+        >
+          <RecenterIcon />
+        </button>
+        <button
+          className="glass-button"
+          onClick={squareUp}
+          aria-label="Square Up"
+          data-tooltip-bottom="Square Up"
+        >
+          <SquareUpIcon />
+        </button>
+
         <button
           className="glass-button primary"
           onClick={playStop}
-          data-tooltip-bottom={running ? "Pause" : "Play"}
+          disabled={!rotationMode}
+          data-tooltip-bottom={!rotationMode ? "Playback disabled in Edit mode" : running ? "Pause" : "Play"}
         >
           {running ? "⏸" : "▶"}
         </button>
