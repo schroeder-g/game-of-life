@@ -56,56 +56,55 @@ export default function App() {
 
   return (
     <div className="app">
+      <div className="canvas-wrapper">
+        <Canvas>
+          <Scene />
+        </Canvas>
+      </div>
 
-      <AppHeaderPanel />
+      <div className="ui-root">
+        <AppHeaderPanel />
 
-      <div className="ui-overlay">
-        <p className="explainer">
-          Explore a 3D adaptation of{" "}
-          <a
-            href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="ui-overlay">
+          <p className="explainer">
+            Explore a 3D adaptation of{" "}
+            <a
+              href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Conway's Game of Life
+            </a>{" "}
+            by placing cells in the grid and watching them evolve.
+          </p>
+          <SimulationStats />
+          {!rotationMode && selectorPos && (
+            <div className="selector-pos">
+              Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
+            </div>
+          )}
+          {!rotationMode && selectedShape !== "None" && (
+            <div className="shape-info">
+              Shape: {selectedShape} ({shapeSize}x{shapeSize}
+              {supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
+              {isHollow && supportsHollow(selectedShape) && " (hollow)"}
+            </div>
+          )}
+          <button
+            className="glass-button shortcuts-toggle"
+            onClick={() => setShowShortcuts(true)}
           >
-            Conway's Game of Life
-          </a>{" "}
-          by placing cells in the grid and watching them evolve.
-        </p>
-        <SimulationStats />
-        {!rotationMode && selectorPos && (
-          <div className="selector-pos">
-            Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
-          </div>
-        )}
-        {!rotationMode && selectedShape !== "None" && (
-          <div className="shape-info">
-            Shape: {selectedShape} ({shapeSize}x{shapeSize}
-            {supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
-            {isHollow && supportsHollow(selectedShape) && " (hollow)"}
-          </div>
-        )}
-        <button
-          className="glass-button shortcuts-toggle"
-          onClick={() => setShowShortcuts(true)}
-        >
-          ⌘ Shortcuts
-        </button>
+            ⌘ Shortcuts
+          </button>
 
-        <MainMenu />
+          <MainMenu />
+        </div>
       </div>
 
       <ShortcutOverlay
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
-
-      {/* bottom-right panel removed; now handled inside overlay */}
-      
-      <div className="canvas-container">
-        <Canvas>
-          <Scene />
-        </Canvas>
-      </div>
     </div>
   );
 }

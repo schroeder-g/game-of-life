@@ -175,7 +175,10 @@ export function Scene() {
         const fov = cameraRef.current.fov;
         const aspect = cameraRef.current.aspect;
         const viewportHeight = window.innerHeight;
-        const availableHeightRatio = (viewportHeight - 70) / viewportHeight;
+        
+        // Use a more generous header height estimate now that it includes version info
+        const approximatedHeaderHeight = 120; 
+        const availableHeightRatio = (viewportHeight - approximatedHeaderHeight) / viewportHeight;
         
         const tanFOV = Math.tan((Math.PI * fov) / 360);
         let distance = (radius * padding) / (tanFOV * availableHeightRatio);
@@ -185,8 +188,8 @@ export function Scene() {
         
         distance = Math.max(distance, distanceH);
         
-        // Shift the target down so it's centered in the area below the 70px header
-        const vOffsetNDC = -70 / viewportHeight;
+        // Centering in the viewport area *below* the header
+        const vOffsetNDC = -approximatedHeaderHeight / viewportHeight;
         const verticalOffset = distance * tanFOV * vOffsetNDC;
         
         const direction = new THREE.Vector3().subVectors(cameraRef.current.position, controlsRef.current.target).normalize();
