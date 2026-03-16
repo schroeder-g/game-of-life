@@ -149,8 +149,8 @@ function KeyboardSelector({
 
 export function Scene() {
   const {
-    state: { speed, cellMargin, rotationMode, running },
-    actions: { tick },
+    state: { speed, cellMargin, rotationMode, running, community },
+    actions: { tick, setCommunity },
     meta: { gridRef },
   } = useSimulation();
 
@@ -242,7 +242,21 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <Cells grid={gridRef.current} margin={cellMargin} />
+      <Cells 
+        grid={gridRef.current} 
+        margin={cellMargin} 
+        onClick={(e) => {
+          if (rotationMode || running) return;
+          e.stopPropagation();
+          const { instanceId } = e;
+          if (instanceId !== undefined) {
+            const cells = gridRef.current.getLivingCells();
+            const [x, y, z] = cells[instanceId];
+            const community = gridRef.current.getCommunity(x, y, z);
+            setCommunity(community);
+          }
+        }}
+      />
       <BoundingBox size={gridRef.current.size} />
       {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
       <OrbitControls

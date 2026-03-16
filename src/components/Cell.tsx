@@ -28,7 +28,15 @@ const cellShaderMaterial = {
   `,
 };
 
-export function Cells({ grid, margin }: { grid: Grid3D; margin: number }) {
+export function Cells({ 
+  grid, 
+  margin,
+  onClick
+}: { 
+  grid: Grid3D; 
+  margin: number;
+  onClick?: (e: any) => void;
+}) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
@@ -122,7 +130,11 @@ export function Cells({ grid, margin }: { grid: Grid3D; margin: number }) {
 
   return (
     <group key={`cells-${margin}`}>
-      <instancedMesh ref={meshRef} args={[undefined, undefined, 50000]}>
+      <instancedMesh 
+        ref={meshRef} 
+        args={[undefined, undefined, 50000]}
+        onClick={onClick}
+      >
         <boxGeometry args={[cellSize, cellSize, cellSize]} />
         <shaderMaterial
           vertexShader={cellShaderMaterial.vertexShader}

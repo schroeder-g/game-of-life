@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
+import { CommunitySidebar } from "./Controls";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 
 const FitIcon = () => (
@@ -605,7 +606,7 @@ export function AppHeaderPanel() {
 
 export function MainMenu() {
   const {
-    state: { running, rotationMode },
+    state: { running, rotationMode, community },
     actions: { setRotationMode },
   } = useSimulation();
   const [collapsed, setCollapsed] = useState(() => {
@@ -637,13 +638,18 @@ export function MainMenu() {
           </header>
           {!collapsed && <ActionsSection />}
         </div>
-
         <div className="menu-scrollable-content">
           {!rotationMode && <EnvironmentSection />}
           <SimulationSection />
           <RulesSection />
           {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <GenesisConfigSection />}
+          {!rotationMode && !running && (
+            <div className="menu-section">
+              <h3>Selection</h3>
+              <CommunitySidebar community={community} />
+            </div>
+          )}
         </div>
       </aside>
     </>

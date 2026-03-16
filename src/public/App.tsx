@@ -1,6 +1,5 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
-import { CommunitySidebar } from "../components/Controls";
 import { Scene } from "../components/Grid";
 import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
@@ -92,11 +91,6 @@ export default function App() {
           ⌘ Shortcuts
         </button>
 
-        {/* community panel only in edit mode, below shortcuts */}
-        {!rotationMode && !running && (
-          <CommunitySidebar community={community} />
-        )}
-        
         <MainMenu />
       </div>
 
