@@ -219,18 +219,11 @@ input[type="range"] {
 
 /* Community sidebar */
 .community-sidebar {
-  position: relative;
-  background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
-  min-width: 200px;
-  z-index: 100;
-  margin-top: 8px; /* Breathing room against the shortcut button */
+  margin-top: 16px;
+  width: 100%;
+  flex: 0 0 auto;
+  padding: 20px;
 }
-/* No longer used explicitly absolute left/right positions since it flows in overlay */
 
 .community-sidebar h3 {
   margin: 0 0 12px 0;
@@ -241,24 +234,31 @@ input[type="range"] {
 
 .community-sidebar .no-community {
   color: #8b949e;
-  font-size: 12px;
+  font-size: 13px;
   font-style: italic;
+  line-height: 1.4;
 }
 
 .community-stats {
   display: flex;
   gap: 16px;
   margin-bottom: 12px;
-  font-size: 12px;
+  font-size: 13px;
   color: #8b949e;
 }
 
-.community-3d {
-  width: 180px;
-  height: 180px;
-  background: #0d1117;
+.community-3d-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   overflow: hidden;
+  position: relative; /* CRITICAL for Canvas containment */
+}
+
+.community-3d-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Shape info styling */

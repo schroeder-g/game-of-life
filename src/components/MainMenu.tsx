@@ -644,12 +644,6 @@ export function MainMenu() {
           <RulesSection />
           {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <GenesisConfigSection />}
-          {!rotationMode && !running && (
-            <div className="menu-section">
-              <h3>Selection</h3>
-              <CommunitySidebar community={community} />
-            </div>
-          )}
         </div>
       </aside>
     </>

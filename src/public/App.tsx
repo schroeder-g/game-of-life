@@ -2,6 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { Scene } from "../components/Grid";
 import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
+import { CommunitySidebar } from "../components/Controls";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -54,6 +55,10 @@ export default function App() {
 
   useAppShortcuts();
 
+  useEffect(() => {
+    console.log("APP STATE - community length:", community.length);
+  }, [community]);
+
   return (
     <div className="app">
       <AppHeaderPanel />
@@ -92,6 +97,7 @@ export default function App() {
           </button>
 
           <MainMenu />
+          <CommunitySidebar community={community} />
         </aside>
 
         <main className="canvas-container">

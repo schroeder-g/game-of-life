@@ -250,6 +250,7 @@ export function Scene() {
             const cells = gridRef.current.getLivingCells();
             const [x, y, z] = cells[instanceId];
             const community = gridRef.current.getCommunity(x, y, z);
+            console.log("Selected community:", community.length, "cells at", x, y, z);
             setCommunity(community);
           }
         }}
