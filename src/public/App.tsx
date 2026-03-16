@@ -56,16 +56,10 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="canvas-wrapper">
-        <Canvas>
-          <Scene />
-        </Canvas>
-      </div>
-
-      <div className="ui-root">
-        <AppHeaderPanel />
-
-        <div className="ui-overlay">
+      <AppHeaderPanel />
+      
+      <div className="main-content-layout">
+        <aside className="ui-overlay">
           <p className="explainer">
             Explore a 3D adaptation of{" "}
             <a
@@ -98,7 +92,13 @@ export default function App() {
           </button>
 
           <MainMenu />
-        </div>
+        </aside>
+
+        <main className="canvas-container">
+          <Canvas>
+            <Scene />
+          </Canvas>
+        </main>
       </div>
 
       <ShortcutOverlay
