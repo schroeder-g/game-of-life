@@ -104,24 +104,35 @@ export function Cells({
     });
 
     // Set instance colors
-    meshRef.current.instanceColor = new THREE.InstancedBufferAttribute(
-      colors,
-      3,
-    );
-    meshRef.current.geometry.setAttribute(
-      "instanceOpacity",
-      new THREE.InstancedBufferAttribute(opacities, 1),
-    );
+    if (!meshRef.current.instanceColor) {
+      meshRef.current.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(50000 * 3), 3);
+    }
+    (meshRef.current.instanceColor as THREE.InstancedBufferAttribute).set(colors);
+    meshRef.current.instanceColor.needsUpdate = true;
 
-    edgesRef.current.instanceColor = new THREE.InstancedBufferAttribute(
-      edgeColors,
-      3,
-    );
+    if (!meshRef.current.geometry.attributes.instanceOpacity) {
+      meshRef.current.geometry.setAttribute(
+        "instanceOpacity",
+        new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
+      );
+    }
+    (meshRef.current.geometry.attributes.instanceOpacity as THREE.InstancedBufferAttribute).set(opacities);
+    meshRef.current.geometry.attributes.instanceOpacity.needsUpdate = true;
+
+    if (!edgesRef.current.instanceColor) {
+      edgesRef.current.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(50000 * 3), 3);
+    }
+    (edgesRef.current.instanceColor as THREE.InstancedBufferAttribute).set(edgeColors);
+    edgesRef.current.instanceColor.needsUpdate = true;
 
     meshRef.current.instanceMatrix.needsUpdate = true;
     meshRef.current.count = cells.length;
     edgesRef.current.instanceMatrix.needsUpdate = true;
     edgesRef.current.count = cells.length;
+
+    // IMPORTANT: Three.js needs updated bounding info for raycasting to work correctly on the whole mesh volume
+    meshRef.current.computeBoundingSphere();
+    edgesRef.current.computeBoundingSphere();
   });
 
 

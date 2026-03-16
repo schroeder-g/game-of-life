@@ -208,7 +208,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     initialStateRef.current = [];
     setGridSize(newSize);
     setCommunity([]);
-  }, [neighborFaces, neighborEdges, neighborCorners]);
+  }, [neighborFaces, neighborEdges, neighborCorners, gridSize]);
 
   const playStop = useCallback(() => {
     if (!running && gridRef.current.generation === 0) {
@@ -318,7 +318,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       initialStateRef.current = cells;
       setCommunity([]);
     },
-    [gridSize],
+    [gridSize, neighborFaces, neighborEdges, neighborCorners],
   );
 
   const handleSetRotationMode = useCallback(

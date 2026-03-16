@@ -10,7 +10,7 @@ import { Cells } from "./Cell";
 
 export function BoundingBox({ size }: { size: number }) {
   return (
-    <lineSegments>
+    <lineSegments raycast={() => null}>
       <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
       <lineBasicMaterial color="silver" />
     </lineSegments>
@@ -117,12 +117,13 @@ function KeyboardSelector({
 
   if (!selectorPos) return null;
 
-  const offset = gridSize / 2;
+  const offset = (gridSize - 1) / 2;
 
   return (
     <group>
       <ShapePreview controlsRef={controlsRef} />
       <mesh
+        raycast={() => null}
         position={[
           selectorPos[0] - offset,
           selectorPos[1] - offset,
@@ -133,6 +134,7 @@ function KeyboardSelector({
         <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
       </mesh>
       <lineSegments
+        raycast={() => null}
         position={[
           selectorPos[0] - offset,
           selectorPos[1] - offset,
@@ -152,6 +154,9 @@ export function Scene() {
     actions: { tick, setCommunity },
     meta: { gridRef },
   } = useSimulation();
+  const {
+    actions: { setSelectorPos },
+  } = useBrush();
 
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
@@ -243,15 +248,19 @@ export function Scene() {
         grid={gridRef.current} 
         margin={cellMargin} 
         onClick={(e) => {
-          if (rotationMode || running) return;
+          if (running) return;
           e.stopPropagation();
           const { instanceId } = e;
           if (instanceId !== undefined) {
             const cells = gridRef.current.getLivingCells();
-            const [x, y, z] = cells[instanceId];
-            const community = gridRef.current.getCommunity(x, y, z);
-            console.log("Selected community:", community.length, "cells at", x, y, z);
-            setCommunity(community);
+            const cell = cells[instanceId];
+            if (cell) {
+              const [x, y, z] = cell;
+              setSelectorPos([x, y, z]);
+              const community = gridRef.current.getCommunity(x, y, z);
+              setCommunity(community);
+              console.log("Clicked cell at", x, y, z, "Community:", community.length);
+            }
           }
         }}
       />

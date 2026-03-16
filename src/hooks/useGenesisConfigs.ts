@@ -43,6 +43,9 @@ const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
       birthMargin: 0,
       cellMargin: 0.2,
       gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: false,
     },
     createdAt: new Date("2026-03-09T00:00:00Z").toISOString(),
   },
@@ -127,7 +130,9 @@ export function loadGenesisConfigs(): Record<string, GenesisConfig> {
   try {
     const stored = localStorage.getItem(GENESIS_STORAGE_KEY);
     if (stored) {
-      configs = { ...configs, ...JSON.parse(stored) };
+      // Merge: stored takes precedence for custom names, default takes precedence for built-in names
+      const saved = JSON.parse(stored);
+      configs = { ...saved, ...DEFAULT_CONFIGS };
     }
   } catch (e) {
     console.error("Failed to load genesis configs:", e);
