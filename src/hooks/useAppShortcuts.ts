@@ -19,10 +19,10 @@ export function useAppShortcuts() {
       if (rotationMode) {
         switch (e.key.toLowerCase()) {
           case "a": // slide left
-            panCamera(-1, 0);
+            panCamera(1, 0);
             break;
           case "d": // slide right
-            panCamera(1, 0);
+            panCamera(-1, 0);
             break;
           case "w": // forward
             dollyCamera("in");
