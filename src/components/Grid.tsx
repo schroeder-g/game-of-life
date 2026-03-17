@@ -175,7 +175,7 @@ export function Scene() {
         controlsRef.current.target.set(0, 0, 0);
         
         const size = gridRef.current.size;
-        const padding = 1.3; // Increased padding for safer framing on mobile/square screens
+        const padding = 1.1; // 10% margin
         
         // Sphere that encompasses the entire cube
         const radius = (size / 2) * Math.sqrt(3);
@@ -273,7 +273,7 @@ export function Scene() {
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
       />
-      <PerspectiveCamera ref={cameraRef} makeDefault position={[30, 25, 30]} />
+      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, -40]} />
     </>
   );
 }
