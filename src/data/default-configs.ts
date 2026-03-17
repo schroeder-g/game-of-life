@@ -1,0 +1,149 @@
+export interface GenesisConfig {
+  name: string;
+  cells: Array<[number, number, number]>;
+  settings: {
+    speed: number;
+    density: number;
+    surviveMin: number;
+    surviveMax: number;
+    birthMin: number;
+    birthMax: number;
+    birthMargin: number;
+    cellMargin: number;
+    gridSize: number;
+    neighborFaces?: boolean;
+    neighborEdges?: boolean;
+    neighborCorners?: boolean;
+  };
+  createdAt: string;
+}
+
+export const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
+  "squid gun": {
+    name: "squid gun",
+    cells: [
+      [11, 11, 11],
+      [11, 11, 12],
+      [11, 12, 11],
+      [11, 12, 12],
+      [12, 11, 11],
+      [12, 11, 12],
+      [12, 12, 11],
+      [12, 12, 12],
+    ],
+    settings: {
+      speed: 5,
+      density: 0.08,
+      surviveMin: 2,
+      surviveMax: 2,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: false,
+    },
+    createdAt: new Date("2026-03-09T00:00:00Z").toISOString(),
+  },
+  "3d glider": {
+    name: "3d glider",
+    cells: [
+      [11, 11, 13], 
+      [12, 12, 11], 
+      [12, 11, 13], 
+      [12, 12, 12]
+    ],
+    settings: {
+      speed: 6,
+      density: 0.08,
+      surviveMin: 4,
+      surviveMax: 4,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
+  "gemini glider 2": {
+    name: "gemini glider 2",
+    cells: [
+      [11, 12, 12],
+      [11, 12, 11],
+      [12, 12, 13],
+      [12, 11, 13]
+    ],
+    settings: {
+      speed: 6,
+      density: 0.08,
+      surviveMin: 5,
+      surviveMax: 5,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
+  "Gemini Coaster": {
+    name: "Gemini Coaster",
+    cells: [
+      [12, 11, 21],
+      [11, 12, 21],
+      [13, 12, 21],
+      [12, 13, 21],
+      [11, 11, 22],
+      [13, 13, 23],
+    ],
+    settings: {
+      speed: 10,
+      density: 0.08,
+      surviveMin: 5,
+      surviveMax: 5,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
+  "Flyer 1": {
+    name: "Flyer 1",
+    cells: [
+      [28, 0, 26],
+      [29, 0, 26],
+      [28, 1, 27],
+      [29, 1, 27],
+      [28, 1, 28],
+      [29, 1, 28],
+      [28, 0, 29],
+      [29, 0, 29],
+    ],
+    settings: {
+      speed: 5,
+      density: 0.08,
+      surviveMin: 2,
+      surviveMax: 2,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 59,
+    },
+    createdAt: new Date("2026-03-17T00:39:36.554Z").toISOString(),
+  },
+};
