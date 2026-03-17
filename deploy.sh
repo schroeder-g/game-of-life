@@ -7,7 +7,18 @@ set -e
 # --- Environment setup ---
 ENV=$1
 
+if [ "$ENV" == "help" ] || [ "$ENV" == "--help" ]; then
+  echo "Usage: ./deploy.sh [prod|test]"
+  echo "Deploys the application to the specified environment on Google Cloud Run."
+  echo ""
+  echo "Environments:"
+  echo "  prod    Deploys to the production service (game-of-life)."
+  echo "  test    Deploys to the test service (goncalves-3d-game-of-life-test)."
+  exit 0
+fi
+
 if [ -z "$ENV" ]; then
+  echo "Error: No environment specified."
   echo "Usage: ./deploy.sh [prod|test]"
   exit 1
 fi
