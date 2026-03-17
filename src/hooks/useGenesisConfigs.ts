@@ -20,7 +20,7 @@ export interface GenesisConfig {
 
 const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
 
-const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
+export const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
   "squid gun": {
     name: "squid gun",
     cells: [
@@ -97,15 +97,15 @@ const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
     },
     createdAt: new Date().toISOString(),
   },
-  "gemini glider 3": {
-    name: "gemini glider 3",
+  "Gemini Coaster": {
+    name: "Gemini Coaster",
     cells: [
-      [12, 11, 11],
-      [11, 12, 11],
-      [13, 12, 11],
-      [12, 13, 11],
-      [11, 11, 12],
-      [13, 13, 13],
+      [12, 11, 21],
+      [11, 12, 21],
+      [13, 12, 21],
+      [12, 13, 21],
+      [11, 11, 22],
+      [13, 13, 23],
     ],
     settings: {
       speed: 10,
@@ -122,6 +122,31 @@ const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
       neighborCorners: true,
     },
     createdAt: new Date().toISOString(),
+  },
+  "Flyer 1": {
+    name: "Flyer 1",
+    cells: [
+      [28, 0, 26],
+      [29, 0, 26],
+      [28, 1, 27],
+      [29, 1, 27],
+      [28, 1, 28],
+      [29, 1, 28],
+      [28, 0, 29],
+      [29, 0, 29],
+    ],
+    settings: {
+      speed: 5,
+      density: 0.08,
+      surviveMin: 2,
+      surviveMax: 2,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 59,
+    },
+    createdAt: new Date("2026-03-17T00:39:36.554Z").toISOString(),
   },
 };
 

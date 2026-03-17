@@ -27,6 +27,10 @@ body {
   overflow: hidden;
 }
 
+.version-info a:hover {
+  color: white;
+}
+
 .version-info {
   font-size: 11px;
   color: #4f5b66;
@@ -52,14 +56,17 @@ h6 {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto; /* Container A grows vertically as needed */
+  overflow-y: auto;
+  /* Container A grows vertically as needed */
   background: #0d1117;
 }
 
 .main-content-layout {
   display: flex;
-  flex-direction: row; /* Default Row (Widescreen) */
-  flex: 1; /* Fills remaining space in Container A */
+  flex-direction: row;
+  /* Default Row (Widescreen) */
+  flex: 1;
+  /* Fills remaining space in Container A */
   min-height: 0;
 }
 
@@ -75,7 +82,7 @@ h6 {
   gap: 12px;
   overflow-y: auto;
   z-index: 100;
-  
+
   /* Customize scrollbar for the overlay */
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
@@ -91,9 +98,11 @@ h6 {
 .ui-overlay::-webkit-scrollbar {
   width: 6px;
 }
+
 .ui-overlay::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .ui-overlay::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
@@ -186,6 +195,7 @@ input[type="range"] {
   font-weight: normal;
   font-size: 12px;
 }
+
 .mode-toggle-button {
   background: none;
   border: none;
@@ -194,6 +204,7 @@ input[type="range"] {
   cursor: pointer;
   padding: 0;
 }
+
 .mode-toggle-button {
   /* use glass-button styles via class; reset text decoration */
   text-decoration: none;
@@ -253,7 +264,8 @@ input[type="range"] {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   overflow: hidden;
-  position: relative; /* CRITICAL for Canvas containment */
+  position: relative;
+  /* CRITICAL for Canvas containment */
 }
 
 .community-3d-wrapper canvas {
@@ -276,15 +288,18 @@ input[type="range"] {
 }
 
 .main-menu {
-  position: relative; /* Flows inside ui-overlay */
+  position: relative;
+  /* Flows inside ui-overlay */
   width: 100%;
-  flex: 0 0 auto; /* Don't stretch/shrink, just fit content height naturally */
+  flex: 0 0 auto;
+  /* Don't stretch/shrink, just fit content height naturally */
   display: flex;
   flex-direction: column;
   z-index: 1000;
   color: #fff;
   transition: all 0.3s ease;
-  margin-top: 8px; /* Give it some breathing room from elements above it */
+  margin-top: 8px;
+  /* Give it some breathing room from elements above it */
 }
 
 /* On large or tall displays, old layout rules for absolute positioning are removed
@@ -306,7 +321,8 @@ input[type="range"] {
 }
 
 .menu-scrollable-content {
-  flex: 0 0 auto; /* Allow natural content height rather than forcing a scrollbox */
+  flex: 0 0 auto;
+  /* Allow natural content height rather than forcing a scrollbox */
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -395,9 +411,11 @@ input[type="range"] {
 .config-actions {
   grid-template-columns: 1fr 1fr;
 }
+
 .config-actions button:first-child {
   grid-column: span 1;
 }
+
 .config-actions button:last-child {
   grid-column: span 2;
 }
@@ -436,6 +454,7 @@ input[type="range"] {
   border-color: rgba(138, 180, 248, 0.3);
   color: #8ab4f8;
 }
+
 .glass-button.primary:hover:not(:disabled) {
   background: rgba(138, 180, 248, 0.25);
 }
@@ -445,6 +464,7 @@ input[type="range"] {
   border-color: rgba(242, 139, 130, 0.3);
   color: #f28b82;
 }
+
 .glass-button.danger:hover:not(:disabled) {
   background: rgba(242, 139, 130, 0.25);
 }
@@ -456,6 +476,7 @@ input[type="range"] {
   font-size: 0.85rem;
   color: #ccc;
 }
+
 .control-label.row {
   flex-direction: row;
   align-items: center;
@@ -468,9 +489,11 @@ input[type="range"] {
   gap: 12px;
   margin-bottom: 12px;
 }
+
 .neighbor-controls .control-label {
   font-size: 0.85rem;
 }
+
 .control-label span {
   display: flex;
   justify-content: space-between;
@@ -525,10 +548,12 @@ input[type="range"]::-webkit-slider-runnable-track {
   outline: none;
   transition: border-color 0.2s;
 }
+
 .glass-select:focus,
 .glass-input:focus {
   border-color: rgba(138, 180, 248, 0.5);
 }
+
 .glass-select option {
   background: #0d1117;
   color: #fff;
@@ -695,6 +720,7 @@ kbd {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -705,6 +731,7 @@ kbd {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -783,6 +810,7 @@ kbd {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -794,8 +822,10 @@ kbd {
 ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .main-content-layout {
-    flex-direction: column; /* Small Screen: Stack vertically */
-    flex: none; /* Allow Container A to scroll naturally */
+    flex-direction: column;
+    /* Small Screen: Stack vertically */
+    flex: none;
+    /* Allow Container A to scroll naturally */
   }
 
   .ui-overlay {
@@ -804,16 +834,19 @@ kbd {
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(13, 17, 23, 0.8);
-    overflow-y: visible; /* Let the main document handle scroll */
+    overflow-y: visible;
+    /* Let the main document handle scroll */
   }
 
   .canvas-container {
     width: 100%;
-    aspect-ratio: 1 / 1; /* Make it square */
+    aspect-ratio: 1 / 1;
+    /* Make it square */
     flex: none;
     position: relative;
     height: auto;
-    overflow: hidden; /* Ensure canvas doesn't bleed out */
+    overflow: hidden;
+    /* Ensure canvas doesn't bleed out */
     display: block;
   }
 
@@ -828,8 +861,10 @@ kbd {
   h1 {
     font-size: 1.3rem;
   }
-  
-  .explainer, .stats, .shape-info {
+
+  .explainer,
+  .stats,
+  .shape-info {
     font-size: 12px;
   }
 
@@ -845,15 +880,109 @@ kbd {
   }
 
   .glass-button {
-    padding: 10px 14px; /* Larger tap targets on phone */
+    padding: 10px 14px;
+    /* Larger tap targets on phone */
   }
 
   /* Ensure the config menu handles height gracefully */
   .main-menu {
     border-radius: 12px;
   }
-  
+
   .main-menu.collapsed {
     flex: 0 0 auto;
   }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  padding: 20px;
+}
+
+.modal-content {
+  background: #161b22;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-content h3 {
+  margin: 0;
+  color: #58a6ff;
+  font-size: 1.2rem;
+}
+
+.modal-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #8b949e;
+}
+
+.modal-content .warning-text {
+  color: #ffa657;
+  font-size: 13px;
+  padding: 12px;
+  background: rgba(255, 166, 87, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #ffa657;
+}
+
+.scene-delete-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.scene-delete-item {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scene-delete-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.scene-delete-item.selected {
+  background: rgba(88, 166, 255, 0.1);
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
 }

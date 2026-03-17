@@ -45,6 +45,7 @@ export interface SimulationState {
   neighborFaces: boolean;
   neighborEdges: boolean;
   neighborCorners: boolean;
+  hasInitialState: boolean;
 }
 
 export interface SimulationActions {
@@ -113,6 +114,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     squareUp: () => void;
   } | null>(null);
   const isFirstLoadRef = useRef(true);
+  const [hasInitialState, setHasInitialState] = useState(false);
 
   if (isFirstLoadRef.current) {
     isFirstLoadRef.current = false;
@@ -126,6 +128,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
           }
         }
       }
+      setHasInitialState(initialStateRef.current.length > 0);
     }
   }
 
@@ -206,6 +209,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     gridRef.current.neighborEdges = neighborEdges;
     gridRef.current.neighborCorners = neighborCorners;
     initialStateRef.current = [];
+    setHasInitialState(false);
     setGridSize(newSize);
     setCommunity([]);
   }, [neighborFaces, neighborEdges, neighborCorners, gridSize]);
@@ -213,6 +217,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const playStop = useCallback(() => {
     if (!running && gridRef.current.generation === 0) {
       initialStateRef.current = gridRef.current.saveState();
+      setHasInitialState(initialStateRef.current.length > 0);
     }
     setRunning((r) => !r);
   }, [running]);
@@ -221,6 +226,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     if (!running) {
       if (gridRef.current.generation === 0) {
         initialStateRef.current = gridRef.current.saveState();
+        setHasInitialState(initialStateRef.current.length > 0);
       }
       // ensure grid uses current neighbor settings (fixes stale values)
       gridRef.current.neighborFaces = neighborFaces;
@@ -249,6 +255,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const randomize = useCallback(() => {
     gridRef.current.randomize(density);
     initialStateRef.current = gridRef.current.saveState();
+    setHasInitialState(initialStateRef.current.length > 0);
   }, [density]);
 
   const reset = useCallback(() => {
@@ -260,6 +267,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     setRunning(false);
     gridRef.current.clear();
     initialStateRef.current = [];
+    setHasInitialState(false);
   }, []);
 
   const tick = useCallback(() => {
@@ -274,6 +282,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       birthMax,
       birthMargin,
     );
+    // Auto-pause when all cells die
+    if (gridRef.current.getLivingCells().length === 0) {
+      setRunning(false);
+    }
   }, [
     surviveMin,
     surviveMax,
@@ -316,6 +328,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       }
       gridRef.current.restoreState(cells);
       initialStateRef.current = cells;
+      setHasInitialState(cells.length > 0);
       setCommunity([]);
     },
     [gridSize, neighborFaces, neighborEdges, neighborCorners],
@@ -356,6 +369,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborFaces,
       neighborEdges,
       neighborCorners,
+      hasInitialState,
     },
     actions: {
       setSpeed,
