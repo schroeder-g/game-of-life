@@ -161,7 +161,7 @@ function AxisLabels({ size }: { size: number }) {
   const padding = 1.5; // Distance from the edge
   const textProps = {
     color: "silver",
-    fontSize: 1,
+    fontSize: 0.25,
     anchorX: "center" as const,
     anchorY: "middle" as const,
   };
@@ -186,7 +186,6 @@ function AxisLabels({ size }: { size: number }) {
           camSigns.y * (half + padding),
           camSigns.z * (half + padding),
         ]}
-        rotation={[0, 0, 0]}
         visible={camSigns.y !== 0 && camSigns.z !== 0}
         {...textProps}
       >
@@ -199,7 +198,6 @@ function AxisLabels({ size }: { size: number }) {
           0,
           camSigns.z * (half + padding),
         ]}
-        rotation={[0, 0, Math.PI / 2]}
         visible={camSigns.x !== 0 && camSigns.z !== 0}
         {...textProps}
       >
@@ -212,7 +210,6 @@ function AxisLabels({ size }: { size: number }) {
           camSigns.y * (half + padding),
           0,
         ]}
-        rotation={[0, Math.PI / 2, 0]}
         visible={camSigns.x !== 0 && camSigns.y !== 0}
         {...textProps}
       >
