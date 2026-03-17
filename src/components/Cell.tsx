@@ -8,22 +8,33 @@ import { Grid3D } from "../core/Grid3D";
 const cellShaderMaterial = {
   vertexShader: `
     attribute float instanceOpacity;
+    attribute float instanceHighlight;
     varying vec3 vColor;
     varying float vOpacity;
+    varying float vHighlight;
 
     void main() {
       vColor = instanceColor;
       vOpacity = instanceOpacity;
+      vHighlight = instanceHighlight;
       vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
       gl_Position = projectionMatrix * mvPosition;
     }
   `,
   fragmentShader: `
+    uniform float u_time;
     varying vec3 vColor;
     varying float vOpacity;
+    varying float vHighlight;
 
     void main() {
-      gl_FragColor = vec4(vColor, vOpacity);
+      vec3 finalColor = vColor;
+      if (vHighlight > 0.5) {
+        // Pulse effect: smoothly cycle brightness
+        float pulse = (sin(u_time * 6.0) + 1.0) * 0.5; // oscillates between 0 and 1
+        finalColor = vColor + vec3(0.4, 0.4, 0.4) * pulse; // Add brightness
+      }
+      gl_FragColor = vec4(finalColor, vOpacity);
     }
   `,
 };
@@ -40,6 +51,7 @@ export function Cells({
   selectorPos: [number, number, number] | null;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
   const lastSelectorPos = useRef<string | null>(null);
@@ -57,7 +69,10 @@ export function Cells({
   }, [grid]);
 
   // Use useFrame to natively poll the Grid3D instance without triggering React re-renders
-  useFrame(() => {
+  useFrame((state) => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.u_time.value = state.clock.getElapsedTime();
+    }
     if (!meshRef.current || !edgesRef.current) return;
 
     const selectorPosStr = JSON.stringify(selectorPos);
@@ -75,6 +90,7 @@ export function Cells({
     const colors = new Float32Array(cells.length * 3);
     const opacities = new Float32Array(cells.length);
     const edgeColors = new Float32Array(cells.length * 3);
+    const highlights = new Float32Array(cells.length);
 
     cells.forEach((cell, i) => {
       const [x, y, z] = cell;
@@ -111,6 +127,8 @@ export function Cells({
         ((x === selectorPos[0] && y === selectorPos[1]) ||
           (x === selectorPos[0] && z === selectorPos[2]) ||
           (y === selectorPos[1] && z === selectorPos[2]));
+
+      highlights[i] = sharesTwoCoords ? 1.0 : 0.0;
 
       if (sharesTwoCoords) {
         // White outline for cells sharing two coordinates with the cursor
@@ -151,6 +169,16 @@ export function Cells({
     (meshRef.current.geometry.attributes.instanceOpacity as THREE.InstancedBufferAttribute).set(opacities);
     meshRef.current.geometry.attributes.instanceOpacity.needsUpdate = true;
 
+    // Set instance highlights
+    if (!meshRef.current.geometry.attributes.instanceHighlight) {
+      meshRef.current.geometry.setAttribute(
+        "instanceHighlight",
+        new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
+      );
+    }
+    (meshRef.current.geometry.attributes.instanceHighlight as THREE.InstancedBufferAttribute).set(highlights);
+    meshRef.current.geometry.attributes.instanceHighlight.needsUpdate = true;
+
     if (!edgesRef.current.instanceColor) {
       edgesRef.current.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(50000 * 3), 3);
     }
@@ -173,13 +201,15 @@ export function Cells({
 
   return (
     <group key={`cells-${margin}`}>
-      <instancedMesh 
-        ref={meshRef} 
+      <instancedMesh
+        ref={meshRef}
         args={[undefined, undefined, 50000]}
         onClick={onClick}
       >
         <boxGeometry args={[cellSize, cellSize, cellSize]} />
         <shaderMaterial
+          ref={materialRef}
+          uniforms={{ u_time: { value: 0 } }}
           vertexShader={cellShaderMaterial.vertexShader}
           fragmentShader={cellShaderMaterial.fragmentShader}
           transparent
