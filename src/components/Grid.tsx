@@ -17,6 +17,144 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
+function KeyboardCameraControls() {
+  const {
+    state: { rotationMode },
+    actions: { panCamera, dollyCamera },
+  } = useSimulation();
+
+  const movement = useRef({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+  });
+
+  const velocity = useRef({
+    panX: 0,
+    dolly: 0,
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      if (!rotationMode) return;
+
+      switch (e.key.toLowerCase()) {
+        case "w":
+          e.preventDefault();
+          movement.current.forward = true;
+          break;
+        case "x":
+          e.preventDefault();
+          movement.current.backward = true;
+          break;
+        case "a":
+          e.preventDefault();
+          movement.current.left = true;
+          break;
+        case "d":
+          e.preventDefault();
+          movement.current.right = true;
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === "INPUT") return;
+
+      switch (e.key.toLowerCase()) {
+        case "w":
+          e.preventDefault();
+          movement.current.forward = false;
+          break;
+        case "x":
+          e.preventDefault();
+          movement.current.backward = false;
+          break;
+        case "a":
+          e.preventDefault();
+          movement.current.left = false;
+          break;
+        case "d":
+          e.preventDefault();
+          movement.current.right = false;
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [rotationMode]);
+
+  useFrame((_, delta) => {
+    if (!rotationMode) {
+      // Reset movement and velocity when not in rotation mode
+      movement.current.forward = false;
+      movement.current.backward = false;
+      movement.current.left = false;
+      movement.current.right = false;
+      velocity.current.panX = 0;
+      velocity.current.dolly = 0;
+      return;
+    }
+
+    const acceleration = 50.0;
+    const maxSpeed = 20.0;
+    const damping = 0.9; // friction for deceleration
+
+    // Panning (left/right)
+    if (movement.current.left) {
+      velocity.current.panX = Math.min(
+        velocity.current.panX + acceleration * delta,
+        maxSpeed,
+      );
+    } else if (movement.current.right) {
+      velocity.current.panX = Math.max(
+        velocity.current.panX - acceleration * delta,
+        -maxSpeed,
+      );
+    } else {
+      velocity.current.panX *= damping;
+    }
+
+    // Dollying (forward/backward)
+    if (movement.current.forward) {
+      velocity.current.dolly = Math.min(
+        velocity.current.dolly + acceleration * delta,
+        maxSpeed,
+      );
+    } else if (movement.current.backward) {
+      velocity.current.dolly = Math.max(
+        velocity.current.dolly - acceleration * delta,
+        -maxSpeed,
+      );
+    } else {
+      velocity.current.dolly *= damping;
+    }
+
+    if (Math.abs(velocity.current.panX) > 0.01) {
+      // Positive x pans left, negative x pans right
+      panCamera(velocity.current.panX * delta, 0);
+    } else {
+      velocity.current.panX = 0;
+    }
+
+    if (Math.abs(velocity.current.dolly) > 0.01) {
+      dollyCamera(velocity.current.dolly * delta);
+    } else {
+      velocity.current.dolly = 0;
+    }
+  });
+
+  return null;
+}
+
 function ShapePreview({ controlsRef }: { controlsRef: React.RefObject<any> }) {
   const {
     state: { gridSize },
@@ -317,21 +455,20 @@ export function Scene() {
       },
       panCamera: (x: number, y: number) => {
         if (!controlsRef.current || !cameraRef.current) return;
-        const panSpeed = 10;
         if (x !== 0) {
-          controlsRef.current.panLeft(x * panSpeed, cameraRef.current.matrix);
+          controlsRef.current.panLeft(x, cameraRef.current.matrix);
         }
         if (y !== 0) {
-          controlsRef.current.panUp(y * panSpeed, cameraRef.current.matrix);
+          controlsRef.current.panUp(y, cameraRef.current.matrix);
         }
         controlsRef.current.update();
       },
-      dollyCamera: (direction: "in" | "out") => {
+      dollyCamera: (delta: number) => {
         if (!controlsRef.current) return;
-        const dollyScale = 1.1;
-        if (direction === "in") {
+        const dollyScale = 1 + Math.abs(delta) * 0.2;
+        if (delta > 0) {
           controlsRef.current.dollyIn(dollyScale);
-        } else {
+        } else if (delta < 0) {
           controlsRef.current.dollyOut(dollyScale);
         }
         controlsRef.current.update();
@@ -377,6 +514,7 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
+      <KeyboardCameraControls />
       <Cells
         grid={gridRef.current}
         margin={cellMargin}

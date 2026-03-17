@@ -87,7 +87,7 @@ export interface SimulationActions {
   recenter: () => void;
   squareUp: () => void;
   panCamera: (x: number, y: number) => void;
-  dollyCamera: (direction: "in" | "out") => void;
+  dollyCamera: (delta: number) => void;
 }
 
 export interface SimulationMeta {
@@ -98,7 +98,7 @@ export interface SimulationMeta {
     recenter: () => void;
     squareUp: () => void;
     panCamera: (x: number, y: number) => void;
-    dollyCamera: (direction: "in" | "out") => void;
+    dollyCamera: (delta: number) => void;
   } | null>;
 }
 
@@ -379,8 +379,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [],
   );
   const dollyCamera = useCallback(
-    (direction: "in" | "out") =>
-      cameraActionsRef.current?.dollyCamera(direction),
+    (delta: number) => cameraActionsRef.current?.dollyCamera(delta),
     [],
   );
 
