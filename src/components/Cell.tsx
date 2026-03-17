@@ -105,12 +105,26 @@ export function Cells({
       colors[i * 3 + 1] = g;
       colors[i * 3 + 2] = b;
 
-      // Edge colors slightly brighter
-      const edgeColor = color.brighten(0.5);
-      const [er, eg, eb] = edgeColor.gl();
-      edgeColors[i * 3] = er;
-      edgeColors[i * 3 + 1] = eg;
-      edgeColors[i * 3 + 2] = eb;
+      // Edge colors
+      const sharesTwoCoords =
+        selectorPos &&
+        ((x === selectorPos[0] && y === selectorPos[1]) ||
+          (x === selectorPos[0] && z === selectorPos[2]) ||
+          (y === selectorPos[1] && z === selectorPos[2]));
+
+      if (sharesTwoCoords) {
+        // White outline for cells sharing two coordinates with the cursor
+        edgeColors[i * 3] = 1;
+        edgeColors[i * 3 + 1] = 1;
+        edgeColors[i * 3 + 2] = 1;
+      } else {
+        // Default edge colors are slightly brighter
+        const edgeColor = color.brighten(0.5);
+        const [er, eg, eb] = edgeColor.gl();
+        edgeColors[i * 3] = er;
+        edgeColors[i * 3 + 1] = eg;
+        edgeColors[i * 3 + 2] = eb;
+      }
 
       // Opacity based on distance from center (closer = more opaque)
       const dx = x - center;
