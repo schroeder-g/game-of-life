@@ -223,6 +223,23 @@ export function Scene() {
     meta: { cameraActionsRef },
   } = useSimulation();
 
+  // Hack to style the GizmoViewport, which doesn't accept a className prop
+  useEffect(() => {
+    // The Gizmo is portaled outside the normal React tree, so we have to find it in the DOM
+    if (controlsRef.current?.domElement) {
+      const r3fContainer = controlsRef.current.domElement.parentNode;
+      if (r3fContainer) {
+        // Find the gizmo div, which is the only absolutely positioned element in this container
+        const gizmoDiv = Array.from(r3fContainer.children).find(
+          (el) => (el as HTMLElement).style.position === 'absolute'
+        );
+        if (gizmoDiv) {
+          gizmoDiv.classList.add('gizmo-viewport');
+        }
+      }
+    }
+  }, []); // Run once on mount
+
   useEffect(() => {
     cameraActionsRef.current = {
       fitDisplay: () => {
@@ -324,7 +341,12 @@ export function Scene() {
       />
       <BoundingBox size={gridRef.current.size} />
       {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
-      <GizmoViewport axisColors={['#f75858', '#58f758', '#5858f7']} labelColor="white" />
+      <GizmoViewport
+        alignment="top-left"
+        margin={[30, 30]}
+        axisColors={["#f75858", "#58f758", "#5858f7"]}
+        labelColor="white"
+      />
       <OrbitControls
         ref={controlsRef}
         makeDefault

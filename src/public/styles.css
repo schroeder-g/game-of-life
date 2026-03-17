@@ -1063,3 +1063,29 @@ kbd {
 .coord-buttons button:first-child {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Gizmo Viewport Customization */
+.gizmo-viewport {
+  background: rgba(22, 27, 34, 0.5);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  width: 10vw !important;
+  height: 10vw !important;
+  max-width: 90px !important;
+  max-height: 90px !important;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  transition: all 0.2s ease;
+}
+
+.gizmo-viewport:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.gizmo-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
