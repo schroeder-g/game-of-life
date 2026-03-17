@@ -4,7 +4,7 @@ import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { CommunitySidebar } from "./Controls";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
-import { DEFAULT_CONFIGS } from "../hooks/useGenesisConfigs";
+import { DEFAULT_CONFIGS } from "../data/default-configs";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
