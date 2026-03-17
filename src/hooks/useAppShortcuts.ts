@@ -4,7 +4,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 export function useAppShortcuts() {
   const {
     state: { running, rotationMode },
-    actions: { setRotationMode, playStop, step },
+    actions: { setRotationMode, playStop, step, panCamera, dollyCamera },
   } = useSimulation();
 
   useEffect(() => {
@@ -14,6 +14,23 @@ export function useAppShortcuts() {
 
       if (e.key === "m" || e.key === "M") {
         setRotationMode((prev) => !prev);
+      }
+
+      if (rotationMode) {
+        switch (e.key.toLowerCase()) {
+          case "a": // slide left
+            panCamera(-1, 0);
+            break;
+          case "d": // slide right
+            panCamera(1, 0);
+            break;
+          case "w": // forward
+            dollyCamera("in");
+            break;
+          case "x": // reverse
+            dollyCamera("out");
+            break;
+        }
       }
 
       if (e.key === "Enter") {
@@ -29,5 +46,13 @@ export function useAppShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setRotationMode, playStop, step, running, rotationMode]);
+  }, [
+    setRotationMode,
+    playStop,
+    step,
+    running,
+    rotationMode,
+    panCamera,
+    dollyCamera,
+  ]);
 }

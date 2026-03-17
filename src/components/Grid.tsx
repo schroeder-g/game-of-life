@@ -315,6 +315,27 @@ export function Scene() {
         controlsRef.current.target.set(0, 0, 0);
         controlsRef.current.update();
       },
+      panCamera: (x: number, y: number) => {
+        if (!controlsRef.current || !cameraRef.current) return;
+        const panSpeed = 10;
+        if (x !== 0) {
+          controlsRef.current.panLeft(x * panSpeed, cameraRef.current.matrix);
+        }
+        if (y !== 0) {
+          controlsRef.current.panUp(y * panSpeed, cameraRef.current.matrix);
+        }
+        controlsRef.current.update();
+      },
+      dollyCamera: (direction: "in" | "out") => {
+        if (!controlsRef.current) return;
+        const dollyScale = 1.1;
+        if (direction === "in") {
+          controlsRef.current.dollyIn(dollyScale);
+        } else {
+          controlsRef.current.dollyOut(dollyScale);
+        }
+        controlsRef.current.update();
+      },
       squareUp: () => {
         if (!controlsRef.current) return;
         // Snap to nearest 90 degree azimuthal and 90 degree polar
