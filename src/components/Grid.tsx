@@ -1,4 +1,4 @@
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -151,6 +151,73 @@ function AxisChannels({
           blending={THREE.AdditiveBlending}
         />
       </mesh>
+    </group>
+  );
+}
+
+function AxisLabels({ size }: { size: number }) {
+  const [camSigns, setCamSigns] = useState(new THREE.Vector3());
+  const half = size / 2;
+  const padding = 1.5; // Distance from the edge
+  const textProps = {
+    color: "silver",
+    fontSize: 1,
+    anchorX: "center" as const,
+    anchorY: "middle" as const,
+  };
+
+  useFrame(({ camera }) => {
+    const newSigns = new THREE.Vector3(
+      Math.sign(camera.position.x),
+      Math.sign(camera.position.y),
+      Math.sign(camera.position.z),
+    );
+    if (!newSigns.equals(camSigns)) {
+      setCamSigns(newSigns);
+    }
+  });
+
+  return (
+    <group>
+      {/* X-AXIS */}
+      <Text
+        position={[
+          0,
+          camSigns.y * (half + padding),
+          camSigns.z * (half + padding),
+        ]}
+        rotation={[0, 0, 0]}
+        visible={camSigns.y !== 0 && camSigns.z !== 0}
+        {...textProps}
+      >
+        X-AXIS
+      </Text>
+      {/* Y-AXIS */}
+      <Text
+        position={[
+          camSigns.x * (half + padding),
+          0,
+          camSigns.z * (half + padding),
+        ]}
+        rotation={[0, 0, Math.PI / 2]}
+        visible={camSigns.x !== 0 && camSigns.z !== 0}
+        {...textProps}
+      >
+        Y-AXIS
+      </Text>
+      {/* Z-AXIS */}
+      <Text
+        position={[
+          camSigns.x * (half + padding),
+          camSigns.y * (half + padding),
+          0,
+        ]}
+        rotation={[0, Math.PI / 2, 0]}
+        visible={camSigns.x !== 0 && camSigns.y !== 0}
+        {...textProps}
+      >
+        Z-AXIS
+      </Text>
     </group>
   );
 }
@@ -323,6 +390,7 @@ export function Scene() {
         }}
       />
       <BoundingBox size={gridRef.current.size} />
+      <AxisLabels size={gridRef.current.size} />
       {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
       <OrbitControls
         ref={controlsRef}
