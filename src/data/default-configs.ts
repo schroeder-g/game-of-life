@@ -121,8 +121,8 @@ export const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
     },
     createdAt: new Date().toISOString(),
   },
-  "Flyer 1": {
-    name: "Flyer 1",
+  "Flyer": {
+    name: "Flyer",
     cells: [
       [28, 0, 26],
       [29, 0, 26],
