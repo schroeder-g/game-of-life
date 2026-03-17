@@ -1,5 +1,7 @@
 import { DEFAULT_CONFIGS, GenesisConfig } from "../data/default-configs";
 
+const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
+
 export function loadGenesisConfigs(): Record<string, GenesisConfig> {
   let configs = { ...DEFAULT_CONFIGS };
   try {
