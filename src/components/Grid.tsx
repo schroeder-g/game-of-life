@@ -156,7 +156,6 @@ function AxisChannels({
 }
 
 function AxisLabels({ size }: { size: number }) {
-  const [camSigns, setCamSigns] = useState(new THREE.Vector3());
   const half = size / 2;
   const padding = 1.5; // Distance from the edge
   const labelStyle: React.CSSProperties = {
@@ -167,55 +166,46 @@ function AxisLabels({ size }: { size: number }) {
     whiteSpace: "nowrap",
   };
 
-  useFrame(({ camera }) => {
-    const newSigns = new THREE.Vector3(
-      Math.sign(camera.position.x),
-      Math.sign(camera.position.y),
-      Math.sign(camera.position.z),
-    );
-    if (!newSigns.equals(camSigns)) {
-      setCamSigns(newSigns);
-    }
-  });
+  const signs = [-1, 1];
 
   return (
     <group>
-      {/* X-AXIS */}
-      <Html
-        position={[
-          0,
-          camSigns.y * (half + padding),
-          camSigns.z * (half + padding),
-        ]}
-        visible={camSigns.y !== 0 && camSigns.z !== 0}
-        center
-      >
-        <div style={labelStyle}>X-AXIS</div>
-      </Html>
-      {/* Y-AXIS */}
-      <Html
-        position={[
-          camSigns.x * (half + padding),
-          0,
-          camSigns.z * (half + padding),
-        ]}
-        visible={camSigns.x !== 0 && camSigns.z !== 0}
-        center
-      >
-        <div style={labelStyle}>Y-AXIS</div>
-      </Html>
-      {/* Z-AXIS */}
-      <Html
-        position={[
-          camSigns.x * (half + padding),
-          camSigns.y * (half + padding),
-          0,
-        ]}
-        visible={camSigns.x !== 0 && camSigns.y !== 0}
-        center
-      >
-        <div style={labelStyle}>Z-AXIS</div>
-      </Html>
+      {/* X labels */}
+      {signs.map((sy) =>
+        signs.map((sz) => (
+          <Html
+            key={`x-${sy}-${sz}`}
+            position={[0, sy * (half + padding), sz * (half + padding)]}
+            center
+          >
+            <div style={labelStyle}>X</div>
+          </Html>
+        )),
+      )}
+      {/* Y labels */}
+      {signs.map((sx) =>
+        signs.map((sz) => (
+          <Html
+            key={`y-${sx}-${sz}`}
+            position={[sx * (half + padding), 0, sz * (half + padding)]}
+            center
+          >
+            <div style={labelStyle}>Y</div>
+          </Html>
+        )),
+      )}
+      {/* Z labels */}
+      {signs.map((sx) =>
+        signs.map((sy) => (
+          <Html
+            key={`z-${sx}-${sy}`}
+            position={[sx * (half + padding), sy * (half + padding), 0]}
+            center
+          >
+            <div style={labelStyle}>Z</div>
+          </Html>
+        )),
+      )}
     </group>
   );
 }
