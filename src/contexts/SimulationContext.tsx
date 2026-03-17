@@ -46,6 +46,7 @@ export interface SimulationState {
   neighborEdges: boolean;
   neighborCorners: boolean;
   hasInitialState: boolean;
+  hasPastHistory: boolean;
 }
 
 export interface SimulationActions {
@@ -66,6 +67,7 @@ export interface SimulationActions {
 
   playStop: () => void;
   step: () => void;
+  stepBackward: () => void;
   randomize: () => void;
   reset: () => void;
   clear: () => void;
@@ -115,6 +117,18 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   } | null>(null);
   const isFirstLoadRef = useRef(true);
   const [hasInitialState, setHasInitialState] = useState(false);
+  const [hasPastHistory, setHasPastHistory] = useState(
+    gridRef.current.canStepBackward,
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (hasPastHistory !== gridRef.current.canStepBackward) {
+        setHasPastHistory(gridRef.current.canStepBackward);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [hasPastHistory]);
 
   if (isFirstLoadRef.current) {
     isFirstLoadRef.current = false;
@@ -221,6 +235,11 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     }
     setRunning((r) => !r);
   }, [running]);
+
+  const stepBackward = useCallback(() => {
+    setRunning(false);
+    gridRef.current.stepBackward();
+  }, []);
 
   const step = useCallback(() => {
     if (!running) {
@@ -370,6 +389,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborEdges,
       neighborCorners,
       hasInitialState,
+      hasPastHistory,
     },
     actions: {
       setSpeed,
@@ -385,6 +405,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRotationMode: handleSetRotationMode,
       playStop,
       step,
+      stepBackward,
       randomize,
       reset,
       clear,

@@ -3,6 +3,9 @@ export class Grid3D {
   private cells: boolean[][][];
   public generation: number = 0;
   public version: number = 0;
+  private pastHistory: Array<boolean[][][]> = [];
+  private futureHistory: Array<boolean[][][]> = [];
+  private readonly historyLimit = 100;
 
   constructor(size: number = 20) {
     this.size = size;
@@ -65,6 +68,8 @@ export class Grid3D {
     this.cells = this.createEmptyGrid();
     this.generation = 0;
     this.version++;
+    this.pastHistory = [];
+    this.futureHistory = [];
   }
 
   // Save current state as array of living cell coordinates
@@ -89,6 +94,8 @@ export class Grid3D {
     }
     this.generation = 0;
     this.version++;
+    this.pastHistory = [];
+    this.futureHistory = [];
   }
 
   randomize(density: number = 0.08): void {
@@ -107,7 +114,24 @@ export class Grid3D {
     if (changed) {
       this.generation = 0;
       this.version++;
+      this.pastHistory = [];
+      this.futureHistory = [];
     }
+  }
+
+  public get canStepBackward(): boolean {
+    return this.pastHistory.length > 0;
+  }
+
+  stepBackward(): boolean {
+    if (this.pastHistory.length > 0) {
+      this.futureHistory.push(this.cells);
+      this.cells = this.pastHistory.pop()!;
+      this.generation--;
+      this.version++;
+      return true;
+    }
+    return false;
   }
 
   // neighbor inclusion flags (set externally by SimulationContext)
@@ -188,6 +212,15 @@ export class Grid3D {
     birthMax: number,
     birthMargin: number = 0,
   ): void {
+    // When we tick forward, we clear any "future" states from rewinding
+    this.futureHistory = [];
+
+    // Store current state in history before advancing
+    this.pastHistory.push(this.cells);
+    if (this.pastHistory.length > this.historyLimit) {
+      this.pastHistory.shift();
+    }
+
     const newCells = this.createEmptyGrid();
 
     // Pre-compute community map if birth margin is active

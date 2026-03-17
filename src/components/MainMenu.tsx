@@ -673,8 +673,8 @@ function SceneManagementSection() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState },
-    actions: { playStop, step, reset, setRotationMode, fitDisplay, recenter, squareUp },
+    state: { running, rotationMode, hasInitialState, hasPastHistory },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp },
   } = useSimulation();
 
   return (
@@ -727,6 +727,14 @@ export function AppHeaderPanel() {
           data-tooltip-bottom={!rotationMode ? "Playback disabled in Edit mode" : running ? "Pause" : "Play"}
         >
           {running ? "⏸" : "▶"}
+        </button>
+        <button
+          className="glass-button"
+          onClick={stepBackward}
+          disabled={running || !hasPastHistory}
+          data-tooltip-bottom={!hasPastHistory ? "No history to step back to" : "Step Backward"}
+        >
+          ⏮
         </button>
         <button
           className="glass-button"
