@@ -28,18 +28,21 @@ const cellShaderMaterial = {
   `,
 };
 
-export function Cells({ 
-  grid, 
+export function Cells({
+  grid,
   margin,
-  onClick
-}: { 
-  grid: Grid3D; 
+  onClick,
+  selectorPos,
+}: {
+  grid: Grid3D;
   margin: number;
   onClick?: (e: any) => void;
+  selectorPos: [number, number, number] | null;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
+  const lastSelectorPos = useRef<string | null>(null);
 
   // Setup colors and matrices
   const { colorScale, offset, center, gridSize } = useMemo(() => {
@@ -57,9 +60,15 @@ export function Cells({
   useFrame(() => {
     if (!meshRef.current || !edgesRef.current) return;
 
-    // Only update buffers if the version changed
-    if (grid.version === lastVersion.current) return;
+    const selectorPosStr = JSON.stringify(selectorPos);
+    // Only update buffers if the version or selector position changed
+    if (
+      grid.version === lastVersion.current &&
+      selectorPosStr === lastSelectorPos.current
+    )
+      return;
     lastVersion.current = grid.version;
+    lastSelectorPos.current = selectorPosStr;
 
     const cells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();
@@ -80,7 +89,16 @@ export function Cells({
       // Saturation based on Z position
       const hue = (x / gridSize) * 300; // 240 (blue) to 0 (red)
       const saturation = 0.4 + (z / gridSize) * 0.6; // 0.4 to 1.0
-      const color = chroma.hsl(240 - hue, saturation, 0.55);
+      let color = chroma.hsl(240 - hue, saturation, 0.55);
+
+      // Highlight if on the selector's axis
+      const onAxis =
+        selectorPos &&
+        (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
+      if (onAxis) {
+        color = color.brighten(0.75);
+      }
+
       const [r, g, b] = color.gl();
 
       colors[i * 3] = r;

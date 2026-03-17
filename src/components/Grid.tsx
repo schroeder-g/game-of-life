@@ -100,6 +100,61 @@ function ShapePreview({ controlsRef }: { controlsRef: React.RefObject<any> }) {
   );
 }
 
+function AxisChannels({
+  selectorPos,
+  gridSize,
+}: {
+  selectorPos: [number, number, number];
+  gridSize: number;
+}) {
+  const offset = (gridSize - 1) / 2;
+  const channelWidth = 0.05;
+
+  return (
+    <group>
+      {/* X-axis channel */}
+      <mesh
+        position={[0, selectorPos[1] - offset, selectorPos[2] - offset]}
+        raycast={() => null}
+      >
+        <boxGeometry args={[gridSize, channelWidth, channelWidth]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.1}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      {/* Y-axis channel */}
+      <mesh
+        position={[selectorPos[0] - offset, 0, selectorPos[2] - offset]}
+        raycast={() => null}
+      >
+        <boxGeometry args={[channelWidth, gridSize, channelWidth]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.1}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      {/* Z-axis channel */}
+      <mesh
+        position={[selectorPos[0] - offset, selectorPos[1] - offset, 0]}
+        raycast={() => null}
+      >
+        <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
+        <meshBasicMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.1}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function KeyboardSelector({
   controlsRef,
 }: {
@@ -121,6 +176,7 @@ function KeyboardSelector({
 
   return (
     <group>
+      <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
       <ShapePreview controlsRef={controlsRef} />
       <mesh
         raycast={() => null}
@@ -155,6 +211,7 @@ export function Scene() {
     meta: { gridRef },
   } = useSimulation();
   const {
+    state: { selectorPos },
     actions: { setSelectorPos },
   } = useBrush();
 
@@ -244,9 +301,10 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <Cells 
-        grid={gridRef.current} 
-        margin={cellMargin} 
+      <Cells
+        grid={gridRef.current}
+        margin={cellMargin}
+        selectorPos={selectorPos}
         onClick={(e) => {
           if (running) return;
           e.stopPropagation();

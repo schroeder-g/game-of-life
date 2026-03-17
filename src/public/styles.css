@@ -986,3 +986,80 @@ kbd {
   gap: 12px;
   margin-top: 8px;
 }
+
+/* Selector Position Inputs */
+.selector-position-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coordinate-input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coordinate-input-container label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #8b949e;
+  width: 20px;
+}
+
+.coordinate-input-group {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.coordinate-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.coordinate-input::-webkit-outer-spin-button,
+.coordinate-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.coordinate-input:focus-within {
+  border-color: rgba(138, 180, 248, 0.5);
+}
+
+.coord-buttons {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.coord-buttons button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 8px;
+  font-size: 0.6rem;
+  line-height: 1;
+  flex: 1;
+  transition: background 0.2s;
+}
+
+.coord-buttons button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.coord-buttons button:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}

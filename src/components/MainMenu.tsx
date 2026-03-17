@@ -347,6 +347,76 @@ function RulesSection() {
   );
 }
 
+function SelectorPositionSection() {
+  const {
+    state: { gridSize },
+  } = useSimulation();
+  const {
+    state: { selectorPos },
+    actions: { setSelectorPos },
+  } = useBrush();
+
+  if (!selectorPos) {
+    return null;
+  }
+
+  const handleCoordinateChange = (axis: "x" | "y" | "z", value: string) => {
+    const numValue = parseInt(value, 10);
+    if (isNaN(numValue) || numValue < 0 || numValue >= gridSize) {
+      // Invalid input is not updated
+      return;
+    }
+
+    const newPos: [number, number, number] = [...selectorPos];
+    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+    newPos[axisIndex] = numValue;
+    setSelectorPos(newPos);
+  };
+
+  const increment = (axis: "x" | "y" | "z") => {
+    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+    const currentValue = selectorPos[axisIndex];
+    if (currentValue < gridSize - 1) {
+      handleCoordinateChange(axis, String(currentValue + 1));
+    }
+  };
+
+  const decrement = (axis: "x" | "y" | "z") => {
+    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+    const currentValue = selectorPos[axisIndex];
+    if (currentValue > 0) {
+      handleCoordinateChange(axis, String(currentValue - 1));
+    }
+  };
+
+  return (
+    <section className="menu-section">
+      <h3 style={{ cursor: "default" }}>Cursor Position</h3>
+      <div className="selector-position-section">
+        {(["x", "y", "z"] as const).map((axis) => (
+          <div key={axis} className="coordinate-input-container">
+            <label>{axis.toUpperCase()}</label>
+            <div className="coordinate-input-group">
+              <input
+                type="number"
+                className="coordinate-input"
+                value={selectorPos[{ x: 0, y: 1, z: 2 }[axis]]}
+                onChange={(e) => handleCoordinateChange(axis, e.target.value)}
+                min={0}
+                max={gridSize - 1}
+              />
+              <div className="coord-buttons">
+                <button onClick={() => increment(axis)}>▲</button>
+                <button onClick={() => decrement(axis)}>▼</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ShapeBrushSection() {
   const {
     state: { gridSize },
@@ -795,6 +865,7 @@ export function MainMenu() {
           {!rotationMode && <SceneManagementSection />}
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
+          {!rotationMode && <SelectorPositionSection />}
           {!rotationMode && <ShapeBrushSection />}
         </div>
       </aside>
