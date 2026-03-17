@@ -43,7 +43,8 @@ function ActionsSection() {
     actions: {
       setSpeed, applyCells, setDensity, setSurviveMin, setSurviveMax,
       setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
-      setNeighborFaces, setNeighborEdges, setNeighborCorners
+      setNeighborFaces, setNeighborEdges, setNeighborCorners,
+      fitDisplay
     },
   } = useSimulation();
 
@@ -72,6 +73,7 @@ function ActionsSection() {
       if (config.settings.neighborCorners !== undefined) {
         setNeighborCorners(config.settings.neighborCorners);
       }
+      fitDisplay();
     }
   };
 
@@ -229,6 +231,7 @@ function RulesSection() {
       setNeighborFaces,
       setNeighborEdges,
       setNeighborCorners,
+      fitDisplay,
     },
   } = useSimulation();
 
@@ -531,6 +534,7 @@ function SceneManagementSection() {
       if (config.settings.neighborCorners !== undefined) {
         setNeighborCorners(config.settings.neighborCorners);
       }
+      fitDisplay();
     });
   };
 
