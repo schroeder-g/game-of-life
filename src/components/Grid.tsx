@@ -28,10 +28,13 @@ function KeyboardCameraControls() {
     backward: false,
     left: false,
     right: false,
+    up: false,
+    down: false,
   });
 
   const velocity = useRef({
     panX: 0,
+    panY: 0,
     dolly: 0,
   });
 
@@ -41,21 +44,29 @@ function KeyboardCameraControls() {
       if (!rotationMode) return;
 
       switch (e.key.toLowerCase()) {
-        case "w":
+        case "x": // forward (dolly in)
           e.preventDefault();
           movement.current.forward = true;
           break;
-        case "x":
+        case "w": // backward (dolly out)
           e.preventDefault();
           movement.current.backward = true;
           break;
-        case "a":
+        case "k": // pan left
           e.preventDefault();
           movement.current.left = true;
           break;
-        case "d":
+        case ";": // pan right
           e.preventDefault();
           movement.current.right = true;
+          break;
+        case ".": // pan up
+          e.preventDefault();
+          movement.current.up = true;
+          break;
+        case "o": // pan down
+          e.preventDefault();
+          movement.current.down = true;
           break;
       }
     };
@@ -64,21 +75,29 @@ function KeyboardCameraControls() {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
 
       switch (e.key.toLowerCase()) {
-        case "w":
+        case "x":
           e.preventDefault();
           movement.current.forward = false;
           break;
-        case "x":
+        case "w":
           e.preventDefault();
           movement.current.backward = false;
           break;
-        case "a":
+        case "k":
           e.preventDefault();
           movement.current.left = false;
           break;
-        case "d":
+        case ";":
           e.preventDefault();
           movement.current.right = false;
+          break;
+        case ".":
+          e.preventDefault();
+          movement.current.up = false;
+          break;
+        case "o":
+          e.preventDefault();
+          movement.current.down = false;
           break;
       }
     };
@@ -99,7 +118,10 @@ function KeyboardCameraControls() {
       movement.current.backward = false;
       movement.current.left = false;
       movement.current.right = false;
+      movement.current.up = false;
+      movement.current.down = false;
       velocity.current.panX = 0;
+      velocity.current.panY = 0;
       velocity.current.dolly = 0;
       return;
     }
@@ -123,6 +145,21 @@ function KeyboardCameraControls() {
       velocity.current.panX *= damping;
     }
 
+    // Panning (up/down)
+    if (movement.current.up) {
+      velocity.current.panY = Math.min(
+        velocity.current.panY + acceleration * delta,
+        maxSpeed,
+      );
+    } else if (movement.current.down) {
+      velocity.current.panY = Math.max(
+        velocity.current.panY - acceleration * delta,
+        -maxSpeed,
+      );
+    } else {
+      velocity.current.panY *= damping;
+    }
+
     // Dollying (forward/backward)
     if (movement.current.forward) {
       velocity.current.dolly = Math.min(
@@ -138,11 +175,21 @@ function KeyboardCameraControls() {
       velocity.current.dolly *= damping;
     }
 
-    if (Math.abs(velocity.current.panX) > 0.01) {
-      // Positive x pans left, negative x pans right
-      panCamera(velocity.current.panX * delta, 0);
-    } else {
+    const hasPanX = Math.abs(velocity.current.panX) > 0.01;
+    const hasPanY = Math.abs(velocity.current.panY) > 0.01;
+
+    if (hasPanX || hasPanY) {
+      panCamera(
+        hasPanX ? velocity.current.panX * delta : 0,
+        hasPanY ? velocity.current.panY * delta : 0,
+      );
+    }
+
+    if (!hasPanX) {
       velocity.current.panX = 0;
+    }
+    if (!hasPanY) {
+      velocity.current.panY = 0;
     }
 
     if (Math.abs(velocity.current.dolly) > 0.01) {
