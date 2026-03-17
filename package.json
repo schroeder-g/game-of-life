@@ -4,8 +4,8 @@
   "scripts": {
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/public/index.tsx --outdir dist",
-    "deploy": "./deploy.sh",
-    "deploy:test": "./deploy-test.sh"
+    "deploy": "./deploy.sh prod",
+    "deploy:test": "./deploy.sh test"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.0",
