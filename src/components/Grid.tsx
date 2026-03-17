@@ -1,4 +1,4 @@
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { GizmoViewport, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -324,6 +324,7 @@ export function Scene() {
       />
       <BoundingBox size={gridRef.current.size} />
       {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
+      <GizmoViewport axisColors={['#f75858', '#58f758', '#5858f7']} labelColor="white" />
       <OrbitControls
         ref={controlsRef}
         makeDefault
