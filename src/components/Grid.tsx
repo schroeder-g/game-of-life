@@ -17,94 +17,6 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
-function KeyboardCameraControls() {
-  const {
-    state: { rotationMode },
-    actions: { panCamera, dollyCamera },
-  } = useSimulation();
-
-  const movement = useRef({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
-      if (!rotationMode) return;
-
-      switch (e.key.toLowerCase()) {
-        case "w":
-          e.preventDefault();
-          movement.current.forward = true;
-          break;
-        case "x":
-          e.preventDefault();
-          movement.current.backward = true;
-          break;
-        case "a":
-          e.preventDefault();
-          movement.current.left = true;
-          break;
-        case "d":
-          e.preventDefault();
-          movement.current.right = true;
-          break;
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
-
-      switch (e.key.toLowerCase()) {
-        case "w":
-          e.preventDefault();
-          movement.current.forward = false;
-          break;
-        case "x":
-          e.preventDefault();
-          movement.current.backward = false;
-          break;
-        case "a":
-          e.preventDefault();
-          movement.current.left = false;
-          break;
-        case "d":
-          e.preventDefault();
-          movement.current.right = false;
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [rotationMode]);
-
-  useFrame(() => {
-    if (!rotationMode) {
-      movement.current.forward = false;
-      movement.current.backward = false;
-      movement.current.left = false;
-      movement.current.right = false;
-      return;
-    }
-
-    if (movement.current.forward) dollyCamera("in");
-    if (movement.current.backward) dollyCamera("out");
-    if (movement.current.left) panCamera(1, 0); // pan left
-    if (movement.current.right) panCamera(-1, 0); // pan right
-  });
-
-  return null;
-}
-
 function ShapePreview({ controlsRef }: { controlsRef: React.RefObject<any> }) {
   const {
     state: { gridSize },
@@ -405,7 +317,7 @@ export function Scene() {
       },
       panCamera: (x: number, y: number) => {
         if (!controlsRef.current || !cameraRef.current) return;
-        const panSpeed = 0.5;
+        const panSpeed = 10;
         if (x !== 0) {
           controlsRef.current.panLeft(x * panSpeed, cameraRef.current.matrix);
         }
@@ -416,7 +328,7 @@ export function Scene() {
       },
       dollyCamera: (direction: "in" | "out") => {
         if (!controlsRef.current) return;
-        const dollyScale = 1.02;
+        const dollyScale = 1.1;
         if (direction === "in") {
           controlsRef.current.dollyIn(dollyScale);
         } else {
@@ -465,7 +377,6 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <KeyboardCameraControls />
       <Cells
         grid={gridRef.current}
         margin={cellMargin}
