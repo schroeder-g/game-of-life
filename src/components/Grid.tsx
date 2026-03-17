@@ -1,4 +1,4 @@
-import { OrbitControls, PerspectiveCamera, Text } from "@react-three/drei";
+import { Html, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -159,11 +159,12 @@ function AxisLabels({ size }: { size: number }) {
   const [camSigns, setCamSigns] = useState(new THREE.Vector3());
   const half = size / 2;
   const padding = 1.5; // Distance from the edge
-  const textProps = {
+  const labelStyle: React.CSSProperties = {
     color: "silver",
-    fontSize: 0.25,
-    anchorX: "center" as const,
-    anchorY: "middle" as const,
+    fontSize: "12pt",
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    whiteSpace: "nowrap",
   };
 
   useFrame(({ camera }) => {
@@ -180,41 +181,41 @@ function AxisLabels({ size }: { size: number }) {
   return (
     <group>
       {/* X-AXIS */}
-      <Text
+      <Html
         position={[
           0,
           camSigns.y * (half + padding),
           camSigns.z * (half + padding),
         ]}
         visible={camSigns.y !== 0 && camSigns.z !== 0}
-        {...textProps}
+        center
       >
-        X-AXIS
-      </Text>
+        <div style={labelStyle}>X-AXIS</div>
+      </Html>
       {/* Y-AXIS */}
-      <Text
+      <Html
         position={[
           camSigns.x * (half + padding),
           0,
           camSigns.z * (half + padding),
         ]}
         visible={camSigns.x !== 0 && camSigns.z !== 0}
-        {...textProps}
+        center
       >
-        Y-AXIS
-      </Text>
+        <div style={labelStyle}>Y-AXIS</div>
+      </Html>
       {/* Z-AXIS */}
-      <Text
+      <Html
         position={[
           camSigns.x * (half + padding),
           camSigns.y * (half + padding),
           0,
         ]}
         visible={camSigns.x !== 0 && camSigns.y !== 0}
-        {...textProps}
+        center
       >
-        Z-AXIS
-      </Text>
+        <div style={labelStyle}>Z-AXIS</div>
+      </Html>
     </group>
   );
 }
