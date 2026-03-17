@@ -24,13 +24,11 @@ RUN BUILD_DATE=$(date "+%Y-%m-%d %H:%M:%S %Z") && sed -i "s/__VERSION__/$BUILD_D
 FROM oven/bun:latest
 WORKDIR /app
 
-# Copy the final built assets from the build stage.
-COPY --from=build /app/dist ./dist
-
-# Copy the production server.
-COPY --from=build /app/src/server.prod.ts ./server.prod.ts
+# Copy built assets and server with correct permissions for the 'bun' user.
+COPY --from=build --chown=bun:bun /app/dist ./dist
+COPY --from=build --chown=bun:bun /app/src/server.prod.ts ./server.prod.ts
 
 EXPOSE 8080
 
-# Run the server using Bun
+# Run the server using Bun. The base image is already configured to run as the 'bun' user.
 CMD ["bun", "run", "server.prod.ts"]
