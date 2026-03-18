@@ -242,8 +242,6 @@ function KeyboardCameraControls({
         }
       }
 
-      if (!rotationMode) return;
-
       switch (e.key.toLowerCase()) {
         case "w": // dolly in
           e.preventDefault();
@@ -381,29 +379,6 @@ function KeyboardCameraControls({
   }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState]);
 
   useFrame((_, delta) => {
-    if (!rotationMode) {
-      // Reset movement and velocity when not in rotation mode
-      movement.current.forward = false;
-      movement.current.backward = false;
-      movement.current.left = false;
-      movement.current.right = false;
-      movement.current.up = false;
-      movement.current.down = false;
-      movement.current.rotateLeft = false;
-      movement.current.rotateRight = false;
-      movement.current.rotateUp = false;
-      movement.current.rotateDown = false;
-      movement.current.rollLeft = false;
-      movement.current.rollRight = false;
-      velocity.current.panX = 0;
-      velocity.current.panY = 0;
-      velocity.current.dolly = 0;
-      velocity.current.rotateX = 0;
-      velocity.current.rotateY = 0;
-      velocity.current.roll = 0;
-      return;
-    }
-
     const panMaxSpeed = panSpeed;
     const dollyMaxSpeed = panSpeed * 1.5;
 
