@@ -31,7 +31,7 @@ function KeyboardCameraControls({
   rotationSpeed: number;
 }) {
   const {
-    state: { rotationMode },
+    state: { rotationMode, invertRotation },
   } = useSimulation();
 
   const movement = useRef({
@@ -88,13 +88,21 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.up = true;
           break;
-        case ";": // rotate left
+        case ";": // rotate left/right
           e.preventDefault();
-          movement.current.rotateLeft = true;
+          if (invertRotation) {
+            movement.current.rotateRight = true;
+          } else {
+            movement.current.rotateLeft = true;
+          }
           break;
-        case "k": // rotate right
+        case "k": // rotate right/left
           e.preventDefault();
-          movement.current.rotateRight = true;
+          if (invertRotation) {
+            movement.current.rotateLeft = true;
+          } else {
+            movement.current.rotateRight = true;
+          }
           break;
         case "o": // rotate backward (pitch up)
           e.preventDefault();
@@ -146,9 +154,11 @@ function KeyboardCameraControls({
         case ";":
           e.preventDefault();
           movement.current.rotateLeft = false;
+          movement.current.rotateRight = false;
           break;
         case "k":
           e.preventDefault();
+          movement.current.rotateLeft = false;
           movement.current.rotateRight = false;
           break;
         case "o":
@@ -177,7 +187,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode]);
+  }, [rotationMode, invertRotation]);
 
   useFrame((_, delta) => {
     if (!rotationMode) {

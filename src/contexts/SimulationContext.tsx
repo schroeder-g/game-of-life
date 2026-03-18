@@ -27,6 +27,7 @@ const defaults = {
   neighborCorners: 0,
   panSpeed: 24,
   rotationSpeed: 50,
+  invertRotation: 1,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -51,6 +52,7 @@ export interface SimulationState {
   hasPastHistory: boolean;
   panSpeed: number;
   rotationSpeed: number;
+  invertRotation: boolean;
 }
 
 export interface SimulationActions {
@@ -70,6 +72,7 @@ export interface SimulationActions {
   setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
   setPanSpeed: (speed: number) => void;
   setRotationSpeed: (speed: number) => void;
+  setInvertRotation: (val: boolean) => void;
 
   playStop: () => void;
   step: () => void;
@@ -171,6 +174,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [rotationSpeed, setRotationSpeed] = useState(
     storedSettings.rotationSpeed,
   );
+  const [invertRotation, setInvertRotation] = useState(
+    Boolean(storedSettings.invertRotation),
+  );
 
   const [neighborFaces, setNeighborFaces] = useState(
     Boolean(storedSettings.neighborFaces),
@@ -211,6 +217,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborCorners: neighborCorners ? 1 : 0,
       panSpeed,
       rotationSpeed,
+      invertRotation: invertRotation ? 1 : 0,
     };
     saveSettings(settings);
   }, [
@@ -228,6 +235,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     neighborCorners,
     panSpeed,
     rotationSpeed,
+    invertRotation,
   ]);
 
   const handleGridSizeChange = useCallback((newSize: number) => {
@@ -407,6 +415,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       hasPastHistory,
       panSpeed,
       rotationSpeed,
+      invertRotation,
     },
     actions: {
       setSpeed,
@@ -422,6 +431,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRotationMode: handleSetRotationMode,
       setPanSpeed,
       setRotationSpeed,
+      setInvertRotation,
       playStop,
       step,
       stepBackward,

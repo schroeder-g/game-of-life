@@ -482,8 +482,8 @@ function ShapeBrushSection() {
 
 function CameraControlSection() {
   const {
-    state: { panSpeed, rotationSpeed },
-    actions: { setPanSpeed, setRotationSpeed },
+    state: { panSpeed, rotationSpeed, invertRotation },
+    actions: { setPanSpeed, setRotationSpeed, setInvertRotation },
   } = useSimulation();
 
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -526,6 +526,15 @@ function CameraControlSection() {
               step={1}
               value={rotationSpeed}
               onChange={(e) => setRotationSpeed(Number(e.target.value))}
+            />
+          </label>
+          <label className="control-label row">
+            <span>Invert Yaw</span>
+            <input
+              type="checkbox"
+              className="glass-checkbox"
+              checked={invertRotation}
+              onChange={(e) => setInvertRotation(e.target.checked)}
             />
           </label>
         </>
