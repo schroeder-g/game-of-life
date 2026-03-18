@@ -511,7 +511,7 @@ function CameraControlSection() {
             <input
               type="range"
               min={1}
-              max={60}
+              max={100}
               step={1}
               value={panSpeed}
               onChange={(e) => setPanSpeed(Number(e.target.value))}
