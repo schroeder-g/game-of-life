@@ -8,6 +8,63 @@ import { generateShape } from "../core/shapes";
 import { useKeyboardSelector } from "../hooks/useKeyboardSelector";
 import { Cells } from "./Cell";
 
+function isCubeVisible(
+  cube: THREE.Group,
+  camera: THREE.Camera,
+  gridSize: number,
+): boolean {
+  if (!cube) return true;
+
+  const halfSize = gridSize / 2;
+  const corners = [
+    new THREE.Vector3(halfSize, halfSize, halfSize),
+    new THREE.Vector3(halfSize, halfSize, -halfSize),
+    new THREE.Vector3(halfSize, -halfSize, halfSize),
+    new THREE.Vector3(halfSize, -halfSize, -halfSize),
+    new THREE.Vector3(-halfSize, halfSize, halfSize),
+    new THREE.Vector3(-halfSize, halfSize, -halfSize),
+    new THREE.Vector3(-halfSize, -halfSize, halfSize),
+    new THREE.Vector3(-halfSize, -halfSize, -halfSize),
+  ];
+
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity,
+    minZ = Infinity,
+    maxZ = -Infinity;
+
+  for (const corner of corners) {
+    corner.applyMatrix4(cube.matrixWorld);
+    corner.project(camera);
+    minX = Math.min(minX, corner.x);
+    maxX = Math.max(maxX, corner.x);
+    minY = Math.min(minY, corner.y);
+    maxY = Math.max(maxY, corner.y);
+    minZ = Math.min(minZ, corner.z);
+    maxZ = Math.max(maxZ, corner.z);
+  }
+
+  if (minZ > 1 || maxZ < -1) {
+    // All points are outside the near/far planes.
+    return false;
+  }
+
+  const overlapX = Math.max(0, Math.min(maxX, 1) - Math.max(minX, -1));
+  const spanX = maxX - minX;
+  if (spanX > 1e-6 && overlapX / spanX < 0.05) {
+    return false;
+  }
+
+  const overlapY = Math.max(0, Math.min(maxY, 1) - Math.max(minY, -1));
+  const spanY = maxY - minY;
+  if (spanY > 1e-6 && overlapY / spanY < 0.05) {
+    return false;
+  }
+
+  return true;
+}
+
 export function BoundingBox({ size }: { size: number }) {
   return (
     <lineSegments raycast={() => null}>
@@ -23,12 +80,14 @@ function KeyboardCameraControls({
   cubeRef,
   panSpeed,
   rotationSpeed,
+  gridSize,
 }: {
   controlsRef: React.RefObject<any>;
   cameraRef: React.RefObject<THREE.PerspectiveCamera>;
   cubeRef: React.RefObject<THREE.Group>;
   panSpeed: number;
   rotationSpeed: number;
+  gridSize: number;
 }) {
   const {
     state: { rotationMode, invertRotation },
@@ -332,7 +391,8 @@ function KeyboardCameraControls({
 
 
     if (Math.abs(velocity.current.roll) > 0.01) {
-      if (cameraRef.current && controlsRef.current) {
+      if (cameraRef.current && controlsRef.current && cubeRef.current) {
+        const oldUp = cameraRef.current.up.clone();
         const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
 
         const camera = cameraRef.current;
@@ -344,7 +404,12 @@ function KeyboardCameraControls({
         quaternion.setFromAxisAngle(forward, rollAngleRad);
 
         camera.up.applyQuaternion(quaternion);
-        controls.update();
+
+        if (!isCubeVisible(cubeRef.current, camera, gridSize)) {
+          camera.up.copy(oldUp);
+        } else {
+          controls.update();
+        }
       }
     } else {
       velocity.current.roll = 0;
@@ -377,17 +442,38 @@ function KeyboardCameraControls({
       }
 
       if (panOffset.lengthSq() > 0) {
+        const oldPosition = camera.position.clone();
+        const oldTarget = controls.target.clone();
+
         camera.position.add(panOffset);
         controls.target.add(panOffset);
-        needsUpdate = true;
+
+        if (
+          cubeRef.current &&
+          !isCubeVisible(cubeRef.current, camera, gridSize)
+        ) {
+          camera.position.copy(oldPosition);
+          controls.target.copy(oldTarget);
+        } else {
+          needsUpdate = true;
+        }
       }
 
       if (Math.abs(velocity.current.dolly) > 0.01) {
+        const oldPosition = camera.position.clone();
         const dollyOffset = forward
           .clone()
           .multiplyScalar(velocity.current.dolly * delta);
         camera.position.add(dollyOffset);
-        needsUpdate = true;
+
+        if (
+          cubeRef.current &&
+          !isCubeVisible(cubeRef.current, camera, gridSize)
+        ) {
+          camera.position.copy(oldPosition);
+        } else {
+          needsUpdate = true;
+        }
       } else {
         velocity.current.dolly = 0;
       }
@@ -397,6 +483,9 @@ function KeyboardCameraControls({
 
       if (cubeRef.current && cameraRef.current) {
         const camera = cameraRef.current;
+        const oldQuaternion = cubeRef.current.quaternion.clone();
+        let rotated = false;
+
         if (Math.abs(rotateX) > 0) {
           // Yaw
           const cameraUp = new THREE.Vector3().setFromMatrixColumn(
@@ -404,6 +493,7 @@ function KeyboardCameraControls({
             1,
           );
           cubeRef.current.rotateOnWorldAxis(cameraUp, -rotateX);
+          rotated = true;
         }
         if (Math.abs(rotateY) > 0) {
           // Pitch
@@ -412,6 +502,11 @@ function KeyboardCameraControls({
             0,
           );
           cubeRef.current.rotateOnWorldAxis(cameraRight, rotateY);
+          rotated = true;
+        }
+
+        if (rotated && !isCubeVisible(cubeRef.current, camera, gridSize)) {
+          cubeRef.current.quaternion.copy(oldQuaternion);
         }
       }
 
@@ -807,6 +902,7 @@ export function Scene() {
         cubeRef={cubeRef}
         panSpeed={panSpeed}
         rotationSpeed={rotationSpeed}
+        gridSize={gridSize}
       />
       <group ref={cubeRef}>
         <Cells
