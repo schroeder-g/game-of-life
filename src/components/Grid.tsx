@@ -187,7 +187,7 @@ function KeyboardCameraControls({
 
   const moveCursor = React.useCallback(
     (direction: "up" | "down" | "left" | "right") => {
-      if (!cameraRef.current || !cubeRef.current || !selectorPos) return;
+      if (!cameraRef.current || !cubeRef.current) return;
 
       const camera = cameraRef.current;
       const cube = cubeRef.current;
@@ -268,15 +268,17 @@ function KeyboardCameraControls({
       const dy = moveAxis.y * moveDirection;
       const dz = moveAxis.z * moveDirection;
 
-      const newPos: [number, number, number] = [
-        Math.max(0, Math.min(gridSize - 1, selectorPos[0] + dx)),
-        Math.max(0, Math.min(gridSize - 1, selectorPos[1] + dy)),
-        Math.max(0, Math.min(gridSize - 1, selectorPos[2] + dz)),
-      ];
-
-      setSelectorPos(newPos);
+      setSelectorPos((prevSelectorPos) => {
+        if (!prevSelectorPos) return null;
+        const newPos: [number, number, number] = [
+          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[0] + dx)),
+          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[1] + dy)),
+          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[2] + dz)),
+        ];
+        return newPos;
+      });
     },
-    [cameraRef, cubeRef, selectorPos, setSelectorPos, gridSize],
+    [cameraRef, cubeRef, setSelectorPos, gridSize],
   );
 
   useEffect(() => {
@@ -895,14 +897,23 @@ function KeyboardCameraControls({
   return null;
 }
 
-function ShapePreview({ controlsRef }: { controlsRef: React.RefObject<any> }) {
+function ShapePreview({
+  controlsRef,
+  rotateOffsets,
+}: {
+  controlsRef: React.RefObject<any>;
+  rotateOffsets: (
+    offsets: [number, number, number][],
+    azimuth: number,
+    polar: number,
+  ) => [number, number, number][];
+}) {
   const {
     state: { gridSize },
   } = useSimulation();
   const {
     state: { selectedShape, shapeSize, isHollow, selectorPos },
   } = useBrush();
-  const { rotateOffsets } = useKeyboardSelector(controlsRef as any);
   const offset = (gridSize - 1) / 2;
   const [azimuth, setAzimuth] = useState(0);
   const [polar, setPolar] = useState(Math.PI / 4);
@@ -1102,7 +1113,7 @@ function KeyboardSelector({
   } = useBrush();
 
   // Attach keyboard listeners
-  useKeyboardSelector(controlsRef as any);
+  const { rotateOffsets } = useKeyboardSelector(controlsRef as any);
 
   if (!selectorPos) return null;
 
@@ -1119,7 +1130,7 @@ function KeyboardSelector({
   return (
     <group>
       <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
-      <ShapePreview controlsRef={controlsRef} />
+      <ShapePreview controlsRef={controlsRef} rotateOffsets={rotateOffsets} />
       <mesh
         raycast={() => null}
         position={[
