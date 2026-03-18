@@ -979,30 +979,38 @@ export function Scene() {
         controlsRef.current.update();
       },
       squareUp: () => {
-        if (!controlsRef.current) return;
-        // Snap to nearest 90 degree azimuthal and 90 degree polar
+        if (!controlsRef.current || !cubeRef.current) return;
+
+        // Reset cube rotation to be aligned with world axes
+        cubeRef.current.quaternion.identity();
+
+        // Snap camera to nearest 90 degree azimuthal and level polar angle
         const azimuth = controlsRef.current.getAzimuthalAngle();
-        const snappedAzimuth = Math.round(azimuth / (Math.PI / 2)) * (Math.PI / 2);
-        
-        // We want front face at 90 degrees to camera. 
-        // OrbitControls use polar and azimuthal. 
-        // Polar PI/2 is level.
-        
-        const distance = cameraRef.current?.position.distanceTo(controlsRef.current.target) ?? 30;
-        
-        // Calculate new position based on snapped angles
-        const x = distance * Math.sin(snappedAzimuth) * Math.sin(Math.PI / 2);
-        const y = distance * Math.cos(Math.PI / 2);
-        const z = distance * Math.cos(snappedAzimuth) * Math.sin(Math.PI / 2);
-        
-        cameraRef.current?.position.set(x, y, z).add(controlsRef.current.target);
+        const snappedAzimuth =
+          Math.round(azimuth / (Math.PI / 2)) * (Math.PI / 2);
+        const snappedPolar = Math.PI / 2; // Level with the horizon
+
+        const distance =
+          cameraRef.current?.position.distanceTo(controlsRef.current.target) ??
+          30;
+
+        // Calculate new camera position based on snapped angles
+        const x =
+          distance * Math.sin(snappedAzimuth) * Math.sin(snappedPolar);
+        const y = distance * Math.cos(snappedPolar);
+        const z =
+          distance * Math.cos(snappedAzimuth) * Math.sin(snappedPolar);
+
+        cameraRef.current?.position
+          .set(x, y, z)
+          .add(controlsRef.current.target);
         controlsRef.current.update();
       },
     };
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef]);
+  }, [cameraActionsRef, gridRef, cubeRef]);
 
   useFrame((state) => {
     if (running) {
