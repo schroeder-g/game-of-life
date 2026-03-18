@@ -185,6 +185,7 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
       if (!camera) return;
 
       const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const upVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
       const forwardVec = new THREE.Vector3()
         .setFromMatrixColumn(camera.matrix, 2)
         .negate();
@@ -210,9 +211,9 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
 
       if (e.shiftKey) {
         if (e.key === "ArrowUp") {
-          dy = 1;
+          [dx, dy, dz] = quantize(forwardVec);
         } else if (e.key === "ArrowDown") {
-          dy = -1;
+          [dx, dy, dz] = quantize(forwardVec.clone().negate());
         }
       } else {
         if (e.key === "ArrowRight") {
@@ -220,9 +221,9 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
         } else if (e.key === "ArrowLeft") {
           [dx, dy, dz] = quantize(rightVec.clone().negate());
         } else if (e.key === "ArrowUp") {
-          [dx, dy, dz] = quantize(forwardVec);
+          [dx, dy, dz] = quantize(upVec);
         } else if (e.key === "ArrowDown") {
-          [dx, dy, dz] = quantize(forwardVec.clone().negate());
+          [dx, dy, dz] = quantize(upVec.clone().negate());
         }
       }
 

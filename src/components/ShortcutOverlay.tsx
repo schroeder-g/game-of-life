@@ -153,14 +153,14 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                 <h3>Cursor & Cells</h3>
                 <div className="shortcut-row">
                   <span className="shortcut-desc">
-                    Move Cursor (camera relative)
+                    Move Cursor (screen relative)
                   </span>
                   <div className="shortcut-keys">
                     <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>
                   </div>
                 </div>
                 <div className="shortcut-row">
-                  <span className="shortcut-desc">Move Cursor (Y-axis)</span>
+                  <span className="shortcut-desc">Move Cursor In/Out</span>
                   <div className="shortcut-keys">
                     <kbd>⇧ Shift</kbd> <span>+</span> <kbd>↑</kbd> <kbd>↓</kbd>
                   </div>
