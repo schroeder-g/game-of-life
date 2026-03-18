@@ -1081,8 +1081,12 @@ export function Scene() {
         }}
       />
         <BoundingBox size={gridRef.current.size} />
-        <AxisLabels size={gridRef.current.size} />
-        {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
+        {!rotationMode && (
+          <>
+            <AxisLabels size={gridRef.current.size} />
+            <KeyboardSelector controlsRef={controlsRef} />
+          </>
+        )}
       </group>
       <OrbitControls
         ref={controlsRef}
