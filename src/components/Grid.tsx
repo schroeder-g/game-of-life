@@ -126,6 +126,7 @@ function KeyboardCameraControls({
 }) {
   const {
     state: { rotationMode, invertRotation },
+    actions: { setRotationMode },
   } = useSimulation();
 
   const movement = useRef({
@@ -163,6 +164,17 @@ function KeyboardCameraControls({
           ((target as HTMLInputElement).type === "text" ||
             (target as HTMLInputElement).type === "number"))
       ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        setRotationMode(false); // Edit mode
+        return;
+      }
+      if (e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        setRotationMode(true); // View mode
         return;
       }
 
@@ -327,7 +339,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode]);
 
   useFrame((_, delta) => {
     if (!rotationMode) {
