@@ -250,14 +250,14 @@ function KeyboardCameraControls({
 
     // Rotation (left/right)
     if (movement.current.rotateRight) {
-      velocity.current.rotateX = Math.min(
-        velocity.current.rotateX + acceleration * delta,
-        rotateMaxSpeed,
-      );
-    } else if (movement.current.rotateLeft) {
       velocity.current.rotateX = Math.max(
         velocity.current.rotateX - acceleration * delta,
         -rotateMaxSpeed,
+      );
+    } else if (movement.current.rotateLeft) {
+      velocity.current.rotateX = Math.min(
+        velocity.current.rotateX + acceleration * delta,
+        rotateMaxSpeed,
       );
     } else {
       velocity.current.rotateX *= damping;
