@@ -1003,6 +1003,9 @@ export function Scene() {
         // Reset cube rotation to be aligned with world axes
         cubeRef.current.quaternion.identity();
 
+        // Reset camera roll
+        cameraRef.current?.up.set(0, 1, 0);
+
         // Snap camera to nearest 90 degree azimuthal and level polar angle
         const azimuth = controlsRef.current.getAzimuthalAngle();
         const snappedAzimuth =
