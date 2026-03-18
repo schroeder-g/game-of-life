@@ -863,17 +863,35 @@ export function AppHeaderPanel() {
         </button>
         <button
           className="glass-button"
-          onClick={stepBackward}
-          disabled={running || !hasPastHistory}
-          data-tooltip-bottom={!hasPastHistory ? "No history to step back to" : "Step Backward"}
+          onClick={() => {
+            if (running) {
+              playStop();
+            }
+            stepBackward();
+          }}
+          disabled={!rotationMode || !hasPastHistory}
+          data-tooltip-bottom={
+            !rotationMode
+              ? "Stepping disabled in Edit mode"
+              : !hasPastHistory
+              ? "No history to step back to"
+              : "Step Backward"
+          }
         >
           ⏮
         </button>
         <button
           className="glass-button"
-          onClick={step}
-          disabled={running}
-          data-tooltip-bottom="Step"
+          onClick={() => {
+            if (running) {
+              playStop();
+            }
+            step();
+          }}
+          disabled={!rotationMode}
+          data-tooltip-bottom={
+            !rotationMode ? "Stepping disabled in Edit mode" : "Step Forward"
+          }
         >
           ⏭
         </button>

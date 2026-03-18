@@ -186,14 +186,18 @@ function KeyboardCameraControls({
         }
         if (e.key === "ArrowRight") {
           e.preventDefault();
-          if (!running) {
-            step();
+          if (running) {
+            playStop();
           }
+          step();
           return;
         }
         if (e.key === "ArrowLeft") {
           e.preventDefault();
-          if (!running && hasPastHistory) {
+          if (hasPastHistory) {
+            if (running) {
+              playStop();
+            }
             stepBackward();
           }
           return;
