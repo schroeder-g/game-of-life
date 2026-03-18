@@ -157,7 +157,7 @@ function KeyboardCameraControls({
     isAnimating: false,
     startQuaternion: new THREE.Quaternion(),
     targetQuaternion: new THREE.Quaternion(),
-    duration: 0.25,
+    duration: 1,
     startTime: 0,
   });
 
@@ -452,8 +452,8 @@ function KeyboardCameraControls({
           );
         }
       } else {
-        // ease out cubic
-        progress = 1 - Math.pow(1 - progress, 3);
+        // ease in cubic
+        progress = progress * progress * progress;
         if (cubeRef.current) {
           THREE.Quaternion.slerp(
             animationState.current.startQuaternion,
@@ -721,7 +721,11 @@ function KeyboardCameraControls({
       const rotateX = velocity.current.rotateX * delta;
       const rotateY = velocity.current.rotateY * delta;
 
-      if (cubeRef.current && cameraRef.current) {
+      if (
+        cubeRef.current &&
+        cameraRef.current &&
+        !animationState.current.isAnimating
+      ) {
         const camera = cameraRef.current;
         const oldQuaternion = cubeRef.current.quaternion.clone();
         let rotated = false;
