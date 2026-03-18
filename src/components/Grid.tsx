@@ -8,12 +8,28 @@ import { generateShape } from "../core/shapes";
 import { useKeyboardSelector } from "../hooks/useKeyboardSelector";
 import { Cells } from "./Cell";
 
-function isCubeVisible(
+interface CubeVisibility {
+  isOffScreen: boolean;
+  isOffScreenLeft: boolean;
+  isOffScreenRight: boolean;
+  isOffScreenTop: boolean;
+  isOffScreenBottom: boolean;
+}
+
+function getCubeVisibility(
   cube: THREE.Group,
   camera: THREE.Camera,
   gridSize: number,
-): boolean {
-  if (!cube) return true;
+): CubeVisibility {
+  const result: CubeVisibility = {
+    isOffScreen: false,
+    isOffScreenLeft: false,
+    isOffScreenRight: false,
+    isOffScreenTop: false,
+    isOffScreenBottom: false,
+  };
+
+  if (!cube) return result;
 
   const halfSize = gridSize / 2;
   const corners = [
@@ -47,22 +63,35 @@ function isCubeVisible(
 
   if (minZ > 1 || maxZ < -1) {
     // All points are outside the near/far planes.
-    return false;
+    result.isOffScreen = true;
+    return result;
   }
 
   const overlapX = Math.max(0, Math.min(maxX, 1) - Math.max(minX, -1));
   const spanX = maxX - minX;
   if (spanX > 1e-6 && overlapX / spanX < 0.05) {
-    return false;
+    result.isOffScreen = true;
+    const centerX = (minX + maxX) / 2;
+    if (centerX > 0) {
+      result.isOffScreenRight = true;
+    } else {
+      result.isOffScreenLeft = true;
+    }
   }
 
   const overlapY = Math.max(0, Math.min(maxY, 1) - Math.max(minY, -1));
   const spanY = maxY - minY;
   if (spanY > 1e-6 && overlapY / spanY < 0.05) {
-    return false;
+    result.isOffScreen = true;
+    const centerY = (minY + maxY) / 2;
+    if (centerY > 0) {
+      result.isOffScreenTop = true;
+    } else {
+      result.isOffScreenBottom = true;
+    }
   }
 
-  return true;
+  return result;
 }
 
 export function BoundingBox({ size }: { size: number }) {
@@ -405,7 +434,8 @@ function KeyboardCameraControls({
 
         camera.up.applyQuaternion(quaternion);
 
-        if (!isCubeVisible(cubeRef.current, camera, gridSize)) {
+        const visibility = getCubeVisibility(cubeRef.current, camera, gridSize);
+        if (visibility.isOffScreen) {
           camera.up.copy(oldUp);
         } else {
           controls.update();
@@ -448,12 +478,47 @@ function KeyboardCameraControls({
         camera.position.add(panOffset);
         controls.target.add(panOffset);
 
-        if (
-          cubeRef.current &&
-          !isCubeVisible(cubeRef.current, camera, gridSize)
-        ) {
-          camera.position.copy(oldPosition);
-          controls.target.copy(oldTarget);
+        if (cubeRef.current) {
+          const visibility = getCubeVisibility(
+            cubeRef.current,
+            camera,
+            gridSize,
+          );
+          if (visibility.isOffScreen) {
+            const panX = velocity.current.panX;
+            const panY = velocity.current.panY;
+
+            const cameraPanRight = panX > 0;
+            const cameraPanLeft = panX < 0;
+            const cameraPanUp = panY > 0; // q key, cube moves down
+            const cameraPanDown = panY < 0; // z key, cube moves up
+
+            const blockPanX =
+              (visibility.isOffScreenLeft && cameraPanRight) ||
+              (visibility.isOffScreenRight && cameraPanLeft);
+            const blockPanY =
+              (visibility.isOffScreenTop && cameraPanDown) ||
+              (visibility.isOffScreenBottom && cameraPanUp);
+
+            if (blockPanX && blockPanY) {
+              camera.position.copy(oldPosition);
+              controls.target.copy(oldTarget);
+            } else if (blockPanX) {
+              const panXOffset = right.clone().multiplyScalar(panX * delta);
+              camera.position.sub(panXOffset);
+              controls.target.sub(panXOffset);
+              needsUpdate = true;
+            } else if (blockPanY) {
+              const panYOffset = up.clone().multiplyScalar(panY * delta);
+              camera.position.sub(panYOffset);
+              controls.target.sub(panYOffset);
+              needsUpdate = true;
+            } else {
+              needsUpdate = true;
+            }
+          } else {
+            needsUpdate = true;
+          }
         } else {
           needsUpdate = true;
         }
@@ -466,11 +531,17 @@ function KeyboardCameraControls({
           .multiplyScalar(velocity.current.dolly * delta);
         camera.position.add(dollyOffset);
 
-        if (
-          cubeRef.current &&
-          !isCubeVisible(cubeRef.current, camera, gridSize)
-        ) {
-          camera.position.copy(oldPosition);
+        if (cubeRef.current) {
+          const visibility = getCubeVisibility(
+            cubeRef.current,
+            camera,
+            gridSize,
+          );
+          if (visibility.isOffScreen) {
+            camera.position.copy(oldPosition);
+          } else {
+            needsUpdate = true;
+          }
         } else {
           needsUpdate = true;
         }
@@ -505,8 +576,15 @@ function KeyboardCameraControls({
           rotated = true;
         }
 
-        if (rotated && !isCubeVisible(cubeRef.current, camera, gridSize)) {
-          cubeRef.current.quaternion.copy(oldQuaternion);
+        if (rotated) {
+          const visibility = getCubeVisibility(
+            cubeRef.current,
+            camera,
+            gridSize,
+          );
+          if (visibility.isOffScreen) {
+            cubeRef.current.quaternion.copy(oldQuaternion);
+          }
         }
       }
 
