@@ -125,8 +125,8 @@ function KeyboardCameraControls({
   } | null>;
 }) {
   const {
-    state: { rotationMode, invertRotation, running, hasPastHistory },
-    actions: { setRotationMode, playStop, step, stepBackward },
+    state: { rotationMode, invertRotation, running, hasPastHistory, hasInitialState },
+    actions: { setRotationMode, playStop, step, stepBackward, reset },
   } = useSimulation();
 
   const movement = useRef({
@@ -178,6 +178,14 @@ function KeyboardCameraControls({
         return;
       }
 
+      if (e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        if (hasInitialState) {
+          reset();
+        }
+        return;
+      }
+
       if (rotationMode) {
         if (e.key === " ") {
           e.preventDefault();
@@ -205,6 +213,11 @@ function KeyboardCameraControls({
       }
 
       if (cameraActionsRef.current) {
+        if (e.key.toLowerCase() === "f") {
+          e.preventDefault();
+          cameraActionsRef.current.fitDisplay();
+          return;
+        }
         if (e.key.toLowerCase() === "s") {
           e.preventDefault();
           cameraActionsRef.current.recenter();
@@ -232,11 +245,11 @@ function KeyboardCameraControls({
       if (!rotationMode) return;
 
       switch (e.key.toLowerCase()) {
-        case "x": // dolly in
+        case "w": // dolly in
           e.preventDefault();
           movement.current.forward = true;
           break;
-        case "w": // dolly out
+        case "x": // dolly out
           e.preventDefault();
           movement.current.backward = true;
           break;
@@ -248,13 +261,13 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.right = true;
           break;
-        case "q": // pan down
-          e.preventDefault();
-          movement.current.down = true;
-          break;
-        case "z": // pan up
+        case "q": // pan up
           e.preventDefault();
           movement.current.up = true;
+          break;
+        case "z": // pan down
+          e.preventDefault();
+          movement.current.down = true;
           break;
         case ";": // rotate left/right
           e.preventDefault();
@@ -305,11 +318,11 @@ function KeyboardCameraControls({
       }
 
       switch (e.key.toLowerCase()) {
-        case "x":
+        case "w":
           e.preventDefault();
           movement.current.forward = false;
           break;
-        case "w":
+        case "x":
           e.preventDefault();
           movement.current.backward = false;
           break;
@@ -323,11 +336,11 @@ function KeyboardCameraControls({
           break;
         case "q":
           e.preventDefault();
-          movement.current.down = false;
+          movement.current.up = false;
           break;
         case "z":
           e.preventDefault();
-          movement.current.up = false;
+          movement.current.down = false;
           break;
         case ";":
           e.preventDefault();
@@ -365,7 +378,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState]);
 
   useFrame((_, delta) => {
     if (!rotationMode) {

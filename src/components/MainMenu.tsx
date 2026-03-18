@@ -50,7 +50,7 @@ function ActionsSection() {
 
   const configOptions = Object.keys(savedConfigs);
 
-  const handleSelectConfig = (name: string) => {
+  const handleSelectConfig = useCallback((name: string) => {
     setSelectedConfigName(name);
     if (name && savedConfigs[name]) {
       const config = savedConfigs[name];
@@ -75,7 +75,18 @@ function ActionsSection() {
       }
       fitDisplay();
     }
-  };
+  }, [
+    setSelectedConfigName, savedConfigs, applyCells, setSpeed, setDensity,
+    setSurviveMin, setSurviveMax, setBirthMin, setBirthMax, setBirthMargin,
+    setCellMargin, setNeighborFaces, setNeighborEdges, setNeighborCorners,
+    fitDisplay
+  ]);
+
+  useEffect(() => {
+    if (!selectedConfigName && configOptions.length > 0) {
+      handleSelectConfig(configOptions[0]);
+    }
+  }, [selectedConfigName, configOptions, handleSelectConfig]);
 
   return (
     <section className="menu-section actions-section">
@@ -823,7 +834,7 @@ export function AppHeaderPanel() {
           className="glass-button mode-toggle-button"
           onClick={() => setRotationMode((prev) => !prev)}
           aria-label="Toggle mode"
-          data-tooltip-bottom="Switch Mode"
+          data-tooltip-bottom="Switch Mode (E/V)"
         >
           {rotationMode ? "Viewing" : "Editing"}
         </button>
@@ -832,7 +843,7 @@ export function AppHeaderPanel() {
           className="glass-button"
           onClick={fitDisplay}
           aria-label="Fit"
-          data-tooltip-bottom="Fit"
+          data-tooltip-bottom="Fit (F)"
         >
           <FitIcon />
         </button>
@@ -840,7 +851,7 @@ export function AppHeaderPanel() {
           className="glass-button"
           onClick={recenter}
           aria-label="Recenter"
-          data-tooltip-bottom="Recenter"
+          data-tooltip-bottom="Recenter (S)"
         >
           <RecenterIcon />
         </button>
@@ -848,7 +859,7 @@ export function AppHeaderPanel() {
           className="glass-button"
           onClick={squareUp}
           aria-label="Square Up"
-          data-tooltip-bottom="Square Up"
+          data-tooltip-bottom="Square Up (L)"
         >
           <SquareUpIcon />
         </button>
@@ -857,7 +868,7 @@ export function AppHeaderPanel() {
           className="glass-button primary"
           onClick={playStop}
           disabled={!rotationMode}
-          data-tooltip-bottom={!rotationMode ? "Playback disabled in Edit mode" : running ? "Pause" : "Play"}
+          data-tooltip-bottom={!rotationMode ? "Playback disabled in Edit mode" : running ? "Pause (Space)" : "Play (Space)"}
         >
           {running ? "⏸" : "▶"}
         </button>
@@ -875,7 +886,7 @@ export function AppHeaderPanel() {
               ? "Stepping disabled in Edit mode"
               : !hasPastHistory
               ? "No history to step back to"
-              : "Step Backward"
+              : "Step Backward (←)"
           }
         >
           ⏮
@@ -890,7 +901,7 @@ export function AppHeaderPanel() {
           }}
           disabled={!rotationMode}
           data-tooltip-bottom={
-            !rotationMode ? "Stepping disabled in Edit mode" : "Step Forward"
+            !rotationMode ? "Stepping disabled in Edit mode" : "Step Forward (→)"
           }
         >
           ⏭
@@ -899,7 +910,7 @@ export function AppHeaderPanel() {
           className="glass-button"
           onClick={reset}
           disabled={!hasInitialState}
-          data-tooltip-bottom={!hasInitialState ? "No initial state to reset to" : "Reset"}
+          data-tooltip-bottom={!hasInitialState ? "No initial state to reset to" : "Reset (R)"}
         >
           ↺
         </button>
