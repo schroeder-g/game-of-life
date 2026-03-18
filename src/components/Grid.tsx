@@ -361,14 +361,23 @@ function KeyboardCameraControls({
       const rotateX = velocity.current.rotateX * delta * 0.005;
       const rotateY = velocity.current.rotateY * delta * 0.005;
 
-      if (cubeRef.current) {
+      if (cubeRef.current && cameraRef.current) {
+        const camera = cameraRef.current;
         if (Math.abs(rotateX) > 0) {
           // Yaw
-          cubeRef.current.rotation.y += rotateX;
+          const cameraUp = new THREE.Vector3().setFromMatrixColumn(
+            camera.matrix,
+            1,
+          );
+          cubeRef.current.rotateOnWorldAxis(cameraUp, -rotateX);
         }
         if (Math.abs(rotateY) > 0) {
           // Pitch
-          cubeRef.current.rotation.x += rotateY;
+          const cameraRight = new THREE.Vector3().setFromMatrixColumn(
+            camera.matrix,
+            0,
+          );
+          cubeRef.current.rotateOnWorldAxis(cameraRight, rotateY);
         }
       }
 
