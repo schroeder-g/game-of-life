@@ -724,6 +724,7 @@ function KeyboardCameraControls({
       if (
         cubeRef.current &&
         cameraRef.current &&
+        rotationMode &&
         !animationState.current.isAnimating
       ) {
         const camera = cameraRef.current;
