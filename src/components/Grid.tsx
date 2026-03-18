@@ -26,15 +26,7 @@ function KeyboardCameraControls({
 }) {
   const {
     state: { rotationMode },
-    actions: { dollyCamera },
   } = useSimulation();
-  const { gl } = useThree();
-
-  const panState = useRef({
-    isPanning: false,
-    startX: 0,
-    startY: 0,
-  });
 
   const rotateState = useRef({
     isRotating: false,
@@ -211,10 +203,10 @@ function KeyboardCameraControls({
       return;
     }
 
-    const acceleration = 2000.0;
-    const panMaxSpeed = 120.0; // pixels/sec, approx 3 cells/sec
+    const acceleration = 30.0;
+    const panMaxSpeed = 3.0; // 3 cells/sec
     const rotateMaxSpeed = 208.0; // pixels/sec, approx 75 deg/sec
-    const dollyMaxSpeed = 10.0;
+    const dollyMaxSpeed = 3.0; // 3 cells/sec
     const rollMaxSpeed = 75.0; // degrees/sec
     const damping = 0.9; // friction for deceleration
 
@@ -308,46 +300,11 @@ function KeyboardCameraControls({
       velocity.current.dolly *= damping;
     }
 
-    const panKeyDown =
-      movement.current.left ||
-      movement.current.right ||
-      movement.current.up ||
-      movement.current.down;
-
     const rotateKeyDown =
       movement.current.rotateLeft ||
       movement.current.rotateRight ||
       movement.current.rotateUp ||
       movement.current.rotateDown;
-
-    if (panKeyDown && !panState.current.isPanning) {
-      panState.current.isPanning = true;
-      panState.current.startX = 0;
-      panState.current.startY = 0;
-      gl.domElement.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          button: 2,
-          buttons: 2,
-          clientX: 0,
-          clientY: 0,
-          pointerType: "mouse",
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-    } else if (!panKeyDown && panState.current.isPanning) {
-      panState.current.isPanning = false;
-      gl.domElement.dispatchEvent(
-        new PointerEvent("pointerup", {
-          button: 2,
-          clientX: panState.current.startX,
-          clientY: panState.current.startY,
-          pointerType: "mouse",
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-    }
 
     if (rotateKeyDown && !rotateState.current.isRotating) {
       rotateState.current.isRotating = true;
@@ -378,25 +335,6 @@ function KeyboardCameraControls({
       );
     }
 
-    if (panState.current.isPanning) {
-      const deltaX = velocity.current.panX * delta;
-      const deltaY = velocity.current.panY * delta;
-
-      if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
-        panState.current.startX += deltaX;
-        panState.current.startY += deltaY;
-        gl.domElement.dispatchEvent(
-          new PointerEvent("pointermove", {
-            buttons: 2,
-            clientX: panState.current.startX,
-            clientY: panState.current.startY,
-            pointerType: "mouse",
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      }
-    }
 
     if (rotateState.current.isRotating) {
       const deltaX = velocity.current.rotateX * delta;
@@ -418,15 +356,6 @@ function KeyboardCameraControls({
       }
     }
 
-    if (Math.abs(velocity.current.panX) < 0.01) {
-      velocity.current.panX = 0;
-    }
-    if (Math.abs(velocity.current.panY) < 0.01) {
-      velocity.current.panY = 0;
-    }
-    if (Math.abs(velocity.current.roll) < 0.01) {
-      velocity.current.roll = 0;
-    }
     if (Math.abs(velocity.current.roll) > 0.01) {
       if (cameraRef.current && controlsRef.current) {
         const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
@@ -453,10 +382,43 @@ function KeyboardCameraControls({
       velocity.current.rotateY = 0;
     }
 
-    if (Math.abs(velocity.current.dolly) > 0.01) {
-      dollyCamera(velocity.current.dolly * delta);
-    } else {
-      velocity.current.dolly = 0;
+    if (cameraRef.current && controlsRef.current) {
+      const camera = cameraRef.current;
+      const controls = controlsRef.current;
+
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      const forward = new THREE.Vector3()
+        .setFromMatrixColumn(camera.matrix, 2)
+        .negate();
+
+      const offset = new THREE.Vector3();
+
+      if (Math.abs(velocity.current.panX) > 0.01) {
+        offset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
+      } else {
+        velocity.current.panX = 0;
+      }
+
+      if (Math.abs(velocity.current.panY) > 0.01) {
+        offset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
+      } else {
+        velocity.current.panY = 0;
+      }
+
+      if (Math.abs(velocity.current.dolly) > 0.01) {
+        offset.add(
+          forward.clone().multiplyScalar(velocity.current.dolly * delta),
+        );
+      } else {
+        velocity.current.dolly = 0;
+      }
+
+      if (offset.lengthSq() > 0) {
+        camera.position.add(offset);
+        controls.target.add(offset);
+        controls.update();
+      }
     }
   });
 
@@ -780,16 +742,6 @@ export function Scene() {
         const offset = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), controlsRef.current.target);
         cameraRef.current?.position.add(offset);
         controlsRef.current.target.set(0, 0, 0);
-        controlsRef.current.update();
-      },
-      dollyCamera: (delta: number) => {
-        if (!controlsRef.current) return;
-        const dollyScale = 1 + Math.abs(delta) * 0.02;
-        if (delta > 0) {
-          controlsRef.current.dollyIn(dollyScale);
-        } else if (delta < 0) {
-          controlsRef.current.dollyOut(dollyScale);
-        }
         controlsRef.current.update();
       },
       squareUp: () => {

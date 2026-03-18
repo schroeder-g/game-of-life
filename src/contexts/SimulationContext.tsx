@@ -86,7 +86,6 @@ export interface SimulationActions {
   fitDisplay: () => void;
   recenter: () => void;
   squareUp: () => void;
-  dollyCamera: (delta: number) => void;
 }
 
 export interface SimulationMeta {
@@ -96,7 +95,6 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    dollyCamera: (delta: number) => void;
   } | null>;
 }
 
@@ -372,10 +370,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
-  const dollyCamera = useCallback(
-    (delta: number) => cameraActionsRef.current?.dollyCamera(delta),
-    [],
-  );
 
   const value: SimulationContextValue = {
     state: {
@@ -426,7 +420,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       fitDisplay,
       recenter,
       squareUp,
-      dollyCamera,
     },
     meta: {
       gridRef,
