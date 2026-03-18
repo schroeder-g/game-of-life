@@ -27,13 +27,6 @@ function KeyboardCameraControls({
   const {
     state: { rotationMode },
   } = useSimulation();
-  const { gl } = useThree();
-
-  const rotateState = useRef({
-    isRotating: false,
-    startX: 0,
-    startY: 0,
-  });
 
   const movement = useRef({
     forward: false,
@@ -301,61 +294,6 @@ function KeyboardCameraControls({
       velocity.current.dolly *= damping;
     }
 
-    const rotateKeyDown =
-      movement.current.rotateLeft ||
-      movement.current.rotateRight ||
-      movement.current.rotateUp ||
-      movement.current.rotateDown;
-
-    if (rotateKeyDown && !rotateState.current.isRotating) {
-      rotateState.current.isRotating = true;
-      rotateState.current.startX = 0;
-      rotateState.current.startY = 0;
-      gl.domElement.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          button: 0, // left-click for rotation
-          buttons: 1,
-          clientX: 0,
-          clientY: 0,
-          pointerType: "mouse",
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-    } else if (!rotateKeyDown && rotateState.current.isRotating) {
-      rotateState.current.isRotating = false;
-      gl.domElement.dispatchEvent(
-        new PointerEvent("pointerup", {
-          button: 0,
-          clientX: rotateState.current.startX,
-          clientY: rotateState.current.startY,
-          pointerType: "mouse",
-          bubbles: true,
-          cancelable: true,
-        }),
-      );
-    }
-
-
-    if (rotateState.current.isRotating) {
-      const deltaX = velocity.current.rotateX * delta;
-      const deltaY = velocity.current.rotateY * delta;
-
-      if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
-        rotateState.current.startX += deltaX;
-        rotateState.current.startY += deltaY;
-        gl.domElement.dispatchEvent(
-          new PointerEvent("pointermove", {
-            buttons: 1,
-            clientX: rotateState.current.startX,
-            clientY: rotateState.current.startY,
-            pointerType: "mouse",
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-      }
-    }
 
     if (Math.abs(velocity.current.roll) > 0.01) {
       if (cameraRef.current && controlsRef.current) {
@@ -376,12 +314,6 @@ function KeyboardCameraControls({
       velocity.current.roll = 0;
     }
 
-    if (Math.abs(velocity.current.rotateX) < 0.01) {
-      velocity.current.rotateX = 0;
-    }
-    if (Math.abs(velocity.current.rotateY) < 0.01) {
-      velocity.current.rotateY = 0;
-    }
 
     if (cameraRef.current && controlsRef.current) {
       const camera = cameraRef.current;
@@ -422,6 +354,37 @@ function KeyboardCameraControls({
         needsUpdate = true;
       } else {
         velocity.current.dolly = 0;
+      }
+
+      const rotateX = velocity.current.rotateX * delta * 0.005;
+      const rotateY = velocity.current.rotateY * delta * 0.005;
+
+      if (Math.abs(rotateX) > 0 || Math.abs(rotateY) > 0) {
+        const offset = new THREE.Vector3().subVectors(
+          camera.position,
+          controls.target,
+        );
+        const worldUp = new THREE.Vector3(0, 1, 0);
+
+        if (Math.abs(rotateX) > 0) {
+          offset.applyAxisAngle(worldUp, rotateX);
+        }
+        if (Math.abs(rotateY) > 0) {
+          const right = new THREE.Vector3()
+            .crossVectors(worldUp, offset)
+            .normalize();
+          offset.applyAxisAngle(right, rotateY);
+        }
+
+        camera.position.copy(controls.target).add(offset);
+        needsUpdate = true;
+      }
+
+      if (Math.abs(velocity.current.rotateX) < 0.01) {
+        velocity.current.rotateX = 0;
+      }
+      if (Math.abs(velocity.current.rotateY) < 0.01) {
+        velocity.current.rotateY = 0;
       }
 
       if (needsUpdate) {
