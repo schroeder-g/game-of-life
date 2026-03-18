@@ -212,12 +212,12 @@ function KeyboardCameraControls({
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
-    if (movement.current.left) {
+    if (movement.current.right) {
       velocity.current.panX = Math.min(
         velocity.current.panX + acceleration * delta,
         panMaxSpeed,
       );
-    } else if (movement.current.right) {
+    } else if (movement.current.left) {
       velocity.current.panX = Math.max(
         velocity.current.panX - acceleration * delta,
         -panMaxSpeed,
