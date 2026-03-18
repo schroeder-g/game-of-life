@@ -74,13 +74,13 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.right = true;
           break;
-        case "q": // rotate backward (pitch up)
+        case "q": // pan up
           e.preventDefault();
-          movement.current.rotateUp = true;
+          movement.current.up = true;
           break;
-        case "z": // rotate forward (pitch down)
+        case "z": // pan down
           e.preventDefault();
-          movement.current.rotateDown = true;
+          movement.current.down = true;
           break;
         case ";": // rotate left
           e.preventDefault();
@@ -90,13 +90,13 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.rotateRight = true;
           break;
-        case "o": // pan up
+        case "o": // rotate backward (pitch up)
           e.preventDefault();
-          movement.current.up = true;
+          movement.current.rotateUp = true;
           break;
-        case ".": // pan down
+        case ".": // rotate forward (pitch down)
           e.preventDefault();
-          movement.current.down = true;
+          movement.current.rotateDown = true;
           break;
         case "i": // barrel roll left
           e.preventDefault();
@@ -131,11 +131,11 @@ function KeyboardCameraControls({
           break;
         case "q":
           e.preventDefault();
-          movement.current.rotateUp = false;
+          movement.current.up = false;
           break;
         case "z":
           e.preventDefault();
-          movement.current.rotateDown = false;
+          movement.current.down = false;
           break;
         case ";":
           e.preventDefault();
@@ -147,11 +147,11 @@ function KeyboardCameraControls({
           break;
         case "o":
           e.preventDefault();
-          movement.current.up = false;
+          movement.current.rotateUp = false;
           break;
         case ".":
           e.preventDefault();
-          movement.current.down = false;
+          movement.current.rotateDown = false;
           break;
         case "i":
           e.preventDefault();
