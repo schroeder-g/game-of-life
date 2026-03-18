@@ -21,13 +21,19 @@ function KeyboardCameraControls({
   controlsRef,
   cameraRef,
   cubeRef,
+  panSpeed,
+  rotationSpeed,
+  rollSpeed,
 }: {
   controlsRef: React.RefObject<any>;
   cameraRef: React.RefObject<THREE.PerspectiveCamera>;
   cubeRef: React.RefObject<THREE.Group>;
+  panSpeed: number;
+  rotationSpeed: number;
+  rollSpeed: number;
 }) {
   const {
-    state: { rotationMode, panSpeed, rotationSpeed, rollSpeed },
+    state: { rotationMode },
   } = useSimulation();
 
   const movement = useRef({
@@ -643,7 +649,17 @@ function KeyboardSelector({
 
 export function Scene() {
   const {
-    state: { speed, cellMargin, rotationMode, running, community, gridSize },
+    state: {
+      speed,
+      cellMargin,
+      rotationMode,
+      running,
+      community,
+      gridSize,
+      panSpeed,
+      rotationSpeed,
+      rollSpeed,
+    },
     actions: { tick, setCommunity },
     meta: { gridRef },
   } = useSimulation();
@@ -764,6 +780,9 @@ export function Scene() {
         controlsRef={controlsRef}
         cameraRef={cameraRef}
         cubeRef={cubeRef}
+        panSpeed={panSpeed}
+        rotationSpeed={rotationSpeed}
+        rollSpeed={rollSpeed}
       />
       <group ref={cubeRef}>
         <Cells
