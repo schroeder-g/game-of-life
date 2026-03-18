@@ -154,7 +154,17 @@ function KeyboardCameraControls({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      const target = e.target as HTMLElement;
+      const tagName = target.tagName;
+      if (
+        tagName === "SELECT" ||
+        tagName === "TEXTAREA" ||
+        (tagName === "INPUT" &&
+          ((target as HTMLInputElement).type === "text" ||
+            (target as HTMLInputElement).type === "number"))
+      ) {
+        return;
+      }
 
       if (cameraActionsRef.current) {
         if (e.key.toLowerCase() === "s") {
@@ -232,7 +242,17 @@ function KeyboardCameraControls({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
+      const target = e.target as HTMLElement;
+      const tagName = target.tagName;
+      if (
+        tagName === "SELECT" ||
+        tagName === "TEXTAREA" ||
+        (tagName === "INPUT" &&
+          ((target as HTMLInputElement).type === "text" ||
+            (target as HTMLInputElement).type === "number"))
+      ) {
+        return;
+      }
 
       switch (e.key.toLowerCase()) {
         case "x":
