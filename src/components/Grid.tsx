@@ -204,6 +204,7 @@ function KeyboardCameraControls({
     }
 
     const acceleration = 30.0;
+    const dollyAcceleration = 60.0;
     const rotationAcceleration = 15.0;
     const rollAcceleration = 900.0; // degrees/sec^2
     const panMaxSpeed = panSpeed;
@@ -305,12 +306,12 @@ function KeyboardCameraControls({
     // Dollying (forward/backward)
     if (movement.current.backward) {
       velocity.current.dolly = Math.min(
-        velocity.current.dolly + acceleration * delta,
+        velocity.current.dolly + dollyAcceleration * delta,
         dollyMaxSpeed,
       );
     } else if (movement.current.forward) {
       velocity.current.dolly = Math.max(
-        velocity.current.dolly - acceleration * delta,
+        velocity.current.dolly - dollyAcceleration * delta,
         -dollyMaxSpeed,
       );
     } else {
