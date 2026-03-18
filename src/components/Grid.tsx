@@ -27,6 +27,7 @@ function KeyboardCameraControls({
   const {
     state: { rotationMode },
   } = useSimulation();
+  const { gl } = useThree();
 
   const rotateState = useRef({
     isRotating: false,
