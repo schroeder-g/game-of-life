@@ -245,11 +245,11 @@ function KeyboardCameraControls({
       switch (e.key.toLowerCase()) {
         case "w": // dolly in
           e.preventDefault();
-          movement.current.forward = true;
+          movement.current.backward = true;
           break;
         case "x": // dolly out
           e.preventDefault();
-          movement.current.backward = true;
+          movement.current.forward = true;
           break;
         case "a": // pan left
           e.preventDefault();
@@ -318,11 +318,11 @@ function KeyboardCameraControls({
       switch (e.key.toLowerCase()) {
         case "w":
           e.preventDefault();
-          movement.current.forward = false;
+          movement.current.backward = false;
           break;
         case "x":
           e.preventDefault();
-          movement.current.backward = false;
+          movement.current.forward = false;
           break;
         case "a":
           e.preventDefault();
@@ -887,6 +887,7 @@ function KeyboardSelector({
 }) {
   const {
     state: { gridSize },
+    meta: { gridRef },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -896,6 +897,14 @@ function KeyboardSelector({
   useKeyboardSelector(controlsRef as any);
 
   if (!selectorPos) return null;
+
+  const isAlive = gridRef.current.get(
+    selectorPos[0],
+    selectorPos[1],
+    selectorPos[2],
+  );
+  const cursorColor = isAlive ? "#00ff00" : "#ffffff";
+  const cursorOpacity = isAlive ? 0.5 : 0.3;
 
   const offset = (gridSize - 1) / 2;
 
@@ -912,7 +921,11 @@ function KeyboardSelector({
         ]}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+        <meshBasicMaterial
+          color={cursorColor}
+          transparent
+          opacity={cursorOpacity}
+        />
       </mesh>
       <lineSegments
         raycast={() => null}
@@ -923,7 +936,7 @@ function KeyboardSelector({
         ]}
       >
         <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />
-        <lineBasicMaterial color="#ffffff" linewidth={2} />
+        <lineBasicMaterial color={cursorColor} linewidth={2} />
       </lineSegments>
     </group>
   );

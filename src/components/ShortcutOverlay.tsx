@@ -164,9 +164,15 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                   </div>
                 </div>
                 <div className="shortcut-row">
-                  <span className="shortcut-desc">Toggle Cell State</span>
+                  <span className="shortcut-desc">Activate Cell(s)</span>
                   <div className="shortcut-keys">
                     <kbd>␣ Space</kbd>
+                  </div>
+                </div>
+                <div className="shortcut-row">
+                  <span className="shortcut-desc">Deactivate Cell(s)</span>
+                  <div className="shortcut-keys">
+                    <kbd>Ctrl</kbd> <span>+</span> <kbd>␣ Space</kbd>
                   </div>
                 </div>
                 <div className="shortcut-row">

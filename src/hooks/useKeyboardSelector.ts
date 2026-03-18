@@ -133,7 +133,7 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
 
       if (e.code === "Space") {
         e.preventDefault();
-        const isShift = e.shiftKey;
+        const isCtrl = e.ctrlKey;
         if (selectedShape !== "None") {
           const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
           const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
@@ -157,7 +157,7 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
                 z >= 0 &&
                 z < gridSize,
             );
-          if (isShift) {
+          if (isCtrl) {
             deleteCells(cells);
           } else {
             setCells(cells);
@@ -165,9 +165,9 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
         } else {
           if (!spaceHeld) {
             setSpaceHeld(true);
-            setEraseMode(isShift);
+            setEraseMode(isCtrl);
             lastPaintedPos.current = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
-            if (isShift) {
+            if (isCtrl) {
               deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
             } else {
               setCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
