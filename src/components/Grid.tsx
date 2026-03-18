@@ -203,10 +203,6 @@ function KeyboardCameraControls({
       return;
     }
 
-    const acceleration = 30.0;
-    const dollyAcceleration = 60.0;
-    const rotationAcceleration = 15.0;
-    const rollAcceleration = 900.0; // degrees/sec^2
     const panMaxSpeed = panSpeed;
     const dollyMaxSpeed = panSpeed * 1.5;
 
@@ -225,6 +221,12 @@ function KeyboardCameraControls({
 
     const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
     const rollMaxSpeed = actualRollSpeed;
+
+    // Set acceleration to reach max speed in 1 second
+    const acceleration = panMaxSpeed;
+    const dollyAcceleration = dollyMaxSpeed;
+    const rotationAcceleration = rotateMaxSpeed;
+    const rollAcceleration = rollMaxSpeed;
 
     const damping = 0.9; // friction for deceleration
 
