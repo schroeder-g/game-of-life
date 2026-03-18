@@ -707,7 +707,7 @@ function KeyboardSelector({
 
 export function Scene() {
   const {
-    state: { speed, cellMargin, rotationMode, running, community },
+    state: { speed, cellMargin, rotationMode, running, community, gridSize },
     actions: { tick, setCommunity },
     meta: { gridRef },
   } = useSimulation();
@@ -719,11 +719,31 @@ export function Scene() {
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-  const { size } = useThree();
+  const { camera } = useThree();
 
   const {
     meta: { cameraActionsRef },
   } = useSimulation();
+
+  const maxDistance = useMemo(() => {
+    const padding = 1.1; // 10% margin
+
+    // Sphere that encompasses the entire cube
+    const radius = (gridSize / 2) * Math.sqrt(3);
+
+    const fov = (camera as THREE.PerspectiveCamera).fov;
+    const aspect = (camera as THREE.PerspectiveCamera).aspect;
+
+    const tanFOV = Math.tan((Math.PI * fov) / 360);
+    let distance = (radius * padding) / tanFOV;
+
+    const hFov = 2 * Math.atan(tanFOV * aspect);
+    const distanceH = (radius * padding) / Math.tan(hFov / 2);
+
+    distance = Math.max(distance, distanceH);
+
+    return distance * 2;
+  }, [gridSize, camera]);
 
   useEffect(() => {
     cameraActionsRef.current = {
@@ -844,6 +864,7 @@ export function Scene() {
         enableDamping
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
+        maxDistance={maxDistance}
       />
       <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, -40]} />
     </>
