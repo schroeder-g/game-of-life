@@ -236,14 +236,14 @@ function KeyboardCameraControls({
 
     // Rotation (left/right)
     if (movement.current.rotateRight) {
-      velocity.current.rotateX = Math.max(
-        velocity.current.rotateX - acceleration * delta,
-        -rotateMaxSpeed,
-      );
-    } else if (movement.current.rotateLeft) {
       velocity.current.rotateX = Math.min(
         velocity.current.rotateX + acceleration * delta,
         rotateMaxSpeed,
+      );
+    } else if (movement.current.rotateLeft) {
+      velocity.current.rotateX = Math.max(
+        velocity.current.rotateX - acceleration * delta,
+        -rotateMaxSpeed,
       );
     } else {
       velocity.current.rotateX *= damping;
@@ -360,23 +360,23 @@ function KeyboardCameraControls({
       const rotateY = velocity.current.rotateY * delta * 0.005;
 
       if (Math.abs(rotateX) > 0 || Math.abs(rotateY) > 0) {
-        const offset = new THREE.Vector3().subVectors(
-          camera.position,
+        const targetToCamera = new THREE.Vector3().subVectors(
           controls.target,
+          camera.position,
         );
         const worldUp = new THREE.Vector3(0, 1, 0);
 
         if (Math.abs(rotateX) > 0) {
-          offset.applyAxisAngle(worldUp, rotateX);
+          // Yaw
+          targetToCamera.applyAxisAngle(worldUp, rotateX);
         }
         if (Math.abs(rotateY) > 0) {
-          const right = new THREE.Vector3()
-            .crossVectors(worldUp, offset)
-            .normalize();
-          offset.applyAxisAngle(right, rotateY);
+          // Pitch
+          const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+          targetToCamera.applyAxisAngle(right, rotateY);
         }
 
-        camera.position.copy(controls.target).add(offset);
+        controls.target.copy(camera.position).add(targetToCamera);
         needsUpdate = true;
       }
 
