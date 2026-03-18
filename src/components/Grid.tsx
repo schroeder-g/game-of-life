@@ -92,13 +92,13 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.rotateRight = true;
           break;
-        case "o": // rotate forward (pitch down)
-          e.preventDefault();
-          movement.current.rotateDown = true;
-          break;
-        case ".": // rotate backward (pitch up)
+        case "o": // rotate backward (pitch up)
           e.preventDefault();
           movement.current.rotateUp = true;
+          break;
+        case ".": // rotate forward (pitch down)
+          e.preventDefault();
+          movement.current.rotateDown = true;
           break;
         case "i": // barrel roll left
           e.preventDefault();
@@ -149,11 +149,11 @@ function KeyboardCameraControls({
           break;
         case "o":
           e.preventDefault();
-          movement.current.rotateDown = false;
+          movement.current.rotateUp = false;
           break;
         case ".":
           e.preventDefault();
-          movement.current.rotateUp = false;
+          movement.current.rotateDown = false;
           break;
         case "i":
           e.preventDefault();
@@ -201,7 +201,7 @@ function KeyboardCameraControls({
 
     const acceleration = 30.0;
     const panMaxSpeed = 24.0; // 24 cells/sec
-    const rotateMaxSpeed = 1664.0; // pixels/sec, approx 600 deg/sec
+    const rotateMaxSpeed = Math.PI; // rad/sec, 180 deg/sec
     const dollyMaxSpeed = 24.0; // 24 cells/sec
     const rollMaxSpeed = 300.0; // degrees/sec
     const damping = 0.9; // friction for deceleration
@@ -358,8 +358,8 @@ function KeyboardCameraControls({
         velocity.current.dolly = 0;
       }
 
-      const rotateX = velocity.current.rotateX * delta * 0.005;
-      const rotateY = velocity.current.rotateY * delta * 0.005;
+      const rotateX = velocity.current.rotateX * delta;
+      const rotateY = velocity.current.rotateY * delta;
 
       if (cubeRef.current && cameraRef.current) {
         const camera = cameraRef.current;
