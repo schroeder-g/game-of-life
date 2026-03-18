@@ -153,33 +153,30 @@ function KeyboardCameraControls({
     roll: 0,
   });
 
-  const animationState = useRef({
-    isAnimating: false,
+  const snapRotation = useRef({
+    active: false,
+    axis: new THREE.Vector3(),
+    totalAngle: 0,
     startQuaternion: new THREE.Quaternion(),
-    targetQuaternion: new THREE.Quaternion(),
-    duration: 1,
     startTime: 0,
+    duration: 1.0,
+    lastAngle: 0,
   });
 
   const triggerSnapRotation = React.useCallback(
     (axis: "x" | "y" | "z", direction: number) => {
-      if (animationState.current.isAnimating || !cubeRef.current) return;
-
-      animationState.current.isAnimating = true;
-      animationState.current.startTime = 0;
-      animationState.current.startQuaternion.copy(cubeRef.current.quaternion);
-
-      const worldAxis = new THREE.Vector3();
-      if (axis === "x") worldAxis.set(1, 0, 0);
-      if (axis === "y") worldAxis.set(0, 1, 0);
-      if (axis === "z") worldAxis.set(0, 0, 1);
+      if (snapRotation.current.active || !cubeRef.current) return;
 
       const angle = direction * (Math.PI / 2);
-      const rotation = new THREE.Quaternion().setFromAxisAngle(worldAxis, angle);
 
-      animationState.current.targetQuaternion
-        .copy(rotation)
-        .multiply(animationState.current.startQuaternion);
+      snapRotation.current.active = true;
+      if (axis === "x") snapRotation.current.axis.set(1, 0, 0);
+      if (axis === "y") snapRotation.current.axis.set(0, 1, 0);
+      if (axis === "z") snapRotation.current.axis.set(0, 0, 1);
+      snapRotation.current.totalAngle = angle;
+      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
+      snapRotation.current.startTime = 0;
+      snapRotation.current.lastAngle = 0;
     },
     [cubeRef],
   );
@@ -434,34 +431,36 @@ function KeyboardCameraControls({
   }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
 
   useFrame((state, delta) => {
-    if (animationState.current.isAnimating) {
-      if (animationState.current.startTime === 0) {
-        animationState.current.startTime = state.clock.getElapsedTime();
+    if (snapRotation.current.active && cubeRef.current) {
+      if (snapRotation.current.startTime === 0) {
+        snapRotation.current.startTime = state.clock.getElapsedTime();
       }
       const elapsedTime =
-        state.clock.getElapsedTime() - animationState.current.startTime;
-      let progress = elapsedTime / animationState.current.duration;
+        state.clock.getElapsedTime() - snapRotation.current.startTime;
+      let progress = elapsedTime / snapRotation.current.duration;
 
       if (progress >= 1) {
-        progress = 1;
-        animationState.current.isAnimating = false;
-        animationState.current.startTime = 0;
-        if (cubeRef.current) {
-          cubeRef.current.quaternion.copy(
-            animationState.current.targetQuaternion,
-          );
-        }
+        // Snap to final position to correct for float inaccuracies
+        const finalRotation = new THREE.Quaternion().setFromAxisAngle(
+          snapRotation.current.axis,
+          snapRotation.current.totalAngle,
+        );
+        cubeRef.current.quaternion
+          .copy(finalRotation)
+          .multiply(snapRotation.current.startQuaternion);
+        snapRotation.current.active = false;
       } else {
         // ease in cubic
         progress = progress * progress * progress;
-        if (cubeRef.current) {
-          THREE.Quaternion.slerp(
-            animationState.current.startQuaternion,
-            animationState.current.targetQuaternion,
-            cubeRef.current.quaternion,
-            progress,
-          );
-        }
+        const currentAngle = snapRotation.current.totalAngle * progress;
+        const angleThisFrame = currentAngle - snapRotation.current.lastAngle;
+
+        cubeRef.current.rotateOnWorldAxis(
+          snapRotation.current.axis,
+          angleThisFrame,
+        );
+
+        snapRotation.current.lastAngle = currentAngle;
       }
     }
 
@@ -725,7 +724,7 @@ function KeyboardCameraControls({
         cubeRef.current &&
         cameraRef.current &&
         rotationMode &&
-        !animationState.current.isAnimating
+        !snapRotation.current.active
       ) {
         const camera = cameraRef.current;
         const oldQuaternion = cubeRef.current.quaternion.clone();
