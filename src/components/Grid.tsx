@@ -105,11 +105,11 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.rotateDown = true;
           break;
-        case "q": // barrel roll left
+        case "e": // barrel roll left
           e.preventDefault();
           movement.current.rollLeft = true;
           break;
-        case "e": // barrel roll right
+        case "q": // barrel roll right
           e.preventDefault();
           movement.current.rollRight = true;
           break;
@@ -160,11 +160,11 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.rotateDown = false;
           break;
-        case "q":
+        case "e":
           e.preventDefault();
           movement.current.rollLeft = false;
           break;
-        case "e":
+        case "q":
           e.preventDefault();
           movement.current.rollRight = false;
           break;
