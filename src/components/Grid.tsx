@@ -74,11 +74,11 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.right = true;
           break;
-        case "s": // pan up
+        case "q": // pan up
           e.preventDefault();
           movement.current.up = true;
           break;
-        case "l": // pan down
+        case "z": // pan down
           e.preventDefault();
           movement.current.down = true;
           break;
@@ -129,11 +129,11 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.right = false;
           break;
-        case "s":
+        case "q":
           e.preventDefault();
           movement.current.up = false;
           break;
-        case "l":
+        case "z":
           e.preventDefault();
           movement.current.down = false;
           break;
