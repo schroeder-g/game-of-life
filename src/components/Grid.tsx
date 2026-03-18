@@ -212,12 +212,12 @@ function KeyboardCameraControls({
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
-    if (movement.current.right) {
+    if (movement.current.left) {
       velocity.current.panX = Math.min(
         velocity.current.panX + acceleration * delta,
         panMaxSpeed,
       );
-    } else if (movement.current.left) {
+    } else if (movement.current.right) {
       velocity.current.panX = Math.max(
         velocity.current.panX - acceleration * delta,
         -panMaxSpeed,
@@ -227,12 +227,12 @@ function KeyboardCameraControls({
     }
 
     // Panning (up/down)
-    if (movement.current.up) {
+    if (movement.current.down) {
       velocity.current.panY = Math.min(
         velocity.current.panY + acceleration * delta,
         panMaxSpeed,
       );
-    } else if (movement.current.down) {
+    } else if (movement.current.up) {
       velocity.current.panY = Math.max(
         velocity.current.panY - acceleration * delta,
         -panMaxSpeed,
@@ -287,12 +287,12 @@ function KeyboardCameraControls({
     }
 
     // Dollying (forward/backward)
-    if (movement.current.forward) {
+    if (movement.current.backward) {
       velocity.current.dolly = Math.min(
         velocity.current.dolly + acceleration * delta,
         dollyMaxSpeed,
       );
-    } else if (movement.current.backward) {
+    } else if (movement.current.forward) {
       velocity.current.dolly = Math.max(
         velocity.current.dolly - acceleration * delta,
         -dollyMaxSpeed,
