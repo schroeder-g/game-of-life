@@ -25,6 +25,9 @@ const defaults = {
   neighborFaces: 1,
   neighborEdges: 1,
   neighborCorners: 0,
+  panSpeed: 24,
+  rotationSpeed: 180,
+  rollSpeed: 600,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -47,6 +50,9 @@ export interface SimulationState {
   neighborCorners: boolean;
   hasInitialState: boolean;
   hasPastHistory: boolean;
+  panSpeed: number;
+  rotationSpeed: number;
+  rollSpeed: number;
 }
 
 export interface SimulationActions {
@@ -64,6 +70,9 @@ export interface SimulationActions {
   setNeighborCorners: (val: boolean) => void;
   setCommunity: (community: Array<[number, number, number]>) => void;
   setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
+  setPanSpeed: (speed: number) => void;
+  setRotationSpeed: (speed: number) => void;
+  setRollSpeed: (speed: number) => void;
 
   playStop: () => void;
   step: () => void;
@@ -161,6 +170,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [birthMax, setBirthMax] = useState(storedSettings.birthMax);
   const [birthMargin, setBirthMargin] = useState(storedSettings.birthMargin);
 
+  const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
+  const [rotationSpeed, setRotationSpeed] = useState(
+    storedSettings.rotationSpeed,
+  );
+  const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
+
   const [neighborFaces, setNeighborFaces] = useState(
     Boolean(storedSettings.neighborFaces),
   );
@@ -198,6 +213,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborFaces: neighborFaces ? 1 : 0,
       neighborEdges: neighborEdges ? 1 : 0,
       neighborCorners: neighborCorners ? 1 : 0,
+      panSpeed,
+      rotationSpeed,
+      rollSpeed,
     };
     saveSettings(settings);
   }, [
@@ -213,6 +231,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     neighborFaces,
     neighborEdges,
     neighborCorners,
+    panSpeed,
+    rotationSpeed,
+    rollSpeed,
   ]);
 
   const handleGridSizeChange = useCallback((newSize: number) => {
@@ -390,6 +411,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborCorners,
       hasInitialState,
       hasPastHistory,
+      panSpeed,
+      rotationSpeed,
+      rollSpeed,
     },
     actions: {
       setSpeed,
@@ -403,6 +427,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setBirthMargin,
       setCommunity,
       setRotationMode: handleSetRotationMode,
+      setPanSpeed,
+      setRotationSpeed,
+      setRollSpeed,
       playStop,
       step,
       stepBackward,

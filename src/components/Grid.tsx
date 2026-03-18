@@ -27,7 +27,7 @@ function KeyboardCameraControls({
   cubeRef: React.RefObject<THREE.Group>;
 }) {
   const {
-    state: { rotationMode },
+    state: { rotationMode, panSpeed, rotationSpeed, rollSpeed },
   } = useSimulation();
 
   const movement = useRef({
@@ -201,10 +201,11 @@ function KeyboardCameraControls({
 
     const acceleration = 30.0;
     const rotationAcceleration = 15.0;
-    const panMaxSpeed = 24.0; // 24 cells/sec
-    const rotateMaxSpeed = Math.PI; // rad/sec, 180 deg/sec
-    const dollyMaxSpeed = 24.0; // 24 cells/sec
-    const rollMaxSpeed = 600.0; // degrees/sec
+    const rollAcceleration = 900.0; // degrees/sec^2
+    const panMaxSpeed = panSpeed;
+    const rotateMaxSpeed = (rotationSpeed * Math.PI) / 180;
+    const dollyMaxSpeed = panSpeed;
+    const rollMaxSpeed = rollSpeed;
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
@@ -270,12 +271,12 @@ function KeyboardCameraControls({
     // Barrel roll
     if (movement.current.rollRight) {
       velocity.current.roll = Math.min(
-        velocity.current.roll + rotationAcceleration * delta,
+        velocity.current.roll + rollAcceleration * delta,
         rollMaxSpeed,
       );
     } else if (movement.current.rollLeft) {
       velocity.current.roll = Math.max(
-        velocity.current.roll - rotationAcceleration * delta,
+        velocity.current.roll - rollAcceleration * delta,
         -rollMaxSpeed,
       );
     } else {

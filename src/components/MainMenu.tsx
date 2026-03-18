@@ -480,6 +480,71 @@ function ShapeBrushSection() {
   );
 }
 
+function CameraControlSection() {
+  const {
+    state: { panSpeed, rotationSpeed, rollSpeed },
+    actions: { setPanSpeed, setRotationSpeed, setRollSpeed },
+  } = useSimulation();
+
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  return (
+    <section className="menu-section">
+      <h3
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        Camera Controls
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
+      </h3>
+      {!isCollapsed && (
+        <>
+          <label className="control-label">
+            <span>Pan/Dolly Speed: {panSpeed}</span>
+            <input
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={panSpeed}
+              onChange={(e) => setPanSpeed(Number(e.target.value))}
+            />
+          </label>
+          <label className="control-label">
+            <span>Rotation Speed: {rotationSpeed}</span>
+            <input
+              type="range"
+              min={10}
+              max={360}
+              step={10}
+              value={rotationSpeed}
+              onChange={(e) => setRotationSpeed(Number(e.target.value))}
+            />
+          </label>
+          <label className="control-label">
+            <span>Barrel Roll Speed: {rollSpeed}</span>
+            <input
+              type="range"
+              min={100}
+              max={1200}
+              step={50}
+              value={rollSpeed}
+              onChange={(e) => setRollSpeed(Number(e.target.value))}
+            />
+          </label>
+        </>
+      )}
+    </section>
+  );
+}
+
 function SceneManagementSection() {
   const {
     state: { savedConfigs, selectedConfigName, newConfigName },
@@ -862,6 +927,7 @@ export function MainMenu() {
           {!collapsed && <ActionsSection />}
         </div>
         <div className="menu-scrollable-content">
+          {rotationMode && <CameraControlSection />}
           {!rotationMode && <SceneManagementSection />}
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
@@ -878,4 +944,5 @@ MainMenu.EnvironmentSection = EnvironmentSection;
 MainMenu.RulesSection = RulesSection;
 MainMenu.ShapeBrushSection = ShapeBrushSection;
 MainMenu.SceneManagementSection = SceneManagementSection;
+MainMenu.CameraControlSection = CameraControlSection;
 MainMenu.AppHeaderPanel = AppHeaderPanel;
