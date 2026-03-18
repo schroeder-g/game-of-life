@@ -17,7 +17,13 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
-function KeyboardCameraControls() {
+function KeyboardCameraControls({
+  controlsRef,
+  cameraRef,
+}: {
+  controlsRef: React.RefObject<any>;
+  cameraRef: React.RefObject<THREE.PerspectiveCamera>;
+}) {
   const {
     state: { rotationMode },
     actions: { dollyCamera },
@@ -47,6 +53,8 @@ function KeyboardCameraControls() {
     rotateRight: false,
     rotateUp: false,
     rotateDown: false,
+    rollLeft: false,
+    rollRight: false,
   });
 
   const velocity = useRef({
@@ -55,6 +63,7 @@ function KeyboardCameraControls() {
     dolly: 0,
     rotateX: 0,
     rotateY: 0,
+    roll: 0,
   });
 
   useEffect(() => {
@@ -63,11 +72,11 @@ function KeyboardCameraControls() {
       if (!rotationMode) return;
 
       switch (e.key.toLowerCase()) {
-        case "w": // dolly in
+        case "x": // dolly in
           e.preventDefault();
           movement.current.forward = true;
           break;
-        case "x": // dolly out
+        case "w": // dolly out
           e.preventDefault();
           movement.current.backward = true;
           break;
@@ -103,6 +112,14 @@ function KeyboardCameraControls() {
           e.preventDefault();
           movement.current.rotateDown = true;
           break;
+        case "q": // barrel roll left
+          e.preventDefault();
+          movement.current.rollLeft = true;
+          break;
+        case "e": // barrel roll right
+          e.preventDefault();
+          movement.current.rollRight = true;
+          break;
       }
     };
 
@@ -110,11 +127,11 @@ function KeyboardCameraControls() {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
 
       switch (e.key.toLowerCase()) {
-        case "w":
+        case "x":
           e.preventDefault();
           movement.current.forward = false;
           break;
-        case "x":
+        case "w":
           e.preventDefault();
           movement.current.backward = false;
           break;
@@ -150,6 +167,14 @@ function KeyboardCameraControls() {
           e.preventDefault();
           movement.current.rotateDown = false;
           break;
+        case "q":
+          e.preventDefault();
+          movement.current.rollLeft = false;
+          break;
+        case "e":
+          e.preventDefault();
+          movement.current.rollRight = false;
+          break;
       }
     };
 
@@ -175,18 +200,22 @@ function KeyboardCameraControls() {
       movement.current.rotateRight = false;
       movement.current.rotateUp = false;
       movement.current.rotateDown = false;
+      movement.current.rollLeft = false;
+      movement.current.rollRight = false;
       velocity.current.panX = 0;
       velocity.current.panY = 0;
       velocity.current.dolly = 0;
       velocity.current.rotateX = 0;
       velocity.current.rotateY = 0;
+      velocity.current.roll = 0;
       return;
     }
 
     const acceleration = 2000.0;
     const panMaxSpeed = 120.0; // pixels/sec, approx 3 cells/sec
-    const rotateMaxSpeed = 250.0; // pixels/sec, approx 90 deg/sec
+    const rotateMaxSpeed = 208.0; // pixels/sec, approx 75 deg/sec
     const dollyMaxSpeed = 10.0;
+    const rollMaxSpeed = 75.0; // degrees/sec
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
@@ -247,6 +276,21 @@ function KeyboardCameraControls() {
       );
     } else {
       velocity.current.rotateY *= damping;
+    }
+
+    // Barrel roll
+    if (movement.current.rollRight) {
+      velocity.current.roll = Math.min(
+        velocity.current.roll + acceleration * delta,
+        rollMaxSpeed,
+      );
+    } else if (movement.current.rollLeft) {
+      velocity.current.roll = Math.max(
+        velocity.current.roll - acceleration * delta,
+        -rollMaxSpeed,
+      );
+    } else {
+      velocity.current.roll *= damping;
     }
 
     // Dollying (forward/backward)
@@ -380,6 +424,28 @@ function KeyboardCameraControls() {
     if (Math.abs(velocity.current.panY) < 0.01) {
       velocity.current.panY = 0;
     }
+    if (Math.abs(velocity.current.roll) < 0.01) {
+      velocity.current.roll = 0;
+    }
+    if (Math.abs(velocity.current.roll) > 0.01) {
+      if (cameraRef.current && controlsRef.current) {
+        const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
+
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+
+        const quaternion = new THREE.Quaternion();
+        quaternion.setFromAxisAngle(forward, rollAngleRad);
+
+        camera.up.applyQuaternion(quaternion);
+        controls.update();
+      }
+    } else {
+      velocity.current.roll = 0;
+    }
+
     if (Math.abs(velocity.current.rotateX) < 0.01) {
       velocity.current.rotateX = 0;
     }
@@ -747,7 +813,7 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <KeyboardCameraControls />
+      <KeyboardCameraControls controlsRef={controlsRef} cameraRef={cameraRef} />
       <Cells
         grid={gridRef.current}
         margin={cellMargin}
