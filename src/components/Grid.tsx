@@ -200,9 +200,9 @@ function KeyboardCameraControls({
     }
 
     const acceleration = 30.0;
-    const panMaxSpeed = 12.0; // 12 cells/sec
-    const rotateMaxSpeed = 832.0; // pixels/sec, approx 300 deg/sec
-    const dollyMaxSpeed = 12.0; // 12 cells/sec
+    const panMaxSpeed = 24.0; // 24 cells/sec
+    const rotateMaxSpeed = 1664.0; // pixels/sec, approx 600 deg/sec
+    const dollyMaxSpeed = 24.0; // 24 cells/sec
     const rollMaxSpeed = 300.0; // degrees/sec
     const damping = 0.9; // friction for deceleration
 
