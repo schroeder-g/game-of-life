@@ -1,5 +1,5 @@
 import { Html, OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
@@ -126,8 +126,8 @@ function KeyboardCameraControls() {
       return;
     }
 
-    const acceleration = 50.0;
-    const maxSpeed = 20.0;
+    const acceleration = 2000.0;
+    const maxSpeed = 1000.0;
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
@@ -458,6 +458,7 @@ export function Scene() {
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  const { size } = useThree();
 
   const {
     meta: { cameraActionsRef },
@@ -502,11 +503,29 @@ export function Scene() {
       },
       panCamera: (x: number, y: number) => {
         if (!controlsRef.current || !cameraRef.current) return;
+
+        const offset = new THREE.Vector3();
+        const position = cameraRef.current.position;
+        offset.copy(position).sub(controlsRef.current.target);
+        let targetDistance = offset.length();
+
+        // half of the fov is center to top of screen
+        targetDistance *= Math.tan(
+          ((cameraRef.current.fov / 2) * Math.PI) / 180.0,
+        );
+
         if (x !== 0) {
-          controlsRef.current.panLeft(x, cameraRef.current.matrix);
+          // we use only clientHeight here since aspect is already taken into account in matrix
+          controlsRef.current.panLeft(
+            (2 * x * targetDistance) / size.height,
+            cameraRef.current.matrix,
+          );
         }
         if (y !== 0) {
-          controlsRef.current.panUp(y, cameraRef.current.matrix);
+          controlsRef.current.panUp(
+            (2 * y * targetDistance) / size.height,
+            cameraRef.current.matrix,
+          );
         }
         controlsRef.current.update();
       },
@@ -544,7 +563,7 @@ export function Scene() {
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef]);
+  }, [cameraActionsRef, gridRef, size]);
 
   useFrame((state) => {
     if (running) {
