@@ -200,10 +200,11 @@ function KeyboardCameraControls({
     }
 
     const acceleration = 30.0;
+    const rotationAcceleration = 15.0;
     const panMaxSpeed = 24.0; // 24 cells/sec
     const rotateMaxSpeed = Math.PI; // rad/sec, 180 deg/sec
     const dollyMaxSpeed = 24.0; // 24 cells/sec
-    const rollMaxSpeed = 300.0; // degrees/sec
+    const rollMaxSpeed = 600.0; // degrees/sec
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
@@ -239,12 +240,12 @@ function KeyboardCameraControls({
     // Rotation (left/right)
     if (movement.current.rotateRight) {
       velocity.current.rotateX = Math.min(
-        velocity.current.rotateX + acceleration * delta,
+        velocity.current.rotateX + rotationAcceleration * delta,
         rotateMaxSpeed,
       );
     } else if (movement.current.rotateLeft) {
       velocity.current.rotateX = Math.max(
-        velocity.current.rotateX - acceleration * delta,
+        velocity.current.rotateX - rotationAcceleration * delta,
         -rotateMaxSpeed,
       );
     } else {
@@ -254,12 +255,12 @@ function KeyboardCameraControls({
     // Rotation (up/down)
     if (movement.current.rotateUp) {
       velocity.current.rotateY = Math.min(
-        velocity.current.rotateY + acceleration * delta,
+        velocity.current.rotateY + rotationAcceleration * delta,
         rotateMaxSpeed,
       );
     } else if (movement.current.rotateDown) {
       velocity.current.rotateY = Math.max(
-        velocity.current.rotateY - acceleration * delta,
+        velocity.current.rotateY - rotationAcceleration * delta,
         -rotateMaxSpeed,
       );
     } else {
@@ -269,12 +270,12 @@ function KeyboardCameraControls({
     // Barrel roll
     if (movement.current.rollRight) {
       velocity.current.roll = Math.min(
-        velocity.current.roll + acceleration * delta,
+        velocity.current.roll + rotationAcceleration * delta,
         rollMaxSpeed,
       );
     } else if (movement.current.rollLeft) {
       velocity.current.roll = Math.max(
-        velocity.current.roll - acceleration * delta,
+        velocity.current.roll - rotationAcceleration * delta,
         -rollMaxSpeed,
       );
     } else {
