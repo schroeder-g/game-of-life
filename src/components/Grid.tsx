@@ -170,11 +170,23 @@ function KeyboardCameraControls({
         if (e.key.toLowerCase() === "s") {
           e.preventDefault();
           cameraActionsRef.current.recenter();
+          velocity.current.panX = 0;
+          velocity.current.panY = 0;
+          velocity.current.dolly = 0;
+          velocity.current.rotateX = 0;
+          velocity.current.rotateY = 0;
+          velocity.current.roll = 0;
           return;
         }
         if (e.key.toLowerCase() === "l") {
           e.preventDefault();
           cameraActionsRef.current.squareUp();
+          velocity.current.panX = 0;
+          velocity.current.panY = 0;
+          velocity.current.dolly = 0;
+          velocity.current.rotateX = 0;
+          velocity.current.rotateY = 0;
+          velocity.current.roll = 0;
           return;
         }
       }
