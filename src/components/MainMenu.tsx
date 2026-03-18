@@ -532,9 +532,9 @@ function CameraControlSection() {
             <span>Barrel Roll Speed: {rollSpeed}</span>
             <input
               type="range"
-              min={100}
+              min={25}
               max={1200}
-              step={50}
+              step={25}
               value={rollSpeed}
               onChange={(e) => setRollSpeed(Number(e.target.value))}
             />
