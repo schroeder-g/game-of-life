@@ -153,6 +153,37 @@ function KeyboardCameraControls({
     roll: 0,
   });
 
+  const animationState = useRef({
+    isAnimating: false,
+    startQuaternion: new THREE.Quaternion(),
+    targetQuaternion: new THREE.Quaternion(),
+    duration: 0.25,
+    startTime: 0,
+  });
+
+  const triggerSnapRotation = React.useCallback(
+    (axis: "x" | "y" | "z", direction: number) => {
+      if (animationState.current.isAnimating || !cubeRef.current) return;
+
+      animationState.current.isAnimating = true;
+      animationState.current.startTime = 0;
+      animationState.current.startQuaternion.copy(cubeRef.current.quaternion);
+
+      const worldAxis = new THREE.Vector3();
+      if (axis === "x") worldAxis.set(1, 0, 0);
+      if (axis === "y") worldAxis.set(0, 1, 0);
+      if (axis === "z") worldAxis.set(0, 0, 1);
+
+      const angle = direction * (Math.PI / 2);
+      const rotation = new THREE.Quaternion().setFromAxisAngle(worldAxis, angle);
+
+      animationState.current.targetQuaternion
+        .copy(rotation)
+        .multiply(animationState.current.startQuaternion);
+    },
+    [cubeRef],
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -269,6 +300,10 @@ function KeyboardCameraControls({
           break;
         case ";": // rotate left/right
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("y", invertRotation ? -1 : 1);
+            break;
+          }
           if (invertRotation) {
             movement.current.rotateRight = true;
           } else {
@@ -277,6 +312,10 @@ function KeyboardCameraControls({
           break;
         case "k": // rotate right/left
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("y", invertRotation ? 1 : -1);
+            break;
+          }
           if (invertRotation) {
             movement.current.rotateLeft = true;
           } else {
@@ -285,18 +324,34 @@ function KeyboardCameraControls({
           break;
         case "o": // rotate backward (pitch up)
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("x", 1);
+            break;
+          }
           movement.current.rotateUp = true;
           break;
         case ".": // rotate forward (pitch down)
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("x", -1);
+            break;
+          }
           movement.current.rotateDown = true;
           break;
         case "i": // barrel roll left
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("z", 1);
+            break;
+          }
           movement.current.rollLeft = true;
           break;
         case "p": // barrel roll right
           e.preventDefault();
+          if (!rotationMode) {
+            triggerSnapRotation("z", -1);
+            break;
+          }
           movement.current.rollRight = true;
           break;
       }
@@ -376,9 +431,40 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
+    if (animationState.current.isAnimating) {
+      if (animationState.current.startTime === 0) {
+        animationState.current.startTime = state.clock.getElapsedTime();
+      }
+      const elapsedTime =
+        state.clock.getElapsedTime() - animationState.current.startTime;
+      let progress = elapsedTime / animationState.current.duration;
+
+      if (progress >= 1) {
+        progress = 1;
+        animationState.current.isAnimating = false;
+        animationState.current.startTime = 0;
+        if (cubeRef.current) {
+          cubeRef.current.quaternion.copy(
+            animationState.current.targetQuaternion,
+          );
+        }
+      } else {
+        // ease out cubic
+        progress = 1 - Math.pow(1 - progress, 3);
+        if (cubeRef.current) {
+          THREE.Quaternion.slerp(
+            animationState.current.startQuaternion,
+            animationState.current.targetQuaternion,
+            cubeRef.current.quaternion,
+            progress,
+          );
+        }
+      }
+    }
+
     const panMaxSpeed = panSpeed;
     const dollyMaxSpeed = panSpeed * 1.5;
 

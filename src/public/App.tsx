@@ -46,7 +46,7 @@ function SimulationStats() {
 export default function App() {
   const {
     state: { rotationMode, community, running },
-    actions: { setRotationMode },
+    actions: { setRotationMode, recenter, squareUp, fitDisplay },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -54,6 +54,14 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   useAppShortcuts();
+
+  useEffect(() => {
+    if (rotationMode === false) {
+      recenter();
+      squareUp();
+      fitDisplay();
+    }
+  }, [rotationMode, recenter, squareUp, fitDisplay]);
 
   useEffect(() => {
     console.log("APP STATE - community length:", community.length);
