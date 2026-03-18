@@ -1024,23 +1024,61 @@ export function Scene() {
         controlsRef.current.update();
       },
       squareUp: () => {
-        if (!controlsRef.current || !cubeRef.current) return;
+        if (!controlsRef.current || !cubeRef.current || !cameraRef.current)
+          return;
 
-        // Reset cube rotation to be aligned with world axes
-        cubeRef.current.quaternion.identity();
+        // 1. Determine which face is pointing towards the camera.
+        const toCamera = cameraRef.current.position
+          .clone()
+          .sub(controlsRef.current.target)
+          .normalize();
+        const Q_current = cubeRef.current.quaternion.clone();
+        const localToCamera = toCamera
+          .clone()
+          .applyQuaternion(Q_current.clone().invert());
 
-        // Reset camera roll
-        cameraRef.current?.up.set(0, 1, 0);
+        const { x: localX, y: localY, z: localZ } = localToCamera;
+        const absX = Math.abs(localX),
+          absY = Math.abs(localY),
+          absZ = Math.abs(localZ);
+        const dominantLocalAxis = new THREE.Vector3();
+        if (absX > absY && absX > absZ) {
+          dominantLocalAxis.set(Math.sign(localX), 0, 0);
+        } else if (absY > absX && absY > absZ) {
+          dominantLocalAxis.set(0, Math.sign(localY), 0);
+        } else {
+          dominantLocalAxis.set(0, 0, Math.sign(localZ));
+        }
 
-        // Snap camera to nearest 90 degree azimuthal and level polar angle
+        // 2. Determine where the camera will snap to and the corresponding "front" vector.
         const azimuth = controlsRef.current.getAzimuthalAngle();
         const snappedAzimuth =
           Math.round(azimuth / (Math.PI / 2)) * (Math.PI / 2);
-        const snappedPolar = Math.PI / 2; // Level with the horizon
+        const targetFrontVector = new THREE.Vector3(
+          Math.sin(snappedAzimuth),
+          0,
+          Math.cos(snappedAzimuth),
+        );
 
-        const distance =
-          cameraRef.current?.position.distanceTo(controlsRef.current.target) ??
-          30;
+        // 3. Calculate the rotation to align the dominant face with the new front direction.
+        const dominantWorldAxis = dominantLocalAxis
+          .clone()
+          .applyQuaternion(Q_current);
+        const Q_fix = new THREE.Quaternion().setFromUnitVectors(
+          dominantWorldAxis,
+          targetFrontVector,
+        );
+
+        // 4. Apply this rotation to the cube.
+        cubeRef.current.quaternion.premultiply(Q_fix);
+
+        // 5. Do the rest of squareUp: reset camera roll and snap position.
+        cameraRef.current.up.set(0, 1, 0);
+
+        const snappedPolar = Math.PI / 2; // Level with the horizon
+        const distance = cameraRef.current.position.distanceTo(
+          controlsRef.current.target,
+        );
 
         // Calculate new camera position based on snapped angles
         const x =
@@ -1049,7 +1087,7 @@ export function Scene() {
         const z =
           distance * Math.cos(snappedAzimuth) * Math.sin(snappedPolar);
 
-        cameraRef.current?.position
+        cameraRef.current.position
           .set(x, y, z)
           .add(controlsRef.current.target);
         controlsRef.current.update();
