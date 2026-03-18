@@ -207,7 +207,7 @@ function KeyboardCameraControls({
     const rotationAcceleration = 15.0;
     const rollAcceleration = 900.0; // degrees/sec^2
     const panMaxSpeed = panSpeed;
-    const dollyMaxSpeed = panSpeed;
+    const dollyMaxSpeed = panSpeed * 1.5;
 
     // rotationSpeed is 1-100.
     // Map to old rotation speed range: 10 to 360
