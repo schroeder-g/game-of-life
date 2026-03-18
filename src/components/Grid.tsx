@@ -20,8 +20,15 @@ export function BoundingBox({ size }: { size: number }) {
 function KeyboardCameraControls() {
   const {
     state: { rotationMode },
-    actions: { panCamera, dollyCamera },
+    actions: { dollyCamera },
   } = useSimulation();
+  const { gl } = useThree();
+
+  const panState = useRef({
+    isPanning: false,
+    startX: 0,
+    startY: 0,
+  });
 
   const movement = useRef({
     forward: false,
@@ -175,20 +182,65 @@ function KeyboardCameraControls() {
       velocity.current.dolly *= damping;
     }
 
-    const hasPanX = Math.abs(velocity.current.panX) > 0.01;
-    const hasPanY = Math.abs(velocity.current.panY) > 0.01;
+    const panKeyDown =
+      movement.current.left ||
+      movement.current.right ||
+      movement.current.up ||
+      movement.current.down;
 
-    if (hasPanX || hasPanY) {
-      panCamera(
-        hasPanX ? velocity.current.panX * delta : 0,
-        hasPanY ? velocity.current.panY * delta : 0,
+    if (panKeyDown && !panState.current.isPanning) {
+      panState.current.isPanning = true;
+      panState.current.startX = 0;
+      panState.current.startY = 0;
+      gl.domElement.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          button: 2,
+          buttons: 2,
+          clientX: 0,
+          clientY: 0,
+          pointerType: "mouse",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    } else if (!panKeyDown && panState.current.isPanning) {
+      panState.current.isPanning = false;
+      gl.domElement.dispatchEvent(
+        new PointerEvent("pointerup", {
+          button: 2,
+          clientX: panState.current.startX,
+          clientY: panState.current.startY,
+          pointerType: "mouse",
+          bubbles: true,
+          cancelable: true,
+        }),
       );
     }
 
-    if (!hasPanX) {
+    if (panState.current.isPanning) {
+      const deltaX = velocity.current.panX * delta;
+      const deltaY = velocity.current.panY * delta;
+
+      if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
+        panState.current.startX += deltaX;
+        panState.current.startY += deltaY;
+        gl.domElement.dispatchEvent(
+          new PointerEvent("pointermove", {
+            buttons: 2,
+            clientX: panState.current.startX,
+            clientY: panState.current.startY,
+            pointerType: "mouse",
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      }
+    }
+
+    if (Math.abs(velocity.current.panX) < 0.01) {
       velocity.current.panX = 0;
     }
-    if (!hasPanY) {
+    if (Math.abs(velocity.current.panY) < 0.01) {
       velocity.current.panY = 0;
     }
 
@@ -501,34 +553,6 @@ export function Scene() {
         controlsRef.current.target.set(0, 0, 0);
         controlsRef.current.update();
       },
-      panCamera: (x: number, y: number) => {
-        if (!controlsRef.current || !cameraRef.current) return;
-
-        const offset = new THREE.Vector3();
-        const position = cameraRef.current.position;
-        offset.copy(position).sub(controlsRef.current.target);
-        let targetDistance = offset.length();
-
-        // half of the fov is center to top of screen
-        targetDistance *= Math.tan(
-          ((cameraRef.current.fov / 2) * Math.PI) / 180.0,
-        );
-
-        if (x !== 0) {
-          // we use only clientHeight here since aspect is already taken into account in matrix
-          controlsRef.current.panLeft(
-            (2 * x * targetDistance) / size.height,
-            cameraRef.current.matrix,
-          );
-        }
-        if (y !== 0) {
-          controlsRef.current.panUp(
-            (2 * y * targetDistance) / size.height,
-            cameraRef.current.matrix,
-          );
-        }
-        controlsRef.current.update();
-      },
       dollyCamera: (delta: number) => {
         if (!controlsRef.current) return;
         const dollyScale = 1 + Math.abs(delta) * 0.2;
@@ -563,7 +587,7 @@ export function Scene() {
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef, size]);
+  }, [cameraActionsRef, gridRef]);
 
   useFrame((state) => {
     if (running) {

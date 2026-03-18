@@ -86,7 +86,6 @@ export interface SimulationActions {
   fitDisplay: () => void;
   recenter: () => void;
   squareUp: () => void;
-  panCamera: (x: number, y: number) => void;
   dollyCamera: (delta: number) => void;
 }
 
@@ -97,7 +96,6 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    panCamera: (x: number, y: number) => void;
     dollyCamera: (delta: number) => void;
   } | null>;
 }
@@ -374,10 +372,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
-  const panCamera = useCallback(
-    (x: number, y: number) => cameraActionsRef.current?.panCamera(x, y),
-    [],
-  );
   const dollyCamera = useCallback(
     (delta: number) => cameraActionsRef.current?.dollyCamera(delta),
     [],
@@ -432,7 +426,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       fitDisplay,
       recenter,
       squareUp,
-      panCamera,
       dollyCamera,
     },
     meta: {
