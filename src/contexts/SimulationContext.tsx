@@ -26,8 +26,7 @@ const defaults = {
   neighborEdges: 1,
   neighborCorners: 0,
   panSpeed: 24,
-  rotationSpeed: 180,
-  rollSpeed: 600,
+  rotationSpeed: 50,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -52,7 +51,6 @@ export interface SimulationState {
   hasPastHistory: boolean;
   panSpeed: number;
   rotationSpeed: number;
-  rollSpeed: number;
 }
 
 export interface SimulationActions {
@@ -72,7 +70,6 @@ export interface SimulationActions {
   setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
   setPanSpeed: (speed: number) => void;
   setRotationSpeed: (speed: number) => void;
-  setRollSpeed: (speed: number) => void;
 
   playStop: () => void;
   step: () => void;
@@ -174,7 +171,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [rotationSpeed, setRotationSpeed] = useState(
     storedSettings.rotationSpeed,
   );
-  const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
 
   const [neighborFaces, setNeighborFaces] = useState(
     Boolean(storedSettings.neighborFaces),
@@ -215,7 +211,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborCorners: neighborCorners ? 1 : 0,
       panSpeed,
       rotationSpeed,
-      rollSpeed,
     };
     saveSettings(settings);
   }, [
@@ -233,7 +228,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     neighborCorners,
     panSpeed,
     rotationSpeed,
-    rollSpeed,
   ]);
 
   const handleGridSizeChange = useCallback((newSize: number) => {
@@ -413,7 +407,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       hasPastHistory,
       panSpeed,
       rotationSpeed,
-      rollSpeed,
     },
     actions: {
       setSpeed,
@@ -429,7 +422,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRotationMode: handleSetRotationMode,
       setPanSpeed,
       setRotationSpeed,
-      setRollSpeed,
       playStop,
       step,
       stepBackward,

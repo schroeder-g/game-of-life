@@ -23,14 +23,12 @@ function KeyboardCameraControls({
   cubeRef,
   panSpeed,
   rotationSpeed,
-  rollSpeed,
 }: {
   controlsRef: React.RefObject<any>;
   cameraRef: React.RefObject<THREE.PerspectiveCamera>;
   cubeRef: React.RefObject<THREE.Group>;
   panSpeed: number;
   rotationSpeed: number;
-  rollSpeed: number;
 }) {
   const {
     state: { rotationMode },
@@ -209,9 +207,24 @@ function KeyboardCameraControls({
     const rotationAcceleration = 15.0;
     const rollAcceleration = 900.0; // degrees/sec^2
     const panMaxSpeed = panSpeed;
-    const rotateMaxSpeed = (rotationSpeed * Math.PI) / 180;
     const dollyMaxSpeed = panSpeed;
-    const rollMaxSpeed = rollSpeed;
+
+    // rotationSpeed is 1-100.
+    // Map to old rotation speed range: 10 to 360
+    const minRotSpeed = 10;
+    const maxRotSpeed = 360;
+    const actualRotationSpeed =
+      minRotSpeed + ((rotationSpeed - 1) / 99) * (maxRotSpeed - minRotSpeed);
+
+    // Map to old roll speed range: 25 to 1200
+    const minRollSpeed = 25;
+    const maxRollSpeed = 1200;
+    const actualRollSpeed =
+      minRollSpeed + ((rotationSpeed - 1) / 99) * (maxRollSpeed - minRollSpeed);
+
+    const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
+    const rollMaxSpeed = actualRollSpeed;
+
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
@@ -658,7 +671,6 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
-      rollSpeed,
     },
     actions: { tick, setCommunity },
     meta: { gridRef },
@@ -782,7 +794,6 @@ export function Scene() {
         cubeRef={cubeRef}
         panSpeed={panSpeed}
         rotationSpeed={rotationSpeed}
-        rollSpeed={rollSpeed}
       />
       <group ref={cubeRef}>
         <Cells

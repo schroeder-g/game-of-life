@@ -482,8 +482,8 @@ function ShapeBrushSection() {
 
 function CameraControlSection() {
   const {
-    state: { panSpeed, rotationSpeed, rollSpeed },
-    actions: { setPanSpeed, setRotationSpeed, setRollSpeed },
+    state: { panSpeed, rotationSpeed },
+    actions: { setPanSpeed, setRotationSpeed },
   } = useSimulation();
 
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -521,22 +521,11 @@ function CameraControlSection() {
             <span>Rotation Speed: {rotationSpeed}</span>
             <input
               type="range"
-              min={10}
-              max={360}
-              step={10}
+              min={1}
+              max={100}
+              step={1}
               value={rotationSpeed}
               onChange={(e) => setRotationSpeed(Number(e.target.value))}
-            />
-          </label>
-          <label className="control-label">
-            <span>Barrel Roll Speed: {rollSpeed}</span>
-            <input
-              type="range"
-              min={25}
-              max={1200}
-              step={25}
-              value={rollSpeed}
-              onChange={(e) => setRollSpeed(Number(e.target.value))}
             />
           </label>
         </>
