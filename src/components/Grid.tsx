@@ -393,31 +393,38 @@ function KeyboardCameraControls({
         .setFromMatrixColumn(camera.matrix, 2)
         .negate();
 
-      const offset = new THREE.Vector3();
+      let needsUpdate = false;
+      const panOffset = new THREE.Vector3();
 
       if (Math.abs(velocity.current.panX) > 0.01) {
-        offset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
+        panOffset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
       } else {
         velocity.current.panX = 0;
       }
 
       if (Math.abs(velocity.current.panY) > 0.01) {
-        offset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
+        panOffset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
       } else {
         velocity.current.panY = 0;
       }
 
+      if (panOffset.lengthSq() > 0) {
+        camera.position.add(panOffset);
+        controls.target.add(panOffset);
+        needsUpdate = true;
+      }
+
       if (Math.abs(velocity.current.dolly) > 0.01) {
-        offset.add(
-          forward.clone().multiplyScalar(velocity.current.dolly * delta),
-        );
+        const dollyOffset = forward
+          .clone()
+          .multiplyScalar(velocity.current.dolly * delta);
+        camera.position.add(dollyOffset);
+        needsUpdate = true;
       } else {
         velocity.current.dolly = 0;
       }
 
-      if (offset.lengthSq() > 0) {
-        camera.position.add(offset);
-        controls.target.add(offset);
+      if (needsUpdate) {
         controls.update();
       }
     }
