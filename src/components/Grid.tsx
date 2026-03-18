@@ -128,6 +128,10 @@ function KeyboardCameraControls({
     state: { rotationMode, invertRotation, running, hasPastHistory, hasInitialState },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
   } = useSimulation();
+  const {
+    state: { selectorPos },
+    actions: { setSelectorPos },
+  } = useBrush();
 
   const movement = useRef({
     forward: false,
@@ -179,6 +183,100 @@ function KeyboardCameraControls({
       snapRotation.current.lastAngle = 0;
     },
     [cubeRef],
+  );
+
+  const moveCursor = React.useCallback(
+    (direction: "up" | "down" | "left" | "right") => {
+      if (!cameraRef.current || !cubeRef.current || !selectorPos) return;
+
+      const camera = cameraRef.current;
+      const cube = cubeRef.current;
+
+      // 1. Get grid axes in world space
+      const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
+        cube.quaternion,
+      );
+      const gridAxisY = new THREE.Vector3(0, 1, 0).applyQuaternion(
+        cube.quaternion,
+      );
+      const gridAxisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(
+        cube.quaternion,
+      );
+
+      // 2. Get camera's right and up vectors (screen horizontal and vertical)
+      const cameraRight = new THREE.Vector3().setFromMatrixColumn(
+        camera.matrix,
+        0,
+      );
+      const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+
+      let moveAxis = new THREE.Vector3(); // This will be one of (1,0,0), (0,1,0), (0,0,1)
+      let moveDirection = 0; // This will be 1 or -1
+
+      if (direction === "left" || direction === "right") {
+        // Find most horizontal grid axis
+        const dotX = gridAxisX.dot(cameraRight);
+        const dotY = gridAxisY.dot(cameraRight);
+        const dotZ = gridAxisZ.dot(cameraRight);
+
+        const absDotX = Math.abs(dotX);
+        const absDotY = Math.abs(dotY);
+        const absDotZ = Math.abs(dotZ);
+
+        if (absDotX > absDotY && absDotX > absDotZ) {
+          moveAxis.set(1, 0, 0);
+          moveDirection = Math.sign(dotX);
+        } else if (absDotY > absDotX && absDotY > absDotZ) {
+          moveAxis.set(0, 1, 0);
+          moveDirection = Math.sign(dotY);
+        } else {
+          moveAxis.set(0, 0, 1);
+          moveDirection = Math.sign(dotZ);
+        }
+
+        if (direction === "left") {
+          moveDirection *= -1;
+        }
+      } else {
+        // "up" or "down"
+        // Find most vertical grid axis
+        const dotX = gridAxisX.dot(cameraUp);
+        const dotY = gridAxisY.dot(cameraUp);
+        const dotZ = gridAxisZ.dot(cameraUp);
+
+        const absDotX = Math.abs(dotX);
+        const absDotY = Math.abs(dotY);
+        const absDotZ = Math.abs(dotZ);
+
+        if (absDotX > absDotY && absDotX > absDotZ) {
+          moveAxis.set(1, 0, 0);
+          moveDirection = Math.sign(dotX);
+        } else if (absDotY > absDotX && absDotY > absDotZ) {
+          moveAxis.set(0, 1, 0);
+          moveDirection = Math.sign(dotY);
+        } else {
+          moveAxis.set(0, 0, 1);
+          moveDirection = Math.sign(dotZ);
+        }
+
+        if (direction === "down") {
+          moveDirection *= -1;
+        }
+      }
+
+      const dx = moveAxis.x * moveDirection;
+      const dy = moveAxis.y * moveDirection;
+      const dz = moveAxis.z * moveDirection;
+
+      const newPos: [number, number, number] = [
+        Math.max(0, Math.min(gridSize - 1, selectorPos[0] + dx)),
+        Math.max(0, Math.min(gridSize - 1, selectorPos[1] + dy)),
+        Math.max(0, Math.min(gridSize - 1, selectorPos[2] + dz)),
+      ];
+
+      setSelectorPos(newPos);
+    },
+    [cameraRef, cubeRef, selectorPos, setSelectorPos, gridSize],
   );
 
   useEffect(() => {
@@ -237,6 +335,26 @@ function KeyboardCameraControls({
             stepBackward();
           }
           return;
+        }
+      } else {
+        // Edit mode
+        switch (e.key) {
+          case "ArrowUp":
+            e.preventDefault();
+            moveCursor("up");
+            return;
+          case "ArrowDown":
+            e.preventDefault();
+            moveCursor("down");
+            return;
+          case "ArrowLeft":
+            e.preventDefault();
+            moveCursor("left");
+            return;
+          case "ArrowRight":
+            e.preventDefault();
+            moveCursor("right");
+            return;
         }
       }
 
@@ -428,7 +546,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, moveCursor]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
