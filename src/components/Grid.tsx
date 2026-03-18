@@ -538,7 +538,12 @@ function KeyboardCameraControls({
             gridSize,
           );
           if (visibility.isOffScreen) {
-            camera.position.copy(oldPosition);
+            const isDollyIn = velocity.current.dolly < 0;
+            if (!isDollyIn) {
+              camera.position.copy(oldPosition);
+            } else {
+              needsUpdate = true;
+            }
           } else {
             needsUpdate = true;
           }
