@@ -364,11 +364,11 @@ function KeyboardCameraControls({
           controls.target,
           camera.position,
         );
-        const worldUp = new THREE.Vector3(0, 1, 0);
+        const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
 
         if (Math.abs(rotateX) > 0) {
           // Yaw
-          targetToCamera.applyAxisAngle(worldUp, rotateX);
+          targetToCamera.applyAxisAngle(cameraUp, rotateX);
         }
         if (Math.abs(rotateY) > 0) {
           // Pitch
