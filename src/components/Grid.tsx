@@ -110,6 +110,7 @@ function KeyboardCameraControls({
   panSpeed,
   rotationSpeed,
   gridSize,
+  cameraActionsRef,
 }: {
   controlsRef: React.RefObject<any>;
   cameraRef: React.RefObject<THREE.PerspectiveCamera>;
@@ -117,6 +118,11 @@ function KeyboardCameraControls({
   panSpeed: number;
   rotationSpeed: number;
   gridSize: number;
+  cameraActionsRef: React.MutableRefObject<{
+    fitDisplay: () => void;
+    recenter: () => void;
+    squareUp: () => void;
+  } | null>;
 }) {
   const {
     state: { rotationMode, invertRotation },
@@ -149,6 +155,20 @@ function KeyboardCameraControls({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
+
+      if (cameraActionsRef.current) {
+        if (e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          cameraActionsRef.current.recenter();
+          return;
+        }
+        if (e.key.toLowerCase() === "l") {
+          e.preventDefault();
+          cameraActionsRef.current.squareUp();
+          return;
+        }
+      }
+
       if (!rotationMode) return;
 
       switch (e.key.toLowerCase()) {
@@ -275,7 +295,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation]);
+  }, [rotationMode, invertRotation, cameraActionsRef]);
 
   useFrame((_, delta) => {
     if (!rotationMode) {
@@ -986,6 +1006,7 @@ export function Scene() {
         panSpeed={panSpeed}
         rotationSpeed={rotationSpeed}
         gridSize={gridSize}
+        cameraActionsRef={cameraActionsRef}
       />
       <group ref={cubeRef}>
         <Cells
