@@ -125,8 +125,8 @@ function KeyboardCameraControls({
   } | null>;
 }) {
   const {
-    state: { rotationMode, invertRotation },
-    actions: { setRotationMode },
+    state: { rotationMode, invertRotation, running, hasPastHistory },
+    actions: { setRotationMode, playStop, step, stepBackward },
   } = useSimulation();
 
   const movement = useRef({
@@ -176,6 +176,28 @@ function KeyboardCameraControls({
         e.preventDefault();
         setRotationMode(true); // View mode
         return;
+      }
+
+      if (rotationMode) {
+        if (e.key === " ") {
+          e.preventDefault();
+          playStop();
+          return;
+        }
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          if (!running) {
+            step();
+          }
+          return;
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          if (!running && hasPastHistory) {
+            stepBackward();
+          }
+          return;
+        }
       }
 
       if (cameraActionsRef.current) {
@@ -339,7 +361,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory]);
 
   useFrame((_, delta) => {
     if (!rotationMode) {
