@@ -95,11 +95,11 @@ function KeyboardCameraControls() {
           e.preventDefault();
           movement.current.rotateRight = true;
           break;
-        case ".": // rotate backward (pitch up)
+        case "o": // rotate backward (pitch up)
           e.preventDefault();
           movement.current.rotateUp = true;
           break;
-        case "o": // rotate forward (pitch down)
+        case ".": // rotate forward (pitch down)
           e.preventDefault();
           movement.current.rotateDown = true;
           break;
@@ -142,11 +142,11 @@ function KeyboardCameraControls() {
           e.preventDefault();
           movement.current.rotateRight = false;
           break;
-        case ".":
+        case "o":
           e.preventDefault();
           movement.current.rotateUp = false;
           break;
-        case "o":
+        case ".":
           e.preventDefault();
           movement.current.rotateDown = false;
           break;
@@ -184,19 +184,21 @@ function KeyboardCameraControls() {
     }
 
     const acceleration = 2000.0;
-    const maxSpeed = 1000.0;
+    const panMaxSpeed = 120.0; // pixels/sec, approx 3 cells/sec
+    const rotateMaxSpeed = 250.0; // pixels/sec, approx 90 deg/sec
+    const dollyMaxSpeed = 10.0;
     const damping = 0.9; // friction for deceleration
 
     // Panning (left/right)
     if (movement.current.right) {
       velocity.current.panX = Math.min(
         velocity.current.panX + acceleration * delta,
-        maxSpeed,
+        panMaxSpeed,
       );
     } else if (movement.current.left) {
       velocity.current.panX = Math.max(
         velocity.current.panX - acceleration * delta,
-        -maxSpeed,
+        -panMaxSpeed,
       );
     } else {
       velocity.current.panX *= damping;
@@ -206,12 +208,12 @@ function KeyboardCameraControls() {
     if (movement.current.up) {
       velocity.current.panY = Math.min(
         velocity.current.panY + acceleration * delta,
-        maxSpeed,
+        panMaxSpeed,
       );
     } else if (movement.current.down) {
       velocity.current.panY = Math.max(
         velocity.current.panY - acceleration * delta,
-        -maxSpeed,
+        -panMaxSpeed,
       );
     } else {
       velocity.current.panY *= damping;
@@ -221,12 +223,12 @@ function KeyboardCameraControls() {
     if (movement.current.rotateRight) {
       velocity.current.rotateX = Math.min(
         velocity.current.rotateX + acceleration * delta,
-        maxSpeed,
+        rotateMaxSpeed,
       );
     } else if (movement.current.rotateLeft) {
       velocity.current.rotateX = Math.max(
         velocity.current.rotateX - acceleration * delta,
-        -maxSpeed,
+        -rotateMaxSpeed,
       );
     } else {
       velocity.current.rotateX *= damping;
@@ -236,12 +238,12 @@ function KeyboardCameraControls() {
     if (movement.current.rotateUp) {
       velocity.current.rotateY = Math.min(
         velocity.current.rotateY + acceleration * delta,
-        maxSpeed,
+        rotateMaxSpeed,
       );
     } else if (movement.current.rotateDown) {
       velocity.current.rotateY = Math.max(
         velocity.current.rotateY - acceleration * delta,
-        -maxSpeed,
+        -rotateMaxSpeed,
       );
     } else {
       velocity.current.rotateY *= damping;
@@ -251,12 +253,12 @@ function KeyboardCameraControls() {
     if (movement.current.forward) {
       velocity.current.dolly = Math.min(
         velocity.current.dolly + acceleration * delta,
-        maxSpeed,
+        dollyMaxSpeed,
       );
     } else if (movement.current.backward) {
       velocity.current.dolly = Math.max(
         velocity.current.dolly - acceleration * delta,
-        -maxSpeed,
+        -dollyMaxSpeed,
       );
     } else {
       velocity.current.dolly *= damping;
