@@ -1,4 +1,5 @@
 import { MutableRefObject, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
@@ -180,18 +181,24 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
       if (!e.key.startsWith("Arrow")) return;
       e.preventDefault();
 
-      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-      const rightX = Math.cos(azimuth);
-      const rightZ = -Math.sin(azimuth);
-      const forwardX = -Math.sin(azimuth);
-      const forwardZ = -Math.cos(azimuth);
+      const camera = controlsRef.current?.object as THREE.Camera;
+      if (!camera) return;
 
-      const quantizeToAxis = (
-        x: number,
-        z: number,
-      ): [number, number, number] => {
-        if (Math.abs(x) >= Math.abs(z)) {
+      const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const forwardVec = new THREE.Vector3()
+        .setFromMatrixColumn(camera.matrix, 2)
+        .negate();
+
+      const quantize = (v: THREE.Vector3): [number, number, number] => {
+        const { x, y, z } = v;
+        const absX = Math.abs(x);
+        const absY = Math.abs(y);
+        const absZ = Math.abs(z);
+
+        if (absX > absY && absX > absZ) {
           return [Math.sign(x), 0, 0];
+        } else if (absY > absX && absY > absZ) {
+          return [0, Math.sign(y), 0];
         } else {
           return [0, 0, Math.sign(z)];
         }
@@ -203,19 +210,19 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
 
       if (e.shiftKey) {
         if (e.key === "ArrowUp") {
-          [dx, dy, dz] = quantizeToAxis(forwardX, forwardZ);
-        } else if (e.key === "ArrowDown") {
-          [dx, dy, dz] = quantizeToAxis(-forwardX, -forwardZ);
-        }
-      } else {
-        if (e.key === "ArrowRight") {
-          [dx, dy, dz] = quantizeToAxis(rightX, rightZ);
-        } else if (e.key === "ArrowLeft") {
-          [dx, dy, dz] = quantizeToAxis(-rightX, -rightZ);
-        } else if (e.key === "ArrowUp") {
           dy = 1;
         } else if (e.key === "ArrowDown") {
           dy = -1;
+        }
+      } else {
+        if (e.key === "ArrowRight") {
+          [dx, dy, dz] = quantize(rightVec);
+        } else if (e.key === "ArrowLeft") {
+          [dx, dy, dz] = quantize(rightVec.clone().negate());
+        } else if (e.key === "ArrowUp") {
+          [dx, dy, dz] = quantize(forwardVec);
+        } else if (e.key === "ArrowDown") {
+          [dx, dy, dz] = quantize(forwardVec.clone().negate());
         }
       }
 
