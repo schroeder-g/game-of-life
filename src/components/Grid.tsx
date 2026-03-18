@@ -945,30 +945,37 @@ export function Scene() {
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!controlsRef.current || !cameraRef.current) return;
-        
-        // Ensure we calculate from the origin for symmetric centering
+
+        // Recenter on the origin without changing camera orientation
+        const offset = new THREE.Vector3().subVectors(
+          new THREE.Vector3(0, 0, 0),
+          controlsRef.current.target,
+        );
+        cameraRef.current.position.add(offset);
         controlsRef.current.target.set(0, 0, 0);
-        
+
         const size = gridRef.current.size;
         const padding = 1.1; // 10% margin
-        
+
         // Sphere that encompasses the entire cube
         const radius = (size / 2) * Math.sqrt(3);
-        
+
         const fov = cameraRef.current.fov;
         const aspect = cameraRef.current.aspect;
-        
+
         const tanFOV = Math.tan((Math.PI * fov) / 360);
         let distance = (radius * padding) / tanFOV;
-        
+
         const hFov = 2 * Math.atan(tanFOV * aspect);
         const distanceH = (radius * padding) / Math.tan(hFov / 2);
-        
+
         distance = Math.max(distance, distanceH);
-        
-        const direction = new THREE.Vector3().subVectors(cameraRef.current.position, new THREE.Vector3(0, 0, 0)).normalize();
+
+        const direction = new THREE.Vector3()
+          .subVectors(cameraRef.current.position, controlsRef.current.target)
+          .normalize();
         cameraRef.current.position.copy(direction.multiplyScalar(distance));
-        cameraRef.current.lookAt(0, 0, 0);
+
         controlsRef.current.update();
       },
       recenter: () => {
