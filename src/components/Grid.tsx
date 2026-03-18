@@ -90,13 +90,13 @@ function KeyboardCameraControls({
           e.preventDefault();
           movement.current.rotateRight = true;
           break;
-        case "o": // rotate backward (pitch up)
-          e.preventDefault();
-          movement.current.rotateUp = true;
-          break;
-        case ".": // rotate forward (pitch down)
+        case "o": // rotate forward (pitch down)
           e.preventDefault();
           movement.current.rotateDown = true;
+          break;
+        case ".": // rotate backward (pitch up)
+          e.preventDefault();
+          movement.current.rotateUp = true;
           break;
         case "i": // barrel roll left
           e.preventDefault();
@@ -147,11 +147,11 @@ function KeyboardCameraControls({
           break;
         case "o":
           e.preventDefault();
-          movement.current.rotateUp = false;
+          movement.current.rotateDown = false;
           break;
         case ".":
           e.preventDefault();
-          movement.current.rotateDown = false;
+          movement.current.rotateUp = false;
           break;
         case "i":
           e.preventDefault();
