@@ -20,9 +20,11 @@ export function BoundingBox({ size }: { size: number }) {
 function KeyboardCameraControls({
   controlsRef,
   cameraRef,
+  cubeRef,
 }: {
   controlsRef: React.RefObject<any>;
   cameraRef: React.RefObject<THREE.PerspectiveCamera>;
+  cubeRef: React.RefObject<THREE.Group>;
 }) {
   const {
     state: { rotationMode },
@@ -359,25 +361,15 @@ function KeyboardCameraControls({
       const rotateX = velocity.current.rotateX * delta * 0.005;
       const rotateY = velocity.current.rotateY * delta * 0.005;
 
-      if (Math.abs(rotateX) > 0 || Math.abs(rotateY) > 0) {
-        const targetToCamera = new THREE.Vector3().subVectors(
-          controls.target,
-          camera.position,
-        );
-        const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-
+      if (cubeRef.current) {
         if (Math.abs(rotateX) > 0) {
           // Yaw
-          targetToCamera.applyAxisAngle(cameraUp, rotateX);
+          cubeRef.current.rotation.y += rotateX;
         }
         if (Math.abs(rotateY) > 0) {
           // Pitch
-          const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-          targetToCamera.applyAxisAngle(right, rotateY);
+          cubeRef.current.rotation.x += rotateY;
         }
-
-        controls.target.copy(camera.position).add(targetToCamera);
-        needsUpdate = true;
       }
 
       if (Math.abs(velocity.current.rotateX) < 0.01) {
@@ -652,6 +644,7 @@ export function Scene() {
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
   const {
@@ -756,8 +749,13 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <KeyboardCameraControls controlsRef={controlsRef} cameraRef={cameraRef} />
-      <Cells
+      <KeyboardCameraControls
+        controlsRef={controlsRef}
+        cameraRef={cameraRef}
+        cubeRef={cubeRef}
+      />
+      <group ref={cubeRef}>
+        <Cells
         grid={gridRef.current}
         margin={cellMargin}
         selectorPos={selectorPos}
@@ -778,9 +776,10 @@ export function Scene() {
           }
         }}
       />
-      <BoundingBox size={gridRef.current.size} />
-      <AxisLabels size={gridRef.current.size} />
-      {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
+        <BoundingBox size={gridRef.current.size} />
+        <AxisLabels size={gridRef.current.size} />
+        {!rotationMode && <KeyboardSelector controlsRef={controlsRef} />}
+      </group>
       <OrbitControls
         ref={controlsRef}
         makeDefault
