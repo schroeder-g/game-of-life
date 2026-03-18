@@ -1060,17 +1060,46 @@ export function Scene() {
           Math.cos(snappedAzimuth),
         );
 
-        // 3. Calculate the rotation to align the dominant face with the new front direction.
-        const dominantWorldAxis = dominantLocalAxis
-          .clone()
-          .applyQuaternion(Q_current);
-        const Q_fix = new THREE.Quaternion().setFromUnitVectors(
-          dominantWorldAxis,
+        // 3. Calculate the target rotation to make the dominant face front and level the cube.
+        const targetUpVector = new THREE.Vector3(0, 1, 0);
+        const targetRightVector = new THREE.Vector3().crossVectors(
+          targetUpVector,
           targetFrontVector,
         );
 
+        const finalQuaternion = new THREE.Quaternion();
+        const targetMatrix = new THREE.Matrix4();
+
+        const { x: dx, y: dy, z: dz } = dominantLocalAxis;
+        const col1 = new THREE.Vector3(),
+          col2 = new THREE.Vector3(),
+          col3 = new THREE.Vector3();
+
+        if (Math.abs(dx) > 0.5) {
+          // right/left face is dominant (local X)
+          const sign = Math.sign(dx);
+          col1.copy(targetFrontVector).multiplyScalar(sign); // Map local X to target Z
+          col2.copy(targetUpVector); // Map local Y to target Y
+          col3.copy(targetRightVector).multiplyScalar(-sign); // Map local Z to -target X
+        } else if (Math.abs(dz) > 0.5) {
+          // front/back face is dominant (local Z)
+          const sign = Math.sign(dz);
+          col1.copy(targetRightVector).multiplyScalar(sign); // Map local X to target X
+          col2.copy(targetUpVector); // Map local Y to target Y
+          col3.copy(targetFrontVector).multiplyScalar(sign); // Map local Z to target Z
+        } else {
+          // top/bottom face is dominant (local Y)
+          const sign = Math.sign(dy);
+          col1.copy(targetRightVector).multiplyScalar(-sign); // Map local X to -target X
+          col2.copy(targetFrontVector).multiplyScalar(sign); // Map local Y to target Z
+          col3.copy(targetUpVector); // Map local Z to target Y
+        }
+
+        targetMatrix.makeBasis(col1, col2, col3);
+        finalQuaternion.setFromRotationMatrix(targetMatrix);
+
         // 4. Apply this rotation to the cube.
-        cubeRef.current.quaternion.premultiply(Q_fix);
+        cubeRef.current.quaternion.copy(finalQuaternion);
 
         // 5. Do the rest of squareUp: reset camera roll and snap position.
         cameraRef.current.up.set(0, 1, 0);
