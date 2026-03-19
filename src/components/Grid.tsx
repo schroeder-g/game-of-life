@@ -201,7 +201,7 @@ function KeyboardCameraControls({
         tagName === "TEXTAREA" ||
         (tagName === "INPUT" &&
           ((target as HTMLInputElement).type === "text" ||
-            (target as HTMLInputElement).type === "number")))
+            (target as HTMLInputElement).type === "number"))
       ) {
         return;
       }
@@ -433,7 +433,9 @@ function KeyboardCameraControls({
       if (
         tagName === "SELECT" ||
         tagName === "TEXTAREA" ||
-        (tagName as HTMLInputElement).type === "number"))
+        (tagName === "INPUT" &&
+          ((target as HTMLInputElement).type === "text" ||
+            (target as HTMLInputElement).type === "number"))
       ) {
         return;
       }
