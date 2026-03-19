@@ -1041,9 +1041,9 @@ function AxisChannels({
   );
 }
 
-function AxisLabels({ size }: { size: number }) {
+function FaceLabels({ size }: { size: number }) {
   const half = size / 2;
-  const padding = 1.5; // Distance from the edge
+  const padding = 1.5;
   const labelStyle: React.CSSProperties = {
     color: "silver",
     fontSize: "12pt",
@@ -1052,46 +1052,22 @@ function AxisLabels({ size }: { size: number }) {
     whiteSpace: "nowrap",
   };
 
-  const signs = [-1, 1];
+  const labels = [
+    { pos: [half + padding, 0, 0], text: "Right" },
+    { pos: [-(half + padding), 0, 0], text: "Left" },
+    { pos: [0, half + padding, 0], text: "Top" },
+    { pos: [0, -(half + padding), 0], text: "Bottom" },
+    { pos: [0, 0, half + padding], text: "Back" },
+    { pos: [0, 0, -(half + padding)], text: "Front" },
+  ];
 
   return (
     <group>
-      {/* X labels */}
-      {signs.map((sy) =>
-        signs.map((sz) => (
-          <Html
-            key={`x-${sy}-${sz}`}
-            position={[0, sy * (half + padding), sz * (half + padding)]}
-            center
-          >
-            <div style={labelStyle}>X</div>
-          </Html>
-        )),
-      )}
-      {/* Y labels */}
-      {signs.map((sx) =>
-        signs.map((sz) => (
-          <Html
-            key={`y-${sx}-${sz}`}
-            position={[sx * (half + padding), 0, sz * (half + padding)]}
-            center
-          >
-            <div style={labelStyle}>Y</div>
-          </Html>
-        )),
-      )}
-      {/* Z labels */}
-      {signs.map((sx) =>
-        signs.map((sy) => (
-          <Html
-            key={`z-${sx}-${sy}`}
-            position={[sx * (half + padding), sy * (half + padding), 0]}
-            center
-          >
-            <div style={labelStyle}>Z</div>
-          </Html>
-        )),
-      )}
+      {labels.map(({ pos, text }) => (
+        <Html key={text} position={[pos[0], pos[1], pos[2]]} center>
+          <div style={labelStyle}>{text}</div>
+        </Html>
+      ))}
     </group>
   );
 }
@@ -1170,7 +1146,7 @@ export function Scene() {
       panSpeed,
       rotationSpeed,
     },
-    actions: { tick, setCommunity },
+    actions: { tick, setCommunity, setSnapMessage },
     meta: { gridRef },
   } = useSimulation();
   const {
@@ -1330,6 +1306,32 @@ export function Scene() {
         // 4. Apply this rotation to the cube.
         cubeRef.current.quaternion.copy(finalQuaternion);
 
+        // Determine face name and orientation for message
+        const { x: localX, y: localY, z: localZ } = localToCamera;
+        const absX = Math.abs(localX),
+          absY = Math.abs(localY),
+          absZ = Math.abs(localZ);
+        let faceName = "";
+        if (absX > absY && absX > absZ) {
+          faceName = Math.sign(localX) > 0 ? "Right" : "Left";
+        } else if (absY > absX && absY > absZ) {
+          faceName = Math.sign(localY) > 0 ? "Top" : "Bottom";
+        } else {
+          faceName = Math.sign(localZ) > 0 ? "Back" : "Front";
+        }
+
+        const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(
+          finalQuaternion,
+        );
+        const worldUp = new THREE.Vector3(0, 1, 0);
+        const isUpsideDown = cubeUp.dot(worldUp) < -0.5;
+
+        let message = `Snapped to: ${faceName} face`;
+        if (isUpsideDown) {
+          message += " (upside down)";
+        }
+        setSnapMessage(message);
+
         // 5. Do the rest of squareUp: reset camera roll and snap position.
         cameraRef.current.up.set(0, 1, 0);
 
@@ -1354,7 +1356,7 @@ export function Scene() {
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef, cubeRef]);
+  }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage]);
 
   useFrame((state) => {
     if (running) {
@@ -1405,7 +1407,7 @@ export function Scene() {
         <BoundingBox size={gridRef.current.size} />
         {!rotationMode && (
           <>
-            <AxisLabels size={gridRef.current.size} />
+            <FaceLabels size={gridRef.current.size} />
             <KeyboardSelector controlsRef={controlsRef} />
           </>
         )}

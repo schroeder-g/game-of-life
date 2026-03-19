@@ -45,8 +45,8 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, community, running },
-    actions: { setRotationMode, recenter, squareUp, fitDisplay },
+    state: { rotationMode, community, running, snapMessage },
+    actions: { setRotationMode, recenter, squareUp, fitDisplay, setSnapMessage },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -66,6 +66,15 @@ export default function App() {
   useEffect(() => {
     console.log("APP STATE - community length:", community.length);
   }, [community]);
+
+  useEffect(() => {
+    if (snapMessage) {
+      const timer = setTimeout(() => {
+        setSnapMessage("");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [snapMessage, setSnapMessage]);
 
   return (
     <div className="app">
@@ -90,6 +99,7 @@ export default function App() {
               Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
             </div>
           )}
+          {snapMessage && <div className="snap-message">{snapMessage}</div>}
           {!rotationMode && selectedShape !== "None" && (
             <div className="shape-info">
               Shape: {selectedShape} ({shapeSize}x{shapeSize}
