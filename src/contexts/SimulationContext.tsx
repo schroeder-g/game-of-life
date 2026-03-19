@@ -11,6 +11,11 @@ import { Emitter } from "../core/events";
 import { Grid3D } from "../core/Grid3D";
 import { loadSettings, saveSettings } from "../hooks/useSettings";
 
+export type Orientation = {
+  face: string | null;
+  rotation: number | null;
+};
+
 const initialSettings = loadSettings();
 
 const defaults = {
@@ -412,8 +417,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const value: SimulationContextValue = {
     state: {
-      axisKeyMap,
-      frontFace,
+      orientation,
+      keyHintMap,
       snapMessage,
       speed,
       density,
@@ -449,8 +454,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCommunity,
       setRotationMode: handleSetRotationMode,
       setSnapMessage,
-      setFrontFace,
-      setAxisKeyMap,
+      setOrientation,
+      setKeyHintMap,
       setPanSpeed,
       setRotationSpeed,
       setInvertRotation,
