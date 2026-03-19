@@ -430,23 +430,13 @@ function SelectorPositionSection() {
     }
   };
 
-  const arrowSymbols: { [key: string]: string } = {
-    up: "↑",
-    down: "↓",
-    left: "←",
-    right: "→",
-  };
-
-  const arrowColors: { [key: string]: string } = {
-    left: "red",
-    right: "blue",
-    up: "yellow",
-    down: "green",
-  };
-
-  const getButtonColor = (func: string) => {
-    const direction = arrowKeyMappings[func];
-    return arrowColors[direction] || "white";
+  const directionToKey: { [key: string]: string } = {
+    up: "W",
+    down: "X",
+    left: "A",
+    right: "D",
+    forward: "Q",
+    backward: "Z",
   };
 
   return (
@@ -469,25 +459,23 @@ function SelectorPositionSection() {
                 <button
                   ref={(el) => (buttonsRef.current[`+${axis}`] = el)}
                   onClick={() => increment(axis)}
-                  style={{ color: getButtonColor(`+${axis}`) }}
                 >
                   ▲
                 </button>
                 <button
                   ref={(el) => (buttonsRef.current[`-${axis}`] = el)}
                   onClick={() => decrement(axis)}
-                  style={{ color: getButtonColor(`-${axis}`) }}
                 >
                   ▼
                 </button>
               </div>
             </div>
             <div className="key-mapping-display">
-              <span style={{ color: getButtonColor(`+${axis}`) }}>
-                {arrowSymbols[arrowKeyMappings[`+${axis}`]] || ""}
+              <span>
+                {directionToKey[arrowKeyMappings[`+${axis}`]] || ""}
               </span>
-              <span style={{ color: getButtonColor(`-${axis}`) }}>
-                {arrowSymbols[arrowKeyMappings[`-${axis}`]] || ""}
+              <span>
+                {directionToKey[arrowKeyMappings[`-${axis}`]] || ""}
               </span>
             </div>
           </div>
