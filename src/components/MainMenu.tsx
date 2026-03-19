@@ -360,13 +360,19 @@ function RulesSection() {
 
 function SelectorPositionSection() {
   const {
-    state: { gridSize, keyHintMap },
+    state: { gridSize },
     meta: { eventBus },
   } = useSimulation();
   const {
     state: { selectorPos },
     actions: { setSelectorPos },
   } = useBrush();
+
+  const keyMap = {
+    X: { inc: "D", dec: "A" },
+    Y: { inc: "W", dec: "S" },
+    Z: { inc: "E", dec: "Q" },
+  };
 
   if (!selectorPos) {
     return null;
@@ -448,8 +454,9 @@ function SelectorPositionSection() {
                 </button>
               </div>
             </div>
-            <div className="key-hint">
-              {keyHintMap[axis.toLowerCase() as 'x' | 'y' | 'z']}
+            <div className="coord-hints">
+              <kbd>{keyMap[axis].inc}</kbd>
+              <kbd>{keyMap[axis].dec}</kbd>
             </div>
           </div>
         ))}

@@ -1071,3 +1071,30 @@ kbd {
 .coord-buttons button:first-child {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* ADD THESE NEW RULES */
+.coord-hints {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.coord-hints kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  line-height: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  border-radius: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.coord-hints kbd:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
