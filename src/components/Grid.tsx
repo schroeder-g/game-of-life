@@ -411,16 +411,40 @@ function KeyboardCameraControls({
             e.preventDefault();
             const moveTowards = calculateSelectorMovement('towards');
             if (moveTowards) {
-                const [dx, dy, dz] = moveTowards;
-                setSelectorPos([selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz]);
+              const [dx, dy, dz] = moveTowards;
+              const newX = selectorPos[0] + dx;
+              const newY = selectorPos[1] + dy;
+              const newZ = selectorPos[2] + dz;
+              if (
+                newX >= 0 &&
+                newX < gridSize &&
+                newY >= 0 &&
+                newY < gridSize &&
+                newZ >= 0 &&
+                newZ < gridSize
+              ) {
+                setSelectorPos([newX, newY, newZ]);
+              }
             }
             break;
           case "z": // move selector away from camera
             e.preventDefault();
             const moveAway = calculateSelectorMovement('away');
             if (moveAway) {
-                const [dx, dy, dz] = moveAway;
-                setSelectorPos([selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz]);
+              const [dx, dy, dz] = moveAway;
+              const newX = selectorPos[0] + dx;
+              const newY = selectorPos[1] + dy;
+              const newZ = selectorPos[2] + dz;
+              if (
+                newX >= 0 &&
+                newX < gridSize &&
+                newY >= 0 &&
+                newY < gridSize &&
+                newZ >= 0 &&
+                newZ < gridSize
+              ) {
+                setSelectorPos([newX, newY, newZ]);
+              }
             }
             break;
         }
