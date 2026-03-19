@@ -57,6 +57,7 @@ export interface SimulationState {
   invertRotation: boolean;
   snapMessage: string;
   cameraOrientation: CameraOrientation;
+  isAnimatingInit: boolean;
 }
 
 export interface SimulationActions {
@@ -89,6 +90,7 @@ export interface SimulationActions {
   tick: () => void;
 
   toggleCell: (x: number, y: number, z: number) => void;
+  setCell: (x: number, y: number, z: number, alive: boolean) => void;
   setCells: (cells: Array<[number, number, number]>) => void;
   deleteCells: (cells: Array<[number, number, number]>) => void;
 
@@ -133,21 +135,35 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
-  const cameraActionsRef = useRef<any>(null); // Keep this as any for now
+  const cameraActionsRef = useRef<any>(null);
   const eventBusRef = useRef(new Emitter<AppEvents>());
   const movement = useRef({
-    forward: false, backward: false, left: false, right: false,
-    up: false, down: false, rotateLeft: false, rotateRight: false,
-    rotateUp: false, rotateDown: false, rollLeft: false, rollRight: false,
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    rotateLeft: false,
+    rotateRight: false,
+    rotateUp: false,
+    rotateDown: false,
+    rollLeft: false,
+    rollRight: false,
+    space: false,
+    delete: false,
   });
   const velocity = useRef({
-    panX: 0, panY: 0, dolly: 0, rotateX: 0, rotateY: 0, roll: 0,
+    panX: 0,
+    panY: 0,
+    dolly: 0,
+    rotateX: 0,
+    rotateY: 0,
+    roll: 0,
   });
   const isFirstLoadRef = useRef(true);
   const [hasInitialState, setHasInitialState] = useState(false);
-  const [hasPastHistory, setHasPastHistory] = useState(
-    gridRef.current.canStepBackward,
-  );
+  const [hasPastHistory, setHasPastHistory] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -158,22 +174,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [hasPastHistory]);
 
-  if (isFirstLoadRef.current) {
-    isFirstLoadRef.current = false;
-    if (Object.keys(initialSettings).length === 0) {
-      const mid = Math.floor(storedSettings.gridSize / 2);
-      for (let x = mid - 1; x <= mid; x++) {
-        for (let y = mid - 1; y <= mid; y++) {
-          for (let z = mid - 1; z <= mid; z++) {
-            gridRef.current.set(x, y, z, true);
-            initialStateRef.current.push([x, y, z]);
-          }
-        }
-      }
-      setHasInitialState(initialStateRef.current.length > 0);
-    }
-  }
-
   const [running, setRunning] = useState(false);
   const [rotationMode, setRotationMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
@@ -181,6 +181,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [snapMessage, setSnapMessage] = useState("");
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
+  const [isAnimatingInit, setIsAnimatingInit] = useState(false);
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);
@@ -210,6 +211,124 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
 
   const hasMounted = useRef(false);
+
+  const runInitAnimation = useCallback(async (cells?: Array<[number, number, number]>) => {
+    // Small pause to allow everything to settle
+    await new Promise(r => setTimeout(r, 500));
+    
+    setIsAnimatingInit(true);
+    if (cells) {
+      initialStateRef.current = cells;
+      gridRef.current.clear();
+      setHasInitialState(cells.length > 0);
+    }
+    
+    const size = gridRef.current.size;
+    const originalCells = initialStateRef.current;
+    const originalSet = new Set(originalCells.map(([x, y, z]) => `${x},${y},${z}`));
+
+    // Calculate sphere center and radius to encompass the pattern
+    let centerX = size / 2;
+    let centerY = size / 2;
+    let centerZ = size / 2;
+    let radius = size / 4;
+
+    if (originalCells.length > 0) {
+      let minX = size, maxX = 0;
+      let minY = size, maxY = 0;
+      let minZ = size, maxZ = 0;
+      for (const [x, y, z] of originalCells) {
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+        minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+      }
+      centerX = (minX + maxX) / 2;
+      centerY = (minY + maxY) / 2;
+      centerZ = (minZ + maxZ) / 2;
+      
+      let maxDistSq = 0;
+      for (const [x, y, z] of originalCells) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const dz = z - centerZ;
+        maxDistSq = Math.max(maxDistSq, dx*dx + dy*dy + dz*dz);
+      }
+      radius = Math.sqrt(maxDistSq) + 2; // +2 for generous padding
+    }
+    
+    // Ensure the sphere is at least 30% the volume of the cube
+    // (4/3)*pi*r^3 >= 0.3 * size^3  =>  r >= size * cbrt(0.225/pi) approx 0.415 * size
+    const minRadius = size * 0.415;
+    radius = Math.max(radius, minRadius);
+
+    // 1 second total: 0.5s fill, 0.5s empty
+    const fillDuration = 500;
+    const stepDelay = fillDuration / size;
+    
+    // Phase 1: Fill bottom-up (Y from 0 to size-1)
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+          const dx = x - centerX;
+          const dy = y - centerY;
+          const dz = z - centerZ;
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+          // Hollow shell with thickness 1
+          if (dist <= radius && dist >= radius - 1) {
+            gridRef.current.set(x, y, z, true);
+          }
+        }
+      }
+      gridRef.current.version++;
+      await new Promise(r => setTimeout(r, stepDelay));
+    }
+
+    // Phase 2: Empty top-down (Y from size-1 to 0)
+    const emptyDuration = 500;
+    const emptyStepDelay = emptyDuration / size;
+    for (let y = size - 1; y >= 0; y--) {
+      for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+          const isTarget = originalSet.has(`${x},${y},${z}`);
+          gridRef.current.set(x, y, z, isTarget);
+        }
+      }
+      gridRef.current.version++;
+      await new Promise(r => setTimeout(r, emptyStepDelay));
+    }
+
+    // Wait for the last few cells to finish their shrinking animation (0.2s)
+    await new Promise(r => setTimeout(r, 300));
+    
+    setIsAnimatingInit(false);
+  }, []);
+
+  // Initialization logic
+  useEffect(() => {
+    if (Object.keys(initialSettings).length === 0) {
+      const mid = Math.floor(storedSettings.gridSize / 2);
+      const cells: Array<[number, number, number]> = [];
+      for (let x = mid - 1; x <= mid; x++) {
+        for (let y = mid - 1; y <= mid; y++) {
+          for (let z = mid - 1; z <= mid; z++) {
+            // Do NOT set cells in gridRef yet, just record them
+            cells.push([x, y, z]);
+          }
+        }
+      }
+      initialStateRef.current = cells;
+      setHasInitialState(cells.length > 0);
+    } else {
+      // Capture initial state from settings but clear the grid for animation
+      const cells = gridRef.current.getLivingCells();
+      initialStateRef.current = cells;
+      gridRef.current.clear();
+      setHasInitialState(cells.length > 0);
+    }
+
+    runInitAnimation();
+  }, [runInitAnimation]);
 
   // keep grid's neighbor flags in sync
   useEffect(() => {
@@ -270,7 +389,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     setHasInitialState(false);
     setGridSize(newSize);
     setCommunity([]);
-  }, [neighborFaces, neighborEdges, neighborCorners, gridSize]);
+  }, [neighborFaces, neighborEdges, neighborCorners]);
 
   const playStop = useCallback(() => {
     if (!running && gridRef.current.generation === 0) {
@@ -291,7 +410,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         initialStateRef.current = gridRef.current.saveState();
         setHasInitialState(initialStateRef.current.length > 0);
       }
-      // ensure grid uses current neighbor settings (fixes stale values)
       gridRef.current.neighborFaces = neighborFaces;
       gridRef.current.neighborEdges = neighborEdges;
       gridRef.current.neighborCorners = neighborCorners;
@@ -334,7 +452,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const tick = useCallback(() => {
-    // keep the grid flags current in case effect hasn't run yet
     gridRef.current.neighborFaces = neighborFaces;
     gridRef.current.neighborEdges = neighborEdges;
     gridRef.current.neighborCorners = neighborCorners;
@@ -345,7 +462,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       birthMax,
       birthMargin,
     );
-    // Auto-pause when all cells die
     if (gridRef.current.getLivingCells().length === 0) {
       setRunning(false);
     }
@@ -362,6 +478,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const toggleCell = useCallback((x: number, y: number, z: number) => {
     gridRef.current.toggle(x, y, z);
+  }, []);
+
+  const setCell = useCallback((x: number, y: number, z: number, alive: boolean) => {
+    gridRef.current.set(x, y, z, alive);
   }, []);
 
   const setCells = useCallback((cells: Array<[number, number, number]>) => {
@@ -381,7 +501,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRunning(false);
       if (updateGridSize !== undefined && updateGridSize !== gridSize) {
         gridRef.current = new Grid3D(updateGridSize);
-        // propagate neighbor settings
         gridRef.current.neighborFaces = neighborFaces;
         gridRef.current.neighborEdges = neighborEdges;
         gridRef.current.neighborCorners = neighborCorners;
@@ -389,19 +508,18 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       } else {
         gridRef.current.clear();
       }
-      gridRef.current.restoreState(cells);
-      initialStateRef.current = cells;
-      setHasInitialState(cells.length > 0);
+      
+      // We don't restore state immediately here because runInitAnimation handles it
+      runInitAnimation(cells);
       setCommunity([]);
     },
-    [gridSize, neighborFaces, neighborEdges, neighborCorners],
+    [gridSize, neighborFaces, neighborEdges, neighborCorners, runInitAnimation],
   );
 
   const handleSetRotationMode = useCallback(
     (mode: boolean | ((prev: boolean) => boolean)) => {
       setRotationMode((prev) => {
         const next = typeof mode === "function" ? mode(prev) : mode;
-        // When entering edit mode (next === false), pause simulation
         if (next === false) {
           setRunning(false);
         }
@@ -439,6 +557,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       panSpeed,
       rotationSpeed,
       invertRotation,
+      isAnimatingInit,
     },
     actions: {
       setSpeed,
@@ -468,6 +587,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setNeighborEdges,
       setNeighborCorners,
       toggleCell,
+      setCell,
       setCells,
       deleteCells,
       applyCells,

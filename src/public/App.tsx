@@ -45,7 +45,7 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, community, running, snapMessage, arrowKeyMappings },
+    state: { rotationMode, community, running, snapMessage },
     actions: { setRotationMode, recenter, squareUp, fitDisplay, setSnapMessage },
   } = useSimulation();
   const {

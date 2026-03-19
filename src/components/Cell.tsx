@@ -3,6 +3,7 @@ import chroma from "chroma-js";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Grid3D } from "../core/Grid3D";
+import { useSimulation } from "../contexts/SimulationContext";
 
 // Custom shader material for per-instance color and opacity
 const cellShaderMaterial = {
@@ -68,62 +69,132 @@ export function Cells({
     };
   }, [grid]);
 
+  const {
+    state: { speed, isAnimatingInit },
+  } = useSimulation();
+
+  const previousCellsRef = useRef<Set<string>>(new Set());
+  const animationsRef = useRef<Map<string, { startTime: number; type: "born" | "dead" }>>(new Map());
+
   // Use useFrame to natively poll the Grid3D instance without triggering React re-renders
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (materialRef.current) {
       materialRef.current.uniforms.u_time.value = state.clock.getElapsedTime();
     }
     if (!meshRef.current || !edgesRef.current) return;
 
+    const now = state.clock.getElapsedTime();
+    const isSlow = speed === 1 || isAnimatingInit;
+    const animDuration = isAnimatingInit ? 0.2 : (speed === 1 ? 0.5 : 0);
+
     const selectorPosStr = JSON.stringify(selectorPos);
-    // Only update buffers if the version or selector position changed
-    if (
-      grid.version === lastVersion.current &&
-      selectorPosStr === lastSelectorPos.current
-    )
+    
+    // Detect changes and manage animations
+    if (grid.version !== lastVersion.current) {
+      const livingCells = grid.getLivingCells();
+      const currentSet = new Set(livingCells.map(([x, y, z]) => `${x},${y},${z}`));
+
+      if (isSlow) {
+        // Find newborn cells
+        for (const key of currentSet) {
+          if (!previousCellsRef.current.has(key)) {
+            animationsRef.current.set(key, { startTime: now, type: "born" });
+          }
+        }
+        // Find newly dead cells
+        for (const key of previousCellsRef.current) {
+          if (!currentSet.has(key)) {
+            animationsRef.current.set(key, { startTime: now, type: "dead" });
+          }
+        }
+      } else {
+        animationsRef.current.clear();
+      }
+
+      previousCellsRef.current = currentSet;
+      lastVersion.current = grid.version;
+      lastSelectorPos.current = selectorPosStr;
+    } else if (selectorPosStr !== lastSelectorPos.current) {
+      lastSelectorPos.current = selectorPosStr;
+    } else if (!isSlow || animationsRef.current.size === 0) {
+      // If nothing changed and no animations are active, skip update
       return;
-    lastVersion.current = grid.version;
-    lastSelectorPos.current = selectorPosStr;
+    }
 
-    const cells = grid.getLivingCells();
+    const livingCells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();
-    const colors = new Float32Array(cells.length * 3);
-    const opacities = new Float32Array(cells.length);
-    const edgeColors = new Float32Array(cells.length * 3);
-    const highlights = new Float32Array(cells.length);
+    
+    // Determine which cells to actually render
+    const displayCells: Array<{ pos: [number, number, number]; scale: number }> = [];
 
-    cells.forEach((cell, i) => {
-      const [x, y, z] = cell;
+    // 1. Add living cells
+    livingCells.forEach(pos => {
+      const key = `${pos[0]},${pos[1]},${pos[2]}`;
+      const anim = animationsRef.current.get(key);
+      let scale = 1.0;
+      if (anim && anim.type === "born") {
+        const progress = (now - anim.startTime) / animDuration;
+        if (progress >= 1) {
+          animationsRef.current.delete(key);
+        } else {
+          scale = progress;
+        }
+      }
+      displayCells.push({ pos, scale });
+    });
 
-      // Position
+    // 2. Add animating dead cells
+    if (isSlow) {
+      for (const [key, anim] of animationsRef.current.entries()) {
+        if (anim.type === "dead") {
+          const progress = (now - anim.startTime) / animDuration;
+          if (progress >= 1) {
+            animationsRef.current.delete(key);
+          } else {
+            const pos = key.split(",").map(Number) as [number, number, number];
+            displayCells.push({ pos, scale: 1.0 - progress });
+          }
+        }
+      }
+    }
+
+    const count = displayCells.length;
+    const colors = new Float32Array(count * 3);
+    const opacities = new Float32Array(count);
+    const edgeColors = new Float32Array(count * 3);
+    const highlights = new Float32Array(count);
+
+    displayCells.forEach((cell, i) => {
+      const { pos: [x, y, z], scale } = cell;
+
+      // Position & Scale
       tempObject.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
+      tempObject.scale.set(scale, scale, scale);
       tempObject.updateMatrix();
       meshRef.current!.setMatrixAt(i, tempObject.matrix);
       edgesRef.current!.setMatrixAt(i, tempObject.matrix);
 
       // Hue based on X position (blue to red)
-      // Saturation based on Z position
-      const hue = (x / gridSize) * 300; // 240 (blue) to 0 (red)
-      const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6; // 0.4 to 1.0
+      const hue = (x / gridSize) * 300; 
+      const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
       let color = chroma.hsl(240 - hue, saturation, 0.55);
 
-      // Highlight if on the selector's axis
-      const onAxis =
-        selectorPos &&
-        (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
-      if (onAxis) {
+      const onAxis = selectorPos && (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
+      const isSelected = selectorPos && x === selectorPos[0] && y === selectorPos[1] && z === selectorPos[2];
+
+      if (isSelected) {
+        color = chroma('white');
+      } else if (onAxis) {
         color = color.brighten(0.75);
       }
 
       const [r, g, b] = color.gl();
-
       colors[i * 3] = r;
       colors[i * 3 + 1] = g;
       colors[i * 3 + 2] = b;
 
-      // Edge colors
-      const sharesTwoCoords =
-        selectorPos &&
+      // Edges & Highlights
+      const sharesTwoCoords = selectorPos &&
         ((x === selectorPos[0] && y === selectorPos[1]) ||
           (x === selectorPos[0] && z === selectorPos[2]) ||
           (y === selectorPos[1] && z === selectorPos[2]));
@@ -131,12 +202,10 @@ export function Cells({
       highlights[i] = sharesTwoCoords ? 1.0 : 0.0;
 
       if (sharesTwoCoords) {
-        // White outline for cells sharing two coordinates with the cursor
         edgeColors[i * 3] = 1;
         edgeColors[i * 3 + 1] = 1;
         edgeColors[i * 3 + 2] = 1;
       } else {
-        // Default edge colors are slightly brighter
         const edgeColor = color.brighten(0.5);
         const [er, eg, eb] = edgeColor.gl();
         edgeColors[i * 3] = er;
@@ -144,37 +213,32 @@ export function Cells({
         edgeColors[i * 3 + 2] = eb;
       }
 
-      // Opacity based on distance from center (closer = more opaque)
-      const dx = x - center;
-      const dy = y - center;
-      const dz = z - center;
-      const distFromCenter = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const maxDist = Math.sqrt(3) * center;
-      opacities[i] = 0.1 + 0.9 * (1 - distFromCenter / maxDist);
+      // Opacity
+      if (isSelected) {
+        opacities[i] = 1.0;
+      } else {
+        const dx = x - center, dy = y - center, dz = z - center;
+        const distFromCenter = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const maxDist = Math.sqrt(3) * center;
+        opacities[i] = 0.1 + 0.9 * (1 - distFromCenter / maxDist);
+      }
     });
 
-    // Set instance colors
+    // Update attributes
     if (!meshRef.current.instanceColor) {
       meshRef.current.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(50000 * 3), 3);
     }
-    (meshRef.current.instanceColor as THREE.InstancedBufferAttribute).set(colors);
+    meshRef.current.instanceColor.set(colors);
     meshRef.current.instanceColor.needsUpdate = true;
 
     if (!meshRef.current.geometry.attributes.instanceOpacity) {
-      meshRef.current.geometry.setAttribute(
-        "instanceOpacity",
-        new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
-      );
+      meshRef.current.geometry.setAttribute("instanceOpacity", new THREE.InstancedBufferAttribute(new Float32Array(50000), 1));
     }
     (meshRef.current.geometry.attributes.instanceOpacity as THREE.InstancedBufferAttribute).set(opacities);
     meshRef.current.geometry.attributes.instanceOpacity.needsUpdate = true;
 
-    // Set instance highlights
     if (!meshRef.current.geometry.attributes.instanceHighlight) {
-      meshRef.current.geometry.setAttribute(
-        "instanceHighlight",
-        new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
-      );
+      meshRef.current.geometry.setAttribute("instanceHighlight", new THREE.InstancedBufferAttribute(new Float32Array(50000), 1));
     }
     (meshRef.current.geometry.attributes.instanceHighlight as THREE.InstancedBufferAttribute).set(highlights);
     meshRef.current.geometry.attributes.instanceHighlight.needsUpdate = true;
@@ -182,15 +246,14 @@ export function Cells({
     if (!edgesRef.current.instanceColor) {
       edgesRef.current.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(50000 * 3), 3);
     }
-    (edgesRef.current.instanceColor as THREE.InstancedBufferAttribute).set(edgeColors);
+    edgesRef.current.instanceColor.set(edgeColors);
     edgesRef.current.instanceColor.needsUpdate = true;
 
     meshRef.current.instanceMatrix.needsUpdate = true;
-    meshRef.current.count = cells.length;
+    meshRef.current.count = count;
     edgesRef.current.instanceMatrix.needsUpdate = true;
-    edgesRef.current.count = cells.length;
+    edgesRef.current.count = count;
 
-    // IMPORTANT: Three.js needs updated bounding info for raycasting to work correctly on the whole mesh volume
     meshRef.current.computeBoundingSphere();
     edgesRef.current.computeBoundingSphere();
   });
@@ -214,6 +277,7 @@ export function Cells({
           fragmentShader={cellShaderMaterial.fragmentShader}
           transparent
           vertexColors
+          depthWrite={false}
         />
       </instancedMesh>
       <instancedMesh ref={edgesRef} args={[undefined, undefined, 50000]}>

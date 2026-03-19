@@ -3,6 +3,7 @@ import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { CommunitySidebar } from "./Controls";
+import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 
@@ -368,11 +369,38 @@ function SelectorPositionSection() {
     actions: { setSelectorPos },
   } = useBrush();
 
-  const keyMap = {
-    X: { inc: "D", dec: "A" },
-    Y: { inc: "W", dec: "X" },
-    Z: { inc: "Z", dec: "Q" },
-  };
+  const deriveKeyMap = useCallback(() => {
+    if (cameraOrientation.face === 'unknown' || cameraOrientation.rotation === 'unknown') {
+      return {
+        X: { inc: "D", dec: "A" },
+        Y: { inc: "W", dec: "X" },
+        Z: { inc: "Z", dec: "Q" },
+      };
+    }
+    
+    const face = cameraOrientation.face as CameraFace;
+    const rotation = cameraOrientation.rotation as CameraRotation;
+    const mapping = KEY_MAP[face][rotation];
+    
+    const keys: Record<string, string> = {};
+    for (const key in mapping) {
+      const delta = (mapping as any)[key] as [number, number, number];
+      if (delta[0] === 1) keys["X_inc"] = key.toUpperCase();
+      if (delta[0] === -1) keys["X_dec"] = key.toUpperCase();
+      if (delta[1] === 1) keys["Y_inc"] = key.toUpperCase();
+      if (delta[1] === -1) keys["Y_dec"] = key.toUpperCase();
+      if (delta[2] === 1) keys["Z_inc"] = key.toUpperCase();
+      if (delta[2] === -1) keys["Z_dec"] = key.toUpperCase();
+    }
+    
+    return {
+      X: { inc: keys["X_inc"] || "?", dec: keys["X_dec"] || "?" },
+      Y: { inc: keys["Y_inc"] || "?", dec: keys["Y_dec"] || "?" },
+      Z: { inc: keys["Z_inc"] || "?", dec: keys["Z_dec"] || "?" },
+    };
+  }, [cameraOrientation]);
+
+  const keyMap = deriveKeyMap();
 
   const getTopFace = (face: 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right', rotation: 0 | 90 | 180 | 270): string => {
     switch (face) {
@@ -411,10 +439,6 @@ function SelectorPositionSection() {
     return '';
   };
 
-  if (!selectorPos) {
-    return null;
-  }
-
   const handleCoordinateChange = useCallback((axis: "X" | "Y" | "Z", value: string) => {
     if (!selectorPos) return;
     const numValue = parseInt(value, 10);
@@ -449,7 +473,7 @@ function SelectorPositionSection() {
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
-      setSelectorPos(currentPos => {
+      setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
 
         // The z-axis movement from the keymap is inverted relative to the grid coordinate system.
@@ -461,7 +485,7 @@ function SelectorPositionSection() {
         const newPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
-          currentPos[2] - delta[2], // Invert Z-axis delta
+          currentPos[2] + delta[2],
         ];
 
         // Clamp to grid bounds
@@ -477,6 +501,10 @@ function SelectorPositionSection() {
     };
   }, [eventBus, setSelectorPos, gridSize]);
 
+  if (!selectorPos) {
+    return null;
+  }
+
   return (
     <section className="menu-section">
       <h3 style={{ cursor: "default", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -484,7 +512,7 @@ function SelectorPositionSection() {
           Cursor Position
           {cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown' && (
             <span style={{ color: '#aaa', marginLeft: '8px', fontSize: '0.8em', fontWeight: 'normal' }}>
-              ({cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)}, {getTopFace(cameraOrientation.face, cameraOrientation.rotation)})
+              ({cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)}, {cameraOrientation.rotation}°)
             </span>
           )}
         </span>
@@ -690,6 +718,7 @@ function SceneManagementSection() {
       setNeighborFaces,
       setNeighborEdges,
       setNeighborCorners,
+      fitDisplay,
     },
     meta: { gridRef, initialStateRef },
   } = useSimulation();

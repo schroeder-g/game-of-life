@@ -23,6 +23,7 @@ export function useAppShortcuts() {
       fitDisplay,
       recenter,
       squareUp,
+      setCell,
     },
     meta: { movement, eventBus, cameraActionsRef },
   } = useSimulation();
@@ -66,9 +67,21 @@ export function useAppShortcuts() {
           if (rotationMode) {
             playStop();
           } else {
-            // This will be handled by the BrushContext's keydown listener
-            // if the selector is active. If not, it's ignored.
-            handled = false;
+            movement.current.space = true;
+            if (selectorPos) {
+              setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
+            }
+            handled = true;
+          }
+          break;
+        case "delete":
+        case "backspace":
+          if (!rotationMode) {
+            movement.current.delete = true;
+            if (selectorPos) {
+              setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
+            }
+            handled = true;
           }
           break;
         case "arrowright": // Step forward
@@ -126,7 +139,7 @@ export function useAppShortcuts() {
             }
           }
         } else {
-          switch(key) {
+          switch (key) {
             case "[": changeSize(-1, 0); break; // Max size not needed here
             case "]": changeSize(1, 0); break;
             case "escape": clearShape(); break;
@@ -159,9 +172,12 @@ export function useAppShortcuts() {
         case ".": movement.current.rotateDown = false; break;
         case "i": movement.current.rollLeft = false; break;
         case "p": movement.current.rollRight = false; break;
+        case " ": movement.current.space = false; break;
+        case "delete":
+        case "backspace": movement.current.delete = false; break;
         default: handled = false;
       }
-      if(handled) e.preventDefault();
+      if (handled) e.preventDefault();
     };
 
     window.addEventListener("keydown", handleKeyDown);

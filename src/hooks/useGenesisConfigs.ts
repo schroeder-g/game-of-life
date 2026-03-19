@@ -1,4 +1,5 @@
 import { DEFAULT_CONFIGS, GenesisConfig } from "../data/default-configs";
+export type { GenesisConfig };
 
 const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
 

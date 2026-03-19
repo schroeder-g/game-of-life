@@ -2,7 +2,7 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { orientationMap } from "../core/orientation-map";
+import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
 import { generateShape } from "../core/shapes";
 
 // This function is used by ShapePreview in Grid.tsx and useKeyboardSelector.
@@ -53,9 +53,9 @@ export function useKeyboardSelector(
   cubeRef: MutableRefObject<THREE.Group | null>,
 ) {
   const {
-    state: { gridSize, orientation },
-    actions: { toggleCell, setCells, deleteCells, setCommunity },
-    meta: { gridRef, eventBus },
+    state: { gridSize, cameraOrientation },
+    actions: { toggleCell, setCell, setCells, deleteCells, setCommunity },
+    meta: { gridRef, eventBus, movement },
   } = useSimulation();
 
   const {
@@ -92,25 +92,34 @@ export function useKeyboardSelector(
     }
   }, [selectorPos, gridRef, setCommunity]);
 
-  // Handle continuous painting with space held (activate or erase)
+  // Handle continuous painting with space held (activate)
   useEffect(() => {
-    if (!selectorPos) return;
-    if (spaceHeld && selectedShape === "None") {
+    if (!selectorPos || !movement.current.space) return;
+    
+    // Only paint if no shape is selected, or let it handle shapes if that's intended
+    if (selectedShape === "None") {
       const posKey = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
       if (lastPaintedPos.current !== posKey) {
         lastPaintedPos.current = posKey;
-        if (eraseMode) {
-          deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
-        } else {
-          setCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
-        }
+        setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
       }
+    } else {
+      // Shape painting logic (Space is already handled in handleKeyDown for single click)
+      // but let's allow it to repainting during movement if held
+      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+      const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+      const offsets = generateShape(selectedShape, shapeSize, isHollow);
+      const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+      const cells = rotatedOffsets
+        .map(([dx, dy, dz]) => [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [number, number, number])
+        .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+      setCells(cells);
     }
-  }, [selectorPos, spaceHeld, selectedShape, setCells, deleteCells, eraseMode]);
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, setCells, setCell, controlsRef]);
 
   // Handle continuous deleting with delete key held
   useEffect(() => {
-    if (!selectorPos || !deleteHeld) return;
+    if (!selectorPos || !movement.current.delete) return;
 
     if (selectedShape !== "None") {
       const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
@@ -118,170 +127,13 @@ export function useKeyboardSelector(
       const offsets = generateShape(selectedShape, shapeSize, isHollow);
       const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
       const cells = rotatedOffsets
-        .map(
-          ([dx, dy, dz]) =>
-            [
-              selectorPos[0] + dx,
-              selectorPos[1] + dy,
-              selectorPos[2] + dz,
-            ] as [number, number, number],
-        )
-        .filter(
-          ([x, y, z]) =>
-            x >= 0 &&
-            x < gridSize &&
-            y >= 0 &&
-            y < gridSize &&
-            z >= 0 &&
-            z < gridSize,
-        );
+        .map(([dx, dy, dz]) => [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [number, number, number])
+        .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
       deleteCells(cells);
     } else {
       deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
     }
-  }, [
-    selectorPos,
-    deleteHeld,
-    selectedShape,
-    shapeSize,
-    isHollow,
-    gridSize,
-    deleteCells,
-    controlsRef,
-  ]);
-
-  // Handle zooming / resizing shape with mouse wheel
-  useEffect(() => {
-    if (selectedShape === "None") return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const delta = e.deltaY < 0 ? 1 : -1;
-      changeSize(delta, gridSize);
-    };
-
-    window.addEventListener("wheel", handleWheel, {
-      capture: true,
-      passive: false,
-    });
-    return () =>
-      window.removeEventListener("wheel", handleWheel, { capture: true });
-  }, [selectedShape, changeSize, gridSize]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    if (!selectorPos) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === "INPUT") return;
-
-      if (e.code === "Escape" && selectedShape !== "None") {
-        e.preventDefault();
-        clearShape();
-        return;
-      }
-
-      if (e.key === "Delete" || e.key === "Backspace") {
-        e.preventDefault();
-        setDeleteHeld(true);
-        return;
-      }
-
-      if (e.code === "Space") {
-        e.preventDefault();
-        if (selectedShape !== "None") {
-          const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-          const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
-          const offsets = generateShape(selectedShape, shapeSize, isHollow);
-          const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
-          const cells = rotatedOffsets
-            .map(
-              ([dx, dy, dz]) =>
-                [
-                  selectorPos[0] + dx,
-                  selectorPos[1] + dy,
-                  selectorPos[2] + dz,
-                ] as [number, number, number],
-            )
-            .filter(
-              ([x, y, z]) =>
-                x >= 0 &&
-                x < gridSize &&
-                y >= 0 &&
-                y < gridSize &&
-                z >= 0 &&
-                z < gridSize,
-            );
-          setCells(cells); // Always set cells, no delete with Space
-        } else {
-          if (!spaceHeld) {
-            setSpaceHeld(true);
-            setEraseMode(false); // No erase mode with Ctrl+Space
-            lastPaintedPos.current = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
-            setCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]); // Always set single cell
-          }
-        }
-        return;
-      }
-
-          // Handle selector movement via event bus, only if no modifiers are pressed
-          if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            const key = e.key.toLowerCase();
-            const moveKeys = ["w", "x", "a", "d", "q", "z"];
-            if (moveKeys.includes(key) && orientation.face && orientation.rotation !== null) {
-              e.preventDefault();
-              const mapping = orientationMap[orientation.face]?.[orientation.rotation];
-              if (mapping && mapping[key]) {
-                const moveVector = mapping[key];
-                const dx = moveVector[0];
-                const dy = moveVector[1];
-                const dz = moveVector[2];
-
-                if (dx !== 0) eventBus.emit('moveSelector', { axis: 'x', direction: dx as 1 | -1 });
-                if (dy !== 0) eventBus.emit('moveSelector', { axis: 'y', direction: dy as 1 | -1 });
-                // The Z axis in THREE.js is opposite to our grid's Z axis.
-                if (dz !== 0) eventBus.emit('moveSelector', { axis: 'z', direction: -dz as 1 | -1 });
-              }
-              return; // Movement key handled
-            }
-          }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
-        setSpaceHeld(false);
-        setEraseMode(false);
-        lastPaintedPos.current = null;
-      }
-      if (e.key === "Delete" || e.key === "Backspace") {
-        setDeleteHeld(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [
-    selectorPos,
-    gridSize,
-    controlsRef,
-    selectedShape,
-    shapeSize,
-    isHollow,
-    spaceHeld,
-    setSelectorPos,
-    clearShape,
-    setCells,
-    toggleCell,
-    deleteCells,
-    orientation, // Replaces axisKeyMap
-    eventBus,
-    setCommunity,
-  ]);
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, deleteCells, controlsRef]);
 
   return { rotateOffsets };
 }

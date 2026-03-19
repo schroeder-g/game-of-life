@@ -12,7 +12,14 @@ export interface BrushActions {
   setSelectedShape: (shape: ShapeType) => void;
   setShapeSize: (size: number) => void;
   setIsHollow: (hollow: boolean) => void;
-  setSelectorPos: (pos: [number, number, number] | null) => void;
+  setSelectorPos: (
+    pos:
+      | [number, number, number]
+      | null
+      | ((
+          prev: [number, number, number] | null,
+        ) => [number, number, number] | null),
+  ) => void;
   clearShape: () => void;
   changeSize: (delta: number, maxGridSize: number) => void;
 }

@@ -7,7 +7,64 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
-import { CameraOrientation } from "../core/cameraUtils";
+import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
+
+function getOrientation(
+  camera: THREE.Camera,
+  controlsTarget: THREE.Vector3,
+  cube: THREE.Group,
+): CameraOrientation {
+  const toCamera = camera.position.clone().sub(controlsTarget).normalize();
+  const localToCamera = toCamera.clone().applyQuaternion(cube.quaternion.clone().invert());
+
+  const { x: lx, y: ly, z: lz } = localToCamera;
+  const ax = Math.abs(lx), ay = Math.abs(ly), az = Math.abs(lz);
+
+  let face: CameraOrientation["face"] = "unknown";
+  if (az > ax && az > ay) face = lz > 0 ? "front" : "back";
+  else if (ax > ay && ax > az) face = lx > 0 ? "right" : "left";
+  else if (ay > ax && ay > az) face = ly > 0 ? "top" : "bottom";
+
+  if (face === "unknown") return { face: "unknown", rotation: "unknown" };
+
+  // Calculate top face based on CAMERA UP
+  const localUp = camera.up.clone().applyQuaternion(cube.quaternion.clone().invert());
+
+  let rotation: CameraOrientation["rotation"] = "unknown";
+
+  switch (face) {
+    case "front":
+    case "back":
+      if (localUp.y > 0.7) rotation = 0;
+      else if (localUp.x < -0.7) rotation = 90;
+      else if (localUp.y < -0.7) rotation = 180;
+      else if (localUp.x > 0.7) rotation = 270;
+      break;
+    case "top":
+    case "bottom":
+      if (face === "top") {
+        if (localUp.z > 0.7) rotation = 180;
+        else if (localUp.x < -0.7) rotation = 90;
+        else if (localUp.z < -0.7) rotation = 0;
+        else if (localUp.x > 0.7) rotation = 270;
+      } else { // bottom
+        if (localUp.z < -0.7) rotation = 180;
+        else if (localUp.x < -0.7) rotation = 90;
+        else if (localUp.z > 0.7) rotation = 0;
+        else if (localUp.x > 0.7) rotation = 270;
+      }
+      break;
+    case "right":
+    case "left":
+      if (localUp.y > 0.7) rotation = 0;
+      else if (face === "right" ? localUp.z > 0.7 : localUp.z < -0.7) rotation = 90;
+      else if (localUp.y < -0.7) rotation = 180;
+      else if (face === "right" ? localUp.z < -0.7 : localUp.z > 0.7) rotation = 270;
+      break;
+  }
+
+  return { face, rotation };
+}
 
 interface CubeVisibility {
   isOffScreen: boolean;
@@ -311,10 +368,14 @@ function FaceLabels({ size }: { size: number }) {
       break;
   }
 
+  const rotationStr = cameraOrientation.rotation !== "unknown" ? `${cameraOrientation.rotation}°` : "";
+
   return (
     <group>
       <Html key={face} position={[finalX, finalY, finalZ]} center>
-        <div style={labelStyle}>{currentFaceData.name}</div>
+        <div style={labelStyle}>
+          {currentFaceData.name}{rotationStr && `, ${rotationStr}`}
+        </div>
       </Html>
     </group>
   );
@@ -342,14 +403,16 @@ function KeyboardSelector({
     selectorPos[1],
     selectorPos[2],
   );
-  const cursorColor = isAlive ? "#00ff00" : "#ffffff";
-  const cursorOpacity = isAlive ? 0.5 : 0.3;
+  const cursorColor = "#ffffff";
+  const glowColor = "#ffff00";
+  const cursorOpacity = 0.3;
 
   const offset = (gridSize - 1) / 2;
 
   return (
     <group>
       <ShapePreview controlsRef={controlsRef} />
+      {/* Glow Mesh */}
       <mesh
         raycast={() => null}
         position={[
@@ -358,7 +421,23 @@ function KeyboardSelector({
           (gridSize - 1 - selectorPos[2]) - offset,
         ]}
       >
-        <boxGeometry args={[1, 1, 1]} />
+        <boxGeometry args={[1.2, 1.2, 1.2]} />
+        <meshBasicMaterial
+          color={cursorColor}
+          transparent
+          opacity={0.15}
+        />
+      </mesh>
+      {/* Primary Selector Mesh */}
+      <mesh
+        raycast={() => null}
+        position={[
+          selectorPos[0] - offset,
+          selectorPos[1] - offset,
+          (gridSize - 1 - selectorPos[2]) - offset,
+        ]}
+      >
+        <boxGeometry args={[1.05, 1.05, 1.05]} />
         <meshBasicMaterial
           color={cursorColor}
           transparent
@@ -373,7 +452,7 @@ function KeyboardSelector({
           (gridSize - 1 - selectorPos[2]) - offset,
         ]}
       >
-        <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />
+        <edgesGeometry args={[new THREE.BoxGeometry(1.06, 1.06, 1.06)]} />
         <lineBasicMaterial color={cursorColor} linewidth={2} />
       </lineSegments>
     </group>
@@ -392,6 +471,7 @@ export function Scene() {
       panSpeed,
       rotationSpeed,
       invertRotation,
+      cameraOrientation,
     },
     actions: {
       tick,
@@ -399,7 +479,7 @@ export function Scene() {
       setSnapMessage,
       setCameraOrientation,
     },
-    meta: { gridRef, movement, velocity },
+    meta: { gridRef, movement, velocity, eventBus },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -422,6 +502,7 @@ export function Scene() {
     lastAngle: 0,
     onComplete: undefined as (() => void) | undefined,
   });
+  const lastSelectorMoveTime = useRef(0);
 
   const {
     meta: { cameraActionsRef },
@@ -481,7 +562,7 @@ export function Scene() {
           angle = -Math.PI / 2;
           break;
       }
-      
+
       snapRotation.current.active = true;
       snapRotation.current.axis.copy(axis);
       snapRotation.current.totalAngle = angle;
@@ -567,43 +648,47 @@ export function Scene() {
           Math.cos(snappedAzimuth),
         );
 
-        // 3. Calculate the target rotation to make the dominant face front and level the cube.
         const targetUpVector = new THREE.Vector3(0, 1, 0);
         const targetRightVector = new THREE.Vector3().crossVectors(
           targetUpVector,
           targetFrontVector,
         );
 
-        const finalQuaternion = new THREE.Quaternion();
-        const targetMatrix = new THREE.Matrix4();
+        // 3. Find which local axis should point UP
+        const localUp = targetUpVector.clone().applyQuaternion(Q_current.clone().invert());
+        const absUX = Math.abs(localUp.x), absUY = Math.abs(localUp.y), absUZ = Math.abs(localUp.z);
 
-        const { x: dx, y: dy, z: dz } = dominantLocalAxis;
-        const col1 = new THREE.Vector3(),
-          col2 = new THREE.Vector3(),
-          col3 = new THREE.Vector3();
-
-        if (Math.abs(dx) > 0.5) {
-          // right/left face is dominant (local X)
-          const sign = Math.sign(dx);
-          col1.copy(targetFrontVector).multiplyScalar(sign); // Map local X to target Z
-          col2.copy(targetUpVector); // Map local Y to target Y
-          col3.copy(targetRightVector).multiplyScalar(-sign); // Map local Z to -target X
-        } else if (Math.abs(dz) > 0.5) {
-          // front/back face is dominant (local Z)
-          const sign = Math.sign(dz);
-          col1.copy(targetRightVector).multiplyScalar(sign); // Map local X to target X
-          col2.copy(targetUpVector); // Map local Y to target Y
-          col3.copy(targetFrontVector).multiplyScalar(sign); // Map local Z to target Z
+        const dominantLocalUpAxis = new THREE.Vector3();
+        // Constraint: dominantLocalUpAxis must be perpendicular to dominantLocalAxis
+        if (dominantLocalAxis.x === 0 && absUX > absUY && absUX > absUZ) {
+          dominantLocalUpAxis.set(Math.sign(localUp.x), 0, 0);
+        } else if (dominantLocalAxis.y === 0 && absUY > absUX && absUY > absUZ) {
+          dominantLocalUpAxis.set(0, Math.sign(localUp.y), 0);
         } else {
-          // top/bottom face is dominant (local Y)
-          const sign = Math.sign(dy);
-          col1.copy(targetRightVector).multiplyScalar(-sign); // Map local X to -target X
-          col2.copy(targetFrontVector).multiplyScalar(sign); // Map local Y to target Z
-          col3.copy(targetUpVector); // Map local Z to target Y
+          dominantLocalUpAxis.set(0, 0, Math.sign(localUp.z));
         }
 
-        targetMatrix.makeBasis(col1, col2, col3);
-        finalQuaternion.setFromRotationMatrix(targetMatrix);
+        // 4. Construct the rotation matrix by mapping local axes to world axes
+        const localXTarget = new THREE.Vector3();
+        const localYTarget = new THREE.Vector3();
+        const localZTarget = new THREE.Vector3();
+
+        const assignTarget = (localAxis: THREE.Vector3, worldTarget: THREE.Vector3) => {
+          if (Math.abs(localAxis.x) > 0.5) localXTarget.copy(worldTarget).multiplyScalar(Math.sign(localAxis.x));
+          else if (Math.abs(localAxis.y) > 0.5) localYTarget.copy(worldTarget).multiplyScalar(Math.sign(localAxis.y));
+          else if (Math.abs(localAxis.z) > 0.5) localZTarget.copy(worldTarget).multiplyScalar(Math.sign(localAxis.z));
+        };
+
+        assignTarget(dominantLocalAxis, targetFrontVector);
+        assignTarget(dominantLocalUpAxis, targetUpVector);
+
+        // Third axis via cross product
+        const dominantRightAxis = new THREE.Vector3().crossVectors(dominantLocalUpAxis, dominantLocalAxis);
+        assignTarget(dominantRightAxis, targetRightVector);
+
+        const targetMatrix = new THREE.Matrix4();
+        targetMatrix.makeBasis(localXTarget, localYTarget, localZTarget);
+        const finalQuaternion = new THREE.Quaternion().setFromRotationMatrix(targetMatrix);
 
         // 4. Apply this rotation to the cube.
         cubeRef.current.quaternion.copy(finalQuaternion);
@@ -617,14 +702,14 @@ export function Scene() {
         } else {
           faceName = Math.sign(localZ) > 0 ? "Front" : "Back";
         }
-    
+
         const localFaces = [
-          { name: 'Top',    vector: new THREE.Vector3(0, 1, 0) },
+          { name: 'Top', vector: new THREE.Vector3(0, 1, 0) },
           { name: 'Bottom', vector: new THREE.Vector3(0, -1, 0) },
-          { name: 'Front',  vector: new THREE.Vector3(0, 0, -1) },
-          { name: 'Back',   vector: new THREE.Vector3(0, 0, 1) },
-          { name: 'Right',  vector: new THREE.Vector3(1, 0, 0) },
-          { name: 'Left',   vector: new THREE.Vector3(-1, 0, 0) },
+          { name: 'Front', vector: new THREE.Vector3(0, 0, -1) },
+          { name: 'Back', vector: new THREE.Vector3(0, 0, 1) },
+          { name: 'Right', vector: new THREE.Vector3(1, 0, 0) },
+          { name: 'Left', vector: new THREE.Vector3(-1, 0, 0) },
         ];
 
         const worldUp = new THREE.Vector3(0, 1, 0);
@@ -640,9 +725,9 @@ export function Scene() {
           }
         }
 
-        const message = `Snapped to: ${faceName}, ${topFaceName}`;
+        const message = `Snapped to: ${faceName}${topFaceName ? `, ${topFaceName}` : ''}`;
         setSnapMessage(message);
-    
+
         // 5. Do the rest of squareUp: reset camera roll and snap position.
         cameraRef.current.up.set(0, 1, 0);
 
@@ -694,10 +779,44 @@ export function Scene() {
         progress = progress * progress * progress; // ease-in-cubic
         const currentAngle = snapRotation.current.totalAngle * progress;
         const angleThisFrame = currentAngle - snapRotation.current.lastAngle;
-        
+
         cubeRef.current.rotateOnWorldAxis(snapRotation.current.axis, angleThisFrame);
 
+        if (cameraRef.current && controlsRef.current) {
+          const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+          setCameraOrientation(orientation);
+
+          if (orientation.face !== "unknown") {
+            const faceName = orientation.face.charAt(0).toUpperCase() + orientation.face.slice(1);
+            const rotationStr = orientation.rotation !== "unknown" ? `${orientation.rotation}°` : "";
+            setSnapMessage(`Rotating to: ${faceName}${rotationStr ? ` (${rotationStr})` : ""}`);
+          }
+        }
+
         snapRotation.current.lastAngle = currentAngle;
+      }
+    }
+
+    if (!rotationMode) {
+      const now = state.clock.getElapsedTime();
+      if (now - lastSelectorMoveTime.current > 0.1) {
+        let direction: string | null = null;
+        if (movement.current.backward) direction = "w";
+        else if (movement.current.forward) direction = "x";
+        else if (movement.current.left) direction = "a";
+        else if (movement.current.right) direction = "d";
+        else if (movement.current.up) direction = "q";
+        else if (movement.current.down) direction = "z";
+
+        if (direction && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
+          const face = cameraOrientation.face as CameraFace;
+          const rotation = cameraOrientation.rotation as CameraRotation;
+          const deltaMove = (KEY_MAP[face][rotation] as any)[direction];
+          if (deltaMove) {
+            eventBus.emit("moveSelector", { delta: deltaMove });
+            lastSelectorMoveTime.current = now;
+          }
+        }
       }
     }
 
@@ -856,26 +975,26 @@ export function Scene() {
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
       <group ref={cubeRef}>
         <Cells
-        grid={gridRef.current}
-        margin={cellMargin}
-        selectorPos={selectorPos}
-        onClick={(e) => {
-          if (running) return;
-          e.stopPropagation();
-          const { instanceId } = e;
-          if (instanceId !== undefined) {
-            const cells = gridRef.current.getLivingCells();
-            const cell = cells[instanceId];
-            if (cell) {
-              const [x, y, z] = cell;
-              setSelectorPos([x, y, z]);
-              const community = gridRef.current.getCommunity(x, y, z);
-              setCommunity(community);
-              console.log("Clicked cell at", x, y, z, "Community:", community.length);
+          grid={gridRef.current}
+          margin={cellMargin}
+          selectorPos={selectorPos}
+          onClick={(e) => {
+            if (running) return;
+            e.stopPropagation();
+            const { instanceId } = e;
+            if (instanceId !== undefined) {
+              const cells = gridRef.current.getLivingCells();
+              const cell = cells[instanceId];
+              if (cell) {
+                const [x, y, z] = cell;
+                setSelectorPos([x, y, z]);
+                const community = gridRef.current.getCommunity(x, y, z);
+                setCommunity(community);
+                console.log("Clicked cell at", x, y, z, "Community:", community.length);
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
         <BoundingBox size={gridRef.current.size} />
         {!rotationMode && (
           <>
@@ -892,57 +1011,9 @@ export function Scene() {
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
         onChange={() => {
-          if (cameraRef.current) {
-            const pos = cameraRef.current.position.clone().normalize();
-            const up = cameraRef.current.up.clone().normalize();
-    
-            const { x, y, z } = pos;
-            const ax = Math.abs(x);
-            const ay = Math.abs(y);
-            const az = Math.abs(z);
-    
-            let face: CameraOrientation["face"] = "unknown";
-            if (az > ax && az > ay) face = z > 0 ? "front" : "back";
-            else if (ax > ay && ax > az) face = x > 0 ? "right" : "left";
-            else if (ay > ax && ay > az) face = y > 0 ? "top" : "bottom";
-            if (face === "unknown") {
-                setCameraOrientation({ face: "unknown", rotation: "unknown" });
-                return;
-            };
-    
-            let rotation: CameraOrientation["rotation"] = "unknown";
-    
-            switch (face) {
-              case "front":
-              case "back":
-                if (up.y > 0.7) rotation = 0;
-                else if (up.x < -0.7) rotation = 90;
-                else if (up.y < -0.7) rotation = 180;
-                else if (up.x > 0.7) rotation = 270;
-                break;
-              case "top":
-              case "bottom":
-                if (face === "top") {
-                  if (up.z > 0.7) rotation = 0;
-                  else if (up.x < -0.7) rotation = 90;
-                  else if (up.z < -0.7) rotation = 180;
-                  else if (up.x > 0.7) rotation = 270;
-                } else { // bottom
-                  if (up.z < -0.7) rotation = 0;
-                  else if (up.x < -0.7) rotation = 90;
-                  else if (up.z > 0.7) rotation = 180;
-                  else if (up.x > 0.7) rotation = 270;
-                }
-                break;
-              case "right":
-              case "left":
-                if (up.y > 0.7) rotation = 0;
-                else if (face === "right" ? up.z > 0.7 : up.z < -0.7) rotation = 90;
-                else if (up.y < -0.7) rotation = 180;
-                else if (face === "right" ? up.z < -0.7 : up.z > 0.7) rotation = 270;
-                break;
-            }
-            setCameraOrientation({ face, rotation });
+          if (cameraRef.current && controlsRef.current && cubeRef.current) {
+            const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+            setCameraOrientation(orientation);
           }
         }}
       />
