@@ -1314,7 +1314,7 @@ export function Scene() {
         } else if (absY > absX && absY > absZ) {
           faceName = Math.sign(localY) > 0 ? "Top" : "Bottom";
         } else {
-          faceName = Math.sign(localZ) > 0 ? "Back" : "Front";
+          faceName = Math.sign(localZ) > 0 ? "Front" : "Back";
         }
 
         const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(
@@ -1392,7 +1392,7 @@ export function Scene() {
       } else if (absY > absX && absY > absZ) {
         newFrontFace = Math.sign(localY) > 0 ? "Top" : "Bottom";
       } else {
-        newFrontFace = Math.sign(localZ) > 0 ? "Back" : "Front";
+        newFrontFace = Math.sign(localZ) > 0 ? "Front" : "Back";
       }
 
       if (newFrontFace !== frontFace) {
