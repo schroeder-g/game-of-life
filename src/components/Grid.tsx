@@ -134,31 +134,8 @@ function KeyboardCameraControls({
       hasInitialState,
     },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
-    meta: { eventBus },
+    meta: { eventBus, movement, velocity },
   } = useSimulation();
-  const movement = useRef({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-    rotateLeft: false,
-    rotateRight: false,
-    rotateUp: false,
-    rotateDown: false,
-    rollLeft: false,
-    rollRight: false,
-  });
-
-  const velocity = useRef({
-    panX: 0,
-    panY: 0,
-    dolly: 0,
-    rotateX: 0,
-    rotateY: 0,
-    roll: 0,
-  });
 
   const snapRotation = useRef({
     active: false,

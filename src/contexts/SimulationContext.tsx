@@ -116,6 +116,8 @@ export interface SimulationMeta {
     squareUp: () => void;
   } | null>;
   eventBus: Emitter<AppEvents>;
+  movement: React.MutableRefObject<{ [key: string]: boolean }>;
+  velocity: React.MutableRefObject<{ [key: string]: number }>;
 }
 
 export interface SimulationContextValue {
@@ -130,12 +132,16 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
-  const cameraActionsRef = useRef<{
-    fitDisplay: () => void;
-    recenter: () => void;
-    squareUp: () => void;
-  } | null>(null);
+  const cameraActionsRef = useRef<any>(null); // Keep this as any for now
   const eventBusRef = useRef(new Emitter<AppEvents>());
+  const movement = useRef({
+    forward: false, backward: false, left: false, right: false,
+    up: false, down: false, rotateLeft: false, rotateRight: false,
+    rotateUp: false, rotateDown: false, rollLeft: false, rollRight: false,
+  });
+  const velocity = useRef({
+    panX: 0, panY: 0, dolly: 0, rotateX: 0, rotateY: 0, roll: 0,
+  });
   const isFirstLoadRef = useRef(true);
   const [hasInitialState, setHasInitialState] = useState(false);
   const [hasPastHistory, setHasPastHistory] = useState(
@@ -473,6 +479,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       initialStateRef,
       cameraActionsRef,
       eventBus: eventBusRef.current,
+      movement,
+      velocity,
     },
   };
 
