@@ -56,7 +56,7 @@ export interface SimulationState {
   invertRotation: boolean;
   snapMessage: string;
   frontFace: string | null;
-  arrowKeyFunctions: { [key: string]: string };
+  arrowKeyMappings: { [key: string]: string };
 }
 
 export interface SimulationActions {
@@ -79,7 +79,7 @@ export interface SimulationActions {
   setInvertRotation: (val: boolean) => void;
   setSnapMessage: (message: string) => void;
   setFrontFace: (face: string | null) => void;
-  setArrowKeyFunctions: (functions: { [key: string]: string }) => void;
+  setArrowKeyMappings: (mappings: { [key: string]: string }) => void;
 
   playStop: () => void;
   step: () => void;
@@ -104,11 +104,7 @@ export interface SimulationActions {
   squareUp: () => void;
 }
 
-export type AppEvents = {
-  "arrow-vectors-updated": {
-    [key: string]: [number, number, number];
-  };
-};
+export type AppEvents = Record<string, unknown>;
 
 export interface SimulationMeta {
   gridRef: React.MutableRefObject<Grid3D>;
@@ -177,7 +173,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [snapMessage, setSnapMessage] = useState("");
   const [frontFace, setFrontFace] = useState<string | null>(null);
-  const [arrowKeyFunctions, setArrowKeyFunctions] = useState<{
+  const [arrowKeyMappings, setArrowKeyMappings] = useState<{
     [key: string]: string;
   }>({});
 
@@ -416,7 +412,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const value: SimulationContextValue = {
     state: {
-      arrowKeyFunctions,
+      arrowKeyMappings,
       frontFace,
       snapMessage,
       speed,
@@ -454,7 +450,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRotationMode: handleSetRotationMode,
       setSnapMessage,
       setFrontFace,
-      setArrowKeyFunctions,
+      setArrowKeyMappings,
       setPanSpeed,
       setRotationSpeed,
       setInvertRotation,

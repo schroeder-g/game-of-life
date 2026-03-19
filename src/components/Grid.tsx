@@ -174,10 +174,6 @@ function KeyboardCameraControls({
     lastAngle: 0,
   });
 
-  const movementVectorsRef = useRef<{
-    [key: string]: [number, number, number];
-  }>({});
-
   const triggerSnapRotation = React.useCallback(
     (axis: "x" | "y" | "z", direction: number) => {
       if (snapRotation.current.active || !cubeRef.current) return;
@@ -195,16 +191,6 @@ function KeyboardCameraControls({
     },
     [cubeRef],
   );
-
-  useEffect(() => {
-    const unsubscribe = eventBus.on(
-      "arrow-vectors-updated",
-      (vectors) => {
-        movementVectorsRef.current = vectors;
-      },
-    );
-    return unsubscribe;
-  }, [eventBus]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -265,68 +251,7 @@ function KeyboardCameraControls({
         }
       } else {
         // Edit mode
-        switch (e.key) {
-          case "ArrowUp": {
-            e.preventDefault();
-            const vec = movementVectorsRef.current.up;
-            if (vec) {
-              setSelectorPos((prev) => {
-                if (!prev) return null;
-                return [
-                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
-                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
-                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
-                ];
-              });
-            }
-            return;
-          }
-          case "ArrowDown": {
-            e.preventDefault();
-            const vec = movementVectorsRef.current.down;
-            if (vec) {
-              setSelectorPos((prev) => {
-                if (!prev) return null;
-                return [
-                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
-                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
-                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
-                ];
-              });
-            }
-            return;
-          }
-          case "ArrowLeft": {
-            e.preventDefault();
-            const vec = movementVectorsRef.current.left;
-            if (vec) {
-              setSelectorPos((prev) => {
-                if (!prev) return null;
-                return [
-                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
-                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
-                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
-                ];
-              });
-            }
-            return;
-          }
-          case "ArrowRight": {
-            e.preventDefault();
-            const vec = movementVectorsRef.current.right;
-            if (vec) {
-              setSelectorPos((prev) => {
-                if (!prev) return null;
-                return [
-                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
-                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
-                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
-                ];
-              });
-            }
-            return;
-          }
-        }
+        // Arrow key handling is now in App.tsx
       }
 
       if (cameraActionsRef.current) {
@@ -517,7 +442,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -1015,7 +940,7 @@ function AxisChannels({
 
 function FaceLabels({ size }: { size: number }) {
   const {
-    state: { frontFace },
+    state: { frontFace, arrowKeyMappings },
   } = useSimulation();
   const half = size / 2;
   const padding = 1.5;
@@ -1038,15 +963,22 @@ function FaceLabels({ size }: { size: number }) {
 
   if (!frontFace) return null;
 
+  const frontLabelData = labels.find(({ text }) => text === frontFace);
+  if (!frontLabelData) return null;
+
   return (
     <group>
-      {labels
-        .filter(({ text }) => text === frontFace)
-        .map(({ pos, text }) => (
-          <Html key={text} position={[pos[0], pos[1], pos[2]]} center>
-            <div style={labelStyle}>{text}</div>
-          </Html>
-        ))}
+      <Html
+        key={frontLabelData.text}
+        position={[
+          frontLabelData.pos[0],
+          frontLabelData.pos[1],
+          frontLabelData.pos[2],
+        ]}
+        center
+      >
+        <div style={labelStyle}>{frontLabelData.text}</div>
+      </Html>
     </group>
   );
 }
@@ -1124,16 +1056,16 @@ export function Scene() {
       panSpeed,
       rotationSpeed,
       frontFace,
-      arrowKeyFunctions,
+      arrowKeyMappings,
     },
     actions: {
       tick,
       setCommunity,
       setSnapMessage,
       setFrontFace,
-      setArrowKeyFunctions,
+      setArrowKeyMappings,
     },
-    meta: { gridRef, eventBus },
+    meta: { gridRef },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -1384,9 +1316,7 @@ export function Scene() {
         setFrontFace(newFrontFace);
       }
 
-      const getMovement = (
-        direction: "up" | "down" | "left" | "right",
-      ): { desc: string; vec: [number, number, number] } => {
+      const getMovementMapping = (): { [key: string]: string } => {
         const camera = cameraRef.current!;
         const cube = cubeRef.current!;
         const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
@@ -1402,95 +1332,84 @@ export function Scene() {
           camera.matrix,
           0,
         );
-        const cameraUp = new THREE.Vector3().setFromMatrixColumn(
-          camera.matrix,
-          1,
-        );
-        let moveAxis = new THREE.Vector3();
-        let moveDirection = 0;
-        if (direction === "left" || direction === "right") {
-          const dotX = gridAxisX.dot(cameraRight);
-          const dotY = gridAxisY.dot(cameraRight);
-          const dotZ = gridAxisZ.dot(cameraRight);
-          const absDotX = Math.abs(dotX);
-          const absDotY = Math.abs(dotY);
-          const absDotZ = Math.abs(dotZ);
-          if (absDotX > absDotY && absDotX > absDotZ) {
-            moveAxis.set(1, 0, 0);
-            moveDirection = Math.sign(dotX);
-          } else if (absDotY > absDotX && absDotY > absDotZ) {
-            moveAxis.set(0, 1, 0);
-            moveDirection = Math.sign(dotY);
+        const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+
+        const directions = ["up", "down", "left", "right"];
+        const mappings: { [key: string]: string } = {};
+
+        for (const direction of directions) {
+          let moveAxis = new THREE.Vector3();
+          let moveDirection = 0;
+
+          if (direction === "left" || direction === "right") {
+            const dotX = gridAxisX.dot(cameraRight);
+            const dotY = gridAxisY.dot(cameraRight);
+            const dotZ = gridAxisZ.dot(cameraRight);
+            const absDotX = Math.abs(dotX);
+            const absDotY = Math.abs(dotY);
+            const absDotZ = Math.abs(dotZ);
+            if (absDotX > absDotY && absDotX > absDotZ) {
+              moveAxis.set(1, 0, 0);
+              moveDirection = Math.sign(dotX);
+            } else if (absDotY > absDotX && absDotY > absDotZ) {
+              moveAxis.set(0, 1, 0);
+              moveDirection = Math.sign(dotY);
+            } else {
+              moveAxis.set(0, 0, 1);
+              moveDirection = Math.sign(dotZ);
+            }
+            if (direction === "left") moveDirection *= -1;
           } else {
-            moveAxis.set(0, 0, 1);
-            moveDirection = Math.sign(dotZ);
+            const dotX = gridAxisX.dot(cameraUp);
+            const dotY = gridAxisY.dot(cameraUp);
+            const dotZ = gridAxisZ.dot(cameraUp);
+            const absDotX = Math.abs(dotX);
+            const absDotY = Math.abs(dotY);
+            const absDotZ = Math.abs(dotZ);
+            if (absDotX > absDotY && absDotX > absDotZ) {
+              moveAxis.set(1, 0, 0);
+              moveDirection = Math.sign(dotX);
+            } else if (absDotY > absDotX && absDotY > absDotZ) {
+              moveAxis.set(0, 1, 0);
+              moveDirection = Math.sign(dotY);
+            } else {
+              moveAxis.set(0, 0, 1);
+              moveDirection = Math.sign(dotZ);
+            }
+            if (direction === "down") moveDirection *= -1;
           }
-          if (direction === "left") moveDirection *= -1;
-        } else {
-          const dotX = gridAxisX.dot(cameraUp);
-          const dotY = gridAxisY.dot(cameraUp);
-          const dotZ = gridAxisZ.dot(cameraUp);
-          const absDotX = Math.abs(dotX);
-          const absDotY = Math.abs(dotY);
-          const absDotZ = Math.abs(dotZ);
-          if (absDotX > absDotY && absDotX > absDotZ) {
-            moveAxis.set(1, 0, 0);
-            moveDirection = Math.sign(dotX);
-          } else if (absDotY > absDotX && absDotY > absDotZ) {
-            moveAxis.set(0, 1, 0);
-            moveDirection = Math.sign(dotY);
-          } else {
-            moveAxis.set(0, 0, 1);
-            moveDirection = Math.sign(dotZ);
+          const dx = Math.round(moveAxis.x * moveDirection);
+          const dy = Math.round(moveAxis.y * moveDirection);
+          const dz = Math.round(moveAxis.z * moveDirection);
+
+          let desc = "";
+          if (dx !== 0) desc = `${dx > 0 ? "+" : "-"}X`;
+          if (dy !== 0) desc = `${dy > 0 ? "+" : "-"}Y`;
+          if (dz !== 0) desc = `${dz > 0 ? "+" : "-"}Z`;
+          if (desc) {
+            mappings[desc] = direction;
           }
-          if (direction === "down") moveDirection *= -1;
         }
-        const dx = Math.round(moveAxis.x * moveDirection);
-        const dy = Math.round(moveAxis.y * moveDirection);
-        const dz = Math.round(moveAxis.z * moveDirection);
-
-        let desc = "";
-        if (dx !== 0) desc = `${dx > 0 ? "+" : "-"}X`;
-        if (dy !== 0) desc = `${dy > 0 ? "+" : "-"}Y`;
-        if (dz !== 0) desc = `${dz > 0 ? "+" : "-"}Z`;
-        return { desc, vec: [dx, dy, dz] };
+        return mappings;
       };
 
-      const left = getMovement("left");
-      const right = getMovement("right");
-      const up = getMovement("up");
-      const down = getMovement("down");
-
-      const newArrowKeyFunctions = {
-        left: left.desc,
-        right: right.desc,
-        up: up.desc,
-        down: down.desc,
-      };
-
-      const newArrowKeyMovementVectors = {
-        left: left.vec,
-        right: right.vec,
-        up: up.vec,
-        down: down.vec,
-      };
-
-      eventBus.emit("arrow-vectors-updated", newArrowKeyMovementVectors);
+      const newArrowKeyMappings = getMovementMapping();
 
       if (
-        newArrowKeyFunctions.left !== arrowKeyFunctions.left ||
-        newArrowKeyFunctions.right !== arrowKeyFunctions.right ||
-        newArrowKeyFunctions.up !== arrowKeyFunctions.up ||
-        newArrowKeyFunctions.down !== arrowKeyFunctions.down
+        Object.keys(newArrowKeyMappings).length !==
+          Object.keys(arrowKeyMappings).length ||
+        Object.keys(newArrowKeyMappings).some(
+          (key) => newArrowKeyMappings[key] !== arrowKeyMappings[key],
+        )
       ) {
-        setArrowKeyFunctions(newArrowKeyFunctions);
+        setArrowKeyMappings(newArrowKeyMappings);
       }
     } else {
       if (frontFace !== null) {
         setFrontFace(null);
       }
-      if (Object.keys(arrowKeyFunctions).length > 0) {
-        setArrowKeyFunctions({});
+      if (Object.keys(arrowKeyMappings).length > 0) {
+        setArrowKeyMappings({});
       }
     }
   });
