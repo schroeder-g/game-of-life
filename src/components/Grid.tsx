@@ -185,8 +185,8 @@ function KeyboardCameraControls({
     [cubeRef],
   );
 
-  const moveCursor = React.useCallback(
-    (direction: "up" | "down" | "left" | "right") => {
+  useEffect(() => {
+    const moveCursor = (direction: "up" | "down" | "left" | "right") => {
       if (!cameraRef.current || !cubeRef.current) return;
 
       const camera = cameraRef.current;
@@ -277,11 +277,8 @@ function KeyboardCameraControls({
         ];
         return newPos;
       });
-    },
-    [cameraRef, cubeRef, setSelectorPos, gridSize],
-  );
+    };
 
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const tagName = target.tagName;
@@ -548,7 +545,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, moveCursor]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
