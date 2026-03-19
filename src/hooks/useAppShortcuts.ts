@@ -24,7 +24,7 @@ export function useAppShortcuts() {
       recenter,
       squareUp,
     },
-    meta: { movement, eventBus },
+    meta: { movement, eventBus, cameraActionsRef },
   } = useSimulation();
 
   const {
@@ -103,6 +103,17 @@ export function useAppShortcuts() {
         }
       } else {
         // --- EDITING MODE ---
+        switch (key) {
+          case 'o': cameraActionsRef.current?.snapRotate('up'); handled = true; break;
+          case '.': cameraActionsRef.current?.snapRotate('down'); handled = true; break;
+          case 'k': cameraActionsRef.current?.snapRotate(invertRotation ? 'left' : 'right'); handled = true; break;
+          case ';': cameraActionsRef.current?.snapRotate(invertRotation ? 'right' : 'left'); handled = true; break;
+          case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); handled = true; break;
+          case 'p': cameraActionsRef.current?.snapRotate('rollRight'); handled = true; break;
+        }
+        if (handled) { e.preventDefault(); return; }
+
+
         if (["w", "x", "a", "d", "q", "z"].includes(key)) {
           if (cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
             const face = cameraOrientation.face as CameraFace;
@@ -163,6 +174,6 @@ export function useAppShortcuts() {
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertRotation, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef
   ]);
 }

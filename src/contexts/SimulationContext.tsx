@@ -114,6 +114,7 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
+    snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
   } | null>;
   eventBus: Emitter<AppEvents>;
   movement: React.MutableRefObject<{ [key: string]: boolean }>;

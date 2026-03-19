@@ -1004,11 +1004,12 @@ export function Scene() {
           .add(controlsRef.current.target);
         controlsRef.current.update();
       },
+      snapRotate,
     };
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage]);
+  }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage, cameraRef, controlsRef]);
 
   useFrame((state) => {
     if (running) {
