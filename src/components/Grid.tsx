@@ -1446,6 +1446,10 @@ export function Scene() {
           .setFromMatrixColumn(camera.matrix, 2)
           .negate(); // Camera's forward direction
 
+        const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(cube.quaternion);
+        const worldUp = new THREE.Vector3(0, 1, 0);
+        const isUpsideDown = cubeUp.dot(worldUp) < 0;
+
         const directions = ["up", "down", "left", "right", "forward", "backward"];
         const mappings: { [key: string]: string } = {};
 
@@ -1478,6 +1482,11 @@ export function Scene() {
           } else {
             moveAxis.set(0, 0, 1);
             moveDirection = Math.sign(dotZ);
+            if (frontFace === "Left" && !isUpsideDown) {
+              if (direction === "left" || direction === "right") {
+                moveDirection *= -1;
+              }
+            }
           }
 
           const dx = Math.round(moveAxis.x * moveDirection);
