@@ -283,6 +283,42 @@ function KeyboardCameraControls({
         }
       }
 
+      const calculateSelectorMovement = (direction: 'towards' | 'away') => {
+        if (!cameraRef.current || !cubeRef.current || !selectorPos) return null;
+
+        const camera = cameraRef.current;
+        const cube = cubeRef.current;
+
+        const cameraForward = new THREE.Vector3();
+        camera.getWorldDirection(cameraForward);
+
+        const moveVector = direction === 'towards' ? cameraForward : cameraForward.negate();
+
+        const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(cube.quaternion);
+        const gridAxisY = new THREE.Vector3(0, 1, 0).applyQuaternion(cube.quaternion);
+        const gridAxisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(cube.quaternion);
+
+        const dotX = gridAxisX.dot(moveVector);
+        const dotY = gridAxisY.dot(moveVector);
+        const dotZ = gridAxisZ.dot(moveVector);
+
+        const absDotX = Math.abs(dotX);
+        const absDotY = Math.abs(dotY);
+        const absDotZ = Math.abs(dotZ);
+
+        let dx = 0, dy = 0, dz = 0;
+
+        if (absDotX > absDotY && absDotX > absDotZ) {
+            dx = Math.sign(dotX);
+        } else if (absDotY > absDotX && absDotY > absDotZ) {
+            dy = Math.sign(dotY);
+        } else {
+            dz = Math.sign(dotZ);
+        }
+
+        return [dx, dy, dz];
+    };
+
       // Handle camera/cube movement and rotation based on mode
       if (rotationMode) {
         // Continuous camera/cube movement (only in rotationMode)
@@ -371,6 +407,22 @@ function KeyboardCameraControls({
             e.preventDefault();
             triggerSnapRotation("z", -1);
             break;
+          case "q": // move selector towards camera
+            e.preventDefault();
+            const moveTowards = calculateSelectorMovement('towards');
+            if (moveTowards) {
+                const [dx, dy, dz] = moveTowards;
+                setSelectorPos([selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz]);
+            }
+            break;
+          case "z": // move selector away from camera
+            e.preventDefault();
+            const moveAway = calculateSelectorMovement('away');
+            if (moveAway) {
+                const [dx, dy, dz] = moveAway;
+                setSelectorPos([selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz]);
+            }
+            break;
         }
       }
     }; // Closing brace for handleKeyDown
@@ -381,9 +433,7 @@ function KeyboardCameraControls({
       if (
         tagName === "SELECT" ||
         tagName === "TEXTAREA" ||
-        (tagName === "INPUT" &&
-          ((target as HTMLInputElement).type === "text" ||
-            (target as HTMLInputElement).type === "number"))
+        (tagName as HTMLInputElement).type === "number"))
       ) {
         return;
       }
@@ -452,7 +502,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, selectorPos, setSelectorPos]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
