@@ -361,6 +361,7 @@ function RulesSection() {
 function SelectorPositionSection() {
   const {
     state: { gridSize, axisKeyMap },
+    meta: { eventBus },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -371,7 +372,8 @@ function SelectorPositionSection() {
     return null;
   }
 
-  const handleCoordinateChange = (axis: "X" | "Y" | "Z", value: string) => {
+  const handleCoordinateChange = useCallback((axis: "X" | "Y" | "Z", value: string) => {
+    if (!selectorPos) return;
     const numValue = parseInt(value, 10);
     if (isNaN(numValue) || numValue < 0 || numValue >= gridSize) {
       return;
@@ -381,32 +383,41 @@ function SelectorPositionSection() {
     const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     newPos[axisIndex] = numValue;
     setSelectorPos(newPos);
-  };
+  }, [selectorPos, gridSize, setSelectorPos]);
 
-  const increment = (axis: "X" | "Y" | "Z") => {
+  const increment = useCallback((axis: "X" | "Y" | "Z") => {
+    if (!selectorPos) return;
     const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     const currentValue = selectorPos[axisIndex];
     if (currentValue < gridSize - 1) {
       handleCoordinateChange(axis, String(currentValue + 1));
     }
-  };
+  }, [selectorPos, gridSize, handleCoordinateChange]);
 
-  const decrement = (axis: "X" | "Y" | "Z") => {
+  const decrement = useCallback((axis: "X" | "Y" | "Z") => {
+    if (!selectorPos) return;
     const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     const currentValue = selectorPos[axisIndex];
     if (currentValue > 0) {
       handleCoordinateChange(axis, String(currentValue - 1));
     }
-  };
+  }, [selectorPos, gridSize, handleCoordinateChange]);
 
-  const directionToKey: { [key: string]: string } = {
-    up: "W",
-    down: "X",
-    left: "A",
-    right: "D",
-    forward: "Q",
-    backward: "Z",
-  };
+  useEffect(() => {
+    const unsubscribe = eventBus.on('moveSelector', (payload) => {
+      const { axis, direction } = payload as { axis: 'x' | 'y' | 'z', direction: 1 | -1 };
+      const upperAxis = axis.toUpperCase() as 'X' | 'Y' | 'Z';
+      if (direction === 1) {
+        increment(upperAxis);
+      } else {
+        decrement(upperAxis);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [eventBus, increment, decrement]);
 
   return (
     <section className="menu-section">

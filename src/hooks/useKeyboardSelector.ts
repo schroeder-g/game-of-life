@@ -52,9 +52,9 @@ export function useKeyboardSelector(
   cubeRef: MutableRefObject<THREE.Group | null>,
 ) {
   const {
-    state: { gridSize, arrowKeyMappings },
+    state: { gridSize, axisKeyMap },
     actions: { toggleCell, setCells, deleteCells, setCommunity },
-    meta: { gridRef },
+    meta: { gridRef, eventBus },
   } = useSimulation();
 
   const {
@@ -224,80 +224,38 @@ export function useKeyboardSelector(
         return;
       }
 
-      let dx = 0,
-        dy = 0,
-        dz = 0;
-
-      const move = (axis: string, direction: number) => {
-        switch (axis) {
-          case "X":
-            dx = direction;
-            break;
-          case "Y":
-            dy = direction;
-            break;
-          case "Z":
-            dz = direction;
-            break;
-        }
-      };
-
-      let targetDirection: "up" | "down" | "left" | "right" | "forward" | "backward" | null = null;
-      let shouldPreventDefault = false;
-
-      // Depth movement: Shift + Ctrl + Q/Z
-      if (e.shiftKey && e.ctrlKey) {
-        if (e.key.toLowerCase() === "q") {
-          targetDirection = "forward";
-          shouldPreventDefault = true;
-        } else if (e.key.toLowerCase() === "z") {
-          targetDirection = "backward";
-          shouldPreventDefault = true;
-        }
-      }
-      // Planar movement: W/D/X/A (without Shift or Ctrl)
-      else if (!e.shiftKey && !e.ctrlKey) {
-        if (e.key.toLowerCase() === "w") {
-          targetDirection = "up";
-          shouldPreventDefault = true;
-        } else if (e.key.toLowerCase() === "d") {
-          targetDirection = "right";
-          shouldPreventDefault = true;
-        } else if (e.key.toLowerCase() === "x") {
-          targetDirection = "down";
-          shouldPreventDefault = true;
-        } else if (e.key.toLowerCase() === "a") {
-          targetDirection = "left";
-          shouldPreventDefault = true;
-        }
-      }
-
-      if (shouldPreventDefault) {
-        e.preventDefault();
-      } else {
-        // If it's not one of our new movement keys with the correct modifiers,
-        // let other handlers process it.
-        return;
-      }
-
-      if (targetDirection) {
-        const mapping = Object.entries(arrowKeyMappings).find(
-          ([_key, value]) => value === targetDirection,
-        );
-        if (mapping) {
-          const [key] = mapping;
-          const axis = key.replace(/[^XYZ]/g, "");
-          const direction = key.startsWith("+") ? 1 : -1;
-          move(axis, direction);
-        }
-      }
-
-      if (dx !== 0 || dy !== 0 || dz !== 0) {
-        const newX = Math.max(0, Math.min(gridSize - 1, selectorPos[0] + dx));
-        const newY = Math.max(0, Math.min(gridSize - 1, selectorPos[1] + dy));
-        const newZ = Math.max(0, Math.min(gridSize - 1, selectorPos[2] + dz));
-        setSelectorPos([newX, newY, newZ]);
-      }
+          // Handle selector movement via event bus, only if no modifiers are pressed
+          if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const key = e.key.toLowerCase();
+            const moveKeys = ["w", "x", "a", "d", "q", "z"];
+            
+            if (moveKeys.includes(key)) {
+              e.preventDefault();
+    
+              const findAxisForHint = (hint: string): 'x' | 'y' | 'z' | null => {
+                if (!axisKeyMap) return null;
+                const entry = Object.entries(axisKeyMap).find(([, value]) => value === hint);
+                return entry ? (entry[0] as 'x' | 'y' | 'z') : null;
+              };
+    
+              let axis: 'x' | 'y' | 'z' | null = null;
+              let direction: 1 | -1 = 1;
+    
+              switch (key) {
+                case 'w': axis = findAxisForHint('W/X'); direction = 1; break;
+                case 'x': axis = findAxisForHint('W/X'); direction = -1; break;
+                case 'a': axis = findAxisForHint('A/D'); direction = -1; break;
+                case 'd': axis = findAxisForHint('A/D'); direction = 1; break;
+                case 'q': axis = findAxisForHint('Q/Z'); direction = 1; break; // Corresponds to incrementing Z (away)
+                case 'z': axis = findAxisForHint('Q/Z'); direction = -1; break; // Corresponds to decrementing Z (toward)
+              }
+    
+              if (axis) {
+                eventBus.emit('moveSelector', { axis, direction });
+              }
+              return; // Movement key handled.
+            }
+          }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -330,7 +288,9 @@ export function useKeyboardSelector(
     setCells,
     toggleCell,
     deleteCells,
-    arrowKeyMappings, // Add arrowKeyMappings to dependencies
+    axisKeyMap,
+    eventBus,
+    setCommunity,
   ]);
 
   return { rotateOffsets };

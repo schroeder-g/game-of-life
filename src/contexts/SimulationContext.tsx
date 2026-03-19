@@ -104,7 +104,9 @@ export interface SimulationActions {
   squareUp: () => void;
 }
 
-export type AppEvents = Record<string, unknown>;
+export type AppEvents = {
+  moveSelector: { axis: 'x' | 'y' | 'z', direction: 1 | -1 };
+};
 
 export interface SimulationMeta {
   gridRef: React.MutableRefObject<Grid3D>;
