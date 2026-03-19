@@ -104,6 +104,7 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
+function ShapePreview({
   controlsRef,
 }: {
   controlsRef: React.RefObject<any>;
