@@ -1306,10 +1306,6 @@ export function Scene() {
         cubeRef.current.quaternion.copy(finalQuaternion);
 
         // Determine face name and orientation for message
-        const { x: localX, y: localY, z: localZ } = localToCamera;
-        const absX = Math.abs(localX),
-          absY = Math.abs(localY),
-          absZ = Math.abs(localZ);
         let faceName = "";
         if (absX > absY && absX > absZ) {
           faceName = Math.sign(localX) > 0 ? "Right" : "Left";
