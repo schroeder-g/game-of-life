@@ -132,7 +132,6 @@ function KeyboardCameraControls({
       running,
       hasPastHistory,
       hasInitialState,
-      frontFace,
     },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
     meta: { eventBus },
@@ -449,7 +448,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, frontFace]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -940,7 +939,7 @@ function AxisChannels({
 
 function FaceLabels({ size }: { size: number }) {
   const {
-    state: { orientation },
+    state: { cameraOrientation },
   } = useSimulation();
   const half = size / 2;
   const padding = 1.5;
@@ -961,10 +960,10 @@ function FaceLabels({ size }: { size: number }) {
     { name: "Back", normal: new THREE.Vector3(0, 0, -1) },
   ];
 
-  const frontFace = orientation.face;
-  if (!frontFace) return null;
+  const face = cameraOrientation.face;
+  if (!face || face === "unknown") return null;
 
-  const currentFaceData = labels.find(({ name }) => name.toLowerCase() === frontFace);
+  const currentFaceData = labels.find(({ name }) => name.toLowerCase() === face);
   if (!currentFaceData) return null;
 
   let finalX = 0,
@@ -972,7 +971,7 @@ function FaceLabels({ size }: { size: number }) {
     finalZ = 0;
   const labelOffsetFromCorner = 0.5; // Small offset from the absolute corner for visual appeal
 
-  switch (frontFace) {
+  switch (face) {
     case "back": // Normal (0,0,-1)
       finalX = half - labelOffsetFromCorner;
       finalY = half - labelOffsetFromCorner;
@@ -1007,7 +1006,7 @@ function FaceLabels({ size }: { size: number }) {
 
   return (
     <group>
-      <Html key={frontFace} position={[finalX, finalY, finalZ]} center>
+      <Html key={face} position={[finalX, finalY, finalZ]} center>
         <div style={labelStyle}>{currentFaceData.name}</div>
       </Html>
     </group>
