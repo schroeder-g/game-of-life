@@ -68,6 +68,18 @@ function CursorPositionControl() {
     right: "→",
   };
 
+  const arrowColors: { [key: string]: string } = {
+    left: "red",
+    right: "blue",
+    up: "yellow",
+    down: "green",
+  };
+
+  const getButtonColor = (func: string) => {
+    const direction = arrowKeyMappings[func];
+    return arrowColors[direction] || "white";
+  };
+
   return (
     <div className="cursor-controls">
       {(["X", "Y", "Z"] as const).map((axis, index) => (
@@ -79,6 +91,7 @@ function CursorPositionControl() {
               onClick={() => handleCoordinateChange(index, -1)}
               className="glass-button"
               title={`Decrement ${axis}`}
+              style={{ color: getButtonColor(`-${axis}`) }}
             >
               ↓
             </button>
@@ -93,6 +106,7 @@ function CursorPositionControl() {
               onClick={() => handleCoordinateChange(index, 1)}
               className="glass-button"
               title={`Increment ${axis}`}
+              style={{ color: getButtonColor(`+${axis}`) }}
             >
               ↑
             </button>
