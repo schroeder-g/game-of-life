@@ -9,122 +9,6 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
 import { useAppShortcuts } from "../hooks/useAppShortcuts";
 
-function CursorPositionControl() {
-  const {
-    state: { gridSize, arrowKeyMappings },
-    actions: { setSelectorPos },
-  } = useSimulation();
-  const {
-    state: { selectorPos },
-  } = useBrush();
-
-  const buttonsRef = useRef<Record<string, HTMLButtonElement | null>>({
-    "+X": null,
-    "-X": null,
-    "+Y": null,
-    "-Y": null,
-    "+Z": null,
-    "-Z": null,
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const keyMap: { [key: string]: string } = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-      };
-      const direction = keyMap[e.key];
-      if (!direction) return;
-
-      const func = Object.keys(arrowKeyMappings).find(
-        (key) => arrowKeyMappings[key] === direction,
-      );
-
-      if (func && buttonsRef.current[func]) {
-        e.preventDefault();
-        buttonsRef.current[func]?.click();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [arrowKeyMappings]);
-
-  const handleCoordinateChange = (axis: number, delta: number) => {
-    setSelectorPos((prev) => {
-      if (!prev) return null;
-      const newPos: [number, number, number] = [...prev];
-      newPos[axis] = Math.max(0, Math.min(gridSize - 1, newPos[axis] + delta));
-      return newPos;
-    });
-  };
-
-  const arrowSymbols: { [key: string]: string } = {
-    up: "↑",
-    down: "↓",
-    left: "←",
-    right: "→",
-  };
-
-  const arrowColors: { [key: string]: string } = {
-    left: "red",
-    right: "blue",
-    up: "yellow",
-    down: "green",
-  };
-
-  const getButtonColor = (func: string) => {
-    const direction = arrowKeyMappings[func];
-    return arrowColors[direction] || "white";
-  };
-
-  return (
-    <div className="cursor-controls">
-      {(["X", "Y", "Z"] as const).map((axis, index) => (
-        <div key={axis} className="axis-control">
-          <span className="axis-label">{axis}:</span>
-          <div className="control-group">
-            <button
-              ref={(el) => (buttonsRef.current[`-${axis}`] = el)}
-              onClick={() => handleCoordinateChange(index, -1)}
-              className="glass-button"
-              title={`Decrement ${axis}`}
-              style={{ color: getButtonColor(`-${axis}`) }}
-            >
-              ↓
-            </button>
-            <input
-              type="number"
-              value={selectorPos ? selectorPos[index] : ""}
-              readOnly
-              className="coord-input"
-            />
-            <button
-              ref={(el) => (buttonsRef.current[`+${axis}`] = el)}
-              onClick={() => handleCoordinateChange(index, 1)}
-              className="glass-button"
-              title={`Increment ${axis}`}
-              style={{ color: getButtonColor(`+${axis}`) }}
-            >
-              ↑
-            </button>
-          </div>
-          <div className="key-mapping">
-            <span className="key-map-down">
-              {arrowSymbols[arrowKeyMappings[`-${axis}`]] || ""}
-            </span>
-            <span className="key-map-up">
-              {arrowSymbols[arrowKeyMappings[`+${axis}`]] || ""}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function SimulationStats() {
   const {
     meta: { gridRef },
@@ -211,7 +95,11 @@ export default function App() {
           </p>
           <SimulationStats />
           {snapMessage && <div className="snap-message">{snapMessage}</div>}
-          {!rotationMode && <CursorPositionControl />}
+          {!rotationMode && selectorPos && (
+            <div className="selector-pos">
+              Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
+            </div>
+          )}
           {!rotationMode && selectedShape !== "None" && (
             <div className="shape-info">
               Shape: {selectedShape} ({shapeSize}x{shapeSize}

@@ -360,66 +360,135 @@ function RulesSection() {
 
 function SelectorPositionSection() {
   const {
-    state: { gridSize },
+    state: { gridSize, arrowKeyMappings },
   } = useSimulation();
   const {
     state: { selectorPos },
     actions: { setSelectorPos },
   } = useBrush();
 
+  const buttonsRef = useRef<Record<string, HTMLButtonElement | null>>({
+    "+X": null, "-X": null,
+    "+Y": null, "-Y": null,
+    "+Z": null, "-Z": null,
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const keyMap: { [key: string]: string } = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+      };
+      const direction = keyMap[e.key];
+      if (!direction) return;
+
+      const func = Object.keys(arrowKeyMappings).find(
+        (key) => arrowKeyMappings[key] === direction,
+      );
+
+      if (func && buttonsRef.current[func]) {
+        e.preventDefault();
+        buttonsRef.current[func]?.click();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [arrowKeyMappings]);
+
   if (!selectorPos) {
     return null;
   }
 
-  const handleCoordinateChange = (axis: "x" | "y" | "z", value: string) => {
+  const handleCoordinateChange = (axis: "X" | "Y" | "Z", value: string) => {
     const numValue = parseInt(value, 10);
     if (isNaN(numValue) || numValue < 0 || numValue >= gridSize) {
-      // Invalid input is not updated
       return;
     }
 
     const newPos: [number, number, number] = [...selectorPos];
-    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     newPos[axisIndex] = numValue;
     setSelectorPos(newPos);
   };
 
-  const increment = (axis: "x" | "y" | "z") => {
-    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+  const increment = (axis: "X" | "Y" | "Z") => {
+    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     const currentValue = selectorPos[axisIndex];
     if (currentValue < gridSize - 1) {
       handleCoordinateChange(axis, String(currentValue + 1));
     }
   };
 
-  const decrement = (axis: "x" | "y" | "z") => {
-    const axisIndex = { x: 0, y: 1, z: 2 }[axis];
+  const decrement = (axis: "X" | "Y" | "Z") => {
+    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
     const currentValue = selectorPos[axisIndex];
     if (currentValue > 0) {
       handleCoordinateChange(axis, String(currentValue - 1));
     }
   };
 
+  const arrowSymbols: { [key: string]: string } = {
+    up: "↑",
+    down: "↓",
+    left: "←",
+    right: "→",
+  };
+
+  const arrowColors: { [key: string]: string } = {
+    left: "red",
+    right: "blue",
+    up: "yellow",
+    down: "green",
+  };
+
+  const getButtonColor = (func: string) => {
+    const direction = arrowKeyMappings[func];
+    return arrowColors[direction] || "white";
+  };
+
   return (
     <section className="menu-section">
       <h3 style={{ cursor: "default" }}>Cursor Position</h3>
       <div className="selector-position-section">
-        {(["x", "y", "z"] as const).map((axis) => (
+        {(["X", "Y", "Z"] as const).map((axis) => (
           <div key={axis} className="coordinate-input-container">
-            <label>{axis.toUpperCase()}</label>
+            <label>{axis}</label>
             <div className="coordinate-input-group">
               <input
                 type="number"
                 className="coordinate-input"
-                value={selectorPos[{ x: 0, y: 1, z: 2 }[axis]]}
+                value={selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]}
                 onChange={(e) => handleCoordinateChange(axis, e.target.value)}
                 min={0}
                 max={gridSize - 1}
               />
               <div className="coord-buttons">
-                <button onClick={() => increment(axis)}>▲</button>
-                <button onClick={() => decrement(axis)}>▼</button>
+                <button
+                  ref={(el) => (buttonsRef.current[`+${axis}`] = el)}
+                  onClick={() => increment(axis)}
+                  style={{ color: getButtonColor(`+${axis}`) }}
+                >
+                  ▲
+                </button>
+                <button
+                  ref={(el) => (buttonsRef.current[`-${axis}`] = el)}
+                  onClick={() => decrement(axis)}
+                  style={{ color: getButtonColor(`-${axis}`) }}
+                >
+                  ▼
+                </button>
               </div>
+            </div>
+            <div className="key-mapping-display">
+              <span style={{ color: getButtonColor(`+${axis}`) }}>
+                {arrowSymbols[arrowKeyMappings[`+${axis}`]] || ""}
+              </span>
+              <span style={{ color: getButtonColor(`-${axis}`) }}>
+                {arrowSymbols[arrowKeyMappings[`-${axis}`]] || ""}
+              </span>
             </div>
           </div>
         ))}
