@@ -1012,8 +1012,8 @@ function FaceLabels({ size }: { size: number }) {
     { name: "Left", normal: new THREE.Vector3(-1, 0, 0) },
     { name: "Top", normal: new THREE.Vector3(0, 1, 0) },
     { name: "Bottom", normal: new THREE.Vector3(0, -1, 0) },
-    { name: "Back", normal: new THREE.Vector3(0, 0, 1) },
-    { name: "Front", normal: new THREE.Vector3(0, 0, -1) },
+    { name: "Front", normal: new THREE.Vector3(0, 0, 1) },
+    { name: "Back", normal: new THREE.Vector3(0, 0, -1) },
   ];
 
   if (!frontFace) return null;
@@ -1027,12 +1027,12 @@ function FaceLabels({ size }: { size: number }) {
   const labelOffsetFromCorner = 0.5; // Small offset from the absolute corner for visual appeal
 
   switch (frontFace) {
-    case "Front": // Normal (0,0,-1)
+    case "Back": // Normal (0,0,-1)
       finalX = half - labelOffsetFromCorner;
       finalY = half - labelOffsetFromCorner;
       finalZ = -(half + padding);
       break;
-    case "Back": // Normal (0,0,1)
+    case "Front": // Normal (0,0,1)
       finalX = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -X
       finalY = half - labelOffsetFromCorner;
       finalZ = half + padding;
