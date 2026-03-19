@@ -373,6 +373,7 @@ function KeyboardCameraControls({
             break;
         }
       }
+    }; // Closing brace for handleKeyDown
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -442,7 +443,7 @@ function KeyboardCameraControls({
             break;
         }
       }
-    };
+    }; // Closing brace for handleKeyUp
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -1017,7 +1018,7 @@ function KeyboardSelector({
 
   return (
     <group>
-      <ShapePreview controlsRef={controlsRef} rotateOffsets={rotateOffsets} />
+      <ShapePreview controlsRef={controlsRef} />
       <mesh
         raycast={() => null}
         position={[
