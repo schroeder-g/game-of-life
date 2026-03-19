@@ -4,7 +4,10 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 
-function rotateOffsets(
+// This function is used by ShapePreview in Grid.tsx and useKeyboardSelector.
+// It should probably be moved to a utility file if it's used in more places.
+// For now, keeping it here and exporting it.
+export function rotateOffsets(
   offsets: Array<[number, number, number]>,
   azimuth: number,
   polar: number,
@@ -44,9 +47,12 @@ function rotateOffsets(
   });
 }
 
-export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
+export function useKeyboardSelector(
+  controlsRef: MutableRefObject<any>,
+  cubeRef: MutableRefObject<THREE.Group | null>,
+) {
   const {
-    state: { gridSize },
+    state: { gridSize, arrowKeyMappings },
     actions: { toggleCell, setCells, deleteCells, setCommunity },
     meta: { gridRef },
   } = useSimulation();
@@ -181,49 +187,57 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
       if (!e.key.startsWith("Arrow")) return;
       e.preventDefault();
 
-      const camera = controlsRef.current?.object as THREE.Camera;
-      if (!camera) return;
-
-      const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-      const upVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-      const forwardVec = new THREE.Vector3()
-        .setFromMatrixColumn(camera.matrix, 2)
-        .negate();
-
-      const quantize = (v: THREE.Vector3): [number, number, number] => {
-        const { x, y, z } = v;
-        const absX = Math.abs(x);
-        const absY = Math.abs(y);
-        const absZ = Math.abs(z);
-
-        if (absX > absY && absX > absZ) {
-          return [Math.sign(x), 0, 0];
-        } else if (absY > absX && absY > absZ) {
-          return [0, Math.sign(y), 0];
-        } else {
-          return [0, 0, Math.sign(z)];
-        }
-      };
-
       let dx = 0,
         dy = 0,
         dz = 0;
 
+      // Determine movement based on arrowKeyMappings
+      // The arrowKeyMappings are already calculated based on the cube's orientation
+      // and the camera's perspective in Grid.tsx.
+      // We just need to apply the corresponding delta to the selector position.
+      const move = (axis: string, direction: number) => {
+        switch (axis) {
+          case "X":
+            dx = direction;
+            break;
+          case "Y":
+            dy = direction;
+            break;
+          case "Z":
+            dz = direction;
+            break;
+        }
+      };
+
+      let targetDirection: "up" | "down" | "left" | "right" | "forward" | "backward" | null = null;
+
       if (e.shiftKey) {
         if (e.key === "ArrowUp") {
-          [dx, dy, dz] = quantize(forwardVec);
+          targetDirection = "forward";
         } else if (e.key === "ArrowDown") {
-          [dx, dy, dz] = quantize(forwardVec.clone().negate());
+          targetDirection = "backward";
         }
       } else {
         if (e.key === "ArrowRight") {
-          [dx, dy, dz] = quantize(rightVec);
+          targetDirection = "right";
         } else if (e.key === "ArrowLeft") {
-          [dx, dy, dz] = quantize(rightVec.clone().negate());
+          targetDirection = "left";
         } else if (e.key === "ArrowUp") {
-          [dx, dy, dz] = quantize(upVec);
+          targetDirection = "up";
         } else if (e.key === "ArrowDown") {
-          [dx, dy, dz] = quantize(upVec.clone().negate());
+          targetDirection = "down";
+        }
+      }
+
+      if (targetDirection) {
+        const mapping = Object.entries(arrowKeyMappings).find(
+          ([_key, value]) => value === targetDirection,
+        );
+        if (mapping) {
+          const [key] = mapping;
+          const axis = key.replace(/[^XYZ]/g, "");
+          const direction = key.startsWith("+") ? 1 : -1;
+          move(axis, direction);
         }
       }
 
@@ -262,6 +276,7 @@ export function useKeyboardSelector(controlsRef: MutableRefObject<any>) {
     setCells,
     toggleCell,
     deleteCells,
+    arrowKeyMappings, // Add arrowKeyMappings to dependencies
   ]);
 
   return { rotateOffsets };

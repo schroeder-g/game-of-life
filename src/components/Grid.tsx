@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
-import { useKeyboardSelector } from "../hooks/useKeyboardSelector";
+import { useKeyboardSelector, rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
 
 interface CubeVisibility {
@@ -793,14 +793,8 @@ function KeyboardCameraControls({
 
 function ShapePreview({
   controlsRef,
-  rotateOffsets,
 }: {
   controlsRef: React.RefObject<any>;
-  rotateOffsets: (
-    offsets: [number, number, number][],
-    azimuth: number,
-    polar: number,
-  ) => [number, number, number][];
 }) {
   const {
     state: { gridSize },
@@ -985,8 +979,10 @@ function FaceLabels({ size }: { size: number }) {
 
 function KeyboardSelector({
   controlsRef,
+  cubeRef,
 }: {
   controlsRef: React.RefObject<any>;
+  cubeRef: React.RefObject<THREE.Group>;
 }) {
   const {
     state: { gridSize },
@@ -997,7 +993,7 @@ function KeyboardSelector({
   } = useBrush();
 
   // Attach keyboard listeners
-  const { rotateOffsets } = useKeyboardSelector(controlsRef as any);
+  useKeyboardSelector(controlsRef as any, cubeRef);
 
   if (!selectorPos) return null;
 
@@ -1333,51 +1329,44 @@ export function Scene() {
           0,
         );
         const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+        const cameraForward = new THREE.Vector3()
+          .setFromMatrixColumn(camera.matrix, 2)
+          .negate(); // Camera's forward direction
 
-        const directions = ["up", "down", "left", "right"];
+        const directions = ["up", "down", "left", "right", "forward", "backward"];
         const mappings: { [key: string]: string } = {};
 
         for (const direction of directions) {
+          let targetVector: THREE.Vector3;
+          if (direction === "left") targetVector = cameraRight.clone().negate();
+          else if (direction === "right") targetVector = cameraRight.clone();
+          else if (direction === "up") targetVector = cameraUp.clone();
+          else if (direction === "down") targetVector = cameraUp.clone().negate();
+          else if (direction === "forward") targetVector = cameraForward.clone();
+          else if (direction === "backward") targetVector = cameraForward.clone().negate();
+          else continue;
+
+          const dotX = gridAxisX.dot(targetVector);
+          const dotY = gridAxisY.dot(targetVector);
+          const dotZ = gridAxisZ.dot(targetVector);
+          const absDotX = Math.abs(dotX);
+          const absDotY = Math.abs(dotY);
+          const absDotZ = Math.abs(dotZ);
+
           let moveAxis = new THREE.Vector3();
           let moveDirection = 0;
 
-          if (direction === "left" || direction === "right") {
-            const dotX = gridAxisX.dot(cameraRight);
-            const dotY = gridAxisY.dot(cameraRight);
-            const dotZ = gridAxisZ.dot(cameraRight);
-            const absDotX = Math.abs(dotX);
-            const absDotY = Math.abs(dotY);
-            const absDotZ = Math.abs(dotZ);
-            if (absDotX > absDotY && absDotX > absDotZ) {
-              moveAxis.set(1, 0, 0);
-              moveDirection = Math.sign(dotX);
-            } else if (absDotY > absDotX && absDotY > absDotZ) {
-              moveAxis.set(0, 1, 0);
-              moveDirection = Math.sign(dotY);
-            } else {
-              moveAxis.set(0, 0, 1);
-              moveDirection = Math.sign(dotZ);
-            }
-            if (direction === "left") moveDirection *= -1;
+          if (absDotX > absDotY && absDotX > absDotZ) {
+            moveAxis.set(1, 0, 0);
+            moveDirection = Math.sign(dotX);
+          } else if (absDotY > absDotX && absDotY > absDotZ) {
+            moveAxis.set(0, 1, 0);
+            moveDirection = Math.sign(dotY);
           } else {
-            const dotX = gridAxisX.dot(cameraUp);
-            const dotY = gridAxisY.dot(cameraUp);
-            const dotZ = gridAxisZ.dot(cameraUp);
-            const absDotX = Math.abs(dotX);
-            const absDotY = Math.abs(dotY);
-            const absDotZ = Math.abs(dotZ);
-            if (absDotX > absDotY && absDotX > absDotZ) {
-              moveAxis.set(1, 0, 0);
-              moveDirection = Math.sign(dotX);
-            } else if (absDotY > absDotX && absDotY > absDotZ) {
-              moveAxis.set(0, 1, 0);
-              moveDirection = Math.sign(dotY);
-            } else {
-              moveAxis.set(0, 0, 1);
-              moveDirection = Math.sign(dotZ);
-            }
-            if (direction === "down") moveDirection *= -1;
+            moveAxis.set(0, 0, 1);
+            moveDirection = Math.sign(dotZ);
           }
+
           const dx = Math.round(moveAxis.x * moveDirection);
           const dy = Math.round(moveAxis.y * moveDirection);
           const dz = Math.round(moveAxis.z * moveDirection);
@@ -1454,7 +1443,7 @@ export function Scene() {
         {!rotationMode && (
           <>
             <FaceLabels size={gridRef.current.size} />
-            <KeyboardSelector controlsRef={controlsRef} />
+            <KeyboardSelector controlsRef={controlsRef} cubeRef={cubeRef} />
           </>
         )}
       </group>
