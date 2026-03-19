@@ -1195,11 +1195,7 @@ export function Scene() {
         if (!controlsRef.current || !cameraRef.current) return;
 
         // Recenter on the origin without changing camera orientation
-        const offset = new THREE.Vector3().subVectors(
-          new THREE.Vector3(0, 0, 0),
-          controlsRef.current.target,
-        );
-        cameraRef.current.position.add(offset);
+        cameraRef.current.position.sub(controlsRef.current.target);
         controlsRef.current.target.set(0, 0, 0);
 
         const size = gridRef.current.size;
