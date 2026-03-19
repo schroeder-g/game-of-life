@@ -1542,7 +1542,7 @@ export function Scene() {
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
       />
-      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, -40]} />
+      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 40]} />
     </>
   );
 }
