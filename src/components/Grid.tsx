@@ -225,6 +225,7 @@ function KeyboardCameraControls({
         return;
       }
 
+      // Handle simulation controls (Space, ArrowRight, ArrowLeft) - only in rotationMode
       if (rotationMode) {
         if (e.key === " ") {
           e.preventDefault();
@@ -249,11 +250,9 @@ function KeyboardCameraControls({
           }
           return;
         }
-      } else {
-        // Edit mode
-        // Arrow key handling is now in App.tsx
       }
 
+      // Handle global camera actions (F, S, L) - always available
       if (cameraActionsRef.current) {
         if (e.key.toLowerCase() === "f") {
           e.preventDefault();
@@ -284,89 +283,96 @@ function KeyboardCameraControls({
         }
       }
 
-      switch (e.key.toLowerCase()) {
-        case "w": // dolly in
-          e.preventDefault();
-          movement.current.backward = true;
-          break;
-        case "x": // dolly out
-          e.preventDefault();
-          movement.current.forward = true;
-          break;
-        case "a": // pan left
-          e.preventDefault();
-          movement.current.left = true;
-          break;
-        case "d": // pan right
-          e.preventDefault();
-          movement.current.right = true;
-          break;
-        case "q": // pan up
-          e.preventDefault();
-          movement.current.up = true;
-          break;
-        case "z": // pan down
-          e.preventDefault();
-          movement.current.down = true;
-          break;
-        case ";": // rotate left/right
-          e.preventDefault();
-          if (!rotationMode) {
+      // Handle camera/cube movement and rotation based on mode
+      if (rotationMode) {
+        // Continuous camera/cube movement (only in rotationMode)
+        switch (e.key.toLowerCase()) {
+          case "w": // dolly in
+            e.preventDefault();
+            movement.current.backward = true;
+            break;
+          case "x": // dolly out
+            e.preventDefault();
+            movement.current.forward = true;
+            break;
+          case "a": // pan left
+            e.preventDefault();
+            movement.current.left = true;
+            break;
+          case "d": // pan right
+            e.preventDefault();
+            movement.current.right = true;
+            break;
+          case "q": // pan up
+            e.preventDefault();
+            movement.current.up = true;
+            break;
+          case "z": // pan down
+            e.preventDefault();
+            movement.current.down = true;
+            break;
+          case ";": // rotate left/right
+            e.preventDefault();
+            if (invertRotation) {
+              movement.current.rotateRight = true;
+            } else {
+              movement.current.rotateLeft = true;
+            }
+            break;
+          case "k": // rotate right/left
+            e.preventDefault();
+            if (invertRotation) {
+              movement.current.rotateLeft = true;
+            } else {
+              movement.current.rotateRight = true;
+            }
+            break;
+          case "o": // rotate backward (pitch up)
+            e.preventDefault();
+            movement.current.rotateUp = true;
+            break;
+          case ".": // rotate forward (pitch down)
+            e.preventDefault();
+            movement.current.rotateDown = true;
+            break;
+          case "i": // barrel roll left
+            e.preventDefault();
+            movement.current.rollLeft = true;
+            break;
+          case "p": // barrel roll right
+            e.preventDefault();
+            movement.current.rollRight = true;
+            break;
+        }
+      } else {
+        // Cube snapping rotations (only in edit mode)
+        switch (e.key.toLowerCase()) {
+          case ";": // rotate left/right
+            e.preventDefault();
             triggerSnapRotation("y", invertRotation ? -1 : 1);
             break;
-          }
-          if (invertRotation) {
-            movement.current.rotateRight = true;
-          } else {
-            movement.current.rotateLeft = true;
-          }
-          break;
-        case "k": // rotate right/left
-          e.preventDefault();
-          if (!rotationMode) {
+          case "k": // rotate right/left
+            e.preventDefault();
             triggerSnapRotation("y", invertRotation ? 1 : -1);
             break;
-          }
-          if (invertRotation) {
-            movement.current.rotateLeft = true;
-          } else {
-            movement.current.rotateRight = true;
-          }
-          break;
-        case "o": // rotate backward (pitch up)
-          e.preventDefault();
-          if (!rotationMode) {
+          case "o": // rotate backward (pitch up)
+            e.preventDefault();
             triggerSnapRotation("x", 1);
             break;
-          }
-          movement.current.rotateUp = true;
-          break;
-        case ".": // rotate forward (pitch down)
-          e.preventDefault();
-          if (!rotationMode) {
+          case ".": // rotate forward (pitch down)
+            e.preventDefault();
             triggerSnapRotation("x", -1);
             break;
-          }
-          movement.current.rotateDown = true;
-          break;
-        case "i": // barrel roll left
-          e.preventDefault();
-          if (!rotationMode) {
+          case "i": // barrel roll left
+            e.preventDefault();
             triggerSnapRotation("z", 1);
             break;
-          }
-          movement.current.rollLeft = true;
-          break;
-        case "p": // barrel roll right
-          e.preventDefault();
-          if (!rotationMode) {
+          case "p": // barrel roll right
+            e.preventDefault();
             triggerSnapRotation("z", -1);
             break;
-          }
-          movement.current.rollRight = true;
-          break;
+        }
       }
-    };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -381,57 +387,60 @@ function KeyboardCameraControls({
         return;
       }
 
-      switch (e.key.toLowerCase()) {
-        case "w":
-          e.preventDefault();
-          movement.current.backward = false;
-          break;
-        case "x":
-          e.preventDefault();
-          movement.current.forward = false;
-          break;
-        case "a":
-          e.preventDefault();
-          movement.current.left = false;
-          break;
-        case "d":
-          e.preventDefault();
-          movement.current.right = false;
-          break;
-        case "q":
-          e.preventDefault();
-          movement.current.up = false;
-          break;
-        case "z":
-          e.preventDefault();
-          movement.current.down = false;
-          break;
-        case ";":
-          e.preventDefault();
-          movement.current.rotateLeft = false;
-          movement.current.rotateRight = false;
-          break;
-        case "k":
-          e.preventDefault();
-          movement.current.rotateLeft = false;
-          movement.current.rotateRight = false;
-          break;
-        case "o":
-          e.preventDefault();
-          movement.current.rotateUp = false;
-          break;
-        case ".":
-          e.preventDefault();
-          movement.current.rotateDown = false;
-          break;
-        case "i":
-          e.preventDefault();
-          movement.current.rollLeft = false;
-          break;
-        case "p":
-          e.preventDefault();
-          movement.current.rollRight = false;
-          break;
+      // Only process key up for camera/cube movement if in rotationMode
+      if (rotationMode) {
+        switch (e.key.toLowerCase()) {
+          case "w":
+            e.preventDefault();
+            movement.current.backward = false;
+            break;
+          case "x":
+            e.preventDefault();
+            movement.current.forward = false;
+            break;
+          case "a":
+            e.preventDefault();
+            movement.current.left = false;
+            break;
+          case "d":
+            e.preventDefault();
+            movement.current.right = false;
+            break;
+          case "q":
+            e.preventDefault();
+            movement.current.up = false;
+            break;
+          case "z":
+            e.preventDefault();
+            movement.current.down = false;
+            break;
+          case ";":
+            e.preventDefault();
+            movement.current.rotateLeft = false;
+            movement.current.rotateRight = false;
+            break;
+          case "k":
+            e.preventDefault();
+            movement.current.rotateLeft = false;
+            movement.current.rotateRight = false;
+            break;
+          case "o":
+            e.preventDefault();
+            movement.current.rotateUp = false;
+            break;
+          case ".":
+            e.preventDefault();
+            movement.current.rotateDown = false;
+            break;
+          case "i":
+            e.preventDefault();
+            movement.current.rollLeft = false;
+            break;
+          case "p":
+            e.preventDefault();
+            movement.current.rollRight = false;
+            break;
+        }
       }
     };
 
