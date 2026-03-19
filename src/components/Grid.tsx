@@ -1045,7 +1045,7 @@ function FaceLabels({ size }: { size: number }) {
   const half = size / 2;
   const padding = 1.5;
   const labelStyle: React.CSSProperties = {
-    color: "silver",
+    color: "white",
     fontSize: "12pt",
     fontFamily:
       'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -1102,7 +1102,6 @@ function KeyboardSelector({
 
   return (
     <group>
-      <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
       <ShapePreview controlsRef={controlsRef} rotateOffsets={rotateOffsets} />
       <mesh
         raycast={() => null}
