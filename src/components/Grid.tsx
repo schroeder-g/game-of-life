@@ -409,7 +409,7 @@ function KeyboardCameraControls({
             break;
           case "q": // move selector towards camera
             e.preventDefault();
-            const moveTowards = calculateSelectorMovement('towards');
+            const moveTowards = calculateSelectorMovement('away');
             if (moveTowards) {
               const [dx, dy, dz] = moveTowards;
               const newX = selectorPos[0] + dx;
@@ -429,7 +429,7 @@ function KeyboardCameraControls({
             break;
           case "z": // move selector away from camera
             e.preventDefault();
-            const moveAway = calculateSelectorMovement('away');
+            const moveAway = calculateSelectorMovement('towards');
             if (moveAway) {
               const [dx, dy, dz] = moveAway;
               const newX = selectorPos[0] + dx;
