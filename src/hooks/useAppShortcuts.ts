@@ -12,6 +12,7 @@ export function useAppShortcuts() {
       hasInitialState,
       hasPastHistory,
       invertRotation,
+      gridSize,
     },
     actions: {
       setRotationMode,
@@ -27,8 +28,17 @@ export function useAppShortcuts() {
   } = useSimulation();
 
   const {
-    actions: { changeSize, clearShape },
+    state: { selectorPos },
+    actions: { changeSize, clearShape, setSelectorPos },
   } = useBrush();
+
+  useEffect(() => {
+    // When entering edit mode, if cursor is not set, center it.
+    if (!rotationMode && !selectorPos) {
+      const center = Math.floor(gridSize / 2);
+      setSelectorPos([center, center, center]);
+    }
+  }, [rotationMode, selectorPos, setSelectorPos, gridSize]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -152,6 +162,7 @@ export function useAppShortcuts() {
   }, [
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertRotation, setRotationMode, playStop, step, stepBackward, reset,
-    fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape
+    fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
+    gridSize, selectorPos, setSelectorPos
   ]);
 }
