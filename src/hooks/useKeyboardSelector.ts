@@ -64,6 +64,7 @@ export function useKeyboardSelector(
 
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [eraseMode, setEraseMode] = useState(false);
+  const [deleteHeld, setDeleteHeld] = useState(false);
   const lastPaintedPos = useRef<string | null>(null);
 
   // Initialize selector position if null
@@ -106,6 +107,48 @@ export function useKeyboardSelector(
     }
   }, [selectorPos, spaceHeld, selectedShape, setCells, deleteCells, eraseMode]);
 
+  // Handle continuous deleting with delete key held
+  useEffect(() => {
+    if (!selectorPos || !deleteHeld) return;
+
+    if (selectedShape !== "None") {
+      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+      const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+      const offsets = generateShape(selectedShape, shapeSize, isHollow);
+      const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+      const cells = rotatedOffsets
+        .map(
+          ([dx, dy, dz]) =>
+            [
+              selectorPos[0] + dx,
+              selectorPos[1] + dy,
+              selectorPos[2] + dz,
+            ] as [number, number, number],
+        )
+        .filter(
+          ([x, y, z]) =>
+            x >= 0 &&
+            x < gridSize &&
+            y >= 0 &&
+            y < gridSize &&
+            z >= 0 &&
+            z < gridSize,
+        );
+      deleteCells(cells);
+    } else {
+      deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
+    }
+  }, [
+    selectorPos,
+    deleteHeld,
+    selectedShape,
+    shapeSize,
+    isHollow,
+    gridSize,
+    deleteCells,
+    controlsRef,
+  ]);
+
   // Handle zooming / resizing shape with mouse wheel
   useEffect(() => {
     if (selectedShape === "None") return;
@@ -140,34 +183,7 @@ export function useKeyboardSelector(
 
       if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        if (selectedShape !== "None") {
-          const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-          const polar = controlsRef.current?.getAzimuthalAngle() ?? Math.PI / 4; // Corrected to getAzimuthalAngle for consistency, assuming it's meant to be the same as above
-          const offsets = generateShape(selectedShape, shapeSize, isHollow);
-          const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
-          const cells = rotatedOffsets
-            .map(
-              ([dx, dy, dz]) =>
-                [
-                  selectorPos[0] + dx,
-                  selectorPos[1] + dy,
-                  selectorPos[2] + dz,
-                ] as [number, number, number],
-            )
-            .filter(
-              ([x, y, z]) =>
-                x >= 0 &&
-                x < gridSize &&
-                y >= 0 &&
-                y < gridSize &&
-                z >= 0 &&
-                z < gridSize,
-            );
-          deleteCells(cells); // Delete the currently selected shape's cells
-        } else {
-          // If no shape is selected, delete the single cell at selectorPos
-          deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
-        }
+        setDeleteHeld(true);
         return;
       }
 
@@ -289,6 +305,9 @@ export function useKeyboardSelector(
         setSpaceHeld(false);
         setEraseMode(false);
         lastPaintedPos.current = null;
+      }
+      if (e.key === "Delete" || e.key === "Backspace") {
+        setDeleteHeld(false);
       }
     };
 
