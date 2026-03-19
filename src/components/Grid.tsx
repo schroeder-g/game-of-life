@@ -1042,6 +1042,9 @@ function AxisChannels({
 }
 
 function FaceLabels({ size }: { size: number }) {
+  const {
+    state: { frontFace },
+  } = useSimulation();
   const half = size / 2;
   const padding = 1.5;
   const labelStyle: React.CSSProperties = {
@@ -1061,13 +1064,17 @@ function FaceLabels({ size }: { size: number }) {
     { pos: [0, 0, -(half + padding)], text: "Front" },
   ];
 
+  if (!frontFace) return null;
+
   return (
     <group>
-      {labels.map(({ pos, text }) => (
-        <Html key={text} position={[pos[0], pos[1], pos[2]]} center>
-          <div style={labelStyle}>{text}</div>
-        </Html>
-      ))}
+      {labels
+        .filter(({ text }) => text === frontFace)
+        .map(({ pos, text }) => (
+          <Html key={text} position={[pos[0], pos[1], pos[2]]} center>
+            <div style={labelStyle}>{text}</div>
+          </Html>
+        ))}
     </group>
   );
 }
@@ -1144,8 +1151,9 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
+      frontFace,
     },
-    actions: { tick, setCommunity, setSnapMessage },
+    actions: { tick, setCommunity, setSnapMessage, setFrontFace },
     meta: { gridRef },
   } = useSimulation();
   const {
@@ -1359,6 +1367,46 @@ export function Scene() {
       if (elapsed - lastTick.current > 1 / speed) {
         lastTick.current = elapsed;
         tick();
+      }
+    }
+  });
+
+  useFrame(() => {
+    if (
+      !rotationMode &&
+      cubeRef.current &&
+      cameraRef.current &&
+      controlsRef.current
+    ) {
+      const toCamera = cameraRef.current.position
+        .clone()
+        .sub(controlsRef.current.target)
+        .normalize();
+      const Q_current = cubeRef.current.quaternion.clone();
+      const localToCamera = toCamera
+        .clone()
+        .applyQuaternion(Q_current.clone().invert());
+
+      const { x: localX, y: localY, z: localZ } = localToCamera;
+      const absX = Math.abs(localX);
+      const absY = Math.abs(localY);
+      const absZ = Math.abs(localZ);
+
+      let newFrontFace = "";
+      if (absX > absY && absX > absZ) {
+        newFrontFace = Math.sign(localX) > 0 ? "Right" : "Left";
+      } else if (absY > absX && absY > absZ) {
+        newFrontFace = Math.sign(localY) > 0 ? "Top" : "Bottom";
+      } else {
+        newFrontFace = Math.sign(localZ) > 0 ? "Back" : "Front";
+      }
+
+      if (newFrontFace !== frontFace) {
+        setFrontFace(newFrontFace);
+      }
+    } else {
+      if (frontFace !== null) {
+        setFrontFace(null);
       }
     }
   });

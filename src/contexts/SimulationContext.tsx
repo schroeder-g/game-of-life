@@ -54,6 +54,7 @@ export interface SimulationState {
   rotationSpeed: number;
   invertRotation: boolean;
   snapMessage: string;
+  frontFace: string | null;
 }
 
 export interface SimulationActions {
@@ -75,6 +76,7 @@ export interface SimulationActions {
   setRotationSpeed: (speed: number) => void;
   setInvertRotation: (val: boolean) => void;
   setSnapMessage: (message: string) => void;
+  setFrontFace: (face: string | null) => void;
 
   playStop: () => void;
   step: () => void;
@@ -163,6 +165,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [snapMessage, setSnapMessage] = useState("");
+  const [frontFace, setFrontFace] = useState<string | null>(null);
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);
@@ -399,6 +402,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const value: SimulationContextValue = {
     state: {
+      frontFace,
       snapMessage,
       speed,
       density,
@@ -434,6 +438,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCommunity,
       setRotationMode: handleSetRotationMode,
       setSnapMessage,
+      setFrontFace,
       setPanSpeed,
       setRotationSpeed,
       setInvertRotation,
