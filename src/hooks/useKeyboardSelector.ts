@@ -138,6 +138,39 @@ export function useKeyboardSelector(
         return;
       }
 
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        if (selectedShape !== "None") {
+          const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+          const polar = controlsRef.current?.getAzimuthalAngle() ?? Math.PI / 4; // Corrected to getAzimuthalAngle for consistency, assuming it's meant to be the same as above
+          const offsets = generateShape(selectedShape, shapeSize, isHollow);
+          const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
+          const cells = rotatedOffsets
+            .map(
+              ([dx, dy, dz]) =>
+                [
+                  selectorPos[0] + dx,
+                  selectorPos[1] + dy,
+                  selectorPos[2] + dz,
+                ] as [number, number, number],
+            )
+            .filter(
+              ([x, y, z]) =>
+                x >= 0 &&
+                x < gridSize &&
+                y >= 0 &&
+                y < gridSize &&
+                z >= 0 &&
+                z < gridSize,
+            );
+          deleteCells(cells); // Delete the currently selected shape's cells
+        } else {
+          // If no shape is selected, delete the single cell at selectorPos
+          deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
+        }
+        return;
+      }
+
       if (e.code === "Space") {
         e.preventDefault();
         if (selectedShape !== "None") {

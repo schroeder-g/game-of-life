@@ -1,16 +1,11 @@
 import { useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { useBrush } from "../contexts/BrushContext"; // Import useBrush
 
 export function useAppShortcuts() {
   const {
     state: { running, rotationMode },
     actions: { setRotationMode, playStop, step },
   } = useSimulation();
-
-  const {
-    actions: { clearShape }, // Destructure clearShape from useBrush
-  } = useBrush();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -19,14 +14,6 @@ export function useAppShortcuts() {
 
       if (e.key === "m" || e.key === "M") {
         setRotationMode((prev) => !prev);
-      }
-
-      if (e.key === "Delete" || e.key === "Backspace") {
-        // In edit mode (rotationMode === false), delete the selected shape
-        if (!rotationMode) {
-          clearShape();
-          e.preventDefault(); // Prevent browser back/forward actions
-        }
       }
 
       if (e.key === "Enter") {
@@ -48,6 +35,5 @@ export function useAppShortcuts() {
     step,
     running,
     rotationMode,
-    clearShape, // Add clearShape to dependencies
   ]);
 }
