@@ -10,11 +10,7 @@ import React, {
 import { Emitter } from "../core/events";
 import { Grid3D } from "../core/Grid3D";
 import { loadSettings, saveSettings } from "../hooks/useSettings";
-
-export type Orientation = {
-  face: string | null;
-  rotation: number | null;
-};
+import { CameraOrientation } from "../core/cameraUtils";
 
 const initialSettings = loadSettings();
 
