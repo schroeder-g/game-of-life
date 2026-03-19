@@ -125,7 +125,14 @@ function KeyboardCameraControls({
   } | null>;
 }) {
   const {
-    state: { rotationMode, invertRotation, running, hasPastHistory, hasInitialState },
+    state: {
+      rotationMode,
+      invertRotation,
+      running,
+      hasPastHistory,
+      hasInitialState,
+      arrowKeyMovementVectors,
+    },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
   } = useSimulation();
   const {
@@ -186,99 +193,6 @@ function KeyboardCameraControls({
   );
 
   useEffect(() => {
-    const moveCursor = (direction: "up" | "down" | "left" | "right") => {
-      if (!cameraRef.current || !cubeRef.current) return;
-
-      const camera = cameraRef.current;
-      const cube = cubeRef.current;
-
-      // 1. Get grid axes in world space
-      const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
-        cube.quaternion,
-      );
-      const gridAxisY = new THREE.Vector3(0, 1, 0).applyQuaternion(
-        cube.quaternion,
-      );
-      const gridAxisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(
-        cube.quaternion,
-      );
-
-      // 2. Get camera's right and up vectors (screen horizontal and vertical)
-      const cameraRight = new THREE.Vector3().setFromMatrixColumn(
-        camera.matrix,
-        0,
-      );
-      const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-
-      let moveAxis = new THREE.Vector3(); // This will be one of (1,0,0), (0,1,0), (0,0,1)
-      let moveDirection = 0; // This will be 1 or -1
-
-      if (direction === "left" || direction === "right") {
-        // Find most horizontal grid axis
-        const dotX = gridAxisX.dot(cameraRight);
-        const dotY = gridAxisY.dot(cameraRight);
-        const dotZ = gridAxisZ.dot(cameraRight);
-
-        const absDotX = Math.abs(dotX);
-        const absDotY = Math.abs(dotY);
-        const absDotZ = Math.abs(dotZ);
-
-        if (absDotX > absDotY && absDotX > absDotZ) {
-          moveAxis.set(1, 0, 0);
-          moveDirection = Math.sign(dotX);
-        } else if (absDotY > absDotX && absDotY > absDotZ) {
-          moveAxis.set(0, 1, 0);
-          moveDirection = Math.sign(dotY);
-        } else {
-          moveAxis.set(0, 0, 1);
-          moveDirection = Math.sign(dotZ);
-        }
-
-        if (direction === "left") {
-          moveDirection *= -1;
-        }
-      } else {
-        // "up" or "down"
-        // Find most vertical grid axis
-        const dotX = gridAxisX.dot(cameraUp);
-        const dotY = gridAxisY.dot(cameraUp);
-        const dotZ = gridAxisZ.dot(cameraUp);
-
-        const absDotX = Math.abs(dotX);
-        const absDotY = Math.abs(dotY);
-        const absDotZ = Math.abs(dotZ);
-
-        if (absDotX > absDotY && absDotX > absDotZ) {
-          moveAxis.set(1, 0, 0);
-          moveDirection = Math.sign(dotX);
-        } else if (absDotY > absDotX && absDotY > absDotZ) {
-          moveAxis.set(0, 1, 0);
-          moveDirection = Math.sign(dotY);
-        } else {
-          moveAxis.set(0, 0, 1);
-          moveDirection = Math.sign(dotZ);
-        }
-
-        if (direction === "down") {
-          moveDirection *= -1;
-        }
-      }
-
-      const dx = moveAxis.x * moveDirection;
-      const dy = moveAxis.y * moveDirection;
-      const dz = moveAxis.z * moveDirection;
-
-      setSelectorPos((prevSelectorPos) => {
-        if (!prevSelectorPos) return null;
-        const newPos: [number, number, number] = [
-          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[0] + dx)),
-          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[1] + dy)),
-          Math.max(0, Math.min(gridSize - 1, prevSelectorPos[2] + dz)),
-        ];
-        return newPos;
-      });
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const tagName = target.tagName;
@@ -338,22 +252,66 @@ function KeyboardCameraControls({
       } else {
         // Edit mode
         switch (e.key) {
-          case "ArrowUp":
+          case "ArrowUp": {
             e.preventDefault();
-            moveCursor("up");
+            const vec = arrowKeyMovementVectors.up;
+            if (vec) {
+              setSelectorPos((prev) => {
+                if (!prev) return null;
+                return [
+                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
+                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
+                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
+                ];
+              });
+            }
             return;
-          case "ArrowDown":
+          }
+          case "ArrowDown": {
             e.preventDefault();
-            moveCursor("down");
+            const vec = arrowKeyMovementVectors.down;
+            if (vec) {
+              setSelectorPos((prev) => {
+                if (!prev) return null;
+                return [
+                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
+                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
+                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
+                ];
+              });
+            }
             return;
-          case "ArrowLeft":
+          }
+          case "ArrowLeft": {
             e.preventDefault();
-            moveCursor("left");
+            const vec = arrowKeyMovementVectors.left;
+            if (vec) {
+              setSelectorPos((prev) => {
+                if (!prev) return null;
+                return [
+                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
+                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
+                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
+                ];
+              });
+            }
             return;
-          case "ArrowRight":
+          }
+          case "ArrowRight": {
             e.preventDefault();
-            moveCursor("right");
+            const vec = arrowKeyMovementVectors.right;
+            if (vec) {
+              setSelectorPos((prev) => {
+                if (!prev) return null;
+                return [
+                  Math.max(0, Math.min(gridSize - 1, prev[0] + vec[0])),
+                  Math.max(0, Math.min(gridSize - 1, prev[1] + vec[1])),
+                  Math.max(0, Math.min(gridSize - 1, prev[2] + vec[2])),
+                ];
+              });
+            }
             return;
+          }
         }
       }
 
@@ -545,7 +503,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize, arrowKeyMovementVectors]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -1153,6 +1111,7 @@ export function Scene() {
       rotationSpeed,
       frontFace,
       arrowKeyFunctions,
+      arrowKeyMovementVectors,
     },
     actions: {
       tick,
@@ -1160,6 +1119,7 @@ export function Scene() {
       setSnapMessage,
       setFrontFace,
       setArrowKeyFunctions,
+      setArrowKeyMovementVectors,
     },
     meta: { gridRef },
   } = useSimulation();
@@ -1412,9 +1372,9 @@ export function Scene() {
         setFrontFace(newFrontFace);
       }
 
-      const getMoveDescription = (
+      const getMovement = (
         direction: "up" | "down" | "left" | "right",
-      ): string => {
+      ): { desc: string; vec: [number, number, number] } => {
         const camera = cameraRef.current!;
         const cube = cubeRef.current!;
         const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
@@ -1473,20 +1433,34 @@ export function Scene() {
           }
           if (direction === "down") moveDirection *= -1;
         }
-        const dx = moveAxis.x * moveDirection;
-        const dy = moveAxis.y * moveDirection;
-        const dz = moveAxis.z * moveDirection;
-        if (dx !== 0) return `${dx > 0 ? "+" : "-"}X`;
-        if (dy !== 0) return `${dy > 0 ? "+" : "-"}Y`;
-        if (dz !== 0) return `${dz > 0 ? "+" : "-"}Z`;
-        return "";
+        const dx = Math.round(moveAxis.x * moveDirection);
+        const dy = Math.round(moveAxis.y * moveDirection);
+        const dz = Math.round(moveAxis.z * moveDirection);
+
+        let desc = "";
+        if (dx !== 0) desc = `${dx > 0 ? "+" : "-"}X`;
+        if (dy !== 0) desc = `${dy > 0 ? "+" : "-"}Y`;
+        if (dz !== 0) desc = `${dz > 0 ? "+" : "-"}Z`;
+        return { desc, vec: [dx, dy, dz] };
       };
 
+      const left = getMovement("left");
+      const right = getMovement("right");
+      const up = getMovement("up");
+      const down = getMovement("down");
+
       const newArrowKeyFunctions = {
-        left: getMoveDescription("left"),
-        right: getMoveDescription("right"),
-        up: getMoveDescription("up"),
-        down: getMoveDescription("down"),
+        left: left.desc,
+        right: right.desc,
+        up: up.desc,
+        down: down.desc,
+      };
+
+      const newArrowKeyMovementVectors = {
+        left: left.vec,
+        right: right.vec,
+        up: up.vec,
+        down: down.vec,
       };
 
       if (
@@ -1496,6 +1470,7 @@ export function Scene() {
         newArrowKeyFunctions.down !== arrowKeyFunctions.down
       ) {
         setArrowKeyFunctions(newArrowKeyFunctions);
+        setArrowKeyMovementVectors(newArrowKeyMovementVectors);
       }
     } else {
       if (frontFace !== null) {
@@ -1503,6 +1478,7 @@ export function Scene() {
       }
       if (Object.keys(arrowKeyFunctions).length > 0) {
         setArrowKeyFunctions({});
+        setArrowKeyMovementVectors({});
       }
     }
   });
