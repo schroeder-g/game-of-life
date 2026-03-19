@@ -919,7 +919,7 @@ function ShapePreview({
       {previewCells.map((cell, i) => (
         <mesh
           key={i}
-          position={[cell[0] - offset, cell[1] - offset, cell[2] - offset]}
+          position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
         >
           <boxGeometry args={[0.9, 0.9, 0.9]} />
           <meshBasicMaterial color="#ffaa00" transparent opacity={0.35} />
@@ -928,7 +928,7 @@ function ShapePreview({
       {previewCells.map((cell, i) => (
         <lineSegments
           key={`edge-${i}`}
-          position={[cell[0] - offset, cell[1] - offset, cell[2] - offset]}
+          position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
         >
           <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
           <lineBasicMaterial color="#ffaa00" />
@@ -952,7 +952,7 @@ function AxisChannels({
     <group>
       {/* X-axis channel */}
       <mesh
-        position={[0, selectorPos[1] - offset, selectorPos[2] - offset]}
+        position={[0, selectorPos[1] - offset, (gridSize - 1 - selectorPos[2]) - offset]}
         raycast={() => null}
       >
         <boxGeometry args={[gridSize, channelWidth, channelWidth]} />
@@ -965,7 +965,7 @@ function AxisChannels({
       </mesh>
       {/* Y-axis channel */}
       <mesh
-        position={[selectorPos[0] - offset, 0, selectorPos[2] - offset]}
+        position={[selectorPos[0] - offset, 0, (gridSize - 1 - selectorPos[2]) - offset]}
         raycast={() => null}
       >
         <boxGeometry args={[channelWidth, gridSize, channelWidth]} />
@@ -1106,7 +1106,7 @@ function KeyboardSelector({
         position={[
           selectorPos[0] - offset,
           selectorPos[1] - offset,
-          selectorPos[2] - offset,
+          (gridSize - 1 - selectorPos[2]) - offset,
         ]}
       >
         <boxGeometry args={[1, 1, 1]} />
@@ -1121,7 +1121,7 @@ function KeyboardSelector({
         position={[
           selectorPos[0] - offset,
           selectorPos[1] - offset,
-          selectorPos[2] - offset,
+          (gridSize - 1 - selectorPos[2]) - offset,
         ]}
       >
         <edgesGeometry args={[new THREE.BoxGeometry(1.02, 1.02, 1.02)]} />

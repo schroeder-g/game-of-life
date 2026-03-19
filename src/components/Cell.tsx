@@ -96,7 +96,7 @@ export function Cells({
       const [x, y, z] = cell;
 
       // Position
-      tempObject.position.set(x - offset, y - offset, z - offset);
+      tempObject.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
       tempObject.updateMatrix();
       meshRef.current!.setMatrixAt(i, tempObject.matrix);
       edgesRef.current!.setMatrixAt(i, tempObject.matrix);
@@ -104,7 +104,7 @@ export function Cells({
       // Hue based on X position (blue to red)
       // Saturation based on Z position
       const hue = (x / gridSize) * 300; // 240 (blue) to 0 (red)
-      const saturation = 0.4 + (z / gridSize) * 0.6; // 0.4 to 1.0
+      const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6; // 0.4 to 1.0
       let color = chroma.hsl(240 - hue, saturation, 0.55);
 
       // Highlight if on the selector's axis
