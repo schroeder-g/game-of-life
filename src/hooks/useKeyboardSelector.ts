@@ -184,17 +184,10 @@ export function useKeyboardSelector(
         return;
       }
 
-      if (!e.key.startsWith("Arrow")) return;
-      e.preventDefault();
-
       let dx = 0,
         dy = 0,
         dz = 0;
 
-      // Determine movement based on arrowKeyMappings
-      // The arrowKeyMappings are already calculated based on the cube's orientation
-      // and the camera's perspective in Grid.tsx.
-      // We just need to apply the corresponding delta to the selector position.
       const move = (axis: string, direction: number) => {
         switch (axis) {
           case "X":
@@ -210,23 +203,41 @@ export function useKeyboardSelector(
       };
 
       let targetDirection: "up" | "down" | "left" | "right" | "forward" | "backward" | null = null;
+      let shouldPreventDefault = false;
 
+      // Depth movement: Shift + Ctrl + Q/Z
       if (e.shiftKey && e.ctrlKey) {
-        if (e.key === "ArrowUp") {
+        if (e.key.toLowerCase() === "q") {
           targetDirection = "forward";
-        } else if (e.key === "ArrowDown") {
+          shouldPreventDefault = true;
+        } else if (e.key.toLowerCase() === "z") {
           targetDirection = "backward";
+          shouldPreventDefault = true;
         }
-      } else if (!e.shiftKey && !e.ctrlKey) {
-        if (e.key === "ArrowRight") {
-          targetDirection = "right";
-        } else if (e.key === "ArrowLeft") {
-          targetDirection = "left";
-        } else if (e.key === "ArrowUp") {
+      }
+      // Planar movement: W/D/X/A (without Shift or Ctrl)
+      else if (!e.shiftKey && !e.ctrlKey) {
+        if (e.key.toLowerCase() === "w") {
           targetDirection = "up";
-        } else if (e.key === "ArrowDown") {
+          shouldPreventDefault = true;
+        } else if (e.key.toLowerCase() === "d") {
+          targetDirection = "right";
+          shouldPreventDefault = true;
+        } else if (e.key.toLowerCase() === "x") {
           targetDirection = "down";
+          shouldPreventDefault = true;
+        } else if (e.key.toLowerCase() === "a") {
+          targetDirection = "left";
+          shouldPreventDefault = true;
         }
+      }
+
+      if (shouldPreventDefault) {
+        e.preventDefault();
+      } else {
+        // If it's not one of our new movement keys with the correct modifiers,
+        // let other handlers process it.
+        return;
       }
 
       if (targetDirection) {
