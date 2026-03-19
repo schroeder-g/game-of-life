@@ -140,7 +140,6 @@ export function useKeyboardSelector(
 
       if (e.code === "Space") {
         e.preventDefault();
-        const isCtrl = e.ctrlKey;
         if (selectedShape !== "None") {
           const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
           const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
@@ -164,21 +163,13 @@ export function useKeyboardSelector(
                 z >= 0 &&
                 z < gridSize,
             );
-          if (isCtrl) {
-            deleteCells(cells);
-          } else {
-            setCells(cells);
-          }
+          setCells(cells); // Always set cells, no delete with Space
         } else {
           if (!spaceHeld) {
             setSpaceHeld(true);
-            setEraseMode(isCtrl);
+            setEraseMode(false); // No erase mode with Ctrl+Space
             lastPaintedPos.current = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;
-            if (isCtrl) {
-              deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
-            } else {
-              setCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
-            }
+            setCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]); // Always set single cell
           }
         }
         return;
