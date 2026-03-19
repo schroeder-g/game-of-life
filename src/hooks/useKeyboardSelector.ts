@@ -211,13 +211,13 @@ export function useKeyboardSelector(
 
       let targetDirection: "up" | "down" | "left" | "right" | "forward" | "backward" | null = null;
 
-      if (e.shiftKey) {
+      if (e.shiftKey && e.ctrlKey) {
         if (e.key === "ArrowUp") {
           targetDirection = "forward";
         } else if (e.key === "ArrowDown") {
           targetDirection = "backward";
         }
-      } else {
+      } else if (!e.shiftKey && !e.ctrlKey) {
         if (e.key === "ArrowRight") {
           targetDirection = "right";
         } else if (e.key === "ArrowLeft") {
