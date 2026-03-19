@@ -1098,3 +1098,48 @@ kbd {
 .coord-hints kbd:first-child {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Key Map Page Styles */
+.key-map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+.key-map-face-section h2 {
+  font-size: 1.1rem;
+  color: #8ab4f8;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+.key-map-rotations-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.key-map-rotation-block h3 {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+.key-map-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.key-map-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  background: rgba(0,0,0,0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.key-map-row span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #8b949e;
+}

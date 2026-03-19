@@ -4,10 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { orientationMap } from "../core/orientation-map";
 import { generateShape } from "../core/shapes";
-import { useKeyboardSelector, rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
+import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
+import { CameraOrientation } from "../core/cameraUtils";
 
 interface CubeVisibility {
   isOffScreen: boolean;
@@ -1029,9 +1029,6 @@ function KeyboardSelector({
     state: { selectorPos },
   } = useBrush();
 
-  // Attach keyboard listeners
-  useKeyboardSelector(controlsRef as any, cubeRef);
-
   if (!selectorPos) return null;
 
   const isAlive = gridRef.current.get(
@@ -1088,15 +1085,12 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
-      orientation,
-      keyHintMap,
     },
     actions: {
       tick,
       setCommunity,
       setSnapMessage,
-      setOrientation,
-      setKeyHintMap,
+      setCameraOrientation,
     },
     meta: { gridRef },
   } = useSimulation();
@@ -1311,75 +1305,6 @@ export function Scene() {
     }
   });
 
-  useFrame(({ camera }) => {
-    if (
-      !rotationMode &&
-      cubeRef.current &&
-      cameraRef.current &&
-      controlsRef.current
-    ) {
-      const toCamera = camera.position.clone().sub(controlsRef.current.target).normalize();
-      const Q_current = cubeRef.current.quaternion.clone();
-      const localToCamera = toCamera.clone().applyQuaternion(Q_current.clone().invert());
-    
-      const { x: localX, y: localY, z: localZ } = localToCamera;
-      let newFace: string | null = null;
-    
-      const absX = Math.abs(localX), absY = Math.abs(localY), absZ = Math.abs(localZ);
-      if (absX > 0.99 || absY > 0.99 || absZ > 0.99) {
-        if (absX > absY && absX > absZ) newFace = localX > 0 ? "right" : "left";
-        else if (absY > absX && absY > absZ) newFace = localY > 0 ? "top" : "bottom";
-        else newFace = localZ > 0 ? "front" : "back";
-      }
-    
-      let newRotation: number | null = null;
-      if (newFace) {
-        const worldUp = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
-        const localUp = worldUp.applyQuaternion(Q_current.clone().invert());
-    
-        let angleRad = 0;
-        switch (newFace) {
-          case 'front': angleRad = Math.atan2(localUp.y, localUp.x); break;
-          case 'back': angleRad = Math.atan2(localUp.y, -localUp.x); break;
-          case 'top': angleRad = Math.atan2(localUp.z, localUp.x); break;
-          case 'bottom': angleRad = Math.atan2(-localUp.z, localUp.x); break;
-          case 'right': angleRad = Math.atan2(localUp.y, -localUp.z); break;
-          case 'left': angleRad = Math.atan2(localUp.y, localUp.z); break;
-        }
-        const angleDeg = (angleRad * 180) / Math.PI;
-        newRotation = Math.round(angleDeg / 90) * 90;
-        if (newRotation < 0) newRotation += 360;
-        if (newRotation === 360) newRotation = 0;
-      }
-
-      const newOrientation = { face: newFace, rotation: newRotation };
-      if (newOrientation.face !== orientation.face || newOrientation.rotation !== orientation.rotation) {
-        setOrientation(newOrientation);
-      }
-    
-      const newKeyHintMap = { x: "", y: "", z: "" };
-      if (newOrientation.face && newOrientation.rotation !== null) {
-        const mapping = orientationMap[newOrientation.face]?.[newOrientation.rotation];
-        if (mapping) {
-          for (const axis of ['x', 'y', 'z']) {
-            const axisIndex = { x: 0, y: 1, z: 2 }[axis]!;
-            const incKey = Object.keys(mapping).find(key => mapping[key][axisIndex] === 1);
-            const decKey = Object.keys(mapping).find(key => mapping[key][axisIndex] === -1);
-            if (incKey && decKey) {
-              newKeyHintMap[axis as 'x' | 'y' | 'z'] = `${incKey.toUpperCase()}/${decKey.toUpperCase()}`;
-            }
-          }
-        }
-      }
-    
-      if (newKeyHintMap.x !== keyHintMap.x || newKeyHintMap.y !== keyHintMap.y || newKeyHintMap.z !== keyHintMap.z) {
-        setKeyHintMap(newKeyHintMap);
-      }
-    } else {
-      if (orientation.face) setOrientation({ face: null, rotation: null });
-      if (keyHintMap.x || keyHintMap.y || keyHintMap.z) setKeyHintMap({ x: "", y: "", z: "" });
-    }
-  });
 
   return (
     <>
@@ -1432,6 +1357,60 @@ export function Scene() {
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
+        onChange={() => {
+          if (cameraRef.current) {
+            const pos = cameraRef.current.position.clone().normalize();
+            const up = cameraRef.current.up.clone().normalize();
+    
+            const { x, y, z } = pos;
+            const ax = Math.abs(x);
+            const ay = Math.abs(y);
+            const az = Math.abs(z);
+    
+            let face: CameraOrientation["face"] = "unknown";
+            if (az > ax && az > ay) face = z > 0 ? "front" : "back";
+            else if (ax > ay && ax > az) face = x > 0 ? "right" : "left";
+            else if (ay > ax && ay > az) face = y > 0 ? "top" : "bottom";
+            if (face === "unknown") {
+                setCameraOrientation({ face: "unknown", rotation: "unknown" });
+                return;
+            };
+    
+            let rotation: CameraOrientation["rotation"] = "unknown";
+    
+            switch (face) {
+              case "front":
+              case "back":
+                if (up.y > 0.7) rotation = 0;
+                else if (up.x < -0.7) rotation = 90;
+                else if (up.y < -0.7) rotation = 180;
+                else if (up.x > 0.7) rotation = 270;
+                break;
+              case "top":
+              case "bottom":
+                if (face === "top") {
+                  if (up.z > 0.7) rotation = 0;
+                  else if (up.x < -0.7) rotation = 90;
+                  else if (up.z < -0.7) rotation = 180;
+                  else if (up.x > 0.7) rotation = 270;
+                } else { // bottom
+                  if (up.z < -0.7) rotation = 0;
+                  else if (up.x < -0.7) rotation = 90;
+                  else if (up.z > 0.7) rotation = 180;
+                  else if (up.x > 0.7) rotation = 270;
+                }
+                break;
+              case "right":
+              case "left":
+                if (up.y > 0.7) rotation = 0;
+                else if (face === "right" ? up.z > 0.7 : up.z < -0.7) rotation = 90;
+                else if (up.y < -0.7) rotation = 180;
+                else if (face === "right" ? up.z < -0.7 : up.z > 0.7) rotation = 270;
+                break;
+            }
+            setCameraOrientation({ face, rotation });
+          }
+        }}
       />
       <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 40]} />
     </>

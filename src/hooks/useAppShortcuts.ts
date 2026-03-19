@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
+import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
 
 export function useAppShortcuts() {
   const {
-    state: { running, rotationMode },
+    state: { running, rotationMode, cameraOrientation },
     actions: { setRotationMode, playStop, step },
     meta,
   } = useSimulation();
@@ -15,23 +16,19 @@ export function useAppShortcuts() {
 
       // Selector movement, only in edit mode
       if (!rotationMode) {
-        if (["w", "s", "a", "d", "q", "e"].includes(e.key.toLowerCase())) {
+        const key = e.key.toLowerCase();
+        if (["w", "x", "a", "d", "q", "z"].includes(key)) {
           e.preventDefault();
-          const key = e.key.toLowerCase();
-          let axis: "x" | "y" | "z" | undefined;
-          let direction: 1 | -1 | undefined;
 
-          switch (key) {
-            case "d": axis = "x"; direction = 1; break;
-            case "a": axis = "x"; direction = -1; break;
-            case "w": axis = "y"; direction = 1; break;
-            case "s": axis = "y"; direction = -1; break;
-            case "e": axis = "z"; direction = 1; break;
-            case "q": axis = "z"; direction = -1; break;
-          }
-
-          if (axis && direction) {
-            meta.eventBus.emit("moveSelector", { axis, direction });
+          if (cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
+            const face = cameraOrientation.face as CameraFace;
+            const rotation = cameraOrientation.rotation as CameraRotation;
+            const keymapForOrientation = KEY_MAP[face][rotation];
+            
+            if (key in keymapForOrientation) {
+              const delta = (keymapForOrientation as any)[key] as [number, number, number];
+              meta.eventBus.emit("moveSelector", { delta });
+            }
           }
           return; // Prevent other shortcuts from firing
         }
@@ -61,5 +58,6 @@ export function useAppShortcuts() {
     running,
     rotationMode,
     meta,
+    cameraOrientation,
   ]);
 }

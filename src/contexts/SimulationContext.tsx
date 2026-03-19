@@ -60,8 +60,7 @@ export interface SimulationState {
   rotationSpeed: number;
   invertRotation: boolean;
   snapMessage: string;
-  orientation: Orientation;
-  keyHintMap: { x: string; y: string; z: string };
+  cameraOrientation: CameraOrientation;
 }
 
 export interface SimulationActions {
@@ -83,8 +82,7 @@ export interface SimulationActions {
   setRotationSpeed: (speed: number) => void;
   setInvertRotation: (val: boolean) => void;
   setSnapMessage: (message: string) => void;
-  setOrientation: (orientation: Orientation) => void;
-  setKeyHintMap: (map: { x: string; y: string; z: string }) => void;
+  setCameraOrientation: (orientation: CameraOrientation) => void;
 
   playStop: () => void;
   step: () => void;
@@ -110,7 +108,7 @@ export interface SimulationActions {
 }
 
 export type AppEvents = {
-  moveSelector: { axis: 'x' | 'y' | 'z', direction: 1 | -1 };
+  moveSelector: { delta: [number, number, number] };
 };
 
 export interface SimulationMeta {
@@ -179,8 +177,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [snapMessage, setSnapMessage] = useState("");
-  const [orientation, setOrientation] = useState<Orientation>({ face: null, rotation: null });
-  const [keyHintMap, setKeyHintMap] = useState({ x: "", y: "", z: "" });
+  const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);
@@ -417,8 +414,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const value: SimulationContextValue = {
     state: {
-      orientation,
-      keyHintMap,
+      cameraOrientation,
       snapMessage,
       speed,
       density,
@@ -454,8 +450,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCommunity,
       setRotationMode: handleSetRotationMode,
       setSnapMessage,
-      setOrientation,
-      setKeyHintMap,
+      setCameraOrientation,
       setPanSpeed,
       setRotationSpeed,
       setInvertRotation,

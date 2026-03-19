@@ -1,4 +1,40 @@
 import { useState } from "react";
+import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
+
+const KeyDisplay = ({ k, v }: { k: string; v: number[] }) => (
+  <div className="key-map-row">
+    <kbd>{k.toUpperCase()}</kbd>
+    <span>{`[${v.join(", ")}]`}</span>
+  </div>
+);
+
+function KeyMapPage() {
+  return (
+    <div className="key-map-container">
+      {Object.keys(KEY_MAP).map((face) => (
+        <div key={face} className="key-map-face-section">
+          <h2>{face.charAt(0).toUpperCase() + face.slice(1)} View</h2>
+          <div className="key-map-rotations-grid">
+            {(Object.keys(KEY_MAP[face as CameraFace]) as unknown as CameraRotation[]).map(
+              (rotation) => (
+                <div key={rotation} className="key-map-rotation-block">
+                  <h3>{rotation}°</h3>
+                  <div className="key-map-keys">
+                    {Object.entries(KEY_MAP[face as CameraFace][rotation]).map(
+                      ([key, value]) => (
+                        <KeyDisplay key={key} k={key} v={value} />
+                      ),
+                    )}
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 interface ShortcutOverlayProps {
   isOpen: boolean;
@@ -6,7 +42,7 @@ interface ShortcutOverlayProps {
 }
 
 export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
-  const [activeTab, setActiveTab] = useState<"view" | "edit">("view");
+  const [activeTab, setActiveTab] = useState<"view" | "edit" | "keymap">("view");
 
   if (!isOpen) return null;
 
@@ -36,6 +72,12 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             onClick={() => setActiveTab("edit")}
           >
             Edit Mode
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "keymap" ? "active" : ""}`}
+            onClick={() => setActiveTab("keymap")}
+          >
+            Key Map
           </button>
         </div>
 
@@ -156,13 +198,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                     Move Cursor (screen relative)
                   </span>
                   <div className="shortcut-keys">
-                    <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>
-                  </div>
-                </div>
-                <div className="shortcut-row">
-                  <span className="shortcut-desc">Move Cursor In/Out</span>
-                  <div className="shortcut-keys">
-                    <kbd>⇧ Shift</kbd> <span>+</span> <kbd>↑</kbd> <kbd>↓</kbd>
+                    <kbd>W</kbd> <kbd>X</kbd> <kbd>A</kbd> <kbd>D</kbd> <kbd>Q</kbd> <kbd>Z</kbd>
                   </div>
                 </div>
                 <div className="shortcut-row">
@@ -229,6 +265,8 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
               </div>
             </>
           )}
+
+          {activeTab === "keymap" && <KeyMapPage />}
         </div>
       </div>
     </div>

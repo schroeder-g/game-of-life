@@ -370,8 +370,8 @@ function SelectorPositionSection() {
 
   const keyMap = {
     X: { inc: "D", dec: "A" },
-    Y: { inc: "W", dec: "S" },
-    Z: { inc: "E", dec: "Q" },
+    Y: { inc: "W", dec: "X" },
+    Z: { inc: "Z", dec: "Q" },
   };
 
   if (!selectorPos) {
@@ -411,19 +411,34 @@ function SelectorPositionSection() {
 
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
-      const { axis, direction } = payload as { axis: 'x' | 'y' | 'z', direction: 1 | -1 };
-      const upperAxis = axis.toUpperCase() as 'X' | 'Y' | 'Z';
-      if (direction === 1) {
-        increment(upperAxis);
-      } else {
-        decrement(upperAxis);
-      }
+      const { delta } = payload as { delta: [number, number, number] };
+      setSelectorPos(currentPos => {
+        if (!currentPos) return null;
+
+        // The z-axis movement from the keymap is inverted relative to the grid coordinate system.
+        // Grid Z=0 is at the back, but user 'forward' (q) should decrease Z index.
+        // Our keymap has q:[0,0,-1] (forward). Grid Z increases towards camera.
+        // The coordinate system is: X right, Y up, Z towards camera.
+        // Our grid data is: X right, Y up, Z away from camera.
+        // So we must flip the Z delta.
+        const newPos: [number, number, number] = [
+          currentPos[0] + delta[0],
+          currentPos[1] + delta[1],
+          currentPos[2] - delta[2], // Invert Z-axis delta
+        ];
+
+        // Clamp to grid bounds
+        newPos[0] = Math.max(0, Math.min(gridSize - 1, newPos[0]));
+        newPos[1] = Math.max(0, Math.min(gridSize - 1, newPos[1]));
+        newPos[2] = Math.max(0, Math.min(gridSize - 1, newPos[2]));
+        return newPos;
+      });
     });
 
     return () => {
       unsubscribe();
     };
-  }, [eventBus, increment, decrement]);
+  }, [eventBus, setSelectorPos, gridSize]);
 
   return (
     <section className="menu-section">
