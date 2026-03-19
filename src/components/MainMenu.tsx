@@ -360,7 +360,7 @@ function RulesSection() {
 
 function SelectorPositionSection() {
   const {
-    state: { gridSize },
+    state: { gridSize, cameraOrientation },
     meta: { eventBus },
   } = useSimulation();
   const {
@@ -372,6 +372,43 @@ function SelectorPositionSection() {
     X: { inc: "D", dec: "A" },
     Y: { inc: "W", dec: "X" },
     Z: { inc: "Z", dec: "Q" },
+  };
+
+  const getTopFace = (face: 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right', rotation: 0 | 90 | 180 | 270): string => {
+    switch (face) {
+      case 'front':
+      case 'back':
+        if (rotation === 0) return 'Top';
+        if (rotation === 90) return 'Left';
+        if (rotation === 180) return 'Bottom';
+        if (rotation === 270) return 'Right';
+        break;
+      case 'right':
+        if (rotation === 0) return 'Top';
+        if (rotation === 90) return 'Back';
+        if (rotation === 180) return 'Bottom';
+        if (rotation === 270) return 'Front';
+        break;
+      case 'left':
+        if (rotation === 0) return 'Top';
+        if (rotation === 90) return 'Front';
+        if (rotation === 180) return 'Bottom';
+        if (rotation === 270) return 'Back';
+        break;
+      case 'top':
+        if (rotation === 0) return 'Back';
+        if (rotation === 90) return 'Left';
+        if (rotation === 180) return 'Front';
+        if (rotation === 270) return 'Right';
+        break;
+      case 'bottom':
+        if (rotation === 0) return 'Front';
+        if (rotation === 90) return 'Left';
+        if (rotation === 180) return 'Back';
+        if (rotation === 270) return 'Right';
+        break;
+    }
+    return '';
   };
 
   if (!selectorPos) {
@@ -442,7 +479,16 @@ function SelectorPositionSection() {
 
   return (
     <section className="menu-section">
-      <h3 style={{ cursor: "default" }}>Cursor Position</h3>
+      <h3 style={{ cursor: "default", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>
+          Cursor Position
+          {cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown' && (
+            <span style={{ color: '#aaa', marginLeft: '8px', fontSize: '0.8em', fontWeight: 'normal' }}>
+              ({cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)}, {getTopFace(cameraOrientation.face, cameraOrientation.rotation)})
+            </span>
+          )}
+        </span>
+      </h3>
       <div className="selector-position-section">
         {(["X", "Y", "Z"] as const).map((axis) => (
           <div key={axis} className="coordinate-input-container">
