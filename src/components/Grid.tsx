@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
+import { orientationMap } from "../core/orientation-map";
 import { generateShape } from "../core/shapes";
 import { useKeyboardSelector, rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
@@ -939,7 +940,7 @@ function AxisChannels({
 
 function FaceLabels({ size }: { size: number }) {
   const {
-    state: { frontFace },
+    state: { orientation },
   } = useSimulation();
   const half = size / 2;
   const padding = 1.5;
@@ -960,9 +961,10 @@ function FaceLabels({ size }: { size: number }) {
     { name: "Back", normal: new THREE.Vector3(0, 0, -1) },
   ];
 
+  const frontFace = orientation.face;
   if (!frontFace) return null;
 
-  const currentFaceData = labels.find(({ name }) => name === frontFace);
+  const currentFaceData = labels.find(({ name }) => name.toLowerCase() === frontFace);
   if (!currentFaceData) return null;
 
   let finalX = 0,
@@ -971,32 +973,32 @@ function FaceLabels({ size }: { size: number }) {
   const labelOffsetFromCorner = 0.5; // Small offset from the absolute corner for visual appeal
 
   switch (frontFace) {
-    case "Back": // Normal (0,0,-1)
+    case "back": // Normal (0,0,-1)
       finalX = half - labelOffsetFromCorner;
       finalY = half - labelOffsetFromCorner;
       finalZ = -(half + padding);
       break;
-    case "Front": // Normal (0,0,1)
+    case "front": // Normal (0,0,1)
       finalX = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -X
       finalY = half - labelOffsetFromCorner;
       finalZ = half + padding;
       break;
-    case "Right": // Normal (1,0,0)
+    case "right": // Normal (1,0,0)
       finalX = half + padding;
       finalY = half - labelOffsetFromCorner;
       finalZ = half - labelOffsetFromCorner;
       break;
-    case "Left": // Normal (-1,0,0)
+    case "left": // Normal (-1,0,0)
       finalX = -(half + padding);
       finalY = half - labelOffsetFromCorner;
       finalZ = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -Z
       break;
-    case "Top": // Normal (0,1,0)
+    case "top": // Normal (0,1,0)
       finalX = half - labelOffsetFromCorner;
       finalY = half + padding;
       finalZ = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -Z
       break;
-    case "Bottom": // Normal (0,-1,0)
+    case "bottom": // Normal (0,-1,0)
       finalX = half - labelOffsetFromCorner;
       finalY = -(half + padding);
       finalZ = half - labelOffsetFromCorner;
@@ -1006,7 +1008,7 @@ function FaceLabels({ size }: { size: number }) {
   return (
     <group>
       <Html key={frontFace} position={[finalX, finalY, finalZ]} center>
-        <div style={labelStyle}>{frontFace}</div>
+        <div style={labelStyle}>{currentFaceData.name}</div>
       </Html>
     </group>
   );
@@ -1086,15 +1088,15 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
-      frontFace,
-      axisKeyMap,
+      orientation,
+      keyHintMap,
     },
     actions: {
       tick,
       setCommunity,
       setSnapMessage,
-      setFrontFace,
-      setAxisKeyMap,
+      setOrientation,
+      setKeyHintMap,
     },
     meta: { gridRef },
   } = useSimulation();
@@ -1309,111 +1311,73 @@ export function Scene() {
     }
   });
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     if (
       !rotationMode &&
       cubeRef.current &&
       cameraRef.current &&
       controlsRef.current
     ) {
-      const toCamera = cameraRef.current.position
-        .clone()
-        .sub(controlsRef.current.target)
-        .normalize();
+      const toCamera = camera.position.clone().sub(controlsRef.current.target).normalize();
       const Q_current = cubeRef.current.quaternion.clone();
-      const localToCamera = toCamera
-        .clone()
-        .applyQuaternion(Q_current.clone().invert());
-
-      const { x: localX, y: localY, z: localZ } = localToCamera;
-      const absX = Math.abs(localX);
-      const absY = Math.abs(localY);
-      const absZ = Math.abs(localZ);
-
-      let newFrontFace = "";
-      if (absX > absY && absX > absZ) {
-        newFrontFace = Math.sign(localX) > 0 ? "Right" : "Left";
-      } else if (absY > absX && absY > absZ) {
-        newFrontFace = Math.sign(localY) > 0 ? "Top" : "Bottom";
-      } else {
-        newFrontFace = Math.sign(localZ) > 0 ? "Front" : "Back";
-      }
-
-      if (newFrontFace !== frontFace) {
-        setFrontFace(newFrontFace);
-      }
-
-      const getBestAxis = (targetVector: THREE.Vector3): [number, number, number] => {
-        const axes: Array<[number, number, number]> = [
-          [1, 0, 0], [-1, 0, 0], [0, 1, 0], 
-          [0, -1, 0], [0, 0, 1], [0, 0, -1],
-        ];
-        let maxDot = -Infinity;
-        let bestAxis: [number, number, number] = [0, 0, 0];
+      const localToCamera = toCamera.clone().applyQuaternion(Q_current.clone().invert());
     
-        for (const axis of axes) {
-          const dot = targetVector.dot(new THREE.Vector3(...axis));
-          if (dot > maxDot) {
-            maxDot = dot;
-            bestAxis = axis;
+      const { x: localX, y: localY, z: localZ } = localToCamera;
+      let newFace: string | null = null;
+    
+      const absX = Math.abs(localX), absY = Math.abs(localY), absZ = Math.abs(localZ);
+      if (absX > 0.99 || absY > 0.99 || absZ > 0.99) {
+        if (absX > absY && absX > absZ) newFace = localX > 0 ? "right" : "left";
+        else if (absY > absX && absY > absZ) newFace = localY > 0 ? "top" : "bottom";
+        else newFace = localZ > 0 ? "front" : "back";
+      }
+    
+      let newRotation: number | null = null;
+      if (newFace) {
+        const worldUp = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+        const localUp = worldUp.applyQuaternion(Q_current.clone().invert());
+    
+        let angleRad = 0;
+        switch (newFace) {
+          case 'front': angleRad = Math.atan2(localUp.y, localUp.x); break;
+          case 'back': angleRad = Math.atan2(localUp.y, -localUp.x); break;
+          case 'top': angleRad = Math.atan2(localUp.z, localUp.x); break;
+          case 'bottom': angleRad = Math.atan2(-localUp.z, localUp.x); break;
+          case 'right': angleRad = Math.atan2(localUp.y, -localUp.z); break;
+          case 'left': angleRad = Math.atan2(localUp.y, localUp.z); break;
+        }
+        const angleDeg = (angleRad * 180) / Math.PI;
+        newRotation = Math.round(angleDeg / 90) * 90;
+        if (newRotation < 0) newRotation += 360;
+        if (newRotation === 360) newRotation = 0;
+      }
+
+      const newOrientation = { face: newFace, rotation: newRotation };
+      if (newOrientation.face !== orientation.face || newOrientation.rotation !== orientation.rotation) {
+        setOrientation(newOrientation);
+      }
+    
+      const newKeyHintMap = { x: "", y: "", z: "" };
+      if (newOrientation.face && newOrientation.rotation !== null) {
+        const mapping = orientationMap[newOrientation.face]?.[newOrientation.rotation];
+        if (mapping) {
+          for (const axis of ['x', 'y', 'z']) {
+            const axisIndex = { x: 0, y: 1, z: 2 }[axis]!;
+            const incKey = Object.keys(mapping).find(key => mapping[key][axisIndex] === 1);
+            const decKey = Object.keys(mapping).find(key => mapping[key][axisIndex] === -1);
+            if (incKey && decKey) {
+              newKeyHintMap[axis as 'x' | 'y' | 'z'] = `${incKey.toUpperCase()}/${decKey.toUpperCase()}`;
+            }
           }
         }
-        return bestAxis;
-      };
-
-      const viewDirection = new THREE.Vector3();
-      camera.getWorldDirection(viewDirection);
-      const forwardAxis = getBestAxis(viewDirection);
-
-      const worldAxes: Array<[number, number, number]> = [
-        [1, 0, 0], [-1, 0, 0], [0, 1, 0], 
-        [0, -1, 0], [0, 0, 1], [0, 0, -1],
-      ];
-      
-      let screenUpAxis: [number, number, number] = [0, 1, 0];
-      let maxUp = -Infinity;
-      let screenRightAxis: [number, number, number] = [1, 0, 0];
-      let maxRight = -Infinity;
-      
-      const vec = new THREE.Vector3();
-      for (const axis of worldAxes) {
-          vec.set(...axis).project(camera);
-          if (vec.y > maxUp) {
-              maxUp = vec.y;
-              screenUpAxis = axis;
-          }
-          if (vec.x > maxRight) {
-              maxRight = vec.x;
-              screenRightAxis = axis;
-          }
       }
-  
-      const getAxisChar = (axis: [number, number, number]): 'x' | 'y' | 'z' | null => {
-          if (axis[0] !== 0) return 'x';
-          if (axis[1] !== 0) return 'y';
-          if (axis[2] !== 0) return 'z';
-          return null;
-      };
-      
-      const newKeyMap = { x: "", y: "", z: "" };
-      const upChar = getAxisChar(screenUpAxis);
-      const rightChar = getAxisChar(screenRightAxis);
-      const forwardChar = getAxisChar(forwardAxis);
-  
-      if (upChar) newKeyMap[upChar] = "W/X";
-      if (rightChar) newKeyMap[rightChar] = "A/D";
-      if (forwardChar) newKeyMap[forwardChar] = "Q/Z";
-  
-      if (newKeyMap.x !== axisKeyMap.x || newKeyMap.y !== axisKeyMap.y || newKeyMap.z !== axisKeyMap.z) {
-          setAxisKeyMap(newKeyMap);
+    
+      if (newKeyHintMap.x !== keyHintMap.x || newKeyHintMap.y !== keyHintMap.y || newKeyHintMap.z !== keyHintMap.z) {
+        setKeyHintMap(newKeyHintMap);
       }
     } else {
-      if (frontFace !== null) {
-        setFrontFace(null);
-      }
-      if (axisKeyMap.x || axisKeyMap.y || axisKeyMap.z) {
-        setAxisKeyMap({ x: "", y: "", z: "" });
-      }
+      if (orientation.face) setOrientation({ face: null, rotation: null });
+      if (keyHintMap.x || keyHintMap.y || keyHintMap.z) setKeyHintMap({ x: "", y: "", z: "" });
     }
   });
 

@@ -55,8 +55,8 @@ export interface SimulationState {
   rotationSpeed: number;
   invertRotation: boolean;
   snapMessage: string;
-  frontFace: string | null;
-  axisKeyMap: { x: string; y: string; z: string };
+  orientation: Orientation;
+  keyHintMap: { x: string; y: string; z: string };
 }
 
 export interface SimulationActions {
@@ -78,8 +78,8 @@ export interface SimulationActions {
   setRotationSpeed: (speed: number) => void;
   setInvertRotation: (val: boolean) => void;
   setSnapMessage: (message: string) => void;
-  setFrontFace: (face: string | null) => void;
-  setAxisKeyMap: (map: { x: string; y: string; z: string }) => void;
+  setOrientation: (orientation: Orientation) => void;
+  setKeyHintMap: (map: { x: string; y: string; z: string }) => void;
 
   playStop: () => void;
   step: () => void;
@@ -174,8 +174,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [],
   );
   const [snapMessage, setSnapMessage] = useState("");
-  const [frontFace, setFrontFace] = useState<string | null>(null);
-  const [axisKeyMap, setAxisKeyMap] = useState<{ x: string; y: string; z: string }>({ x: "", y: "", z: "" });
+  const [orientation, setOrientation] = useState<Orientation>({ face: null, rotation: null });
+  const [keyHintMap, setKeyHintMap] = useState({ x: "", y: "", z: "" });
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);

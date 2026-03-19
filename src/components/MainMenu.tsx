@@ -360,7 +360,7 @@ function RulesSection() {
 
 function SelectorPositionSection() {
   const {
-    state: { gridSize, axisKeyMap },
+    state: { gridSize, keyHintMap },
     meta: { eventBus },
   } = useSimulation();
   const {
@@ -449,7 +449,7 @@ function SelectorPositionSection() {
               </div>
             </div>
             <div className="key-hint">
-              {axisKeyMap[axis.toLowerCase() as 'x' | 'y' | 'z']}
+              {keyHintMap[axis.toLowerCase() as 'x' | 'y' | 'z']}
             </div>
           </div>
         ))}

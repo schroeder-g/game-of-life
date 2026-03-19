@@ -2,6 +2,7 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
+import { orientationMap } from "../core/orientation-map";
 import { generateShape } from "../core/shapes";
 
 // This function is used by ShapePreview in Grid.tsx and useKeyboardSelector.
@@ -52,7 +53,7 @@ export function useKeyboardSelector(
   cubeRef: MutableRefObject<THREE.Group | null>,
 ) {
   const {
-    state: { gridSize, axisKeyMap },
+    state: { gridSize, orientation },
     actions: { toggleCell, setCells, deleteCells, setCommunity },
     meta: { gridRef, eventBus },
   } = useSimulation();
@@ -228,32 +229,21 @@ export function useKeyboardSelector(
           if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const key = e.key.toLowerCase();
             const moveKeys = ["w", "x", "a", "d", "q", "z"];
-            
-            if (moveKeys.includes(key)) {
+            if (moveKeys.includes(key) && orientation.face && orientation.rotation !== null) {
               e.preventDefault();
-    
-              const findAxisForHint = (hint: string): 'x' | 'y' | 'z' | null => {
-                if (!axisKeyMap) return null;
-                const entry = Object.entries(axisKeyMap).find(([, value]) => value === hint);
-                return entry ? (entry[0] as 'x' | 'y' | 'z') : null;
-              };
-    
-              let axis: 'x' | 'y' | 'z' | null = null;
-              let direction: 1 | -1 = 1;
-    
-              switch (key) {
-                case 'w': axis = findAxisForHint('W/X'); direction = 1; break;
-                case 'x': axis = findAxisForHint('W/X'); direction = -1; break;
-                case 'a': axis = findAxisForHint('A/D'); direction = -1; break;
-                case 'd': axis = findAxisForHint('A/D'); direction = 1; break;
-                case 'q': axis = findAxisForHint('Q/Z'); direction = 1; break; // Corresponds to incrementing Z (away)
-                case 'z': axis = findAxisForHint('Q/Z'); direction = -1; break; // Corresponds to decrementing Z (toward)
+              const mapping = orientationMap[orientation.face]?.[orientation.rotation];
+              if (mapping && mapping[key]) {
+                const moveVector = mapping[key];
+                const dx = moveVector[0];
+                const dy = moveVector[1];
+                const dz = moveVector[2];
+
+                if (dx !== 0) eventBus.emit('moveSelector', { axis: 'x', direction: dx as 1 | -1 });
+                if (dy !== 0) eventBus.emit('moveSelector', { axis: 'y', direction: dy as 1 | -1 });
+                // The Z axis in THREE.js is opposite to our grid's Z axis.
+                if (dz !== 0) eventBus.emit('moveSelector', { axis: 'z', direction: -dz as 1 | -1 });
               }
-    
-              if (axis) {
-                eventBus.emit('moveSelector', { axis, direction });
-              }
-              return; // Movement key handled.
+              return; // Movement key handled
             }
           }
     };
@@ -288,7 +278,7 @@ export function useKeyboardSelector(
     setCells,
     toggleCell,
     deleteCells,
-    axisKeyMap,
+    orientation, // Replaces axisKeyMap
     eventBus,
     setCommunity,
   ]);
