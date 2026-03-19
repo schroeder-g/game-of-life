@@ -848,7 +848,6 @@ function ShapePreview({
     gridSize,
     azimuth,
     polar,
-    rotateOffsets,
   ]);
 
   if (previewCells.length === 0) return null;
