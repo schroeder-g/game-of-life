@@ -131,6 +131,7 @@ function KeyboardCameraControls({
       running,
       hasPastHistory,
       hasInitialState,
+      frontFace,
     },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
     meta: { eventBus },
@@ -307,13 +308,14 @@ function KeyboardCameraControls({
         const absDotZ = Math.abs(dotZ);
 
         let dx = 0, dy = 0, dz = 0;
+        const isLeftRight = frontFace === "Left" || frontFace === "Right";
 
         if (absDotX > absDotY && absDotX > absDotZ) {
-            dx = Math.sign(dotX);
+            dx = isLeftRight ? -Math.sign(dotX) : Math.sign(dotX);
         } else if (absDotY > absDotX && absDotY > absDotZ) {
             dy = Math.sign(dotY);
         } else {
-            dz = Math.sign(dotZ);
+            dz = isLeftRight ? -Math.sign(dotZ) : Math.sign(dotZ);
         }
 
         return [dx, dy, dz];
@@ -528,7 +530,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, selectorPos, setSelectorPos]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, selectorPos, setSelectorPos, frontFace]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
