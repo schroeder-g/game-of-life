@@ -1008,31 +1008,61 @@ function FaceLabels({ size }: { size: number }) {
   };
 
   const labels = [
-    { pos: [half + padding, 0, 0], text: "Right" },
-    { pos: [-(half + padding), 0, 0], text: "Left" },
-    { pos: [0, half + padding, 0], text: "Top" },
-    { pos: [0, -(half + padding), 0], text: "Bottom" },
-    { pos: [0, 0, half + padding], text: "Back" },
-    { pos: [0, 0, -(half + padding)], text: "Front" },
+    { name: "Right", normal: new THREE.Vector3(1, 0, 0) },
+    { name: "Left", normal: new THREE.Vector3(-1, 0, 0) },
+    { name: "Top", normal: new THREE.Vector3(0, 1, 0) },
+    { name: "Bottom", normal: new THREE.Vector3(0, -1, 0) },
+    { name: "Back", normal: new THREE.Vector3(0, 0, 1) },
+    { name: "Front", normal: new THREE.Vector3(0, 0, -1) },
   ];
 
   if (!frontFace) return null;
 
-  const frontLabelData = labels.find(({ text }) => text === frontFace);
-  if (!frontLabelData) return null;
+  const currentFaceData = labels.find(({ name }) => name === frontFace);
+  if (!currentFaceData) return null;
+
+  let finalX = 0,
+    finalY = 0,
+    finalZ = 0;
+  const labelOffsetFromCorner = 0.5; // Small offset from the absolute corner for visual appeal
+
+  switch (frontFace) {
+    case "Front": // Normal (0,0,-1)
+      finalX = half - labelOffsetFromCorner;
+      finalY = half - labelOffsetFromCorner;
+      finalZ = -(half + padding);
+      break;
+    case "Back": // Normal (0,0,1)
+      finalX = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -X
+      finalY = half - labelOffsetFromCorner;
+      finalZ = half + padding;
+      break;
+    case "Right": // Normal (1,0,0)
+      finalX = half + padding;
+      finalY = half - labelOffsetFromCorner;
+      finalZ = half - labelOffsetFromCorner;
+      break;
+    case "Left": // Normal (-1,0,0)
+      finalX = -(half + padding);
+      finalY = half - labelOffsetFromCorner;
+      finalZ = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -Z
+      break;
+    case "Top": // Normal (0,1,0)
+      finalX = half - labelOffsetFromCorner;
+      finalY = half + padding;
+      finalZ = -(half - labelOffsetFromCorner); // Top-right from viewer's perspective is -Z
+      break;
+    case "Bottom": // Normal (0,-1,0)
+      finalX = half - labelOffsetFromCorner;
+      finalY = -(half + padding);
+      finalZ = half - labelOffsetFromCorner;
+      break;
+  }
 
   return (
     <group>
-      <Html
-        key={frontLabelData.text}
-        position={[
-          frontLabelData.pos[0],
-          frontLabelData.pos[1],
-          frontLabelData.pos[2],
-        ]}
-        center
-      >
-        <div style={labelStyle}>{frontLabelData.text}</div>
+      <Html key={frontFace} position={[finalX, finalY, finalZ]} center>
+        <div style={labelStyle}>{frontFace}</div>
       </Html>
     </group>
   );
