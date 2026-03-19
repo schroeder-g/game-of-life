@@ -530,7 +530,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, selectorPos, setSelectorPos, frontFace]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, selectorPos, setSelectorPos, frontFace, gridSize]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -1169,14 +1169,14 @@ export function Scene() {
       panSpeed,
       rotationSpeed,
       frontFace,
-      arrowKeyMappings,
+      axisKeyMap,
     },
     actions: {
       tick,
       setCommunity,
       setSnapMessage,
       setFrontFace,
-      setArrowKeyMappings,
+      setAxisKeyMap,
     },
     meta: { gridRef },
   } = useSimulation();
@@ -1425,102 +1425,76 @@ export function Scene() {
         setFrontFace(newFrontFace);
       }
 
-      const getMovementMapping = (): { [key: string]: string } => {
-        const camera = cameraRef.current!;
-        const cube = cubeRef.current!;
-        const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
-          cube.quaternion,
-        );
-        const gridAxisY = new THREE.Vector3(0, 1, 0).applyQuaternion(
-          cube.quaternion,
-        );
-        const gridAxisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(
-          cube.quaternion,
-        );
-        const cameraRight = new THREE.Vector3().setFromMatrixColumn(
-          camera.matrix,
-          0,
-        );
-        const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-        const cameraForward = new THREE.Vector3()
-          .setFromMatrixColumn(camera.matrix, 2)
-          .negate(); // Camera's forward direction
-
-        const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(cube.quaternion);
-        const worldUp = new THREE.Vector3(0, 1, 0);
-        const isUpsideDown = cubeUp.dot(worldUp) < 0;
-
-        const directions = ["up", "down", "left", "right", "forward", "backward"];
-        const mappings: { [key: string]: string } = {};
-
-        for (const direction of directions) {
-          let targetVector: THREE.Vector3;
-          if (direction === "left") targetVector = cameraRight.clone().negate();
-          else if (direction === "right") targetVector = cameraRight.clone();
-          else if (direction === "up") targetVector = cameraUp.clone();
-          else if (direction === "down") targetVector = cameraUp.clone().negate();
-          else if (direction === "forward") targetVector = cameraForward.clone();
-          else if (direction === "backward") targetVector = cameraForward.clone().negate();
-          else continue;
-
-          const dotX = gridAxisX.dot(targetVector);
-          const dotY = gridAxisY.dot(targetVector);
-          const dotZ = gridAxisZ.dot(targetVector);
-          const absDotX = Math.abs(dotX);
-          const absDotY = Math.abs(dotY);
-          const absDotZ = Math.abs(dotZ);
-
-          let moveAxis = new THREE.Vector3();
-          let moveDirection = 0;
-
-          if (absDotX > absDotY && absDotX > absDotZ) {
-            moveAxis.set(1, 0, 0);
-            moveDirection = Math.sign(dotX);
-          } else if (absDotY > absDotX && absDotY > absDotZ) {
-            moveAxis.set(0, 1, 0);
-            moveDirection = Math.sign(dotY);
-          } else {
-            moveAxis.set(0, 0, 1);
-            moveDirection = Math.sign(dotZ);
-            if (frontFace === "Left" && !isUpsideDown) {
-              if (direction === "left" || direction === "right") {
-                moveDirection *= -1;
-              }
-            }
-          }
-
-          const dx = Math.round(moveAxis.x * moveDirection);
-          const dy = Math.round(moveAxis.y * moveDirection);
-          const dz = Math.round(moveAxis.z * moveDirection);
-
-          let desc = "";
-          if (dx !== 0) desc = `${dx > 0 ? "+" : "-"}X`;
-          if (dy !== 0) desc = `${dy > 0 ? "+" : "-"}Y`;
-          if (dz !== 0) desc = `${dz > 0 ? "+" : "-"}Z`;
-          if (desc) {
-            mappings[desc] = direction;
+      const getBestAxis = (targetVector: THREE.Vector3): [number, number, number] => {
+        const axes: Array<[number, number, number]> = [
+          [1, 0, 0], [-1, 0, 0], [0, 1, 0], 
+          [0, -1, 0], [0, 0, 1], [0, 0, -1],
+        ];
+        let maxDot = -Infinity;
+        let bestAxis: [number, number, number] = [0, 0, 0];
+    
+        for (const axis of axes) {
+          const dot = targetVector.dot(new THREE.Vector3(...axis));
+          if (dot > maxDot) {
+            maxDot = dot;
+            bestAxis = axis;
           }
         }
-        return mappings;
+        return bestAxis;
       };
 
-      const newArrowKeyMappings = getMovementMapping();
+      const viewDirection = new THREE.Vector3();
+      camera.getWorldDirection(viewDirection);
+      const forwardAxis = getBestAxis(viewDirection);
 
-      if (
-        Object.keys(newArrowKeyMappings).length !==
-          Object.keys(arrowKeyMappings).length ||
-        Object.keys(newArrowKeyMappings).some(
-          (key) => newArrowKeyMappings[key] !== arrowKeyMappings[key],
-        )
-      ) {
-        setArrowKeyMappings(newArrowKeyMappings);
+      const worldAxes: Array<[number, number, number]> = [
+        [1, 0, 0], [-1, 0, 0], [0, 1, 0], 
+        [0, -1, 0], [0, 0, 1], [0, 0, -1],
+      ];
+      
+      let screenUpAxis: [number, number, number] = [0, 1, 0];
+      let maxUp = -Infinity;
+      let screenRightAxis: [number, number, number] = [1, 0, 0];
+      let maxRight = -Infinity;
+      
+      const vec = new THREE.Vector3();
+      for (const axis of worldAxes) {
+          vec.set(...axis).project(camera);
+          if (vec.y > maxUp) {
+              maxUp = vec.y;
+              screenUpAxis = axis;
+          }
+          if (vec.x > maxRight) {
+              maxRight = vec.x;
+              screenRightAxis = axis;
+          }
+      }
+  
+      const getAxisChar = (axis: [number, number, number]): 'x' | 'y' | 'z' | null => {
+          if (axis[0] !== 0) return 'x';
+          if (axis[1] !== 0) return 'y';
+          if (axis[2] !== 0) return 'z';
+          return null;
+      };
+      
+      const newKeyMap = { x: "", y: "", z: "" };
+      const upChar = getAxisChar(screenUpAxis);
+      const rightChar = getAxisChar(screenRightAxis);
+      const forwardChar = getAxisChar(forwardAxis);
+  
+      if (upChar) newKeyMap[upChar] = "W/X";
+      if (rightChar) newKeyMap[rightChar] = "A/D";
+      if (forwardChar) newKeyMap[forwardChar] = "Q/Z";
+  
+      if (newKeyMap.x !== axisKeyMap.x || newKeyMap.y !== axisKeyMap.y || newKeyMap.z !== axisKeyMap.z) {
+          setAxisKeyMap(newKeyMap);
       }
     } else {
       if (frontFace !== null) {
         setFrontFace(null);
       }
-      if (Object.keys(arrowKeyMappings).length > 0) {
-        setArrowKeyMappings({});
+      if (axisKeyMap.x || axisKeyMap.y || axisKeyMap.z) {
+        setAxisKeyMap({ x: "", y: "", z: "" });
       }
     }
   });

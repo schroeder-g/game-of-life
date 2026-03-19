@@ -1000,6 +1000,14 @@ kbd {
   gap: 10px;
 }
 
+.key-hint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  color: #8b949e;
+  width: 40px; /* Allocate space for W/X etc. */
+  text-align: left;
+}
+
 .coordinate-input-container label {
   font-size: 0.8rem;
   font-weight: bold;

@@ -360,43 +360,12 @@ function RulesSection() {
 
 function SelectorPositionSection() {
   const {
-    state: { gridSize, arrowKeyMappings },
+    state: { gridSize, axisKeyMap },
   } = useSimulation();
   const {
     state: { selectorPos },
     actions: { setSelectorPos },
   } = useBrush();
-
-  const buttonsRef = useRef<Record<string, HTMLButtonElement | null>>({
-    "+X": null, "-X": null,
-    "+Y": null, "-Y": null,
-    "+Z": null, "-Z": null,
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const keyMap: { [key: string]: string } = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-      };
-      const direction = keyMap[e.key];
-      if (!direction) return;
-
-      const func = Object.keys(arrowKeyMappings).find(
-        (key) => arrowKeyMappings[key] === direction,
-      );
-
-      if (func && buttonsRef.current[func]) {
-        e.preventDefault();
-        buttonsRef.current[func]?.click();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [arrowKeyMappings]);
 
   if (!selectorPos) {
     return null;
@@ -457,26 +426,19 @@ function SelectorPositionSection() {
               />
               <div className="coord-buttons">
                 <button
-                  ref={(el) => (buttonsRef.current[`+${axis}`] = el)}
                   onClick={() => increment(axis)}
                 >
                   ▲
                 </button>
                 <button
-                  ref={(el) => (buttonsRef.current[`-${axis}`] = el)}
                   onClick={() => decrement(axis)}
                 >
                   ▼
                 </button>
               </div>
             </div>
-            <div className="key-mapping-display">
-              <span>
-                {directionToKey[arrowKeyMappings[`+${axis}`]] || ""}
-              </span>
-              <span>
-                {directionToKey[arrowKeyMappings[`-${axis}`]] || ""}
-              </span>
+            <div className="key-hint">
+              {axisKeyMap[axis.toLowerCase() as 'x' | 'y' | 'z']}
             </div>
           </div>
         ))}
