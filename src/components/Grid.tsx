@@ -131,9 +131,9 @@ function KeyboardCameraControls({
       running,
       hasPastHistory,
       hasInitialState,
-      arrowKeyMovementVectors,
     },
     actions: { setRotationMode, playStop, step, stepBackward, reset },
+    meta: { eventBus },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -174,6 +174,10 @@ function KeyboardCameraControls({
     lastAngle: 0,
   });
 
+  const movementVectorsRef = useRef<{
+    [key: string]: [number, number, number];
+  }>({});
+
   const triggerSnapRotation = React.useCallback(
     (axis: "x" | "y" | "z", direction: number) => {
       if (snapRotation.current.active || !cubeRef.current) return;
@@ -191,6 +195,16 @@ function KeyboardCameraControls({
     },
     [cubeRef],
   );
+
+  useEffect(() => {
+    const unsubscribe = eventBus.on(
+      "arrow-vectors-updated",
+      (vectors) => {
+        movementVectorsRef.current = vectors;
+      },
+    );
+    return unsubscribe;
+  }, [eventBus]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -254,7 +268,7 @@ function KeyboardCameraControls({
         switch (e.key) {
           case "ArrowUp": {
             e.preventDefault();
-            const vec = arrowKeyMovementVectors.up;
+            const vec = movementVectorsRef.current.up;
             if (vec) {
               setSelectorPos((prev) => {
                 if (!prev) return null;
@@ -269,7 +283,7 @@ function KeyboardCameraControls({
           }
           case "ArrowDown": {
             e.preventDefault();
-            const vec = arrowKeyMovementVectors.down;
+            const vec = movementVectorsRef.current.down;
             if (vec) {
               setSelectorPos((prev) => {
                 if (!prev) return null;
@@ -284,7 +298,7 @@ function KeyboardCameraControls({
           }
           case "ArrowLeft": {
             e.preventDefault();
-            const vec = arrowKeyMovementVectors.left;
+            const vec = movementVectorsRef.current.left;
             if (vec) {
               setSelectorPos((prev) => {
                 if (!prev) return null;
@@ -299,7 +313,7 @@ function KeyboardCameraControls({
           }
           case "ArrowRight": {
             e.preventDefault();
-            const vec = arrowKeyMovementVectors.right;
+            const vec = movementVectorsRef.current.right;
             if (vec) {
               setSelectorPos((prev) => {
                 if (!prev) return null;
@@ -503,7 +517,7 @@ function KeyboardCameraControls({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize, arrowKeyMovementVectors]);
+  }, [rotationMode, invertRotation, cameraActionsRef, setRotationMode, playStop, step, stepBackward, running, hasPastHistory, reset, hasInitialState, triggerSnapRotation, setSelectorPos, gridSize]);
 
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -1111,7 +1125,6 @@ export function Scene() {
       rotationSpeed,
       frontFace,
       arrowKeyFunctions,
-      arrowKeyMovementVectors,
     },
     actions: {
       tick,
@@ -1119,9 +1132,8 @@ export function Scene() {
       setSnapMessage,
       setFrontFace,
       setArrowKeyFunctions,
-      setArrowKeyMovementVectors,
     },
-    meta: { gridRef },
+    meta: { gridRef, eventBus },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -1463,6 +1475,8 @@ export function Scene() {
         down: down.vec,
       };
 
+      eventBus.emit("arrow-vectors-updated", newArrowKeyMovementVectors);
+
       if (
         newArrowKeyFunctions.left !== arrowKeyFunctions.left ||
         newArrowKeyFunctions.right !== arrowKeyFunctions.right ||
@@ -1470,7 +1484,6 @@ export function Scene() {
         newArrowKeyFunctions.down !== arrowKeyFunctions.down
       ) {
         setArrowKeyFunctions(newArrowKeyFunctions);
-        setArrowKeyMovementVectors(newArrowKeyMovementVectors);
       }
     } else {
       if (frontFace !== null) {
@@ -1478,7 +1491,6 @@ export function Scene() {
       }
       if (Object.keys(arrowKeyFunctions).length > 0) {
         setArrowKeyFunctions({});
-        setArrowKeyMovementVectors({});
       }
     }
   });

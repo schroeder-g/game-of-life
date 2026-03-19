@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Emitter } from "../core/events";
 import { Grid3D } from "../core/Grid3D";
 import { loadSettings, saveSettings } from "../hooks/useSettings";
 
@@ -56,7 +57,6 @@ export interface SimulationState {
   snapMessage: string;
   frontFace: string | null;
   arrowKeyFunctions: { [key: string]: string };
-  arrowKeyMovementVectors: { [key: string]: [number, number, number] };
 }
 
 export interface SimulationActions {
@@ -80,9 +80,6 @@ export interface SimulationActions {
   setSnapMessage: (message: string) => void;
   setFrontFace: (face: string | null) => void;
   setArrowKeyFunctions: (functions: { [key: string]: string }) => void;
-  setArrowKeyMovementVectors: (vectors: {
-    [key: string]: [number, number, number];
-  }) => void;
 
   playStop: () => void;
   step: () => void;
@@ -107,6 +104,12 @@ export interface SimulationActions {
   squareUp: () => void;
 }
 
+export type AppEvents = {
+  "arrow-vectors-updated": {
+    [key: string]: [number, number, number];
+  };
+};
+
 export interface SimulationMeta {
   gridRef: React.MutableRefObject<Grid3D>;
   initialStateRef: React.MutableRefObject<Array<[number, number, number]>>;
@@ -115,6 +118,7 @@ export interface SimulationMeta {
     recenter: () => void;
     squareUp: () => void;
   } | null>;
+  eventBus: Emitter<AppEvents>;
 }
 
 export interface SimulationContextValue {
@@ -134,6 +138,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     recenter: () => void;
     squareUp: () => void;
   } | null>(null);
+  const eventBusRef = useRef(new Emitter<AppEvents>());
   const isFirstLoadRef = useRef(true);
   const [hasInitialState, setHasInitialState] = useState(false);
   const [hasPastHistory, setHasPastHistory] = useState(
@@ -174,9 +179,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [frontFace, setFrontFace] = useState<string | null>(null);
   const [arrowKeyFunctions, setArrowKeyFunctions] = useState<{
     [key: string]: string;
-  }>({});
-  const [arrowKeyMovementVectors, setArrowKeyMovementVectors] = useState<{
-    [key: string]: [number, number, number];
   }>({});
 
   const [speed, setSpeed] = useState(storedSettings.speed);
@@ -415,7 +417,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const value: SimulationContextValue = {
     state: {
       arrowKeyFunctions,
-      arrowKeyMovementVectors,
       frontFace,
       snapMessage,
       speed,
@@ -454,7 +455,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setSnapMessage,
       setFrontFace,
       setArrowKeyFunctions,
-      setArrowKeyMovementVectors,
       setPanSpeed,
       setRotationSpeed,
       setInvertRotation,
@@ -480,6 +480,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       gridRef,
       initialStateRef,
       cameraActionsRef,
+      eventBus: eventBusRef.current,
     },
   };
 
