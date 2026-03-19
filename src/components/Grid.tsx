@@ -617,19 +617,33 @@ export function Scene() {
         } else {
           faceName = Math.sign(localZ) > 0 ? "Front" : "Back";
         }
-
-        const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(
-          finalQuaternion,
-        );
-        const worldUp = new THREE.Vector3(0, 1, 0);
-        const isUpsideDown = cubeUp.dot(worldUp) < -0.5;
-
-        let message = `Snapped to: ${faceName} face`;
-        if (isUpsideDown) {
-          message += " (upside down)";
+    
+        let rotationDeg: CameraOrientation['rotation'] = 0;
+        const lowerCaseFaceName = faceName.toLowerCase();
+    
+        if (lowerCaseFaceName === 'top' || lowerCaseFaceName === 'bottom') {
+          // For top/bottom views, the reference is the cube's local +Z axis (its "front" face).
+          const cubeFront = new THREE.Vector3(0, 0, 1).applyQuaternion(finalQuaternion);
+          // We check its direction on the world's XZ plane to determine rotation.
+          if (Math.abs(cubeFront.z) > 0.9) { // Pointing towards world Z or -Z
+            rotationDeg = cubeFront.z < 0 ? 0 : 180; // World -Z is "front" (0 deg)
+          } else if (Math.abs(cubeFront.x) > 0.9) { // Pointing towards world X or -X
+            rotationDeg = cubeFront.x < 0 ? 90 : 270; // World -X is "left" (90 deg)
+          }
+        } else {
+          // For front/back/left/right views, the reference is the cube's local Y-axis (its "top" face).
+          const cubeUp = new THREE.Vector3(0, 1, 0).applyQuaternion(finalQuaternion);
+          // We check its direction relative to the world axes.
+          if (Math.abs(cubeUp.y) > 0.9) { // Pointing towards world Y or -Y
+            rotationDeg = cubeUp.y > 0 ? 0 : 180;
+          } else if (Math.abs(cubeUp.x) > 0.9) { // Pointing towards world X or -X
+            rotationDeg = cubeUp.x < 0 ? 90 : 270;
+          }
         }
+    
+        const message = `Snapped to: ${faceName} face, ${rotationDeg}°`;
         setSnapMessage(message);
-
+    
         // 5. Do the rest of squareUp: reset camera roll and snap position.
         cameraRef.current.up.set(0, 1, 0);
 
