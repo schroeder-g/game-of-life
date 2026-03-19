@@ -104,416 +104,6 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
-function KeyboardCameraControls({
-  controlsRef,
-  cameraRef,
-  cubeRef,
-  panSpeed,
-  rotationSpeed,
-  gridSize,
-  cameraActionsRef,
-}: {
-  controlsRef: React.RefObject<any>;
-  cameraRef: React.RefObject<THREE.PerspectiveCamera>;
-  cubeRef: React.RefObject<THREE.Group>;
-  panSpeed: number;
-  rotationSpeed: number;
-  gridSize: number;
-  cameraActionsRef: React.MutableRefObject<{
-    fitDisplay: () => void;
-    recenter: () => void;
-    squareUp: () => void;
-  } | null>;
-}) {
-  const {
-    state: {
-      rotationMode,
-      invertRotation,
-      running,
-      hasPastHistory,
-      hasInitialState,
-    },
-    actions: { setRotationMode, playStop, step, stepBackward, reset },
-    meta: { eventBus, movement, velocity },
-  } = useSimulation();
-
-  const snapRotation = useRef({
-    active: false,
-    axis: new THREE.Vector3(),
-    totalAngle: 0,
-    startQuaternion: new THREE.Quaternion(),
-    startTime: 0,
-    duration: 1.0,
-    lastAngle: 0,
-  });
-
-  const triggerSnapRotation = React.useCallback(
-    (axis: "x" | "y" | "z", direction: number) => {
-      if (snapRotation.current.active || !cubeRef.current) return;
-
-      const angle = direction * (Math.PI / 2);
-
-      snapRotation.current.active = true;
-      if (axis === "x") snapRotation.current.axis.set(1, 0, 0);
-      if (axis === "y") snapRotation.current.axis.set(0, 1, 0);
-      if (axis === "z") snapRotation.current.axis.set(0, 0, 1);
-      snapRotation.current.totalAngle = angle;
-      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
-      snapRotation.current.startTime = 0;
-      snapRotation.current.lastAngle = 0;
-    },
-    [cubeRef],
-  );
-
-
-  useFrame((state, delta) => {
-    if (snapRotation.current.active && cubeRef.current) {
-      if (snapRotation.current.startTime === 0) {
-        snapRotation.current.startTime = state.clock.getElapsedTime();
-      }
-      const elapsedTime =
-        state.clock.getElapsedTime() - snapRotation.current.startTime;
-      let progress = elapsedTime / snapRotation.current.duration;
-
-      if (progress >= 1) {
-        // Snap to final position to correct for float inaccuracies
-        const finalRotation = new THREE.Quaternion().setFromAxisAngle(
-          snapRotation.current.axis,
-          snapRotation.current.totalAngle,
-        );
-        cubeRef.current.quaternion
-          .copy(finalRotation)
-          .multiply(snapRotation.current.startQuaternion);
-        snapRotation.current.active = false;
-      } else {
-        // ease in cubic
-        progress = progress * progress * progress;
-        const currentAngle = snapRotation.current.totalAngle * progress;
-        const angleThisFrame = currentAngle - snapRotation.current.lastAngle;
-
-        cubeRef.current.rotateOnWorldAxis(
-          snapRotation.current.axis,
-          angleThisFrame,
-        );
-
-        snapRotation.current.lastAngle = currentAngle;
-      }
-    }
-
-    const panMaxSpeed = panSpeed;
-    const dollyMaxSpeed = panSpeed * 1.5;
-
-    // rotationSpeed is 1-100.
-    // Map to old rotation speed range: 10 to 360
-    const minRotSpeed = 10;
-    const maxRotSpeed = 360;
-    const actualRotationSpeed =
-      minRotSpeed + ((rotationSpeed - 1) / 99) * (maxRotSpeed - minRotSpeed);
-
-    // Map to old roll speed range: 25 to 1200
-    const minRollSpeed = 25;
-    const maxRollSpeed = 1200;
-    const actualRollSpeed =
-      minRollSpeed + ((rotationSpeed - 1) / 99) * (maxRollSpeed - minRollSpeed);
-
-    const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
-    const rollMaxSpeed = actualRollSpeed;
-
-    // Set acceleration to reach max speed in 1 second
-    const acceleration = panMaxSpeed;
-    const dollyAcceleration = dollyMaxSpeed;
-    const rotationAcceleration = rotateMaxSpeed;
-    const rollAcceleration = rollMaxSpeed;
-
-    const damping = 0.9; // friction for deceleration
-
-    // Panning (left/right)
-    if (movement.current.right) {
-      velocity.current.panX = Math.min(
-        velocity.current.panX + acceleration * delta,
-        panMaxSpeed,
-      );
-    } else if (movement.current.left) {
-      velocity.current.panX = Math.max(
-        velocity.current.panX - acceleration * delta,
-        -panMaxSpeed,
-      );
-    } else {
-      velocity.current.panX *= damping;
-    }
-
-    // Panning (up/down)
-    if (movement.current.down) {
-      velocity.current.panY = Math.min(
-        velocity.current.panY + acceleration * delta,
-        panMaxSpeed,
-      );
-    } else if (movement.current.up) {
-      velocity.current.panY = Math.max(
-        velocity.current.panY - acceleration * delta,
-        -panMaxSpeed,
-      );
-    } else {
-      velocity.current.panY *= damping;
-    }
-
-    // Rotation (left/right)
-    if (movement.current.rotateRight) {
-      velocity.current.rotateX = Math.min(
-        velocity.current.rotateX + rotationAcceleration * delta,
-        rotateMaxSpeed,
-      );
-    } else if (movement.current.rotateLeft) {
-      velocity.current.rotateX = Math.max(
-        velocity.current.rotateX - rotationAcceleration * delta,
-        -rotateMaxSpeed,
-      );
-    } else {
-      velocity.current.rotateX *= damping;
-    }
-
-    // Rotation (up/down)
-    if (movement.current.rotateUp) {
-      velocity.current.rotateY = Math.min(
-        velocity.current.rotateY + rotationAcceleration * delta,
-        rotateMaxSpeed,
-      );
-    } else if (movement.current.rotateDown) {
-      velocity.current.rotateY = Math.max(
-        velocity.current.rotateY - rotationAcceleration * delta,
-        -rotateMaxSpeed,
-      );
-    } else {
-      velocity.current.rotateY *= damping;
-    }
-
-    // Barrel roll
-    if (movement.current.rollRight) {
-      velocity.current.roll = Math.min(
-        velocity.current.roll + rollAcceleration * delta,
-        rollMaxSpeed,
-      );
-    } else if (movement.current.rollLeft) {
-      velocity.current.roll = Math.max(
-        velocity.current.roll - rollAcceleration * delta,
-        -rollMaxSpeed,
-      );
-    } else {
-      velocity.current.roll *= damping;
-    }
-
-    // Dollying (forward/backward)
-    if (movement.current.backward) {
-      velocity.current.dolly = Math.min(
-        velocity.current.dolly + dollyAcceleration * delta,
-        dollyMaxSpeed,
-      );
-    } else if (movement.current.forward) {
-      velocity.current.dolly = Math.max(
-        velocity.current.dolly - dollyAcceleration * delta,
-        -dollyMaxSpeed,
-      );
-    } else {
-      velocity.current.dolly *= damping;
-    }
-
-
-    if (Math.abs(velocity.current.roll) > 0.01) {
-      if (cameraRef.current && controlsRef.current && cubeRef.current) {
-        const oldUp = cameraRef.current.up.clone();
-        const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
-
-        const camera = cameraRef.current;
-        const controls = controlsRef.current;
-        const forward = new THREE.Vector3();
-        camera.getWorldDirection(forward);
-
-        const quaternion = new THREE.Quaternion();
-        quaternion.setFromAxisAngle(forward, rollAngleRad);
-
-        camera.up.applyQuaternion(quaternion);
-
-        const visibility = getCubeVisibility(cubeRef.current, camera, gridSize);
-        if (visibility.isOffScreen) {
-          camera.up.copy(oldUp);
-        } else {
-          controls.update();
-        }
-      }
-    } else {
-      velocity.current.roll = 0;
-    }
-
-
-    if (cameraRef.current && controlsRef.current) {
-      const camera = cameraRef.current;
-      const controls = controlsRef.current;
-
-      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-      const forward = new THREE.Vector3()
-        .setFromMatrixColumn(camera.matrix, 2)
-        .negate();
-
-      let needsUpdate = false;
-      const panOffset = new THREE.Vector3();
-
-      if (Math.abs(velocity.current.panX) > 0.01) {
-        panOffset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
-      } else {
-        velocity.current.panX = 0;
-      }
-
-      if (Math.abs(velocity.current.panY) > 0.01) {
-        panOffset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
-      } else {
-        velocity.current.panY = 0;
-      }
-
-      if (panOffset.lengthSq() > 0) {
-        const oldPosition = camera.position.clone();
-        const oldTarget = controls.target.clone();
-
-        camera.position.add(panOffset);
-        controls.target.add(panOffset);
-
-        if (cubeRef.current) {
-          const visibility = getCubeVisibility(
-            cubeRef.current,
-            camera,
-            gridSize,
-          );
-          if (visibility.isOffScreen) {
-            const panX = velocity.current.panX;
-            const panY = velocity.current.panY;
-
-            const cameraPanRight = panX > 0;
-            const cameraPanLeft = panX < 0;
-            const cameraPanUp = panY > 0; // q key, cube moves down
-            const cameraPanDown = panY < 0; // z key, cube moves up
-
-            const blockPanX =
-              (visibility.isOffScreenLeft && cameraPanRight) ||
-              (visibility.isOffScreenRight && cameraPanLeft);
-            const blockPanY =
-              (visibility.isOffScreenTop && cameraPanDown) ||
-              (visibility.isOffScreenBottom && cameraPanUp);
-
-            if (blockPanX && blockPanY) {
-              camera.position.copy(oldPosition);
-              controls.target.copy(oldTarget);
-            } else if (blockPanX) {
-              const panXOffset = right.clone().multiplyScalar(panX * delta);
-              camera.position.sub(panXOffset);
-              controls.target.sub(panXOffset);
-              needsUpdate = true;
-            } else if (blockPanY) {
-              const panYOffset = up.clone().multiplyScalar(panY * delta);
-              camera.position.sub(panYOffset);
-              controls.target.sub(panYOffset);
-              needsUpdate = true;
-            } else {
-              needsUpdate = true;
-            }
-          } else {
-            needsUpdate = true;
-          }
-        } else {
-          needsUpdate = true;
-        }
-      }
-
-      if (Math.abs(velocity.current.dolly) > 0.01) {
-        const oldPosition = camera.position.clone();
-        const dollyOffset = forward
-          .clone()
-          .multiplyScalar(velocity.current.dolly * delta);
-        camera.position.add(dollyOffset);
-
-        if (cubeRef.current) {
-          const visibility = getCubeVisibility(
-            cubeRef.current,
-            camera,
-            gridSize,
-          );
-          if (visibility.isOffScreen) {
-            const isDollyIn = velocity.current.dolly < 0;
-            if (!isDollyIn) {
-              camera.position.copy(oldPosition);
-            } else {
-              needsUpdate = true;
-            }
-          } else {
-            needsUpdate = true;
-          }
-        } else {
-          needsUpdate = true;
-        }
-      } else {
-        velocity.current.dolly = 0;
-      }
-
-      const rotateX = velocity.current.rotateX * delta;
-      const rotateY = velocity.current.rotateY * delta;
-
-      if (
-        cubeRef.current &&
-        cameraRef.current &&
-        rotationMode &&
-        !snapRotation.current.active
-      ) {
-        const camera = cameraRef.current;
-        const oldQuaternion = cubeRef.current.quaternion.clone();
-        let rotated = false;
-
-        if (Math.abs(rotateX) > 0) {
-          // Yaw
-          const cameraUp = new THREE.Vector3().setFromMatrixColumn(
-            camera.matrix,
-            1,
-          );
-          cubeRef.current.rotateOnWorldAxis(cameraUp, -rotateX);
-          rotated = true;
-        }
-        if (Math.abs(rotateY) > 0) {
-          // Pitch
-          const cameraRight = new THREE.Vector3().setFromMatrixColumn(
-            camera.matrix,
-            0,
-          );
-          cubeRef.current.rotateOnWorldAxis(cameraRight, rotateY);
-          rotated = true;
-        }
-
-        if (rotated) {
-          const visibility = getCubeVisibility(
-            cubeRef.current,
-            camera,
-            gridSize,
-          );
-          if (visibility.isOffScreen) {
-            cubeRef.current.quaternion.copy(oldQuaternion);
-          }
-        }
-      }
-
-      if (Math.abs(velocity.current.rotateX) < 0.01) {
-        velocity.current.rotateX = 0;
-      }
-      if (Math.abs(velocity.current.rotateY) < 0.01) {
-        velocity.current.rotateY = 0;
-      }
-
-      if (needsUpdate) {
-        controls.update();
-      }
-    }
-  });
-
-  return null;
-}
-
-function ShapePreview({
   controlsRef,
 }: {
   controlsRef: React.RefObject<any>;
@@ -800,6 +390,7 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
+      invertRotation,
     },
     actions: {
       tick,
@@ -807,7 +398,7 @@ export function Scene() {
       setSnapMessage,
       setCameraOrientation,
     },
-    meta: { gridRef },
+    meta: { gridRef, movement, velocity },
   } = useSimulation();
   const {
     state: { selectorPos },
@@ -819,6 +410,17 @@ export function Scene() {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
+
+  const snapRotation = useRef({
+    active: false,
+    axis: new THREE.Vector3(),
+    totalAngle: 0,
+    startQuaternion: new THREE.Quaternion(),
+    startTime: 0,
+    duration: 1.0,
+    lastAngle: 0,
+    onComplete: undefined as (() => void) | undefined,
+  });
 
   const {
     meta: { cameraActionsRef },
@@ -846,11 +448,10 @@ export function Scene() {
 
   useEffect(() => {
     const snapRotate = (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
-      if (!controlsRef.current || !cubeRef.current || !cameraRef.current) return;
+      if (snapRotation.current.active || !cubeRef.current || !cameraRef.current) return;
 
       const camera = cameraRef.current;
-      const rotation = new THREE.Quaternion();
-      let angle = Math.PI / 2; // 90 degrees
+      let angle = Math.PI / 2;
       let axis = new THREE.Vector3();
 
       switch (direction) {
@@ -879,12 +480,14 @@ export function Scene() {
           angle = -Math.PI / 2;
           break;
       }
-
-      rotation.setFromAxisAngle(axis, angle);
-      cubeRef.current.quaternion.premultiply(rotation);
-
-      // Finish by squaring up the view to the new orientation
-      cameraActionsRef.current?.squareUp();
+      
+      snapRotation.current.active = true;
+      snapRotation.current.axis.copy(axis);
+      snapRotation.current.totalAngle = angle;
+      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
+      snapRotation.current.startTime = 0;
+      snapRotation.current.lastAngle = 0;
+      snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
     };
 
     cameraActionsRef.current = {
@@ -1053,6 +656,174 @@ export function Scene() {
     };
   }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage, cameraRef, controlsRef]);
 
+  useFrame((state, delta) => {
+    if (snapRotation.current.active && cubeRef.current) {
+      if (snapRotation.current.startTime === 0) {
+        snapRotation.current.startTime = state.clock.getElapsedTime();
+      }
+      const elapsedTime = state.clock.getElapsedTime() - snapRotation.current.startTime;
+      let progress = elapsedTime / snapRotation.current.duration;
+
+      if (progress >= 1) {
+        const finalRotation = new THREE.Quaternion().setFromAxisAngle(
+          snapRotation.current.axis,
+          snapRotation.current.totalAngle,
+        );
+        cubeRef.current.quaternion.copy(snapRotation.current.startQuaternion).premultiply(finalRotation);
+
+        snapRotation.current.active = false;
+        if (snapRotation.current.onComplete) {
+          snapRotation.current.onComplete();
+          snapRotation.current.onComplete = undefined;
+        }
+      } else {
+        progress = progress * progress * progress; // ease-in-cubic
+        const currentAngle = snapRotation.current.totalAngle * progress;
+        const angleThisFrame = currentAngle - snapRotation.current.lastAngle;
+        
+        cubeRef.current.rotateOnWorldAxis(snapRotation.current.axis, angleThisFrame);
+
+        snapRotation.current.lastAngle = currentAngle;
+      }
+    }
+
+    const panMaxSpeed = panSpeed;
+    const dollyMaxSpeed = panSpeed * 1.5;
+    const minRotSpeed = 10, maxRotSpeed = 360;
+    const actualRotationSpeed = minRotSpeed + ((rotationSpeed - 1) / 99) * (maxRotSpeed - minRotSpeed);
+    const minRollSpeed = 25, maxRollSpeed = 1200;
+    const actualRollSpeed = minRollSpeed + ((rotationSpeed - 1) / 99) * (maxRollSpeed - minRollSpeed);
+    const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
+    const rollMaxSpeed = actualRollSpeed;
+
+    const acceleration = panMaxSpeed;
+    const dollyAcceleration = dollyMaxSpeed;
+    const rotationAcceleration = rotateMaxSpeed;
+    const rollAcceleration = rollMaxSpeed;
+    const damping = 0.9;
+
+    if (movement.current.right) velocity.current.panX = Math.min(velocity.current.panX + acceleration * delta, panMaxSpeed);
+    else if (movement.current.left) velocity.current.panX = Math.max(velocity.current.panX - acceleration * delta, -panMaxSpeed);
+    else velocity.current.panX *= damping;
+
+    if (movement.current.down) velocity.current.panY = Math.min(velocity.current.panY + acceleration * delta, panMaxSpeed);
+    else if (movement.current.up) velocity.current.panY = Math.max(velocity.current.panY - acceleration * delta, -panMaxSpeed);
+    else velocity.current.panY *= damping;
+
+    if (movement.current.rotateRight) velocity.current.rotateX = Math.min(velocity.current.rotateX + rotationAcceleration * delta, rotateMaxSpeed);
+    else if (movement.current.rotateLeft) velocity.current.rotateX = Math.max(velocity.current.rotateX - rotationAcceleration * delta, -rotateMaxSpeed);
+    else velocity.current.rotateX *= damping;
+
+    if (movement.current.rotateUp) velocity.current.rotateY = Math.min(velocity.current.rotateY + rotationAcceleration * delta, rotateMaxSpeed);
+    else if (movement.current.rotateDown) velocity.current.rotateY = Math.max(velocity.current.rotateY - rotationAcceleration * delta, -rotateMaxSpeed);
+    else velocity.current.rotateY *= damping;
+
+    if (movement.current.rollRight) velocity.current.roll = Math.min(velocity.current.roll + rollAcceleration * delta, rollMaxSpeed);
+    else if (movement.current.rollLeft) velocity.current.roll = Math.max(velocity.current.roll - rollAcceleration * delta, -rollMaxSpeed);
+    else velocity.current.roll *= damping;
+
+    if (movement.current.backward) velocity.current.dolly = Math.min(velocity.current.dolly + dollyAcceleration * delta, dollyMaxSpeed);
+    else if (movement.current.forward) velocity.current.dolly = Math.max(velocity.current.dolly - dollyAcceleration * delta, -dollyMaxSpeed);
+    else velocity.current.dolly *= damping;
+
+    if (Math.abs(velocity.current.roll) > 0.01) {
+      if (cameraRef.current && controlsRef.current && cubeRef.current) {
+        const oldUp = cameraRef.current.up.clone();
+        const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
+        const camera = cameraRef.current;
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        const quaternion = new THREE.Quaternion().setFromAxisAngle(forward, rollAngleRad);
+        camera.up.applyQuaternion(quaternion);
+        if (getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) camera.up.copy(oldUp);
+        else controlsRef.current.update();
+      }
+    } else {
+      velocity.current.roll = 0;
+    }
+
+    if (cameraRef.current && controlsRef.current) {
+      const camera = cameraRef.current, controls = controlsRef.current;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      const forward = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 2).negate();
+      let needsUpdate = false;
+      const panOffset = new THREE.Vector3();
+
+      if (Math.abs(velocity.current.panX) > 0.01) panOffset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
+      else velocity.current.panX = 0;
+      if (Math.abs(velocity.current.panY) > 0.01) panOffset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
+      else velocity.current.panY = 0;
+
+      if (panOffset.lengthSq() > 0) {
+        const oldPos = camera.position.clone(), oldTarget = controls.target.clone();
+        camera.position.add(panOffset);
+        controls.target.add(panOffset);
+        if (cubeRef.current) {
+          const visibility = getCubeVisibility(cubeRef.current, camera, gridSize);
+          if (visibility.isOffScreen) {
+            const panX = velocity.current.panX;
+            const panY = velocity.current.panY;
+
+            const cameraPanRight = panX > 0;
+            const cameraPanLeft = panX < 0;
+            const cameraPanUp = panY > 0; // q key, cube moves down
+            const cameraPanDown = panY < 0; // z key, cube moves up
+
+            const blockPanX =
+              (visibility.isOffScreenLeft && cameraPanRight) ||
+              (visibility.isOffScreenRight && cameraPanLeft);
+            const blockPanY =
+              (visibility.isOffScreenTop && cameraPanDown) ||
+              (visibility.isOffScreenBottom && cameraPanUp);
+
+            if (blockPanX && blockPanY) {
+              camera.position.copy(oldPos);
+              controls.target.copy(oldTarget);
+            } else if (blockPanX) {
+              const panXOffset = right.clone().multiplyScalar(panX * delta);
+              camera.position.sub(panXOffset);
+              controls.target.sub(panXOffset);
+              needsUpdate = true;
+            } else if (blockPanY) {
+              const panYOffset = up.clone().multiplyScalar(panY * delta);
+              camera.position.sub(panYOffset);
+              controls.target.sub(panYOffset);
+              needsUpdate = true;
+            } else {
+              needsUpdate = true;
+            }
+          } else {
+            needsUpdate = true;
+          }
+        } else {
+          needsUpdate = true;
+        }
+      }
+
+      if (Math.abs(velocity.current.dolly) > 0.01) {
+        const oldPos = camera.position.clone();
+        camera.position.add(forward.clone().multiplyScalar(velocity.current.dolly * delta));
+        if (cubeRef.current && getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) camera.position.copy(oldPos);
+        else needsUpdate = true;
+      } else {
+        velocity.current.dolly = 0;
+      }
+
+      const rotateX = velocity.current.rotateX * delta;
+      const rotateY = velocity.current.rotateY * delta;
+
+      if (cubeRef.current && rotationMode && !snapRotation.current.active) {
+        if (Math.abs(rotateX) > 0) cubeRef.current.rotateOnWorldAxis(up, -rotateX);
+        if (Math.abs(rotateY) > 0) cubeRef.current.rotateOnWorldAxis(right, rotateY);
+      }
+
+      if (Math.abs(velocity.current.rotateX) < 0.01) velocity.current.rotateX = 0;
+      if (Math.abs(velocity.current.rotateY) < 0.01) velocity.current.rotateY = 0;
+      if (needsUpdate) controls.update();
+    }
+  });
+
   useFrame((state) => {
     if (running) {
       const elapsed = state.clock.getElapsedTime();
@@ -1069,15 +840,6 @@ export function Scene() {
       <ambientLight intensity={0.4} />
       <pointLight position={[30, 30, 30]} intensity={1} />
       <pointLight position={[-30, -30, -30]} intensity={0.5} />
-      <KeyboardCameraControls
-        controlsRef={controlsRef}
-        cameraRef={cameraRef}
-        cubeRef={cubeRef}
-        panSpeed={panSpeed}
-        rotationSpeed={rotationSpeed}
-        gridSize={gridSize}
-        cameraActionsRef={cameraActionsRef}
-      />
       <group ref={cubeRef}>
         <Cells
         grid={gridRef.current}
