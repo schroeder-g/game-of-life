@@ -201,7 +201,7 @@ function KeyboardCameraControls({
         tagName === "TEXTAREA" ||
         (tagName === "INPUT" &&
           ((target as HTMLInputElement).type === "text" ||
-            (target as HTMLInputElement).type === "number"))
+            (target as HTMLInputElement).type === "number")))
       ) {
         return;
       }
