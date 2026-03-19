@@ -845,6 +845,48 @@ export function Scene() {
   }, [gridSize, camera]);
 
   useEffect(() => {
+    const snapRotate = (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
+      if (!controlsRef.current || !cubeRef.current || !cameraRef.current) return;
+
+      const camera = cameraRef.current;
+      const rotation = new THREE.Quaternion();
+      let angle = Math.PI / 2; // 90 degrees
+      let axis = new THREE.Vector3();
+
+      switch (direction) {
+        case 'up':
+          axis.setFromMatrixColumn(camera.matrix, 0); // camera's right vector
+          angle = Math.PI / 2;
+          break;
+        case 'down':
+          axis.setFromMatrixColumn(camera.matrix, 0);
+          angle = -Math.PI / 2;
+          break;
+        case 'left':
+          axis.setFromMatrixColumn(camera.matrix, 1); // camera's up vector
+          angle = Math.PI / 2;
+          break;
+        case 'right':
+          axis.setFromMatrixColumn(camera.matrix, 1);
+          angle = -Math.PI / 2;
+          break;
+        case 'rollLeft':
+          axis.setFromMatrixColumn(camera.matrix, 2).negate(); // camera's forward vector
+          angle = Math.PI / 2;
+          break;
+        case 'rollRight':
+          axis.setFromMatrixColumn(camera.matrix, 2).negate();
+          angle = -Math.PI / 2;
+          break;
+      }
+
+      rotation.setFromAxisAngle(axis, angle);
+      cubeRef.current.quaternion.premultiply(rotation);
+
+      // Finish by squaring up the view to the new orientation
+      cameraActionsRef.current?.squareUp();
+    };
+
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!controlsRef.current || !cameraRef.current) return;
