@@ -1152,8 +1152,15 @@ export function Scene() {
       panSpeed,
       rotationSpeed,
       frontFace,
+      arrowKeyFunctions,
     },
-    actions: { tick, setCommunity, setSnapMessage, setFrontFace },
+    actions: {
+      tick,
+      setCommunity,
+      setSnapMessage,
+      setFrontFace,
+      setArrowKeyFunctions,
+    },
     meta: { gridRef },
   } = useSimulation();
   const {
@@ -1404,9 +1411,98 @@ export function Scene() {
       if (newFrontFace !== frontFace) {
         setFrontFace(newFrontFace);
       }
+
+      const getMoveDescription = (
+        direction: "up" | "down" | "left" | "right",
+      ): string => {
+        const camera = cameraRef.current!;
+        const cube = cubeRef.current!;
+        const gridAxisX = new THREE.Vector3(1, 0, 0).applyQuaternion(
+          cube.quaternion,
+        );
+        const gridAxisY = new THREE.Vector3(0, 1, 0).applyQuaternion(
+          cube.quaternion,
+        );
+        const gridAxisZ = new THREE.Vector3(0, 0, 1).applyQuaternion(
+          cube.quaternion,
+        );
+        const cameraRight = new THREE.Vector3().setFromMatrixColumn(
+          camera.matrix,
+          0,
+        );
+        const cameraUp = new THREE.Vector3().setFromMatrixColumn(
+          camera.matrix,
+          1,
+        );
+        let moveAxis = new THREE.Vector3();
+        let moveDirection = 0;
+        if (direction === "left" || direction === "right") {
+          const dotX = gridAxisX.dot(cameraRight);
+          const dotY = gridAxisY.dot(cameraRight);
+          const dotZ = gridAxisZ.dot(cameraRight);
+          const absDotX = Math.abs(dotX);
+          const absDotY = Math.abs(dotY);
+          const absDotZ = Math.abs(dotZ);
+          if (absDotX > absDotY && absDotX > absDotZ) {
+            moveAxis.set(1, 0, 0);
+            moveDirection = Math.sign(dotX);
+          } else if (absDotY > absDotX && absDotY > absDotZ) {
+            moveAxis.set(0, 1, 0);
+            moveDirection = Math.sign(dotY);
+          } else {
+            moveAxis.set(0, 0, 1);
+            moveDirection = Math.sign(dotZ);
+          }
+          if (direction === "left") moveDirection *= -1;
+        } else {
+          const dotX = gridAxisX.dot(cameraUp);
+          const dotY = gridAxisY.dot(cameraUp);
+          const dotZ = gridAxisZ.dot(cameraUp);
+          const absDotX = Math.abs(dotX);
+          const absDotY = Math.abs(dotY);
+          const absDotZ = Math.abs(dotZ);
+          if (absDotX > absDotY && absDotX > absDotZ) {
+            moveAxis.set(1, 0, 0);
+            moveDirection = Math.sign(dotX);
+          } else if (absDotY > absDotX && absDotY > absDotZ) {
+            moveAxis.set(0, 1, 0);
+            moveDirection = Math.sign(dotY);
+          } else {
+            moveAxis.set(0, 0, 1);
+            moveDirection = Math.sign(dotZ);
+          }
+          if (direction === "down") moveDirection *= -1;
+        }
+        const dx = moveAxis.x * moveDirection;
+        const dy = moveAxis.y * moveDirection;
+        const dz = moveAxis.z * moveDirection;
+        if (dx !== 0) return `${dx > 0 ? "+" : "-"}X`;
+        if (dy !== 0) return `${dy > 0 ? "+" : "-"}Y`;
+        if (dz !== 0) return `${dz > 0 ? "+" : "-"}Z`;
+        return "";
+      };
+
+      const newArrowKeyFunctions = {
+        left: getMoveDescription("left"),
+        right: getMoveDescription("right"),
+        up: getMoveDescription("up"),
+        down: getMoveDescription("down"),
+      };
+
+      if (
+        newArrowKeyFunctions.left !== arrowKeyFunctions.left ||
+        newArrowKeyFunctions.right !== arrowKeyFunctions.right ||
+        newArrowKeyFunctions.up !== arrowKeyFunctions.up ||
+        newArrowKeyFunctions.down !== arrowKeyFunctions.down
+      ) {
+        setArrowKeyFunctions(newArrowKeyFunctions);
+      }
     } else {
       if (frontFace !== null) {
         setFrontFace(null);
+      }
+      if (Object.keys(arrowKeyFunctions).length > 0) {
+        setArrowKeyFunctions({});
       }
     }
   });

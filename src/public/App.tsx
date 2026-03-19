@@ -45,7 +45,7 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, community, running, snapMessage },
+    state: { rotationMode, community, running, snapMessage, arrowKeyFunctions },
     actions: { setRotationMode, recenter, squareUp, fitDisplay, setSnapMessage },
   } = useSimulation();
   const {
@@ -105,6 +105,14 @@ export default function App() {
               Shape: {selectedShape} ({shapeSize}x{shapeSize}
               {supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
               {isHollow && supportsHollow(selectedShape) && " (hollow)"}
+            </div>
+          )}
+          {!rotationMode && arrowKeyFunctions.left && (
+            <div className="arrow-key-info">
+              <div>←: {arrowKeyFunctions.left}</div>
+              <div>→: {arrowKeyFunctions.right}</div>
+              <div>↑: {arrowKeyFunctions.up}</div>
+              <div>↓: {arrowKeyFunctions.down}</div>
             </div>
           )}
           <button
