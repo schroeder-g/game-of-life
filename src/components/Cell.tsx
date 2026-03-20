@@ -54,6 +54,7 @@ export function Cells({
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const edgesRef = useRef<THREE.InstancedMesh>(null);
+  const ghostMeshRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
   const lastSelectorPos = useRef<string | null>(null);
 
@@ -70,11 +71,8 @@ export function Cells({
   }, [grid]);
 
   const {
-    state: { speed, isAnimatingInit },
+    state: { speed, isAnimatingInit, rotationMode },
   } = useSimulation();
-
-  const previousCellsRef = useRef<Set<string>>(new Set());
-  const animationsRef = useRef<Map<string, { startTime: number; type: "born" | "dead" }>>(new Map());
 
   // Use useFrame to natively poll the Grid3D instance without triggering React re-renders
   useFrame((state, delta) => {
@@ -83,93 +81,34 @@ export function Cells({
     }
     if (!meshRef.current || !edgesRef.current) return;
 
-    const now = state.clock.getElapsedTime();
-    const isSlow = speed === 1 || isAnimatingInit;
-    const animDuration = isAnimatingInit ? 0.2 : (speed === 1 ? 0.5 : 0);
-
     const selectorPosStr = JSON.stringify(selectorPos);
     
-    // Detect changes and manage animations
-    if (grid.version !== lastVersion.current) {
-      const livingCells = grid.getLivingCells();
-      const currentSet = new Set(livingCells.map(([x, y, z]) => `${x},${y},${z}`));
-
-      if (isSlow) {
-        // Find newborn cells
-        for (const key of currentSet) {
-          if (!previousCellsRef.current.has(key)) {
-            animationsRef.current.set(key, { startTime: now, type: "born" });
-          }
-        }
-        // Find newly dead cells
-        for (const key of previousCellsRef.current) {
-          if (!currentSet.has(key)) {
-            animationsRef.current.set(key, { startTime: now, type: "dead" });
-          }
-        }
-      } else {
-        animationsRef.current.clear();
-      }
-
-      previousCellsRef.current = currentSet;
-      lastVersion.current = grid.version;
-      lastSelectorPos.current = selectorPosStr;
-    } else if (selectorPosStr !== lastSelectorPos.current) {
-      lastSelectorPos.current = selectorPosStr;
-    } else if (!isSlow || animationsRef.current.size === 0) {
-      // If nothing changed and no animations are active, skip update
+    // Detect changes
+    const gridChanged = grid.version !== lastVersion.current;
+    const selectorChanged = selectorPosStr !== lastSelectorPos.current;
+    
+    if (!gridChanged && !selectorChanged) {
       return;
     }
+
+    lastVersion.current = grid.version;
+    lastSelectorPos.current = selectorPosStr;
 
     const livingCells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();
     
-    // Determine which cells to actually render
-    const displayCells: Array<{ pos: [number, number, number]; scale: number }> = [];
-
-    // 1. Add living cells
-    livingCells.forEach(pos => {
-      const key = `${pos[0]},${pos[1]},${pos[2]}`;
-      const anim = animationsRef.current.get(key);
-      let scale = 1.0;
-      if (anim && anim.type === "born") {
-        const progress = (now - anim.startTime) / animDuration;
-        if (progress >= 1) {
-          animationsRef.current.delete(key);
-        } else {
-          scale = progress;
-        }
-      }
-      displayCells.push({ pos, scale });
-    });
-
-    // 2. Add animating dead cells
-    if (isSlow) {
-      for (const [key, anim] of animationsRef.current.entries()) {
-        if (anim.type === "dead") {
-          const progress = (now - anim.startTime) / animDuration;
-          if (progress >= 1) {
-            animationsRef.current.delete(key);
-          } else {
-            const pos = key.split(",").map(Number) as [number, number, number];
-            displayCells.push({ pos, scale: 1.0 - progress });
-          }
-        }
-      }
-    }
-
-    const count = displayCells.length;
+    const count = livingCells.length;
     const colors = new Float32Array(count * 3);
     const opacities = new Float32Array(count);
     const edgeColors = new Float32Array(count * 3);
     const highlights = new Float32Array(count);
 
-    displayCells.forEach((cell, i) => {
-      const { pos: [x, y, z], scale } = cell;
+    livingCells.forEach((pos, i) => {
+      const [x, y, z] = pos;
 
       // Position & Scale
       tempObject.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
-      tempObject.scale.set(scale, scale, scale);
+      tempObject.scale.set(1.0, 1.0, 1.0);
       tempObject.updateMatrix();
       meshRef.current!.setMatrixAt(i, tempObject.matrix);
       edgesRef.current!.setMatrixAt(i, tempObject.matrix);
@@ -179,8 +118,8 @@ export function Cells({
       const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
       let color = chroma.hsl(240 - hue, saturation, 0.55);
 
-      const onAxis = selectorPos && (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
-      const isSelected = selectorPos && x === selectorPos[0] && y === selectorPos[1] && z === selectorPos[2];
+      const onAxis = !rotationMode && selectorPos && (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
+      const isSelected = !rotationMode && selectorPos && x === selectorPos[0] && y === selectorPos[1] && z === selectorPos[2];
 
       if (isSelected) {
         color = chroma('white');
@@ -194,7 +133,7 @@ export function Cells({
       colors[i * 3 + 2] = b;
 
       // Edges & Highlights
-      const sharesTwoCoords = selectorPos &&
+      const sharesTwoCoords = !rotationMode && selectorPos &&
         ((x === selectorPos[0] && y === selectorPos[1]) ||
           (x === selectorPos[0] && z === selectorPos[2]) ||
           (y === selectorPos[1] && z === selectorPos[2]));
@@ -206,7 +145,10 @@ export function Cells({
         edgeColors[i * 3 + 1] = 1;
         edgeColors[i * 3 + 2] = 1;
       } else {
-        const edgeColor = color.brighten(0.5);
+        let edgeColor = color.darken(0.8);
+        if (edgeColor.luminance() > 0.2) {
+          edgeColor = edgeColor.darken(0.5);
+        }
         const [er, eg, eb] = edgeColor.gl();
         edgeColors[i * 3] = er;
         edgeColors[i * 3 + 1] = eg;
@@ -220,9 +162,14 @@ export function Cells({
         const dx = x - center, dy = y - center, dz = z - center;
         const distFromCenter = Math.sqrt(dx * dx + dy * dy + dz * dz);
         const maxDist = Math.sqrt(3) * center;
-        opacities[i] = 0.1 + 0.9 * (1 - distFromCenter / maxDist);
+        // Sharper, denser core: stays opaque for a larger radius
+        const normalizedDist = distFromCenter / maxDist;
+        opacities[i] = 0.2 + 0.8 * Math.pow(Math.max(0, 1.0 - normalizedDist), 0.3);
       }
     });
+
+    meshRef.current.count = count;
+    edgesRef.current.count = count;
 
     // Update attributes
     if (!meshRef.current.instanceColor) {
@@ -250,17 +197,63 @@ export function Cells({
     edgesRef.current.instanceColor.needsUpdate = true;
 
     meshRef.current.instanceMatrix.needsUpdate = true;
-    meshRef.current.count = count;
     edgesRef.current.instanceMatrix.needsUpdate = true;
-    edgesRef.current.count = count;
 
     meshRef.current.computeBoundingSphere();
     edgesRef.current.computeBoundingSphere();
+
+    // --- Ghost Axis Highlights (Edit Mode only) ---
+    if (!rotationMode && selectorPos && ghostMeshRef.current) {
+      const [sx, sy, sz] = selectorPos;
+      const gridSize = grid.size;
+      const offset = (gridSize - 1) / 2;
+      const cellSize = 1 - margin;
+      
+      const livingKeys = new Set(livingCells.map(([x, y, z]) => `${x},${y},${z}`));
+      
+      let ghostCount = 0;
+      // Use a simple triple-loop approach but filter for axis
+      // X-axis
+      for (let x = 0; x < gridSize; x++) {
+        const key = `${x},${sy},${sz}`;
+        if (!livingKeys.has(key)) {
+          tempObject.position.set(x - offset, sy - offset, (gridSize - 1 - sz) - offset);
+          tempObject.scale.set(cellSize, cellSize, cellSize);
+          tempObject.updateMatrix();
+          ghostMeshRef.current.setMatrixAt(ghostCount++, tempObject.matrix);
+        }
+      }
+      // Y-axis
+      for (let y = 0; y < gridSize; y++) {
+        if (y === sy) continue; // already handled in X-axis pass for center
+        const key = `${sx},${y},${sz}`;
+        if (!livingKeys.has(key)) {
+          tempObject.position.set(sx - offset, y - offset, (gridSize - 1 - sz) - offset);
+          tempObject.scale.set(cellSize, cellSize, cellSize);
+          tempObject.updateMatrix();
+          ghostMeshRef.current.setMatrixAt(ghostCount++, tempObject.matrix);
+        }
+      }
+      // Z-axis
+      for (let z = 0; z < gridSize; z++) {
+        if (z === sz) continue; // already handled
+        const key = `${sx},${sy},${z}`;
+        if (!livingKeys.has(key)) {
+          tempObject.position.set(sx - offset, sy - offset, (gridSize - 1 - z) - offset);
+          tempObject.scale.set(cellSize, cellSize, cellSize);
+          tempObject.updateMatrix();
+          ghostMeshRef.current.setMatrixAt(ghostCount++, tempObject.matrix);
+        }
+      }
+      ghostMeshRef.current.count = ghostCount;
+      ghostMeshRef.current.instanceMatrix.needsUpdate = true;
+    } else if (ghostMeshRef.current) {
+      ghostMeshRef.current.count = 0;
+    }
   });
 
-
   const cellSize = 1 - margin;
-  const edgeSize = cellSize + 0.05;
+  const edgeSize = cellSize + 0.01;
 
   return (
     <group key={`cells-${margin}`}>
@@ -273,16 +266,23 @@ export function Cells({
         <shaderMaterial
           ref={materialRef}
           uniforms={{ u_time: { value: 0 } }}
-          vertexShader={cellShaderMaterial.vertexShader}
-          fragmentShader={cellShaderMaterial.fragmentShader}
+          {...cellShaderMaterial}
           transparent
           vertexColors
-          depthWrite={false}
         />
       </instancedMesh>
       <instancedMesh ref={edgesRef} args={[undefined, undefined, 50000]}>
         <boxGeometry args={[edgeSize, edgeSize, edgeSize]} />
         <meshBasicMaterial wireframe vertexColors />
+      </instancedMesh>
+      <instancedMesh ref={ghostMeshRef} args={[undefined, undefined, 1000]}>
+        <boxGeometry args={[cellSize, cellSize, cellSize]} />
+        <meshBasicMaterial 
+          color="white" 
+          transparent 
+          opacity={0.05} 
+          depthWrite={false}
+        />
       </instancedMesh>
     </group>
   );

@@ -153,10 +153,18 @@ function getCubeVisibility(
 }
 
 export function BoundingBox({ size }: { size: number }) {
+  const [opacity, setOpacity] = useState(0);
+  
+  useFrame((_, delta) => {
+    if (opacity < 1) {
+      setOpacity(prev => Math.min(1, prev + delta));
+    }
+  });
+
   return (
     <lineSegments raycast={() => null}>
       <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
-      <lineBasicMaterial color="silver" />
+      <lineBasicMaterial color="silver" transparent opacity={opacity} />
     </lineSegments>
   );
 }
@@ -389,14 +397,14 @@ function KeyboardSelector({
   cubeRef: React.RefObject<THREE.Group>;
 }) {
   const {
-    state: { gridSize },
+    state: { gridSize, rotationMode },
     meta: { gridRef },
   } = useSimulation();
   const {
     state: { selectorPos },
   } = useBrush();
 
-  if (!selectorPos) return null;
+  if (rotationMode || !selectorPos) return null;
 
   const isAlive = gridRef.current.get(
     selectorPos[0],
@@ -988,9 +996,11 @@ export function Scene() {
               if (cell) {
                 const [x, y, z] = cell;
                 setSelectorPos([x, y, z]);
-                const community = gridRef.current.getCommunity(x, y, z);
-                setCommunity(community);
-                console.log("Clicked cell at", x, y, z, "Community:", community.length);
+                if (!rotationMode) {
+                  const community = gridRef.current.getCommunity(x, y, z);
+                  setCommunity(community);
+                  console.log("Clicked cell at", x, y, z, "Community:", community.length);
+                }
               }
             }
           }}

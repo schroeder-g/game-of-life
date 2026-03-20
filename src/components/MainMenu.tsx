@@ -1007,10 +1007,10 @@ export function AppHeaderPanel() {
             }
             stepBackward();
           }}
-          disabled={!rotationMode || !hasPastHistory}
+          disabled={running || !hasPastHistory}
           data-tooltip-bottom={
-            !rotationMode
-              ? "Stepping disabled in Edit mode"
+            running
+              ? "Pause simulation to step"
               : !hasPastHistory
               ? "No history to step back to"
               : "Step Backward (←)"
@@ -1026,9 +1026,9 @@ export function AppHeaderPanel() {
             }
             step();
           }}
-          disabled={!rotationMode}
+          disabled={running}
           data-tooltip-bottom={
-            !rotationMode ? "Stepping disabled in Edit mode" : "Step Forward (→)"
+            running ? "Pause simulation to step" : "Step Forward (→)"
           }
         >
           ⏭

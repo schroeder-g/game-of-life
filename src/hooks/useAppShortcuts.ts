@@ -85,10 +85,10 @@ export function useAppShortcuts() {
           }
           break;
         case "arrowright": // Step forward
-          if (rotationMode && !running) step();
+          if (!running) step();
           break;
         case "arrowleft": // Step backward
-          if (rotationMode && !running && hasPastHistory) stepBackward();
+          if (!running && hasPastHistory) stepBackward();
           break;
         default: handled = false;
       }
