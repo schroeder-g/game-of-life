@@ -45,17 +45,20 @@ export function useAppShortcuts() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const isInputFocused =
-        target.tagName === "INPUT" ||
-        target.tagName === "SELECT" ||
-        target.tagName === "TEXTAREA";
+      const isTextBox =
+        (target.tagName === "INPUT" &&
+          ["text", "number", "email", "password", "url", "search", "tel"].includes(
+            (target as HTMLInputElement).type,
+          )) ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
 
       const key = e.key.toLowerCase();
       const code = e.code;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
       const isBrushRotationCommand = e.ctrlKey && e.shiftKey && isRotationCode;
 
-      if (isInputFocused && !isBrushRotationCommand) {
+      if (isTextBox && !isBrushRotationCommand) {
         return;
       }
 

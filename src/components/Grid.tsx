@@ -907,8 +907,6 @@ export function Scene() {
         }
       }
     } else {
-      // VIEWING MODE - FLIGHT SIMULATOR
-      const damping = 0.9;
       const panMaxSpeed = panSpeed;
       const dollyMaxSpeed = panSpeed * 1.5;
       const rotationSpeedAdj = (rotationSpeed - 1) / 99;
@@ -924,20 +922,20 @@ export function Scene() {
       const acceleration = panMaxSpeed * accelFactor;
       const rotationAcceleration = rotateMaxSpeed * accelFactor;
       const rollAcceleration = rollMaxSpeed * accelFactor;
-      const dollyAcceleration = panMaxSpeed * accelFactor;
+      const dollyAcceleration = dollyMaxSpeed * accelFactor;
 
       const deceleration = panMaxSpeed * decelFactor;
       const rotationDeceleration = rotateMaxSpeed * decelFactor;
       const rollDeceleration = rollMaxSpeed * decelFactor;
-      const dollyDeceleration = panMaxSpeed * decelFactor;
+      const dollyDeceleration = dollyMaxSpeed * decelFactor;
 
       // Pitch (X)
       if (movement.current.rotateO) {
         const dir = invertPitch ? -1 : 1;
-        velocity.current.rotateX = Math.min(velocity.current.rotateX + dir * rotationAcceleration * delta, rotateMaxSpeed);
+        velocity.current.rotateX = THREE.MathUtils.clamp(velocity.current.rotateX + dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
       } else if (movement.current.rotatePeriod) {
         const dir = invertPitch ? -1 : 1;
-        velocity.current.rotateX = Math.max(velocity.current.rotateX - dir * rotationAcceleration * delta, -rotateMaxSpeed);
+        velocity.current.rotateX = THREE.MathUtils.clamp(velocity.current.rotateX - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
       } else {
         // Decelerate
         if (velocity.current.rotateX > 0) velocity.current.rotateX = Math.max(0, velocity.current.rotateX - rotationDeceleration * delta);
@@ -947,10 +945,10 @@ export function Scene() {
       // Yaw (Y)
       if (movement.current.rotateK) {
         const dir = invertYaw ? -1 : 1;
-        velocity.current.rotateY = Math.min(velocity.current.rotateY + dir * rotationAcceleration * delta, rotateMaxSpeed);
+        velocity.current.rotateY = THREE.MathUtils.clamp(velocity.current.rotateY + dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
       } else if (movement.current.rotateSemicolon) {
         const dir = invertYaw ? -1 : 1;
-        velocity.current.rotateY = Math.max(velocity.current.rotateY - dir * rotationAcceleration * delta, -rotateMaxSpeed);
+        velocity.current.rotateY = THREE.MathUtils.clamp(velocity.current.rotateY - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
       } else {
         if (velocity.current.rotateY > 0) velocity.current.rotateY = Math.max(0, velocity.current.rotateY - rotationDeceleration * delta);
         else if (velocity.current.rotateY < 0) velocity.current.rotateY = Math.min(0, velocity.current.rotateY + rotationDeceleration * delta);
@@ -959,10 +957,10 @@ export function Scene() {
       // Roll
       if (movement.current.rotateI) {
         const dir = invertRoll ? -1 : 1;
-        velocity.current.roll = Math.min(velocity.current.roll + dir * rollAcceleration * delta, rollMaxSpeed);
+        velocity.current.roll = THREE.MathUtils.clamp(velocity.current.roll + dir * rollAcceleration * delta, -rollMaxSpeed, rollMaxSpeed);
       } else if (movement.current.rotateP) {
         const dir = invertRoll ? -1 : 1;
-        velocity.current.roll = Math.max(velocity.current.roll - dir * rollAcceleration * delta, -rollMaxSpeed);
+        velocity.current.roll = THREE.MathUtils.clamp(velocity.current.roll - dir * rollAcceleration * delta, -rollMaxSpeed, rollMaxSpeed);
       } else {
         if (velocity.current.roll > 0) velocity.current.roll = Math.max(0, velocity.current.roll - rollDeceleration * delta);
         else if (velocity.current.roll < 0) velocity.current.roll = Math.min(0, velocity.current.roll + rollDeceleration * delta);
@@ -1029,7 +1027,31 @@ export function Scene() {
         velocity.current.roll = 0;
       }
 
-      // Apply Translation and Look-around
+      // Apply Cube Rotation (New logic: rotate the cube around camera's right/up axes)
+      if (Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001) {
+        if (cameraRef.current && cubeRef.current && controlsRef.current) {
+          const camera = cameraRef.current;
+          const cube = cubeRef.current;
+          
+          // Pitch (Rotate around camera's Right vector)
+          if (Math.abs(velocity.current.rotateX) > 0.001) {
+            const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+            cube.rotateOnWorldAxis(camRight, velocity.current.rotateX * delta);
+          }
+          
+          // Yaw (Rotate around camera's Up vector)
+          if (Math.abs(velocity.current.rotateY) > 0.001) {
+            const camUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+            cube.rotateOnWorldAxis(camUp, -velocity.current.rotateY * delta);
+          }
+          
+          const orientation = getOrientation(camera, controlsRef.current.target, cube);
+          setCameraOrientation(orientation);
+          controlsRef.current.update();
+        }
+      }
+
+      // Apply Translation and Look-around (Look-around for rotateX/rotateY removed)
       if (cameraRef.current && controlsRef.current) {
         const camera = cameraRef.current, controls = controlsRef.current;
         const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
@@ -1054,22 +1076,6 @@ export function Scene() {
           needsUpdate = true;
         } else {
           velocity.current.dolly = 0;
-        }
-
-        if (Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001) {
-          const toTarget = new THREE.Vector3().subVectors(controls.target, camera.position);
-          
-          // Yaw (around camera up)
-          const yawQ = new THREE.Quaternion().setFromAxisAngle(camera.up, -velocity.current.rotateY * delta);
-          toTarget.applyQuaternion(yawQ);
-          
-          // Pitch (around camera right)
-          const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-          const pitchQ = new THREE.Quaternion().setFromAxisAngle(camRight, velocity.current.rotateX * delta);
-          toTarget.applyQuaternion(pitchQ);
-          
-          controls.target.copy(camera.position).add(toTarget);
-          needsUpdate = true;
         }
 
         if (needsUpdate) {
