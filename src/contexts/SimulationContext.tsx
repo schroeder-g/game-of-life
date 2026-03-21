@@ -29,7 +29,12 @@ const defaults = {
   neighborCorners: 0,
   panSpeed: 24,
   rotationSpeed: 50,
-  invertRotation: 1,
+  rollSpeed: 100,
+  invertYaw: 1,
+  invertPitch: 0,
+  invertRoll: 0,
+  easeIn: 0.2,
+  easeOut: 0.5,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -54,7 +59,12 @@ export interface SimulationState {
   hasPastHistory: boolean;
   panSpeed: number;
   rotationSpeed: number;
-  invertRotation: boolean;
+  rollSpeed: number;
+  invertYaw: boolean;
+  invertPitch: boolean;
+  invertRoll: boolean;
+  easeIn: number;
+  easeOut: number;
   snapMessage: string;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
@@ -77,7 +87,12 @@ export interface SimulationActions {
   setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
   setPanSpeed: (speed: number) => void;
   setRotationSpeed: (speed: number) => void;
-  setInvertRotation: (val: boolean) => void;
+  setRollSpeed: (speed: number) => void;
+  setInvertYaw: (val: boolean) => void;
+  setInvertPitch: (val: boolean) => void;
+  setInvertRoll: (val: boolean) => void;
+  setEaseIn: (val: number) => void;
+  setEaseOut: (val: number) => void;
   setSnapMessage: (message: string) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
 
@@ -206,8 +221,17 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [rotationSpeed, setRotationSpeed] = useState(
     storedSettings.rotationSpeed,
   );
-  const [invertRotation, setInvertRotation] = useState(
-    Boolean(storedSettings.invertRotation),
+  const [invertYaw, setInvertYaw] = useState(
+    Boolean(storedSettings.invertYaw),
+  );
+  const [invertPitch, setInvertPitch] = useState(
+    Boolean(storedSettings.invertPitch),
+  );
+  const [easeIn, setEaseIn] = useState(storedSettings.easeIn);
+  const [easeOut, setEaseOut] = useState(storedSettings.easeOut);
+  const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
+  const [invertRoll, setInvertRoll] = useState(
+    Boolean(storedSettings.invertRoll),
   );
 
   const [neighborFaces, setNeighborFaces] = useState(
@@ -225,6 +249,11 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const runInitAnimation = useCallback(async (cells?: Array<[number, number, number]>) => {
     // Small pause to allow everything to settle
     await new Promise(r => setTimeout(r, 500));
+    
+    if (isFirstLoadRef.current) {
+      cameraActionsRef.current?.fitDisplay();
+      isFirstLoadRef.current = false;
+    }
     
     setIsAnimatingInit(true);
     if (cells) {
@@ -367,7 +396,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       neighborCorners: neighborCorners ? 1 : 0,
       panSpeed,
       rotationSpeed,
-      invertRotation: invertRotation ? 1 : 0,
+      invertYaw: invertYaw ? 1 : 0,
+      invertPitch: invertPitch ? 1 : 0,
+      invertRoll: invertRoll ? 1 : 0,
+      easeIn,
+      easeOut,
+      rollSpeed,
     };
     saveSettings(settings);
   }, [
@@ -385,7 +419,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     neighborCorners,
     panSpeed,
     rotationSpeed,
-    invertRotation,
+    invertYaw,
+    invertPitch,
+    invertRoll,
+    easeIn,
+    easeOut,
+    rollSpeed,
   ]);
 
   const handleGridSizeChange = useCallback((newSize: number) => {
@@ -566,7 +605,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       hasPastHistory,
       panSpeed,
       rotationSpeed,
-      invertRotation,
+      invertYaw,
+      invertPitch,
+      invertRoll,
+      easeIn,
+      easeOut,
+      rollSpeed,
       isAnimatingInit,
     },
     actions: {
@@ -585,7 +629,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCameraOrientation,
       setPanSpeed,
       setRotationSpeed,
-      setInvertRotation,
+      setInvertYaw,
+      setInvertPitch,
+      setInvertRoll,
+      setEaseIn,
+      setEaseOut,
+      setRollSpeed,
       playStop,
       step,
       stepBackward,

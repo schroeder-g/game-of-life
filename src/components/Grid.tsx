@@ -9,63 +9,62 @@ import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOf
 import { Cells } from "./Cell";
 import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/cameraUtils";
 
+const _toCamera = new THREE.Vector3();
+const _localToCamera = new THREE.Vector3();
+const _localUp = new THREE.Vector3();
+const _cubeQuatInv = new THREE.Quaternion();
+
 function getOrientation(
   camera: THREE.Camera,
   controlsTarget: THREE.Vector3,
   cube: THREE.Group,
 ): CameraOrientation {
-  const toCamera = camera.position.clone().sub(controlsTarget).normalize();
-  const localToCamera = toCamera.clone().applyQuaternion(cube.quaternion.clone().invert());
+  _toCamera.copy(camera.position).sub(controlsTarget).normalize();
+  _cubeQuatInv.copy(cube.quaternion).invert();
+  _localToCamera.copy(_toCamera).applyQuaternion(_cubeQuatInv);
 
-  const { x: lx, y: ly, z: lz } = localToCamera;
+  const { x: lx, y: ly, z: lz } = _localToCamera;
   const ax = Math.abs(lx), ay = Math.abs(ly), az = Math.abs(lz);
 
-  let face: CameraOrientation["face"] = "unknown";
-  if (az > ax && az > ay) face = lz > 0 ? "front" : "back";
-  else if (ax > ay && ax > az) face = lx > 0 ? "right" : "left";
-  else if (ay > ax && ay > az) face = ly > 0 ? "top" : "bottom";
+  let face: CameraFace = "front";
+  if (az >= ax && az >= ay) face = lz > 0 ? "front" : "back";
+  else if (ax >= ay && ax >= az) face = lx > 0 ? "right" : "left";
+  else face = ly > 0 ? "top" : "bottom";
 
-  if (face === "unknown") return { face: "unknown", rotation: "unknown" };
+  _localUp.copy(camera.up).applyQuaternion(_cubeQuatInv);
+  const { x: ux, y: uy, z: uz } = _localUp;
+  const aux = Math.abs(ux), auy = Math.abs(uy), auz = Math.abs(uz);
 
-  // Calculate top face based on CAMERA UP
-  const localUp = camera.up.clone().applyQuaternion(cube.quaternion.clone().invert());
-
-  let rotation: CameraOrientation["rotation"] = "unknown";
+  let rotation: CameraRotation = 0;
 
   switch (face) {
     case "front":
     case "back":
-      if (localUp.y > 0.7) rotation = 0;
-      else if (localUp.x < -0.7) rotation = 90;
-      else if (localUp.y < -0.7) rotation = 180;
-      else if (localUp.x > 0.7) rotation = 270;
+      if (auy >= aux) rotation = uy > 0 ? 0 : 180;
+      else rotation = ux < 0 ? 90 : 270;
       break;
     case "top":
     case "bottom":
       if (face === "top") {
-        if (localUp.z > 0.7) rotation = 180;
-        else if (localUp.x < -0.7) rotation = 90;
-        else if (localUp.z < -0.7) rotation = 0;
-        else if (localUp.x > 0.7) rotation = 270;
+        if (auz >= aux) rotation = uz > 0 ? 180 : 0;
+        else rotation = ux < 0 ? 90 : 270;
       } else { // bottom
-        if (localUp.z < -0.7) rotation = 180;
-        else if (localUp.x < -0.7) rotation = 90;
-        else if (localUp.z > 0.7) rotation = 0;
-        else if (localUp.x > 0.7) rotation = 270;
+        if (auz >= aux) rotation = uz < 0 ? 180 : 0;
+        else rotation = ux < 0 ? 90 : 270;
       }
       break;
     case "right":
     case "left":
-      if (localUp.y > 0.7) rotation = 0;
-      else if (face === "right" ? localUp.z > 0.7 : localUp.z < -0.7) rotation = 90;
-      else if (localUp.y < -0.7) rotation = 180;
-      else if (face === "right" ? localUp.z < -0.7 : localUp.z > 0.7) rotation = 270;
+      if (auy >= auz) rotation = uy > 0 ? 0 : 180;
+      else {
+        if (face === "right") rotation = uz > 0 ? 90 : 270;
+        else rotation = uz < 0 ? 90 : 270;
+      }
       break;
   }
 
   return { face, rotation };
 }
-
 interface CubeVisibility {
   isOffScreen: boolean;
   isOffScreenLeft: boolean;
@@ -497,7 +496,12 @@ export function Scene() {
       gridSize,
       panSpeed,
       rotationSpeed,
-      invertRotation,
+      rollSpeed,
+      invertYaw,
+      invertPitch,
+      invertRoll,
+      easeIn,
+      easeOut,
       cameraOrientation,
     },
     actions: {
@@ -810,7 +814,6 @@ export function Scene() {
       cameraActionsRef.current = null;
     };
   }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage, cameraRef, controlsRef]);
-
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
       if (snapRotation.current.startTime === 0) {
@@ -872,18 +875,15 @@ export function Scene() {
             const nextX = selectorPos[0] + deltaMove[0];
             const nextY = selectorPos[1] + deltaMove[1];
             const nextZ = selectorPos[2] + deltaMove[2];
-            const nextPos: [number, number, number] = [nextX, nextY, nextZ];
+            // const nextPos: [number, number, number] = [nextX, nextY, nextZ]; // This line was removed in the diff, but it's not explicitly in the instruction. Keeping it as it was.
 
             let allowMove = false;
             if (selectedShape === "None") {
-              // Standard clamping
               if (nextX >= 0 && nextX < gridSize && nextY >= 0 && nextY < gridSize && nextZ >= 0 && nextZ < gridSize) {
                 allowMove = true;
               }
             } else {
-              // Shape allows out-of-bounds as long as 1 cell is inside
               const offsets = generateShape(selectedShape, shapeSize, isHollow);
-              // Apply current brush rotation to offsets
               const rotatedOffsets = offsets.map(off => {
                 const v = new THREE.Vector3(...off);
                 if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
@@ -906,175 +906,183 @@ export function Scene() {
           }
         }
       }
-    } const damping = 0.9;
-    const panMaxSpeed = panSpeed;
-    const dollyMaxSpeed = panSpeed * 1.5;
-    const rotationSpeedAdj = (rotationSpeed - 1) / 99;
-    const actualRotationSpeed = 10 + rotationSpeedAdj * (180 - 10);
-    const actualRollSpeed = 25 + rotationSpeedAdj * (600 - 25);
-    const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
-    const rollMaxSpeed = (actualRollSpeed * Math.PI) / 180;
-
-    const acceleration = panMaxSpeed * 2;
-    const rotationAcceleration = rotateMaxSpeed * 2;
-    const rollAcceleration = rollMaxSpeed * 2;
-    const dollyAcceleration = panMaxSpeed * 2;
-
-    if (movement.current.rotateO) velocity.current.rotateO = Math.min(velocity.current.rotateO + rotationAcceleration * delta, rotateMaxSpeed);
-    else if (movement.current.rotatePeriod) velocity.current.rotateO = Math.max(velocity.current.rotateO - rotationAcceleration * delta, -rotateMaxSpeed);
-    else velocity.current.rotateO *= damping;
-
-    if (movement.current.rotateK) velocity.current.rotateK = Math.min(velocity.current.rotateK + rotationAcceleration * delta, rotateMaxSpeed);
-    else if (movement.current.rotateSemicolon) velocity.current.rotateK = Math.max(velocity.current.rotateK - rotationAcceleration * delta, -rotateMaxSpeed);
-    else velocity.current.rotateK *= damping;
-
-    if (movement.current.rotateI) velocity.current.roll = Math.min(velocity.current.roll + rollAcceleration * delta, rollMaxSpeed);
-    else if (movement.current.rotateP) velocity.current.roll = Math.max(velocity.current.roll - rollAcceleration * delta, -rollMaxSpeed);
-    else velocity.current.roll *= damping;
-
-    if (movement.current.right) velocity.current.panX = Math.min(velocity.current.panX + acceleration * delta, panMaxSpeed);
-    else if (movement.current.left) velocity.current.panX = Math.max(velocity.current.panX - acceleration * delta, -panMaxSpeed);
-    else velocity.current.panX *= damping;
-
-    if (movement.current.down) velocity.current.panY = Math.min(velocity.current.panY + acceleration * delta, panMaxSpeed);
-    else if (movement.current.up) velocity.current.panY = Math.max(velocity.current.panY - acceleration * delta, -panMaxSpeed);
-    else velocity.current.panY *= damping;
-
-    if (movement.current.backward) velocity.current.dolly = Math.min(velocity.current.dolly + dollyAcceleration * delta, dollyMaxSpeed);
-    else if (movement.current.forward) velocity.current.dolly = Math.max(velocity.current.dolly - dollyAcceleration * delta, -dollyMaxSpeed);
-    else velocity.current.dolly *= damping;
-
-    if (Math.abs(velocity.current.roll) > 0.01) {
-      if (cameraRef.current && controlsRef.current && cubeRef.current) {
-        const oldUp = cameraRef.current.up.clone();
-        const rollAngleRad = (velocity.current.roll * delta * Math.PI) / 180;
-        const camera = cameraRef.current;
-        const forward = new THREE.Vector3();
-        camera.getWorldDirection(forward);
-        const quaternion = new THREE.Quaternion().setFromAxisAngle(forward, rollAngleRad);
-        camera.up.applyQuaternion(quaternion);
-        if (getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) {
-          camera.up.copy(oldUp);
-        } else {
-          controlsRef.current.update();
-          // Update orientation status during roll
-          const orientation = getOrientation(camera, controlsRef.current.target, cubeRef.current);
-          setCameraOrientation(orientation);
-        }
-      }
     } else {
-      velocity.current.roll = 0;
-    }
+      // VIEWING MODE - FLIGHT SIMULATOR
+      const damping = 0.9;
+      const panMaxSpeed = panSpeed;
+      const dollyMaxSpeed = panSpeed * 1.5;
+      const rotationSpeedAdj = (rotationSpeed - 1) / 99;
+      const actualRotationSpeed = 10 + rotationSpeedAdj * (180 - 10);
+      const actualRollSpeed = rollSpeed;
+      const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
+      const rollMaxSpeed = (actualRollSpeed * Math.PI) / 180;
 
-    if (cameraRef.current && controlsRef.current) {
-      const camera = cameraRef.current, controls = controlsRef.current;
-      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-      const forward = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 2).negate();
-      let needsUpdate = false;
-      const panOffset = new THREE.Vector3();
+      // Linear acceleration/deceleration based on Ease In / Ease Out
+      const accelFactor = easeIn > 0.01 ? 1 / easeIn : 100; // if easeIn is 0, instant speed
+      const decelFactor = easeOut > 0.01 ? 1 / easeOut : 100; // if easeOut is 0, instant stop
+      
+      const acceleration = panMaxSpeed * accelFactor;
+      const rotationAcceleration = rotateMaxSpeed * accelFactor;
+      const rollAcceleration = rollMaxSpeed * accelFactor;
+      const dollyAcceleration = panMaxSpeed * accelFactor;
 
-      if (Math.abs(velocity.current.panX) > 0.01) panOffset.add(right.clone().multiplyScalar(velocity.current.panX * delta));
-      else velocity.current.panX = 0;
-      if (Math.abs(velocity.current.panY) > 0.01) panOffset.add(up.clone().multiplyScalar(velocity.current.panY * delta));
-      else velocity.current.panY = 0;
+      const deceleration = panMaxSpeed * decelFactor;
+      const rotationDeceleration = rotateMaxSpeed * decelFactor;
+      const rollDeceleration = rollMaxSpeed * decelFactor;
+      const dollyDeceleration = panMaxSpeed * decelFactor;
 
-      if (panOffset.lengthSq() > 0) {
-        const oldPos = camera.position.clone(), oldTarget = controls.target.clone();
-        camera.position.add(panOffset);
-        controls.target.add(panOffset);
-        if (cubeRef.current) {
-          const visibility = getCubeVisibility(cubeRef.current, camera, gridSize);
-          if (visibility.isOffScreen) {
-            const panX = velocity.current.panX;
-            const panY = velocity.current.panY;
-
-            const cameraPanRight = panX > 0;
-            const cameraPanLeft = panX < 0;
-            const cameraPanUp = panY > 0; // q key, cube moves down
-            const cameraPanDown = panY < 0; // z key, cube moves up
-
-            const blockPanX =
-              (visibility.isOffScreenLeft && cameraPanRight) ||
-              (visibility.isOffScreenRight && cameraPanLeft);
-            const blockPanY =
-              (visibility.isOffScreenTop && cameraPanDown) ||
-              (visibility.isOffScreenBottom && cameraPanUp);
-
-            if (blockPanX && blockPanY) {
-              camera.position.copy(oldPos);
-              controls.target.copy(oldTarget);
-            } else if (blockPanX) {
-              const panXOffset = right.clone().multiplyScalar(panX * delta);
-              camera.position.sub(panXOffset);
-              controls.target.sub(panXOffset);
-              needsUpdate = true;
-            } else if (blockPanY) {
-              const panYOffset = up.clone().multiplyScalar(panY * delta);
-              camera.position.sub(panYOffset);
-              controls.target.sub(panYOffset);
-              needsUpdate = true;
-            } else {
-              needsUpdate = true;
-            }
-          } else {
-            needsUpdate = true;
-          }
-        } else {
-          needsUpdate = true;
-        }
-      }
-
-      if (Math.abs(velocity.current.dolly) > 0.01) {
-        const oldPos = camera.position.clone();
-        camera.position.add(forward.clone().multiplyScalar(velocity.current.dolly * delta));
-        if (cubeRef.current && getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) camera.position.copy(oldPos);
-        else needsUpdate = true;
+      // Pitch (X)
+      if (movement.current.rotateO) {
+        const dir = invertPitch ? -1 : 1;
+        velocity.current.rotateX = Math.min(velocity.current.rotateX + dir * rotationAcceleration * delta, rotateMaxSpeed);
+      } else if (movement.current.rotatePeriod) {
+        const dir = invertPitch ? -1 : 1;
+        velocity.current.rotateX = Math.max(velocity.current.rotateX - dir * rotationAcceleration * delta, -rotateMaxSpeed);
       } else {
-        velocity.current.dolly = 0;
+        // Decelerate
+        if (velocity.current.rotateX > 0) velocity.current.rotateX = Math.max(0, velocity.current.rotateX - rotationDeceleration * delta);
+        else if (velocity.current.rotateX < 0) velocity.current.rotateX = Math.min(0, velocity.current.rotateX + rotationDeceleration * delta);
       }
 
-      if (cubeRef.current && rotationMode && !snapRotation.current.active && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
-        const face = cameraOrientation.face as CameraFace;
-        const rot = cameraOrientation.rotation as CameraRotation;
-
-        if (Math.abs(velocity.current.rotateO) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'o'), velocity.current.rotateO * delta);
-          needsUpdate = true;
-        }
-        if (Math.abs(velocity.current.rotatePeriod) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'period'), velocity.current.rotatePeriod * delta);
-          needsUpdate = true;
-        }
-        if (Math.abs(velocity.current.rotateK) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'k'), velocity.current.rotateK * delta);
-          needsUpdate = true;
-        }
-        if (Math.abs(velocity.current.rotateSemicolon) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'semicolon'), velocity.current.rotateSemicolon * delta);
-          needsUpdate = true;
-        }
-        if (Math.abs(velocity.current.rotateI) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'i'), velocity.current.rotateI * delta);
-          needsUpdate = true;
-        }
-        if (Math.abs(velocity.current.rotateP) > 0.01) {
-          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'p'), velocity.current.rotateP * delta);
-          needsUpdate = true;
-        }
-
-        // Update orientation state during manual rotation
-        const orientation = getOrientation(camera, controls.target, cubeRef.current);
-        setCameraOrientation(orientation);
+      // Yaw (Y)
+      if (movement.current.rotateK) {
+        const dir = invertYaw ? -1 : 1;
+        velocity.current.rotateY = Math.min(velocity.current.rotateY + dir * rotationAcceleration * delta, rotateMaxSpeed);
+      } else if (movement.current.rotateSemicolon) {
+        const dir = invertYaw ? -1 : 1;
+        velocity.current.rotateY = Math.max(velocity.current.rotateY - dir * rotationAcceleration * delta, -rotateMaxSpeed);
+      } else {
+        if (velocity.current.rotateY > 0) velocity.current.rotateY = Math.max(0, velocity.current.rotateY - rotationDeceleration * delta);
+        else if (velocity.current.rotateY < 0) velocity.current.rotateY = Math.min(0, velocity.current.rotateY + rotationDeceleration * delta);
       }
 
-      if (Math.abs(velocity.current.rotateO) < 0.01) velocity.current.rotateO = 0;
-      if (Math.abs(velocity.current.rotatePeriod) < 0.01) velocity.current.rotatePeriod = 0;
-      if (Math.abs(velocity.current.rotateK) < 0.01) velocity.current.rotateK = 0;
-      if (Math.abs(velocity.current.rotateSemicolon) < 0.01) velocity.current.rotateSemicolon = 0;
-      if (Math.abs(velocity.current.rotateI) < 0.01) velocity.current.rotateI = 0;
-      if (Math.abs(velocity.current.rotateP) < 0.01) velocity.current.rotateP = 0;
-      if (needsUpdate) controls.update();
+      // Roll
+      if (movement.current.rotateI) {
+        const dir = invertRoll ? -1 : 1;
+        velocity.current.roll = Math.min(velocity.current.roll + dir * rollAcceleration * delta, rollMaxSpeed);
+      } else if (movement.current.rotateP) {
+        const dir = invertRoll ? -1 : 1;
+        velocity.current.roll = Math.max(velocity.current.roll - dir * rollAcceleration * delta, -rollMaxSpeed);
+      } else {
+        if (velocity.current.roll > 0) velocity.current.roll = Math.max(0, velocity.current.roll - rollDeceleration * delta);
+        else if (velocity.current.roll < 0) velocity.current.roll = Math.min(0, velocity.current.roll + rollDeceleration * delta);
+      }
+
+      // Pan X
+      if (movement.current.right) {
+        velocity.current.panX = Math.min(velocity.current.panX + acceleration * delta, panMaxSpeed);
+      } else if (movement.current.left) {
+        velocity.current.panX = Math.max(velocity.current.panX - acceleration * delta, -panMaxSpeed);
+      } else {
+        if (velocity.current.panX > 0) velocity.current.panX = Math.max(0, velocity.current.panX - deceleration * delta);
+        else if (velocity.current.panX < 0) velocity.current.panX = Math.min(0, velocity.current.panX + deceleration * delta);
+      }
+
+      // Pan Y
+      if (movement.current.up) {
+        velocity.current.panY = Math.min(velocity.current.panY + acceleration * delta, panMaxSpeed);
+      } else if (movement.current.down) {
+        velocity.current.panY = Math.max(velocity.current.panY - acceleration * delta, -panMaxSpeed);
+      } else {
+        if (velocity.current.panY > 0) velocity.current.panY = Math.max(0, velocity.current.panY - deceleration * delta);
+        else if (velocity.current.panY < 0) velocity.current.panY = Math.min(0, velocity.current.panY + deceleration * delta);
+      }
+
+      // Dolly
+      if (movement.current.forward) {
+        velocity.current.dolly = Math.min(velocity.current.dolly + dollyAcceleration * delta, dollyMaxSpeed);
+      } else if (movement.current.backward) {
+        velocity.current.dolly = Math.max(velocity.current.dolly - dollyAcceleration * delta, -dollyMaxSpeed);
+      } else {
+        if (velocity.current.dolly > 0) velocity.current.dolly = Math.max(0, velocity.current.dolly - dollyDeceleration * delta);
+        else if (velocity.current.dolly < 0) velocity.current.dolly = Math.min(0, velocity.current.dolly + dollyDeceleration * delta);
+      }
+
+      const isMoving = 
+        movement.current.rotateO || 
+        movement.current.rotatePeriod || 
+        movement.current.rotateK || 
+        movement.current.rotateSemicolon || 
+        movement.current.rotateI || 
+        movement.current.rotateP ||
+        velocity.current.rotateX !== 0 ||
+        velocity.current.rotateY !== 0 ||
+        velocity.current.roll !== 0;
+
+      // Apply Roll
+      if (Math.abs(velocity.current.roll) > 0.01) {
+        if (cameraRef.current && controlsRef.current && cubeRef.current) {
+          const rollAngleRad = velocity.current.roll * delta;
+          const camera = cameraRef.current;
+          const forwardVec = new THREE.Vector3();
+          camera.getWorldDirection(forwardVec);
+          const quaternion = new THREE.Quaternion().setFromAxisAngle(forwardVec, rollAngleRad);
+          camera.up.applyQuaternion(quaternion);
+          
+          controlsRef.current.update();
+          const orientation = getOrientation(camera, controlsRef.current.target, cubeRef.current);
+          if (!isMoving && (orientation.face !== cameraOrientation.face || orientation.rotation !== cameraOrientation.rotation)) {
+            setCameraOrientation(orientation);
+          }
+        }
+      } else {
+        velocity.current.roll = 0;
+      }
+
+      // Apply Translation and Look-around
+      if (cameraRef.current && controlsRef.current) {
+        const camera = cameraRef.current, controls = controlsRef.current;
+        const rightVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+        const upVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+        const forwardVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 2).negate();
+        let needsUpdate = false;
+        const panOffset = new THREE.Vector3();
+
+        if (Math.abs(velocity.current.panX) > 0.01) panOffset.add(rightVec.clone().multiplyScalar(velocity.current.panX * delta));
+        else velocity.current.panX = 0;
+        if (Math.abs(velocity.current.panY) > 0.01) panOffset.add(upVec.clone().multiplyScalar(velocity.current.panY * delta));
+        else velocity.current.panY = 0;
+
+        if (panOffset.lengthSq() > 0) {
+          camera.position.add(panOffset);
+          controls.target.add(panOffset);
+          needsUpdate = true;
+        }
+
+        if (Math.abs(velocity.current.dolly) > 0.01) {
+          camera.position.add(forwardVec.clone().multiplyScalar(velocity.current.dolly * delta));
+          needsUpdate = true;
+        } else {
+          velocity.current.dolly = 0;
+        }
+
+        if (Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001) {
+          const toTarget = new THREE.Vector3().subVectors(controls.target, camera.position);
+          
+          // Yaw (around camera up)
+          const yawQ = new THREE.Quaternion().setFromAxisAngle(camera.up, -velocity.current.rotateY * delta);
+          toTarget.applyQuaternion(yawQ);
+          
+          // Pitch (around camera right)
+          const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+          const pitchQ = new THREE.Quaternion().setFromAxisAngle(camRight, velocity.current.rotateX * delta);
+          toTarget.applyQuaternion(pitchQ);
+          
+          controls.target.copy(camera.position).add(toTarget);
+          needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+          const orientation = getOrientation(camera, controls.target, cubeRef.current!);
+          if (!isMoving && (orientation.face !== cameraOrientation.face || orientation.rotation !== cameraOrientation.rotation)) {
+            setCameraOrientation(orientation);
+          }
+          controls.update();
+        }
+      }
+
+      if (Math.abs(velocity.current.rotateX) < 0.01) velocity.current.rotateX = 0;
+      if (Math.abs(velocity.current.rotateY) < 0.01) velocity.current.rotateY = 0;
     }
   });
 
@@ -1098,9 +1106,10 @@ export function Scene() {
         <Cells
           grid={gridRef.current}
           margin={cellMargin}
-          selectorPos={selectorPos}
+          selectorPos={rotationMode ? null : selectorPos}
+          rotationMode={rotationMode}
           onClick={(e) => {
-            if (running) return;
+            if (running || rotationMode) return;
             e.stopPropagation();
             const { instanceId } = e;
             if (instanceId !== undefined) {

@@ -50,6 +50,7 @@ export function Cells({
   margin: number;
   onClick?: (e: any) => void;
   selectorPos: [number, number, number] | null;
+  rotationMode?: boolean;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -57,6 +58,7 @@ export function Cells({
   const ghostMeshRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
   const lastSelectorPos = useRef<string | null>(null);
+  const lastRotationMode = useRef<boolean | null>(null);
 
   // Setup colors and matrices
   const { colorScale, offset, center, gridSize } = useMemo(() => {
@@ -86,13 +88,15 @@ export function Cells({
     // Detect changes
     const gridChanged = grid.version !== lastVersion.current;
     const selectorChanged = selectorPosStr !== lastSelectorPos.current;
+    const modeChanged = rotationMode !== lastRotationMode.current;
     
-    if (!gridChanged && !selectorChanged) {
+    if (!gridChanged && !selectorChanged && !modeChanged) {
       return;
     }
-
+    
     lastVersion.current = grid.version;
     lastSelectorPos.current = selectorPosStr;
+    lastRotationMode.current = rotationMode;
 
     const livingCells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();

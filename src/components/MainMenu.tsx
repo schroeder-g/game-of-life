@@ -643,8 +643,8 @@ function ShapeBrushSection() {
 
 function CameraControlSection() {
   const {
-    state: { panSpeed, rotationSpeed, invertRotation },
-    actions: { setPanSpeed, setRotationSpeed, setInvertRotation },
+    state: { panSpeed, rotationSpeed, rollSpeed, invertYaw, invertPitch, invertRoll, easeIn, easeOut },
+    actions: { setPanSpeed, setRotationSpeed, setRollSpeed, setInvertYaw, setInvertPitch, setInvertRoll, setEaseIn, setEaseOut },
   } = useSimulation();
 
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -679,7 +679,7 @@ function CameraControlSection() {
             />
           </label>
           <label className="control-label">
-            <span>Rotation Speed: {rotationSpeed}</span>
+            <span>Yaw (Swivel) Speed: {rotationSpeed}</span>
             <input
               type="range"
               min={1}
@@ -689,13 +689,64 @@ function CameraControlSection() {
               onChange={(e) => setRotationSpeed(Number(e.target.value))}
             />
           </label>
+          <label className="control-label">
+            <span>Roll Speed: {rollSpeed}</span>
+            <input
+              type="range"
+              min={100}
+              max={500}
+              step={10}
+              value={rollSpeed}
+              onChange={(e) => setRollSpeed(Number(e.target.value))}
+            />
+          </label>
           <label className="control-label row">
-            <span>Invert Yaw</span>
+            <span>Invert Yaw (Swivel)</span>
             <input
               type="checkbox"
               className="glass-checkbox"
-              checked={invertRotation}
-              onChange={(e) => setInvertRotation(e.target.checked)}
+              checked={invertYaw}
+              onChange={(e) => setInvertYaw(e.target.checked)}
+            />
+          </label>
+          <label className="control-label row">
+            <span>Invert Roll</span>
+            <input
+              type="checkbox"
+              className="glass-checkbox"
+              checked={invertRoll}
+              onChange={(e) => setInvertRoll(e.target.checked)}
+            />
+          </label>
+          <label className="control-label row">
+            <span>Invert Vertical (Pitch)</span>
+            <input
+              type="checkbox"
+              className="glass-checkbox"
+              checked={invertPitch}
+              onChange={(e) => setInvertPitch(e.target.checked)}
+            />
+          </label>
+          <label className="control-label">
+            <span>Ease In (accel): {easeIn.toFixed(1)}s</span>
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={0.1}
+              value={easeIn}
+              onChange={(e) => setEaseIn(Number(e.target.value))}
+            />
+          </label>
+          <label className="control-label">
+            <span>Ease Out (decel): {easeOut.toFixed(1)}s</span>
+            <input
+              type="range"
+              min={0}
+              max={2}
+              step={0.1}
+              value={easeOut}
+              onChange={(e) => setEaseOut(Number(e.target.value))}
             />
           </label>
         </>

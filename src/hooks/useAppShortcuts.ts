@@ -11,7 +11,8 @@ export function useAppShortcuts() {
       cameraOrientation,
       hasInitialState,
       hasPastHistory,
-      invertRotation,
+      invertYaw,
+      invertPitch,
       gridSize,
     },
     actions: {
@@ -123,18 +124,19 @@ export function useAppShortcuts() {
       if (rotationMode) {
         // --- VIEWING MODE ---
         switch (key) {
-          // Camera Movement
-          case "w": movement.current.backward = true; break;
-          case "x": movement.current.forward = true; break;
+          // Camera Movement (Flight Sim style)
+          case "w": movement.current.forward = true; break;
+          case "x": movement.current.backward = true; break;
           case "a": movement.current.left = true; break;
           case "d": movement.current.right = true; break;
           case "q": movement.current.up = true; break;
           case "z": movement.current.down = true; break;
-          // Camera Rotation
+          // Camera Look (Pitch/Yaw)
           case ";": movement.current.rotateSemicolon = true; break;
           case "k": movement.current.rotateK = true; break;
           case "o": movement.current.rotateO = true; break;
           case ".": movement.current.rotatePeriod = true; break;
+          // Camera Roll
           case "i": movement.current.rotateI = true; break;
           case "p": movement.current.rotateP = true; break;
           default: handled = false;
@@ -142,10 +144,10 @@ export function useAppShortcuts() {
       } else {
         // --- EDITING MODE ---
         switch (key) {
-          case 'o': cameraActionsRef.current?.snapRotate('up'); handled = true; break;
-          case '.': cameraActionsRef.current?.snapRotate('down'); handled = true; break;
-          case 'k': cameraActionsRef.current?.snapRotate(invertRotation ? 'left' : 'right'); handled = true; break;
-          case ';': cameraActionsRef.current?.snapRotate(invertRotation ? 'right' : 'left'); handled = true; break;
+          case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); handled = true; break;
+          case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); handled = true; break;
+          case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); handled = true; break;
+          case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); handled = true; break;
           case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); handled = true; break;
           case 'p': cameraActionsRef.current?.snapRotate('rollRight'); handled = true; break;
         }
@@ -182,8 +184,8 @@ export function useAppShortcuts() {
       if (!rotationMode) return; // Key up only matters for continuous view mode movement
       let handled = true;
       switch (key) {
-        case "w": movement.current.backward = false; break;
-        case "x": movement.current.forward = false; break;
+        case "w": movement.current.forward = false; break;
+        case "x": movement.current.backward = false; break;
         case "a": movement.current.left = false; break;
         case "d": movement.current.right = false; break;
         case "q": movement.current.up = false; break;
@@ -210,7 +212,7 @@ export function useAppShortcuts() {
     };
   }, [
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
-    invertRotation, setRotationMode, playStop, step, stepBackward, reset,
+    invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef
   ]);
