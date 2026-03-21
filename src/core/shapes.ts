@@ -93,17 +93,18 @@ function generateSphere(size: number, hollow: boolean): Offset[] {
 // Generate triangle offsets (2D on XZ plane)
 function generateTriangle(size: number): Offset[] {
   const offsets: Offset[] = [];
-  const height = size;
+  const half = (size - 1) / 2;
 
-  for (let row = 0; row < height; row++) {
-    // Width expands as we go up rows
-    const width = row + 1;
-    const halfWidth = Math.floor(width / 2);
-
-    for (let x = -halfWidth; x <= halfWidth; x++) {
-      // For even width, skip the extra cell on one side
-      if (width % 2 === 0 && x === halfWidth) continue;
-      offsets.push([x, 0, row - Math.floor(height / 2)]);
+  for (let z = 0; z < size; z++) {
+    // Width expands as we go from top to bottom
+    const width = z + 1;
+    const halfWidth = (width - 1) / 2;
+    for (let x = 0; x < width; x++) {
+      offsets.push([
+        Math.round(x - halfWidth),
+        0,
+        Math.round(z - half)
+      ]);
     }
   }
 
@@ -113,31 +114,28 @@ function generateTriangle(size: number): Offset[] {
 // Generate pyramid offsets (3D)
 function generatePyramid(size: number, hollow: boolean): Offset[] {
   const offsets: Offset[] = [];
-  const height = size;
+  const half = (size - 1) / 2;
 
-  for (let y = 0; y < height; y++) {
-    // Each layer shrinks as we go up
-    const layerSize = height - y;
-    const half = Math.floor(layerSize / 2);
+  for (let y = 0; y < size; y++) {
+    // Each layer shrinks as we go up (bottom is y=0, top is y=size-1)
+    const layerSize = size - y;
+    const halfLayer = (layerSize - 1) / 2;
 
-    for (let x = -half; x <= half; x++) {
-      for (let z = -half; z <= half; z++) {
-        // For even layer sizes, skip the extra cells
-        if (layerSize % 2 === 0) {
-          if (x === half || z === half) continue;
-        }
+    for (let x = 0; x < layerSize; x++) {
+      for (let z = 0; z < layerSize; z++) {
+        const dx = Math.round(x - halfLayer);
+        const dz = Math.round(z - halfLayer);
+        const dy = Math.round(y - half);
 
         if (hollow) {
-          // Only edges of each layer
-          const onEdge =
-            x === -half || x === half - (layerSize % 2 === 0 ? 1 : 0) ||
-            z === -half || z === half - (layerSize % 2 === 0 ? 1 : 0) ||
-            y === 0 || y === height - 1;
-          if (onEdge) {
-            offsets.push([x, y, z]);
+          // Surface of pyramid: base layer OR perimeter of other layers
+          const isBase = y === 0;
+          const isPerimeter = x === 0 || x === layerSize - 1 || z === 0 || z === layerSize - 1;
+          if (isBase || isPerimeter) {
+            offsets.push([dx, dy, dz]);
           }
         } else {
-          offsets.push([x, y, z]);
+          offsets.push([dx, dy, dz]);
         }
       }
     }

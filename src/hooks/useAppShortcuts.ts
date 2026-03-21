@@ -68,9 +68,13 @@ export function useAppShortcuts() {
           const rotation = cameraOrientation.rotation as CameraRotation;
           const rotationKey = code === "Period" ? "period" : code === "Semicolon" ? "semicolon" : code.replace("Key", "").toLowerCase();
           const axis = getExplicitRotationAxis(face, rotation, rotationKey as any);
+          
+          console.log(`[BRUSH ROTATION] Key: ${rotationKey}, Face: ${face}, Rot: ${rotation}, Axis:`, axis.toArray());
+
           if (axis.lengthSq() > 0) {
             cameraActionsRef.current?.rotateBrush(axis, Math.PI / 2);
             e.preventDefault();
+            e.stopPropagation();
             return;
           }
         }

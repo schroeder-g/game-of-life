@@ -997,7 +997,7 @@ export function AppHeaderPanel() {
         </div>
         {!rotationMode && selectedShape !== "None" && (
           <div className="shape-status">
-            Shape: {selectedShape} <span className="hint">(Esc to cancel shape)</span>
+            Shape: {selectedShape} <span className="hint">(Esc to cancel)</span>
           </div>
         )}
       </div>
@@ -1128,10 +1128,10 @@ export function MainMenu() {
         <div className="menu-scrollable-content">
           {rotationMode && <CameraControlSection />}
           {!rotationMode && <SceneManagementSection />}
+          {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
           {!rotationMode && <SelectorPositionSection />}
-          {!rotationMode && <ShapeBrushSection />}
         </div>
       </aside>
     </>

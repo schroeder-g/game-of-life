@@ -203,17 +203,10 @@ function ShapePreview({
     if (selectedShape === "None" || !selectorPos) return [];
 
     const offsets = generateShape(selectedShape, shapeSize, isHollow);
-    const cameraRotated = rotateOffsets(offsets, azimuth, polar);
-    return cameraRotated
+    return offsets
       .map(([dx, dy, dz]) => {
         const v = new THREE.Vector3(dx, dy, dz);
         
-        // Counter-act the cube's rotation to help the brush "retain its original coordinates"
-        // relative to the camera/world, rather than following the cube's rotation.
-        if (cubeRef.current) {
-          v.applyQuaternion(cubeRef.current.quaternion.clone().invert());
-        }
-
         if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
         return [
           Math.round(v.x),
@@ -516,7 +509,7 @@ export function Scene() {
     meta: { gridRef, movement, velocity, eventBus },
   } = useSimulation();
   const {
-    state: { selectorPos, selectedShape },
+    state: { selectorPos, selectedShape, shapeSize, isHollow },
     actions: { setSelectorPos },
   } = useBrush();
 
@@ -786,7 +779,28 @@ export function Scene() {
       snapRotate,
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-        brushQuaternion.current.premultiply(q);
+        const nextQ = brushQuaternion.current.clone().premultiply(q);
+        
+        // Constraint: prevent rotation if all cells would be outside
+        if (selectedShape !== "None" && selectorPos) {
+          const offsets = generateShape(selectedShape, shapeSize, isHollow);
+          const rotatedOffsets = offsets.map(off => {
+            const v = new THREE.Vector3(...off);
+            v.applyQuaternion(nextQ);
+            return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
+          });
+
+          const isAnyInside = rotatedOffsets.some(([dx, dy, dz]) => {
+            const tx = selectorPos[0] + dx;
+            const ty = selectorPos[1] + dy;
+            const tz = selectorPos[2] + dz;
+            return tx >= 0 && tx < gridSize && ty >= 0 && ty < gridSize && tz >= 0 && tz < gridSize;
+          });
+
+          if (!isAnyInside) return; // Block rotation
+        }
+
+        brushQuaternion.current.copy(nextQ);
         // Trigger re-render of ShapePreview
         const { incrementBrushRotationVersion } = (window as any).brushActions;
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
@@ -850,13 +864,45 @@ export function Scene() {
         else if (movement.current.up) direction = "q";
         else if (movement.current.down) direction = "z";
 
-        if (direction && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
+        if (selectorPos && direction && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
           const face = cameraOrientation.face as CameraFace;
           const rotation = cameraOrientation.rotation as CameraRotation;
           const deltaMove = (KEY_MAP[face][rotation] as any)[direction];
           if (deltaMove) {
-            eventBus.emit("moveSelector", { delta: deltaMove });
-            lastSelectorMoveTime.current = now;
+            const nextX = selectorPos[0] + deltaMove[0];
+            const nextY = selectorPos[1] + deltaMove[1];
+            const nextZ = selectorPos[2] + deltaMove[2];
+            const nextPos: [number, number, number] = [nextX, nextY, nextZ];
+
+            let allowMove = false;
+            if (selectedShape === "None") {
+              // Standard clamping
+              if (nextX >= 0 && nextX < gridSize && nextY >= 0 && nextY < gridSize && nextZ >= 0 && nextZ < gridSize) {
+                allowMove = true;
+              }
+            } else {
+              // Shape allows out-of-bounds as long as 1 cell is inside
+              const offsets = generateShape(selectedShape, shapeSize, isHollow);
+              // Apply current brush rotation to offsets
+              const rotatedOffsets = offsets.map(off => {
+                const v = new THREE.Vector3(...off);
+                if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
+                return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
+              });
+              
+              const isAnyInside = rotatedOffsets.some(([dx, dy, dz]) => {
+                const tx = nextX + dx;
+                const ty = nextY + dy;
+                const tz = nextZ + dz;
+                return tx >= 0 && tx < gridSize && ty >= 0 && ty < gridSize && tz >= 0 && tz < gridSize;
+              });
+              if (isAnyInside) allowMove = true;
+            }
+
+            if (allowMove) {
+              eventBus.emit("moveSelector", { delta: deltaMove });
+              lastSelectorMoveTime.current = now;
+            }
           }
         }
       }
@@ -907,8 +953,14 @@ export function Scene() {
         camera.getWorldDirection(forward);
         const quaternion = new THREE.Quaternion().setFromAxisAngle(forward, rollAngleRad);
         camera.up.applyQuaternion(quaternion);
-        if (getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) camera.up.copy(oldUp);
-        else controlsRef.current.update();
+        if (getCubeVisibility(cubeRef.current, camera, gridSize).isOffScreen) {
+          camera.up.copy(oldUp);
+        } else {
+          controlsRef.current.update();
+          // Update orientation status during roll
+          const orientation = getOrientation(camera, controlsRef.current.target, cubeRef.current);
+          setCameraOrientation(orientation);
+        }
       }
     } else {
       velocity.current.roll = 0;
