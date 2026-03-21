@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
+import { isAnyBrushCellInside } from "../core/brushUtils";
 import { useSimulation } from "../contexts/SimulationContext";
 import { CommunitySidebar } from "./Controls";
 import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
@@ -385,9 +386,10 @@ function SelectorPositionSection() {
     meta: { eventBus },
   } = useSimulation();
   const {
-    state: { selectorPos },
+    state: brushState,
     actions: { setSelectorPos },
   } = useBrush();
+  const { selectorPos } = brushState;
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -498,30 +500,38 @@ function SelectorPositionSection() {
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
 
-        // The z-axis movement from the keymap is inverted relative to the grid coordinate system.
-        // Grid Z=0 is at the back, but user 'forward' (q) should decrease Z index.
-        // Our keymap has q:[0,0,-1] (forward). Grid Z increases towards camera.
-        // The coordinate system is: X right, Y up, Z towards camera.
-        // Our grid data is: X right, Y up, Z away from camera.
-        // So we must flip the Z delta.
-        const newPos: [number, number, number] = [
+        const nextPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
           currentPos[2] + delta[2],
         ];
 
-        // Clamp to grid bounds
-        newPos[0] = Math.max(0, Math.min(gridSize - 1, newPos[0]));
-        newPos[1] = Math.max(0, Math.min(gridSize - 1, newPos[1]));
-        newPos[2] = Math.max(0, Math.min(gridSize - 1, newPos[2]));
-        return newPos;
+        // Conditional clamping:
+        // If brush is active, allow outside as long as it overlaps the grid.
+        // If no brush, clamp strictly to grid bounds.
+        const { selectedShape, shapeSize, isHollow, brushQuaternion } = brushState;
+
+        if (selectedShape !== "None") {
+          if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize)) {
+            return nextPos;
+          } else {
+            // If the move would pull it completely out, block it (return current)
+            return currentPos;
+          }
+        } else {
+          // Strict clamping for single cell
+          const clampedX = Math.max(0, Math.min(gridSize - 1, nextPos[0]));
+          const clampedY = Math.max(0, Math.min(gridSize - 1, nextPos[1]));
+          const clampedZ = Math.max(0, Math.min(gridSize - 1, nextPos[2]));
+          return [clampedX, clampedY, clampedZ];
+        }
       });
     });
 
     return () => {
       unsubscribe();
     };
-  }, [eventBus, setSelectorPos, gridSize]);
+  }, [eventBus, setSelectorPos, gridSize, brushState]);
 
   return (
     <section className="menu-section">
@@ -1020,10 +1030,11 @@ function SceneManagementSection() {
 export function AppHeaderPanel() {
   const {
     state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp, setCell },
+    meta: { cameraActionsRef },
   } = useSimulation();
   const {
-    state: { selectedShape },
+    state: { selectedShape, selectorPos },
   } = useBrush();
 
   const faceName = cameraOrientation.face !== 'unknown'
@@ -1054,6 +1065,36 @@ export function AppHeaderPanel() {
       </div>
 
       <div className="button-group panel-actions">
+        {!rotationMode && (
+          <>
+            <button
+              className="glass-button edit-action-button alive-button primary"
+              onClick={() => {
+                if (selectedShape !== "None") {
+                  cameraActionsRef.current?.birthBrushCells();
+                } else if (selectorPos) {
+                   setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
+                }
+              }}
+              title="Birth Cells (Space)"
+            >
+              Alive
+            </button>
+            <button
+              className="glass-button edit-action-button clear-button danger"
+              onClick={() => {
+                if (selectedShape !== "None") {
+                  cameraActionsRef.current?.clearBrushCells();
+                } else if (selectorPos) {
+                  setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
+                }
+              }}
+              title="Clear Cells (Delete)"
+            >
+              Clear
+            </button>
+          </>
+        )}
         <button
           className="glass-button mode-toggle-button"
           onClick={() => setRotationMode((p) => !p)}

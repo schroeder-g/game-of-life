@@ -134,6 +134,8 @@ export interface SimulationMeta {
     squareUp: () => void;
     snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
+    birthBrushCells: () => void;
+    clearBrushCells: () => void;
   } | null>;
   eventBus: Emitter<AppEvents>;
   movement: React.MutableRefObject<Record<string, boolean>>;

@@ -97,7 +97,9 @@ export function useAppShortcuts() {
             playStop();
           } else {
             movement.current.space = true;
-            if (selectorPos) {
+            if (selectedShape !== "None") {
+              cameraActionsRef.current?.birthBrushCells();
+            } else if (selectorPos) {
               setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
             }
             handled = true;
@@ -107,7 +109,9 @@ export function useAppShortcuts() {
         case "backspace":
           if (!rotationMode) {
             movement.current.delete = true;
-            if (selectorPos) {
+            if (selectedShape !== "None") {
+              cameraActionsRef.current?.clearBrushCells();
+            } else if (selectorPos) {
               setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
             }
             handled = true;

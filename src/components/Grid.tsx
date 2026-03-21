@@ -487,35 +487,38 @@ function KeyboardSelector({
 
 export function Scene() {
   const {
-    state: {
-      speed,
-      cellMargin,
-      rotationMode,
-      running,
-      community,
-      gridSize,
-      panSpeed,
-      rotationSpeed,
-      rollSpeed,
-      invertYaw,
-      invertPitch,
-      invertRoll,
-      easeIn,
-      easeOut,
-      cameraOrientation,
-    },
-    actions: {
-      tick,
-      setCommunity,
-      setSnapMessage,
-      setCameraOrientation,
-    },
+    state,
+    actions,
     meta: { gridRef, movement, velocity, eventBus },
   } = useSimulation();
   const {
-    state: { selectorPos, selectedShape, shapeSize, isHollow },
+    tick,
+    setCommunity,
+    setSnapMessage,
+    setCameraOrientation,
+  } = actions;
+  const {
+    speed,
+    cellMargin,
+    rotationMode,
+    running,
+    community,
+    gridSize,
+    panSpeed,
+    rotationSpeed,
+    rollSpeed,
+    invertYaw,
+    invertPitch,
+    invertRoll,
+    easeIn,
+    easeOut,
+    cameraOrientation,
+  } = state;
+  const {
+    state: brushState,
     actions: { setSelectorPos },
   } = useBrush();
+  const { selectorPos, selectedShape, shapeSize, isHollow, brushQuaternion } = brushState;
 
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
@@ -534,7 +537,6 @@ export function Scene() {
     onComplete: undefined as (() => void) | undefined,
   });
   const lastSelectorMoveTime = useRef(0);
-  const brushQuaternion = useRef(new THREE.Quaternion());
 
   const {
     meta: { cameraActionsRef },
@@ -809,11 +811,61 @@ export function Scene() {
         const { incrementBrushRotationVersion } = (window as any).brushActions;
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
       },
+      birthBrushCells: () => {
+        if (selectedShape === "None" || !selectorPos) return;
+        const offsets = generateShape(selectedShape, shapeSize, isHollow);
+        const cells = offsets
+          .map(([dx, dy, dz]) => {
+            const v = new THREE.Vector3(dx, dy, dz);
+            v.applyQuaternion(brushQuaternion.current);
+            return [
+              Math.round(v.x) + selectorPos[0],
+              Math.round(v.y) + selectorPos[1],
+              Math.round(v.z) + selectorPos[2],
+            ] as [number, number, number];
+          })
+          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        
+        setCommunity([]); // Clear community view when manually editing
+        actions.setCells(cells);
+      },
+      clearBrushCells: () => {
+        if (selectedShape === "None" || !selectorPos) return;
+        const offsets = generateShape(selectedShape, shapeSize, isHollow);
+        const cells = offsets
+          .map(([dx, dy, dz]) => {
+            const v = new THREE.Vector3(dx, dy, dz);
+            v.applyQuaternion(brushQuaternion.current);
+            return [
+              Math.round(v.x) + selectorPos[0],
+              Math.round(v.y) + selectorPos[1],
+              Math.round(v.z) + selectorPos[2],
+            ] as [number, number, number];
+          })
+          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        
+        setCommunity([]);
+        actions.deleteCells(cells);
+      },
     };
     return () => {
       cameraActionsRef.current = null;
     };
-  }, [cameraActionsRef, gridRef, cubeRef, setSnapMessage, cameraRef, controlsRef]);
+  }, [
+    cameraActionsRef,
+    gridRef,
+    cubeRef,
+    setSnapMessage,
+    cameraRef,
+    controlsRef,
+    gridSize,
+    selectorPos,
+    selectedShape,
+    shapeSize,
+    isHollow,
+    actions,
+    setCommunity,
+  ]);
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
       if (snapRotation.current.startTime === 0) {
@@ -1059,23 +1111,34 @@ export function Scene() {
         const forwardVec = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 2).negate();
         let needsUpdate = false;
         const panOffset = new THREE.Vector3();
-
-        if (Math.abs(velocity.current.panX) > 0.01) panOffset.add(rightVec.clone().multiplyScalar(velocity.current.panX * delta));
-        else velocity.current.panX = 0;
-        if (Math.abs(velocity.current.panY) > 0.01) panOffset.add(upVec.clone().multiplyScalar(velocity.current.panY * delta));
-        else velocity.current.panY = 0;
-
-        if (panOffset.lengthSq() > 0) {
-          camera.position.add(panOffset);
-          controls.target.add(panOffset);
-          needsUpdate = true;
+        if (Math.abs(velocity.current.panX) > 0.1) {
+          panOffset.add(rightVec.clone().multiplyScalar(velocity.current.panX * delta));
+        }
+        if (Math.abs(velocity.current.panY) > 0.1) {
+          panOffset.add(upVec.clone().multiplyScalar(velocity.current.panY * delta));
+        }
+        if (Math.abs(velocity.current.dolly) > 0.1) {
+          panOffset.add(forwardVec.clone().multiplyScalar(velocity.current.dolly * delta));
         }
 
-        if (Math.abs(velocity.current.dolly) > 0.01) {
-          camera.position.add(forwardVec.clone().multiplyScalar(velocity.current.dolly * delta));
-          needsUpdate = true;
-        } else {
-          velocity.current.dolly = 0;
+        if (panOffset.lengthSq() > 1e-6) {
+          const oldCamPos = camera.position.clone();
+          const oldTarget = controls.target.clone();
+
+          camera.position.add(panOffset);
+          controls.target.add(panOffset);
+          controls.update();
+
+          // Check if NEW position keeps the cube visible (5% margin)
+          const visibility = getCubeVisibility(cubeRef.current!, camera, gridSize);
+          if (visibility.isOffScreen) {
+              // Revert if it goes off screen
+              camera.position.copy(oldCamPos);
+              controls.target.copy(oldTarget);
+              controls.update();
+          } else {
+              needsUpdate = true;
+          }
         }
 
         if (needsUpdate) {

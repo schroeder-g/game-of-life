@@ -1,4 +1,5 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { ShapeType, supportsHollow } from "../core/shapes";
 
 export interface BrushState {
@@ -7,6 +8,7 @@ export interface BrushState {
   isHollow: boolean;
   selectorPos: [number, number, number] | null;
   brushRotationVersion: number;
+  brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
 }
 
 export interface BrushActions {
@@ -41,6 +43,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
     [number, number, number] | null
   >(null);
   const [brushRotationVersion, setBrushRotationVersion] = useState<number>(0);
+  const brushQuaternion = useRef(new THREE.Quaternion());
 
   // clear hollow when switching to an unsupported shape
   useEffect(() => {
@@ -56,6 +59,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       isHollow,
       selectorPos,
       brushRotationVersion,
+      brushQuaternion,
     },
     actions: {
       setSelectedShape,
