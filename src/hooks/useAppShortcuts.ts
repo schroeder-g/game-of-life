@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/cameraUtils";
 import { useBrush } from "../contexts/BrushContext";
 
 export function useAppShortcuts() {
@@ -29,7 +29,7 @@ export function useAppShortcuts() {
   } = useSimulation();
 
   const {
-    state: { selectorPos },
+    state: { selectorPos, selectedShape },
     actions: { changeSize, clearShape, setSelectorPos },
   } = useBrush();
 
@@ -44,16 +44,37 @@ export function useAppShortcuts() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (
+      const isInputFocused =
         target.tagName === "INPUT" ||
         target.tagName === "SELECT" ||
-        target.tagName === "TEXTAREA"
-      ) {
+        target.tagName === "TEXTAREA";
+
+      const key = e.key.toLowerCase();
+      const code = e.code;
+      const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
+      const isBrushRotationCommand = e.ctrlKey && e.shiftKey && isRotationCode;
+
+      if (isInputFocused && !isBrushRotationCommand) {
         return;
       }
 
-      const key = e.key.toLowerCase();
       let handled = true;
+
+      const isBrushActive = selectedShape !== "None";
+
+      if (isBrushRotationCommand && isBrushActive) {
+        if (cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
+          const face = cameraOrientation.face as CameraFace;
+          const rotation = cameraOrientation.rotation as CameraRotation;
+          const rotationKey = code === "Period" ? "period" : code === "Semicolon" ? "semicolon" : code.replace("Key", "").toLowerCase();
+          const axis = getExplicitRotationAxis(face, rotation, rotationKey as any);
+          if (axis.lengthSq() > 0) {
+            cameraActionsRef.current?.rotateBrush(axis, Math.PI / 2);
+            e.preventDefault();
+            return;
+          }
+        }
+      }
 
       // --- Global Shortcuts ---
       switch (key) {
@@ -106,12 +127,12 @@ export function useAppShortcuts() {
           case "q": movement.current.up = true; break;
           case "z": movement.current.down = true; break;
           // Camera Rotation
-          case ";": invertRotation ? (movement.current.rotateRight = true) : (movement.current.rotateLeft = true); break;
-          case "k": invertRotation ? (movement.current.rotateLeft = true) : (movement.current.rotateRight = true); break;
-          case "o": movement.current.rotateUp = true; break;
-          case ".": movement.current.rotateDown = true; break;
-          case "i": movement.current.rollLeft = true; break;
-          case "p": movement.current.rollRight = true; break;
+          case ";": movement.current.rotateSemicolon = true; break;
+          case "k": movement.current.rotateK = true; break;
+          case "o": movement.current.rotateO = true; break;
+          case ".": movement.current.rotatePeriod = true; break;
+          case "i": movement.current.rotateI = true; break;
+          case "p": movement.current.rotateP = true; break;
           default: handled = false;
         }
       } else {
@@ -163,15 +184,12 @@ export function useAppShortcuts() {
         case "d": movement.current.right = false; break;
         case "q": movement.current.up = false; break;
         case "z": movement.current.down = false; break;
-        case ";":
-        case "k":
-          movement.current.rotateLeft = false;
-          movement.current.rotateRight = false;
-          break;
-        case "o": movement.current.rotateUp = false; break;
-        case ".": movement.current.rotateDown = false; break;
-        case "i": movement.current.rollLeft = false; break;
-        case "p": movement.current.rollRight = false; break;
+        case ";": movement.current.rotateSemicolon = false; break;
+        case "k": movement.current.rotateK = false; break;
+        case "o": movement.current.rotateO = false; break;
+        case ".": movement.current.rotatePeriod = false; break;
+        case "i": movement.current.rotateI = false; break;
+        case "p": movement.current.rotateP = false; break;
         case " ": movement.current.space = false; break;
         case "delete":
         case "backspace": movement.current.delete = false; break;

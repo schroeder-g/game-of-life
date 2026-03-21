@@ -760,6 +760,36 @@ kbd {
   gap: 10px;
 }
 
+.cube-status-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.orientation-status {
+  font-size: 13px;
+  color: #8ab4f8;
+  font-weight: 500;
+}
+
+.shape-status {
+  font-size: 11px;
+  color: #ffaa00;
+  opacity: 0.9;
+}
+
+.shape-status .hint {
+  color: #8b949e;
+  font-style: italic;
+  margin-left: 4px;
+}
+
 .app-header-panel button {
   padding: 8px 12px;
   font-size: 1.1rem;
@@ -1004,7 +1034,8 @@ kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8rem;
   color: #8b949e;
-  width: 40px; /* Allocate space for W/X etc. */
+  width: 40px;
+  /* Allocate space for W/X etc. */
   text-align: left;
 }
 
@@ -1033,7 +1064,8 @@ kbd {
   color: #fff;
   font-size: 0.85rem;
   outline: none;
-  -moz-appearance: textfield; /* Firefox */
+  -moz-appearance: textfield;
+  /* Firefox */
 }
 
 .coordinate-input::-webkit-outer-spin-button,
@@ -1108,37 +1140,43 @@ kbd {
   overflow-y: auto;
   padding-right: 12px;
 }
+
 .key-map-face-section h2 {
   font-size: 1.1rem;
   color: #8ab4f8;
-  border-bottom: 1px solid rgba(255,255,255,0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   padding-bottom: 8px;
   margin-bottom: 16px;
 }
+
 .key-map-rotations-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
+
 .key-map-rotation-block h3 {
   font-size: 0.9rem;
   color: #ccc;
   margin-bottom: 8px;
 }
+
 .key-map-keys {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .key-map-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 4px 8px;
   border-radius: 4px;
 }
+
 .key-map-row span {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: #8b949e;

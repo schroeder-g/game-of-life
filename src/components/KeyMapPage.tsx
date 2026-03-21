@@ -1,6 +1,6 @@
 import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
 
-const KeyDisplay = ({ k, v }: { k: string; v: number[] }) => (
+const KeyDisplay = ({ k, v }: { k: string; v: readonly number[] }) => (
   <div className="key-map-row">
     <kbd>{k.toUpperCase()}</kbd>
     <span>{`[${v.join(", ")}]`}</span>

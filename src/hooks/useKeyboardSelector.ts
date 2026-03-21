@@ -95,7 +95,7 @@ export function useKeyboardSelector(
   // Handle continuous painting with space held (activate)
   useEffect(() => {
     if (!selectorPos || !movement.current.space) return;
-    
+
     // Only paint if no shape is selected, or let it handle shapes if that's intended
     if (selectedShape === "None") {
       const posKey = `${selectorPos[0]},${selectorPos[1]},${selectorPos[2]}`;

@@ -7,7 +7,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
-import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
+import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/cameraUtils";
 
 function getOrientation(
   camera: THREE.Camera,
@@ -154,7 +154,7 @@ function getCubeVisibility(
 
 export function BoundingBox({ size }: { size: number }) {
   const [opacity, setOpacity] = useState(0);
-  
+
   useFrame((_, delta) => {
     if (opacity < 1) {
       setOpacity(prev => Math.min(1, prev + delta));
@@ -171,14 +171,18 @@ export function BoundingBox({ size }: { size: number }) {
 
 function ShapePreview({
   controlsRef,
+  cubeRef,
+  brushQuaternion,
 }: {
   controlsRef: React.RefObject<any>;
+  cubeRef: React.RefObject<THREE.Group>;
+  brushQuaternion: React.RefObject<THREE.Quaternion>;
 }) {
   const {
     state: { gridSize },
   } = useSimulation();
   const {
-    state: { selectedShape, shapeSize, isHollow, selectorPos },
+    state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion },
   } = useBrush();
   const offset = (gridSize - 1) / 2;
   const [azimuth, setAzimuth] = useState(0);
@@ -199,8 +203,24 @@ function ShapePreview({
     if (selectedShape === "None" || !selectorPos) return [];
 
     const offsets = generateShape(selectedShape, shapeSize, isHollow);
-    const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
-    return rotatedOffsets
+    const cameraRotated = rotateOffsets(offsets, azimuth, polar);
+    return cameraRotated
+      .map(([dx, dy, dz]) => {
+        const v = new THREE.Vector3(dx, dy, dz);
+        
+        // Counter-act the cube's rotation to help the brush "retain its original coordinates"
+        // relative to the camera/world, rather than following the cube's rotation.
+        if (cubeRef.current) {
+          v.applyQuaternion(cubeRef.current.quaternion.clone().invert());
+        }
+
+        if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
+        return [
+          Math.round(v.x),
+          Math.round(v.y),
+          Math.round(v.z),
+        ] as [number, number, number];
+      })
       .map(
         ([dx, dy, dz]) =>
           [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [
@@ -226,6 +246,9 @@ function ShapePreview({
     gridSize,
     azimuth,
     polar,
+    brushRotationVersion,
+    brushQuaternion,
+    cubeRef
   ]);
 
   if (previewCells.length === 0) return null;
@@ -392,9 +415,11 @@ function FaceLabels({ size }: { size: number }) {
 function KeyboardSelector({
   controlsRef,
   cubeRef,
+  brushQuaternion,
 }: {
   controlsRef: React.RefObject<any>;
   cubeRef: React.RefObject<THREE.Group>;
+  brushQuaternion: React.RefObject<THREE.Quaternion>;
 }) {
   const {
     state: { gridSize, rotationMode },
@@ -419,7 +444,8 @@ function KeyboardSelector({
 
   return (
     <group>
-      <ShapePreview controlsRef={controlsRef} />
+      <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
+      <ShapePreview controlsRef={controlsRef} cubeRef={cubeRef} brushQuaternion={brushQuaternion} />
       {/* Glow Mesh */}
       <mesh
         raycast={() => null}
@@ -490,7 +516,7 @@ export function Scene() {
     meta: { gridRef, movement, velocity, eventBus },
   } = useSimulation();
   const {
-    state: { selectorPos },
+    state: { selectorPos, selectedShape },
     actions: { setSelectorPos },
   } = useBrush();
 
@@ -511,6 +537,7 @@ export function Scene() {
     onComplete: undefined as (() => void) | undefined,
   });
   const lastSelectorMoveTime = useRef(0);
+  const brushQuaternion = useRef(new THREE.Quaternion());
 
   const {
     meta: { cameraActionsRef },
@@ -757,6 +784,13 @@ export function Scene() {
         controlsRef.current.update();
       },
       snapRotate,
+      rotateBrush: (axis: THREE.Vector3, angle: number) => {
+        const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+        brushQuaternion.current.premultiply(q);
+        // Trigger re-render of ShapePreview
+        const { incrementBrushRotationVersion } = (window as any).brushActions;
+        if (incrementBrushRotationVersion) incrementBrushRotationVersion();
+      },
     };
     return () => {
       cameraActionsRef.current = null;
@@ -826,22 +860,31 @@ export function Scene() {
           }
         }
       }
-    }
-
+    } const damping = 0.9;
     const panMaxSpeed = panSpeed;
     const dollyMaxSpeed = panSpeed * 1.5;
-    const minRotSpeed = 10, maxRotSpeed = 360;
-    const actualRotationSpeed = minRotSpeed + ((rotationSpeed - 1) / 99) * (maxRotSpeed - minRotSpeed);
-    const minRollSpeed = 25, maxRollSpeed = 1200;
-    const actualRollSpeed = minRollSpeed + ((rotationSpeed - 1) / 99) * (maxRollSpeed - minRollSpeed);
+    const rotationSpeedAdj = (rotationSpeed - 1) / 99;
+    const actualRotationSpeed = 10 + rotationSpeedAdj * (180 - 10);
+    const actualRollSpeed = 25 + rotationSpeedAdj * (600 - 25);
     const rotateMaxSpeed = (actualRotationSpeed * Math.PI) / 180;
-    const rollMaxSpeed = actualRollSpeed;
+    const rollMaxSpeed = (actualRollSpeed * Math.PI) / 180;
 
-    const acceleration = panMaxSpeed;
-    const dollyAcceleration = dollyMaxSpeed;
-    const rotationAcceleration = rotateMaxSpeed;
-    const rollAcceleration = rollMaxSpeed;
-    const damping = 0.9;
+    const acceleration = panMaxSpeed * 2;
+    const rotationAcceleration = rotateMaxSpeed * 2;
+    const rollAcceleration = rollMaxSpeed * 2;
+    const dollyAcceleration = panMaxSpeed * 2;
+
+    if (movement.current.rotateO) velocity.current.rotateO = Math.min(velocity.current.rotateO + rotationAcceleration * delta, rotateMaxSpeed);
+    else if (movement.current.rotatePeriod) velocity.current.rotateO = Math.max(velocity.current.rotateO - rotationAcceleration * delta, -rotateMaxSpeed);
+    else velocity.current.rotateO *= damping;
+
+    if (movement.current.rotateK) velocity.current.rotateK = Math.min(velocity.current.rotateK + rotationAcceleration * delta, rotateMaxSpeed);
+    else if (movement.current.rotateSemicolon) velocity.current.rotateK = Math.max(velocity.current.rotateK - rotationAcceleration * delta, -rotateMaxSpeed);
+    else velocity.current.rotateK *= damping;
+
+    if (movement.current.rotateI) velocity.current.roll = Math.min(velocity.current.roll + rollAcceleration * delta, rollMaxSpeed);
+    else if (movement.current.rotateP) velocity.current.roll = Math.max(velocity.current.roll - rollAcceleration * delta, -rollMaxSpeed);
+    else velocity.current.roll *= damping;
 
     if (movement.current.right) velocity.current.panX = Math.min(velocity.current.panX + acceleration * delta, panMaxSpeed);
     else if (movement.current.left) velocity.current.panX = Math.max(velocity.current.panX - acceleration * delta, -panMaxSpeed);
@@ -850,18 +893,6 @@ export function Scene() {
     if (movement.current.down) velocity.current.panY = Math.min(velocity.current.panY + acceleration * delta, panMaxSpeed);
     else if (movement.current.up) velocity.current.panY = Math.max(velocity.current.panY - acceleration * delta, -panMaxSpeed);
     else velocity.current.panY *= damping;
-
-    if (movement.current.rotateRight) velocity.current.rotateX = Math.min(velocity.current.rotateX + rotationAcceleration * delta, rotateMaxSpeed);
-    else if (movement.current.rotateLeft) velocity.current.rotateX = Math.max(velocity.current.rotateX - rotationAcceleration * delta, -rotateMaxSpeed);
-    else velocity.current.rotateX *= damping;
-
-    if (movement.current.rotateUp) velocity.current.rotateY = Math.min(velocity.current.rotateY + rotationAcceleration * delta, rotateMaxSpeed);
-    else if (movement.current.rotateDown) velocity.current.rotateY = Math.max(velocity.current.rotateY - rotationAcceleration * delta, -rotateMaxSpeed);
-    else velocity.current.rotateY *= damping;
-
-    if (movement.current.rollRight) velocity.current.roll = Math.min(velocity.current.roll + rollAcceleration * delta, rollMaxSpeed);
-    else if (movement.current.rollLeft) velocity.current.roll = Math.max(velocity.current.roll - rollAcceleration * delta, -rollMaxSpeed);
-    else velocity.current.roll *= damping;
 
     if (movement.current.backward) velocity.current.dolly = Math.min(velocity.current.dolly + dollyAcceleration * delta, dollyMaxSpeed);
     else if (movement.current.forward) velocity.current.dolly = Math.max(velocity.current.dolly - dollyAcceleration * delta, -dollyMaxSpeed);
@@ -951,16 +982,46 @@ export function Scene() {
         velocity.current.dolly = 0;
       }
 
-      const rotateX = velocity.current.rotateX * delta;
-      const rotateY = velocity.current.rotateY * delta;
+      if (cubeRef.current && rotationMode && !snapRotation.current.active && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
+        const face = cameraOrientation.face as CameraFace;
+        const rot = cameraOrientation.rotation as CameraRotation;
 
-      if (cubeRef.current && rotationMode && !snapRotation.current.active) {
-        if (Math.abs(rotateX) > 0) cubeRef.current.rotateOnWorldAxis(up, -rotateX);
-        if (Math.abs(rotateY) > 0) cubeRef.current.rotateOnWorldAxis(right, rotateY);
+        if (Math.abs(velocity.current.rotateO) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'o'), velocity.current.rotateO * delta);
+          needsUpdate = true;
+        }
+        if (Math.abs(velocity.current.rotatePeriod) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'period'), velocity.current.rotatePeriod * delta);
+          needsUpdate = true;
+        }
+        if (Math.abs(velocity.current.rotateK) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'k'), velocity.current.rotateK * delta);
+          needsUpdate = true;
+        }
+        if (Math.abs(velocity.current.rotateSemicolon) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'semicolon'), velocity.current.rotateSemicolon * delta);
+          needsUpdate = true;
+        }
+        if (Math.abs(velocity.current.rotateI) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'i'), velocity.current.rotateI * delta);
+          needsUpdate = true;
+        }
+        if (Math.abs(velocity.current.rotateP) > 0.01) {
+          cubeRef.current.rotateOnWorldAxis(getExplicitRotationAxis(face, rot, 'p'), velocity.current.rotateP * delta);
+          needsUpdate = true;
+        }
+
+        // Update orientation state during manual rotation
+        const orientation = getOrientation(camera, controls.target, cubeRef.current);
+        setCameraOrientation(orientation);
       }
 
-      if (Math.abs(velocity.current.rotateX) < 0.01) velocity.current.rotateX = 0;
-      if (Math.abs(velocity.current.rotateY) < 0.01) velocity.current.rotateY = 0;
+      if (Math.abs(velocity.current.rotateO) < 0.01) velocity.current.rotateO = 0;
+      if (Math.abs(velocity.current.rotatePeriod) < 0.01) velocity.current.rotatePeriod = 0;
+      if (Math.abs(velocity.current.rotateK) < 0.01) velocity.current.rotateK = 0;
+      if (Math.abs(velocity.current.rotateSemicolon) < 0.01) velocity.current.rotateSemicolon = 0;
+      if (Math.abs(velocity.current.rotateI) < 0.01) velocity.current.rotateI = 0;
+      if (Math.abs(velocity.current.rotateP) < 0.01) velocity.current.rotateP = 0;
       if (needsUpdate) controls.update();
     }
   });
@@ -1009,7 +1070,11 @@ export function Scene() {
         {!rotationMode && (
           <>
             <FaceLabels size={gridRef.current.size} />
-            <KeyboardSelector controlsRef={controlsRef} cubeRef={cubeRef} />
+            <KeyboardSelector 
+              controlsRef={controlsRef} 
+              cubeRef={cubeRef} 
+              brushQuaternion={brushQuaternion} 
+            />
           </>
         )}
       </group>

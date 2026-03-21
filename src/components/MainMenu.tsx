@@ -33,6 +33,26 @@ const SquareUpIcon = () => (
   </svg>
 );
 
+const PencilIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
+
+const ProjectorIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* Reels */}
+    <circle cx="7" cy="6" r="3" />
+    <circle cx="15" cy="6" r="3" />
+    {/* Body */}
+    <rect x="5" y="10" width="12" height="8" rx="1" />
+    {/* Lens/Light Wedge */}
+    <path d="M17 12l5-3v6l-5-3" fill="currentColor" fillOpacity="0.2" stroke="none" />
+    <path d="M17 12l5-3M17 12l5 3" />
+    <line x1="17" y1="11" x2="17" y2="17" />
+  </svg>
+);
+
 function ActionsSection() {
   const {
     state: { savedConfigs, selectedConfigName },
@@ -369,6 +389,8 @@ function SelectorPositionSection() {
     actions: { setSelectorPos },
   } = useBrush();
 
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
   const deriveKeyMap = useCallback(() => {
     if (cameraOrientation.face === 'unknown' || cameraOrientation.rotation === 'unknown') {
       return {
@@ -377,11 +399,11 @@ function SelectorPositionSection() {
         Z: { inc: "Z", dec: "Q" },
       };
     }
-    
+
     const face = cameraOrientation.face as CameraFace;
     const rotation = cameraOrientation.rotation as CameraRotation;
     const mapping = KEY_MAP[face][rotation];
-    
+
     const keys: Record<string, string> = {};
     for (const key in mapping) {
       const delta = (mapping as any)[key] as [number, number, number];
@@ -392,7 +414,7 @@ function SelectorPositionSection() {
       if (delta[2] === 1) keys["Z_inc"] = key.toUpperCase();
       if (delta[2] === -1) keys["Z_dec"] = key.toUpperCase();
     }
-    
+
     return {
       X: { inc: keys["X_inc"] || "?", dec: keys["X_dec"] || "?" },
       Y: { inc: keys["Y_inc"] || "?", dec: keys["Y_dec"] || "?" },
@@ -501,13 +523,12 @@ function SelectorPositionSection() {
     };
   }, [eventBus, setSelectorPos, gridSize]);
 
-  if (!selectorPos) {
-    return null;
-  }
-
   return (
     <section className="menu-section">
-      <h3 style={{ cursor: "default", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <h3
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
         <span>
           Cursor Position
           {cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown' && (
@@ -516,40 +537,43 @@ function SelectorPositionSection() {
             </span>
           )}
         </span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
-      <div className="selector-position-section">
-        {(["X", "Y", "Z"] as const).map((axis) => (
-          <div key={axis} className="coordinate-input-container">
-            <label>{axis}</label>
-            <div className="coordinate-input-group">
-              <input
-                type="number"
-                className="coordinate-input"
-                value={selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]}
-                onChange={(e) => handleCoordinateChange(axis, e.target.value)}
-                min={0}
-                max={gridSize - 1}
-              />
-              <div className="coord-buttons">
-                <button
-                  onClick={() => increment(axis)}
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => decrement(axis)}
-                >
-                  ▼
-                </button>
+      {!isCollapsed && (
+        <div className="selector-position-section">
+          {(["X", "Y", "Z"] as const).map((axis) => (
+            <div key={axis} className="coordinate-input-container">
+              <label>{axis}</label>
+              <div className="coordinate-input-group">
+                <input
+                  type="number"
+                  className="coordinate-input"
+                  value={selectorPos ? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]] : ''}
+                  onChange={(e) => handleCoordinateChange(axis, e.target.value)}
+                  min={0}
+                  max={gridSize - 1}
+                />
+                <div className="coord-buttons">
+                  <button
+                    onClick={() => increment(axis)}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => decrement(axis)}
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+              <div className="coord-hints">
+                <kbd>{keyMap[axis].inc}</kbd>
+                <kbd>{keyMap[axis].dec}</kbd>
               </div>
             </div>
-            <div className="coord-hints">
-              <kbd>{keyMap[axis].inc}</kbd>
-              <kbd>{keyMap[axis].dec}</kbd>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -563,7 +587,7 @@ function ShapeBrushSection() {
     actions: { setSelectedShape, setShapeSize, setIsHollow },
   } = useBrush();
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <section className="menu-section">
@@ -944,9 +968,19 @@ function SceneManagementSection() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation },
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp },
   } = useSimulation();
+  const {
+    state: { selectedShape },
+  } = useBrush();
+
+  const faceName = cameraOrientation.face !== 'unknown'
+    ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
+    : 'Unknown';
+  const rotationDegrees = cameraOrientation.rotation !== 'unknown'
+    ? `${cameraOrientation.rotation}°`
+    : '0°';
 
   return (
     <div className="app-header-panel">
@@ -956,14 +990,25 @@ export function AppHeaderPanel() {
           <a>{typeof document !== "undefined" ? document.getElementById("version-data")?.textContent : ""}</a>
         </div>
       </div>
+
+      <div className="cube-status-panel">
+        <div className="orientation-status">
+          Face: {faceName}, {rotationDegrees}
+        </div>
+        {!rotationMode && selectedShape !== "None" && (
+          <div className="shape-status">
+            Shape: {selectedShape} <span className="hint">(Esc to cancel shape)</span>
+          </div>
+        )}
+      </div>
+
       <div className="button-group panel-actions">
         <button
           className="glass-button mode-toggle-button"
-          onClick={() => setRotationMode((prev) => !prev)}
-          aria-label="Toggle mode"
-          data-tooltip-bottom="Switch Mode (E/V)"
+          onClick={() => setRotationMode((p) => !p)}
+          title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
         >
-          {rotationMode ? "Viewing" : "Editing"}
+          {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
         </button>
 
         <button
@@ -1012,8 +1057,8 @@ export function AppHeaderPanel() {
             running
               ? "Pause simulation to step"
               : !hasPastHistory
-              ? "No history to step back to"
-              : "Step Backward (←)"
+                ? "No history to step back to"
+                : "Step Backward (←)"
           }
         >
           ⏮

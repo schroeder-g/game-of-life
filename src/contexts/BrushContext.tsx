@@ -6,6 +6,7 @@ export interface BrushState {
   shapeSize: number;
   isHollow: boolean;
   selectorPos: [number, number, number] | null;
+  brushRotationVersion: number;
 }
 
 export interface BrushActions {
@@ -22,6 +23,7 @@ export interface BrushActions {
   ) => void;
   clearShape: () => void;
   changeSize: (delta: number, maxGridSize: number) => void;
+  incrementBrushRotationVersion: () => void;
 }
 
 export interface BrushContextValue {
@@ -33,11 +35,12 @@ const BrushContext = createContext<BrushContextValue | null>(null);
 
 export function BrushProvider({ children }: { children: ReactNode }) {
   const [selectedShape, setSelectedShape] = useState<ShapeType>("None");
-  const [shapeSize, setShapeSize] = useState<number>(3);
+  const [shapeSize, setShapeSize] = useState<number>(6); // Midpoint of 1-12 range
   const [isHollow, setIsHollow] = useState<boolean>(false);
   const [selectorPos, setSelectorPos] = useState<
     [number, number, number] | null
   >(null);
+  const [brushRotationVersion, setBrushRotationVersion] = useState<number>(0);
 
   // clear hollow when switching to an unsupported shape
   useEffect(() => {
@@ -46,28 +49,30 @@ export function BrushProvider({ children }: { children: ReactNode }) {
     }
   }, [selectedShape, isHollow]);
 
-  const clearShape = () => setSelectedShape("None");
-
-  const changeSize = (delta: number, maxGridSize: number) => {
-    setShapeSize((prev) => Math.max(1, Math.min(maxGridSize, prev + delta)));
-  };
-
   const value: BrushContextValue = {
     state: {
       selectedShape,
       shapeSize,
       isHollow,
       selectorPos,
+      brushRotationVersion,
     },
     actions: {
       setSelectedShape,
       setShapeSize,
       setIsHollow,
       setSelectorPos,
-      clearShape,
-      changeSize,
+      clearShape: () => setSelectedShape("None"),
+      changeSize: (delta: number, maxGridSize: number) => {
+        setShapeSize((prev) => Math.max(1, Math.min(maxGridSize, prev + delta)));
+      },
+      incrementBrushRotationVersion: () => setBrushRotationVersion((v) => v + 1),
     },
   };
+
+  useEffect(() => {
+    (window as any).brushActions = value.actions;
+  }, [value.actions]);
 
   return (
     <BrushContext.Provider value={value}>{children}</BrushContext.Provider>

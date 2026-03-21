@@ -107,6 +107,7 @@ export interface SimulationActions {
 
 export type AppEvents = {
   moveSelector: { delta: [number, number, number] };
+  rotateBrush: { axis: THREE.Vector3; angle: number };
 };
 
 export interface SimulationMeta {
@@ -117,10 +118,11 @@ export interface SimulationMeta {
     recenter: () => void;
     squareUp: () => void;
     snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
+    rotateBrush: (axis: THREE.Vector3, angle: number) => void;
   } | null>;
   eventBus: Emitter<AppEvents>;
-  movement: React.MutableRefObject<{ [key: string]: boolean }>;
-  velocity: React.MutableRefObject<{ [key: string]: number }>;
+  movement: React.MutableRefObject<Record<string, boolean>>;
+  velocity: React.MutableRefObject<Record<string, number>>;
 }
 
 export interface SimulationContextValue {
@@ -137,7 +139,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
   const cameraActionsRef = useRef<any>(null);
   const eventBusRef = useRef(new Emitter<AppEvents>());
-  const movement = useRef({
+  const movement = useRef<Record<string, boolean>>({
     forward: false,
     backward: false,
     left: false,
@@ -150,15 +152,23 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     rotateDown: false,
     rollLeft: false,
     rollRight: false,
+    rotateI: false,
+    rotateP: false,
     space: false,
     delete: false,
   });
-  const velocity = useRef({
+  const velocity = useRef<Record<string, number>>({
     panX: 0,
     panY: 0,
     dolly: 0,
     rotateX: 0,
     rotateY: 0,
+    rotateO: 0,
+    rotatePeriod: 0,
+    rotateK: 0,
+    rotateSemicolon: 0,
+    rotateI: 0,
+    rotateP: 0,
     roll: 0,
   });
   const isFirstLoadRef = useRef(true);
