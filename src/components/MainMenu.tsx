@@ -1302,6 +1302,7 @@ export function MainMenu() {
           {!rotationMode && <SelectorPositionSection />}
         </div>
       </aside>
+      {community.length > 0 && !rotationMode && <CommunitySidebar />}
     </>
   );
 }
