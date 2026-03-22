@@ -459,29 +459,30 @@ function KeyboardSelector({
     meta: { gridRef },
   } = useSimulation();
   const {
-    state: { selectorPos, selectedShape, isBirthing, isClearing },
+    state: brushState,
   } = useBrush();
+  const { selectorPos, isBirthing, isClearing } = brushState;
 
   const isBrushActive = selectedShape !== "None";
 
   const lastPaintedPos = useRef<string | null>(null);
   useEffect(() => {
     if (!selectorPos || (!isBirthing && !isClearing)) {
-      lastPaintedPos.current = null; // Reset when modes are off
+      lastPaintedPos.current = null;
       return;
     }
 
     const posKey = selectorPos.join(',');
-    if (posKey === lastPaintedPos.current) return; // Don't repaint same spot
+    if (posKey === lastPaintedPos.current) return;
 
     if (isBirthing) {
-      cameraActionsRef.current?.birthBrushCells();
+      cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
     } else if (isClearing) {
-      cameraActionsRef.current?.clearBrushCells();
+      cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
     }
     lastPaintedPos.current = posKey;
 
-  }, [selectorPos, isBirthing, isClearing, cameraActionsRef]);
+  }, [selectorPos, isBirthing, isClearing, cameraActionsRef, brushState]);
 
   if (rotationMode || !selectorPos) return null;
 
@@ -951,23 +952,23 @@ export function Scene() {
         const axis = new THREE.Vector3().fromArray(axisArray);
         cameraActionsRef.current?.rotateBrush(axis, angle);
       },
-      birthBrushCells: () => {
-        if (!selectorPos) return; // Only guard if there's no cursor
+      birthBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
+        if (!pos) return;
 
         let cellsToBirth: [number, number, number][];
 
-        if (selectedShape === "None") {
-          cellsToBirth = [selectorPos];
+        if (brush.selectedShape === "None") {
+          cellsToBirth = [pos];
         } else {
-          const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+          const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
           cellsToBirth = offsets
             .map(([dx, dy, dz]) => {
               const v = new THREE.Vector3(dx, dy, dz);
-              v.applyQuaternion(brushQuaternion.current);
+              v.applyQuaternion(brush.brushQuaternion.current);
               return [
-                Math.round(v.x) + selectorPos[0],
-                Math.round(v.y) + selectorPos[1],
-                Math.round(v.z) + selectorPos[2],
+                Math.round(v.x) + pos[0],
+                Math.round(v.y) + pos[1],
+                Math.round(v.z) + pos[2],
               ] as [number, number, number];
             })
             .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
@@ -978,23 +979,23 @@ export function Scene() {
           actions.setCells(cellsToBirth);
         }
       },
-      clearBrushCells: () => {
-        if (!selectorPos) return; // Only guard if there's no cursor
+      clearBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
+        if (!pos) return;
 
         let cellsToClear: [number, number, number][];
 
-        if (selectedShape === "None") {
-          cellsToClear = [selectorPos];
+        if (brush.selectedShape === "None") {
+          cellsToClear = [pos];
         } else {
-          const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+          const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
           cellsToClear = offsets
             .map(([dx, dy, dz]) => {
               const v = new THREE.Vector3(dx, dy, dz);
-              v.applyQuaternion(brushQuaternion.current);
+              v.applyQuaternion(brush.brushQuaternion.current);
               return [
-                Math.round(v.x) + selectorPos[0],
-                Math.round(v.y) + selectorPos[1],
-                Math.round(v.z) + selectorPos[2],
+                Math.round(v.x) + pos[0],
+                Math.round(v.y) + pos[1],
+                Math.round(v.z) + pos[2],
               ] as [number, number, number];
             })
             .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
@@ -1017,14 +1018,9 @@ export function Scene() {
     cameraRef,
     controlsRef,
     gridSize,
-    selectorPos,
-    selectedShape,
-    shapeSize,
-    isHollow,
     actions,
     setCommunity,
-    customOffsets,
-    brushQuaternion, // Added brushQuaternion to dependencies
+    brushState, // Depend on the whole brushState object
   ]);
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
