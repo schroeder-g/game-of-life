@@ -5,8 +5,8 @@ import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { isAnyBrushCellInside } from "../core/brushUtils";
 import { useSimulation } from "../contexts/SimulationContext";
 import { CommunitySidebar } from "./Controls";
-import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
-import { KEY_MAP, CameraFace, CameraRotation, rotationLookup } from "../core/faceOrientationKeyMapping";
+import { type CameraOrientation } from "../core/cameraUtils";
+import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from "../core/faceOrientationKeyMapping";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 
