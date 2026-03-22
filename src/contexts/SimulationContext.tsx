@@ -573,11 +573,22 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         const next = typeof mode === "function" ? mode(prev) : mode;
         if (next === false) {
           setRunning(false);
+          // Snap, center, and fit the cube before entering edit mode.
+          // Use a short delay chain so each camera action can settle.
+          setTimeout(() => {
+            cameraActionsRef.current?.squareUp();
+            setTimeout(() => {
+              cameraActionsRef.current?.recenter();
+              setTimeout(() => {
+                cameraActionsRef.current?.fitDisplay();
+              }, 200);
+            }, 200);
+          }, 0);
         }
         return next;
       });
     },
-    [],
+    [cameraActionsRef],
   );
 
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
