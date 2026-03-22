@@ -229,6 +229,15 @@ input[type="range"] {
 /* Wider leva panel */
 
 /* Community sidebar */
+
+body.view-mode .community-sidebar.glass-panel {
+  display: none !important;
+}
+
+body.edit-mode .community-sidebar.glass-panel {
+  display: block !important;
+}
+
 .community-sidebar {
   margin-top: 16px;
   width: 100%;
