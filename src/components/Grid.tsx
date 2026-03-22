@@ -811,23 +811,63 @@ export function Scene() {
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
         const nextQ = brushQuaternion.current.clone().premultiply(q);
 
-        // Constraint: prevent rotation if all cells would be outside
         if (selectedShape !== "None" && selectorPos) {
           const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-          const rotatedOffsets = offsets.map(off => {
+
+          // Compute current rotated offsets with existing quaternion
+          const currentRotated = offsets.map(off => {
+            const v = new THREE.Vector3(...off);
+            v.applyQuaternion(brushQuaternion.current);
+            return v;
+          });
+
+          // Find bounding box center of current rotated offsets
+          let minX = Infinity, maxX = -Infinity;
+          let minY = Infinity, maxY = -Infinity;
+          let minZ = Infinity, maxZ = -Infinity;
+          for (const v of currentRotated) {
+            minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
+            minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+            minZ = Math.min(minZ, v.z); maxZ = Math.max(maxZ, v.z);
+          }
+          const cx = (minX + maxX) / 2;
+          const cy = (minY + maxY) / 2;
+          const cz = (minZ + maxZ) / 2;
+          const center = new THREE.Vector3(cx, cy, cz);
+
+          // Compute how the center moves under the new rotation q
+          // Adjustment = c - q*c  (keeps the bounding box center fixed)
+          const rotatedCenter = center.clone().applyQuaternion(q);
+          const adj = new THREE.Vector3().subVectors(center, rotatedCenter);
+          const adjX = Math.round(adj.x);
+          const adjY = Math.round(adj.y);
+          const adjZ = Math.round(adj.z);
+
+          // Compute new rotated offsets (with adjusted selectorPos)
+          const newSelectorPos: [number, number, number] = [
+            selectorPos[0] + adjX,
+            selectorPos[1] + adjY,
+            selectorPos[2] + adjZ,
+          ];
+
+          const newRotatedOffsets = offsets.map(off => {
             const v = new THREE.Vector3(...off);
             v.applyQuaternion(nextQ);
             return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
           });
 
-          const isAnyInside = rotatedOffsets.some(([dx, dy, dz]) => {
-            const tx = selectorPos[0] + dx;
-            const ty = selectorPos[1] + dy;
-            const tz = selectorPos[2] + dz;
+          // Check that at least one cell would be inside the grid
+          const isAnyInside = newRotatedOffsets.some(([dx, dy, dz]) => {
+            const tx = newSelectorPos[0] + dx;
+            const ty = newSelectorPos[1] + dy;
+            const tz = newSelectorPos[2] + dz;
             return tx >= 0 && tx < gridSize && ty >= 0 && ty < gridSize && tz >= 0 && tz < gridSize;
           });
 
           if (!isAnyInside) return; // Block rotation
+
+          // Apply the selectorPos adjustment
+          setSelectorPos(newSelectorPos);
         }
 
         brushQuaternion.current.copy(nextQ);

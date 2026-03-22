@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { isAnyBrushCellInside } from "../core/brushUtils";
@@ -590,14 +591,39 @@ function SelectorPositionSection() {
 
 function ShapeBrushSection() {
   const {
-    state: { gridSize, community },
+    state: { gridSize, community, cameraOrientation },
   } = useSimulation();
   const {
-    state: { selectedShape, shapeSize, isHollow },
-    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush },
+    state: { selectedShape, shapeSize, isHollow, brushQuaternion },
+    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush, incrementBrushRotationVersion },
   } = useBrush();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Compute the initial brush quaternion so the brush appears "square"
+  // with the dominant face/angle, using KEY_MAP directions.
+  const initBrushOrientation = () => {
+    const face = cameraOrientation.face;
+    const rotation = cameraOrientation.rotation;
+    if (face === 'unknown' || rotation === 'unknown') {
+      brushQuaternion.current.identity();
+      return;
+    }
+    const mapping = KEY_MAP[face as CameraFace][rotation as CameraRotation] as any;
+    // d = screen-right in grid-local, w = screen-up, q = screen-depth
+    const right = mapping.d as number[];
+    const up = mapping.w as number[];
+    const depth = mapping.q as number[];
+    // Build a rotation matrix: columns = right, up, depth
+    const m = new THREE.Matrix4().set(
+      right[0], up[0], depth[0], 0,
+      right[1], up[1], depth[1], 0,
+      right[2], up[2], depth[2], 0,
+      0, 0, 0, 1,
+    );
+    brushQuaternion.current.setFromRotationMatrix(m);
+    incrementBrushRotationVersion();
+  };
 
   return (
     <section className="menu-section">
@@ -621,6 +647,10 @@ function ShapeBrushSection() {
                   setCustomBrush(community);
                 } else {
                   setSelectedShape(shape);
+                  if (shape !== "None") {
+                    // Initialize brush orientation to match current face/angle
+                    initBrushOrientation();
+                  }
                 }
               }}
             >
