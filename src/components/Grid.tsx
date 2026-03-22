@@ -1242,23 +1242,9 @@ export function Scene() {
         }
 
         if (panOffset.lengthSq() > 1e-6) {
-          const oldCamPos = camera.position.clone();
-          const oldTarget = controls.target.clone();
-
           camera.position.add(panOffset);
           controls.target.add(panOffset);
-          controls.update();
-
-          // Check if NEW position keeps the cube visible (5% margin)
-          const visibility = getCubeVisibility(cubeRef.current!, camera, gridSize);
-          if (visibility.isOffScreen) {
-            // Revert if it goes off screen
-            camera.position.copy(oldCamPos);
-            controls.target.copy(oldTarget);
-            controls.update();
-          } else {
-            needsUpdate = true;
-          }
+          needsUpdate = true;
         }
 
         if (needsUpdate) {
