@@ -447,20 +447,41 @@ function KeyboardSelector({
   controlsRef,
   cubeRef,
   brushQuaternion,
+  cameraActionsRef,
 }: {
   controlsRef: React.RefObject<any>;
   cubeRef: React.RefObject<THREE.Group>;
   brushQuaternion: React.RefObject<THREE.Quaternion>;
+  cameraActionsRef: React.RefObject<any>;
 }) {
   const {
     state: { gridSize, rotationMode },
     meta: { gridRef },
   } = useSimulation();
   const {
-    state: { selectorPos, selectedShape },
+    state: { selectorPos, selectedShape, isBirthing, isClearing },
   } = useBrush();
 
   const isBrushActive = selectedShape !== "None";
+
+  const lastPaintedPos = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectorPos || (!isBirthing && !isClearing)) {
+      lastPaintedPos.current = null; // Reset when modes are off
+      return;
+    }
+
+    const posKey = selectorPos.join(',');
+    if (posKey === lastPaintedPos.current) return; // Don't repaint same spot
+
+    if (isBirthing) {
+      cameraActionsRef.current?.birthBrushCells();
+    } else if (isClearing) {
+      cameraActionsRef.current?.clearBrushCells();
+    }
+    lastPaintedPos.current = posKey;
+
+  }, [selectorPos, isBirthing, isClearing, cameraActionsRef]);
 
   if (rotationMode || !selectorPos) return null;
 
@@ -1325,6 +1346,7 @@ export function Scene() {
               controlsRef={controlsRef}
               cubeRef={cubeRef}
               brushQuaternion={brushQuaternion}
+              cameraActionsRef={cameraActionsRef}
             />
           </>
         )}

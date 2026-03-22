@@ -64,6 +64,21 @@ const ImageIcon = () => (
   </svg>
 );
 
+const BabyIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="11" cy="7" r="4" />
+  </svg>
+);
+
+const XSquareIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="9" y1="9" x2="15" y2="15" />
+    <line x1="15" y1="9" x2="9" y2="15" />
+  </svg>
+);
+
 function ActionsSection() {
   const {
     state: { savedConfigs, selectedConfigName },
@@ -1186,8 +1201,8 @@ export function AppHeaderPanel() {
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
-    state: { selectedShape, selectorPos },
-    actions: { setSelectedShape },
+    state: { selectedShape, selectorPos, isBirthing, isClearing },
+    actions: { setSelectedShape, setIsBirthing, setIsClearing },
   } = useBrush();
 
   const faceName = cameraOrientation.face !== 'unknown'
@@ -1236,30 +1251,24 @@ export function AppHeaderPanel() {
         {!rotationMode && (
           <>
             <button
-              className="glass-button edit-action-button alive-button primary"
+              className={`glass-button edit-action-button alive-button primary ${isBirthing ? 'active' : ''}`}
               onClick={() => {
-                if (selectedShape !== "None") {
-                  cameraActionsRef.current?.birthBrushCells();
-                } else if (selectorPos) {
-                  setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
-                }
+                setIsBirthing(current => !current);
+                if (!isBirthing) setIsClearing(false);
               }}
-              title="Birth Cells (Space)"
+              title="Birth (Space)"
             >
-              Alive
+              <BabyIcon />
             </button>
             <button
-              className="glass-button edit-action-button clear-button danger"
+              className={`glass-button edit-action-button clear-button danger ${isClearing ? 'active' : ''}`}
               onClick={() => {
-                if (selectedShape !== "None") {
-                  cameraActionsRef.current?.clearBrushCells();
-                } else if (selectorPos) {
-                  setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
-                }
+                setIsClearing(current => !current);
+                if (!isClearing) setIsBirthing(false);
               }}
-              title="Clear Cells (Delete)"
+              title="Clear (Delete)"
             >
-              Clear
+              <XSquareIcon />
             </button>
           </>
         )}

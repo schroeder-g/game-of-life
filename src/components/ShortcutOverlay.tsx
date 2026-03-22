@@ -167,19 +167,13 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                   </div>
                 </div>
                 <div className="shortcut-row">
-                  <span className="shortcut-desc">Activate Cell(s)</span>
+                  <span className="shortcut-desc">Activate Birth (Paint) Mode</span>
                   <div className="shortcut-keys">
                     <kbd>␣ Space</kbd>
                   </div>
                 </div>
                 <div className="shortcut-row">
-                  <span className="shortcut-desc">Deactivate Cell(s)</span>
-                  <div className="shortcut-keys">
-                    <kbd>Ctrl</kbd> <span>+</span> <kbd>␣ Space</kbd>
-                  </div>
-                </div>
-                <div className="shortcut-row">
-                  <span className="shortcut-desc">Delete Cells (in shape)</span>
+                  <span className="shortcut-desc">Activate Clear (Paint) Mode</span>
                   <div className="shortcut-keys">
                     <kbd>Delete</kbd> / <kbd>Backspace</kbd>
                   </div>
