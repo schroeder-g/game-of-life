@@ -739,19 +739,22 @@ export function Scene() {
           targetFrontVector,
         );
 
-        // 3. Find which local axis should point UP
+        // 3. Find which local axis should point UP, ensuring it's not the same as the dominant axis.
         const localUp = targetUpVector.clone().applyQuaternion(Q_current.clone().invert());
-        const absUX = Math.abs(localUp.x), absUY = Math.abs(localUp.y), absUZ = Math.abs(localUp.z);
 
-        const dominantLocalUpAxis = new THREE.Vector3();
-        // Constraint: dominantLocalUpAxis must be perpendicular to dominantLocalAxis
-        if (dominantLocalAxis.x === 0 && absUX > absUY && absUX > absUZ) {
-          dominantLocalUpAxis.set(Math.sign(localUp.x), 0, 0);
-        } else if (dominantLocalAxis.y === 0 && absUY > absUX && absUY > absUZ) {
-          dominantLocalUpAxis.set(0, Math.sign(localUp.y), 0);
-        } else {
-          dominantLocalUpAxis.set(0, 0, Math.sign(localUp.z));
-        }
+        const candidates = [
+          { axis: new THREE.Vector3(1, 0, 0), dot: Math.abs(localUp.x), sign: Math.sign(localUp.x) },
+          { axis: new THREE.Vector3(0, 1, 0), dot: Math.abs(localUp.y), sign: Math.sign(localUp.y) },
+          { axis: new THREE.Vector3(0, 0, 1), dot: Math.abs(localUp.z), sign: Math.sign(localUp.z) },
+        ];
+
+        // Filter out the candidate that is parallel to the dominantLocalAxis
+        const validCandidates = candidates.filter(c => Math.abs(c.axis.dot(dominantLocalAxis)) < 0.1);
+
+        // From the valid candidates, find the one most aligned with the world UP
+        validCandidates.sort((a, b) => b.dot - a.dot);
+        const bestUpCandidate = validCandidates[0];
+        const dominantLocalUpAxis = bestUpCandidate.axis.clone().multiplyScalar(bestUpCandidate.sign || 1);
 
         // 4. Construct the rotation matrix by mapping local axes to world axes
         const localXTarget = new THREE.Vector3();
