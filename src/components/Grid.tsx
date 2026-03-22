@@ -452,6 +452,7 @@ function KeyboardSelector({
           color={cursorColor}
           transparent
           opacity={0.15}
+          depthWrite={false}
         />
       </mesh>
       {/* Primary Selector Mesh */}
@@ -467,7 +468,11 @@ function KeyboardSelector({
         <meshBasicMaterial
           color={cursorColor}
           transparent
-          opacity={cursorOpacity}
+          opacity={0.5}
+          depthWrite={false}
+          polygonOffset
+          polygonOffsetFactor={-4}
+          polygonOffsetUnits={-4}
         />
       </mesh>
       <lineSegments
@@ -479,7 +484,7 @@ function KeyboardSelector({
         ]}
       >
         <edgesGeometry args={[new THREE.BoxGeometry(1.06, 1.06, 1.06)]} />
-        <lineBasicMaterial color={cursorColor} linewidth={2} />
+        <lineBasicMaterial color={cursorColor} linewidth={2} transparent opacity={0.8} />
       </lineSegments>
     </group>
   );
