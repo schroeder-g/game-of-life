@@ -5,10 +5,9 @@ import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
-import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
-import { CameraFace, CameraOrientation, CameraRotation, getExplicitRotationAxis } from "../core/cameraUtils";
-import { KEY_MAP, rotationLookup, CameraFace, CameraRotation } from "../core/faceOrientationKeyMapping";
+import { type CameraOrientation } from "../core/cameraUtils";
+import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from "../core/faceOrientationKeyMapping";
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
