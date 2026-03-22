@@ -952,40 +952,58 @@ export function Scene() {
         cameraActionsRef.current?.rotateBrush(axis, angle);
       },
       birthBrushCells: () => {
-        if (selectedShape === "None" || !selectorPos) return;
-        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-        const cells = offsets
-          .map(([dx, dy, dz]) => {
-            const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brushQuaternion.current);
-            return [
-              Math.round(v.x) + selectorPos[0],
-              Math.round(v.y) + selectorPos[1],
-              Math.round(v.z) + selectorPos[2],
-            ] as [number, number, number];
-          })
-          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        if (!selectorPos) return; // Only guard if there's no cursor
 
-        setCommunity([]); // Clear community view when manually editing
-        actions.setCells(cells);
+        let cellsToBirth: [number, number, number][];
+
+        if (selectedShape === "None") {
+          cellsToBirth = [selectorPos];
+        } else {
+          const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+          cellsToBirth = offsets
+            .map(([dx, dy, dz]) => {
+              const v = new THREE.Vector3(dx, dy, dz);
+              v.applyQuaternion(brushQuaternion.current);
+              return [
+                Math.round(v.x) + selectorPos[0],
+                Math.round(v.y) + selectorPos[1],
+                Math.round(v.z) + selectorPos[2],
+              ] as [number, number, number];
+            })
+            .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        }
+
+        if (cellsToBirth.length > 0) {
+          setCommunity([]); // Clear community view when manually editing
+          actions.setCells(cellsToBirth);
+        }
       },
       clearBrushCells: () => {
-        if (selectedShape === "None" || !selectorPos) return;
-        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-        const cells = offsets
-          .map(([dx, dy, dz]) => {
-            const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brushQuaternion.current);
-            return [
-              Math.round(v.x) + selectorPos[0],
-              Math.round(v.y) + selectorPos[1],
-              Math.round(v.z) + selectorPos[2],
-            ] as [number, number, number];
-          })
-          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        if (!selectorPos) return; // Only guard if there's no cursor
 
-        setCommunity([]);
-        actions.deleteCells(cells);
+        let cellsToClear: [number, number, number][];
+
+        if (selectedShape === "None") {
+          cellsToClear = [selectorPos];
+        } else {
+          const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+          cellsToClear = offsets
+            .map(([dx, dy, dz]) => {
+              const v = new THREE.Vector3(dx, dy, dz);
+              v.applyQuaternion(brushQuaternion.current);
+              return [
+                Math.round(v.x) + selectorPos[0],
+                Math.round(v.y) + selectorPos[1],
+                Math.round(v.z) + selectorPos[2],
+              ] as [number, number, number];
+            })
+            .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        }
+
+        if (cellsToClear.length > 0) {
+          setCommunity([]);
+          actions.deleteCells(cellsToClear);
+        }
       },
     };
     return () => {
@@ -1006,6 +1024,7 @@ export function Scene() {
     actions,
     setCommunity,
     customOffsets,
+    brushQuaternion, // Added brushQuaternion to dependencies
   ]);
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
