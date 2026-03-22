@@ -1257,6 +1257,21 @@ export function MainMenu() {
     return false;
   });
 
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth <= 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
   return (
     <>
       <aside
@@ -1279,7 +1294,7 @@ export function MainMenu() {
           {!collapsed && <ActionsSection />}
         </div>
         <div className="menu-scrollable-content">
-          {rotationMode && <CameraControlSection />}
+          {rotationMode && !isSmallScreen && <CameraControlSection />}
           {!rotationMode && <SceneManagementSection />}
           {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <EnvironmentSection />}
