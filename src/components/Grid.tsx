@@ -205,7 +205,7 @@ function ShapePreview({
     return offsets
       .map(([dx, dy, dz]) => {
         const v = new THREE.Vector3(dx, dy, dz);
-        
+
         if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
         return [
           Math.round(v.x),
@@ -791,7 +791,7 @@ export function Scene() {
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
         const nextQ = brushQuaternion.current.clone().premultiply(q);
-        
+
         // Constraint: prevent rotation if all cells would be outside
         if (selectedShape !== "None" && selectorPos) {
           const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
@@ -830,7 +830,7 @@ export function Scene() {
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
-        
+
         setCommunity([]); // Clear community view when manually editing
         actions.setCells(cells);
       },
@@ -848,7 +848,7 @@ export function Scene() {
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
-        
+
         setCommunity([]);
         actions.deleteCells(cells);
       },
@@ -947,7 +947,7 @@ export function Scene() {
                 if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
                 return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
               });
-              
+
               const isAnyInside = rotatedOffsets.some(([dx, dy, dz]) => {
                 const tx = nextX + dx;
                 const ty = nextY + dy;
@@ -976,7 +976,7 @@ export function Scene() {
       // Linear acceleration/deceleration based on Ease In / Ease Out
       const accelFactor = easeIn > 0.01 ? 1 / easeIn : 100; // if easeIn is 0, instant speed
       const decelFactor = easeOut > 0.01 ? 1 / easeOut : 100; // if easeOut is 0, instant stop
-      
+
       const acceleration = panMaxSpeed * accelFactor;
       const rotationAcceleration = rotateMaxSpeed * accelFactor;
       const rollAcceleration = rollMaxSpeed * accelFactor;
@@ -1054,12 +1054,12 @@ export function Scene() {
         else if (velocity.current.dolly < 0) velocity.current.dolly = Math.min(0, velocity.current.dolly + dollyDeceleration * delta);
       }
 
-      const isMoving = 
-        movement.current.rotateO || 
-        movement.current.rotatePeriod || 
-        movement.current.rotateK || 
-        movement.current.rotateSemicolon || 
-        movement.current.rotateI || 
+      const isMoving =
+        movement.current.rotateO ||
+        movement.current.rotatePeriod ||
+        movement.current.rotateK ||
+        movement.current.rotateSemicolon ||
+        movement.current.rotateI ||
         movement.current.rotateP ||
         velocity.current.rotateX !== 0 ||
         velocity.current.rotateY !== 0 ||
@@ -1074,7 +1074,7 @@ export function Scene() {
           camera.getWorldDirection(forwardVec);
           const quaternion = new THREE.Quaternion().setFromAxisAngle(forwardVec, rollAngleRad);
           camera.up.applyQuaternion(quaternion);
-          
+
           controlsRef.current.update();
           const orientation = getOrientation(camera, controlsRef.current.target, cubeRef.current);
           if (!isMoving && (orientation.face !== cameraOrientation.face || orientation.rotation !== cameraOrientation.rotation)) {
@@ -1090,19 +1090,19 @@ export function Scene() {
         if (cameraRef.current && cubeRef.current && controlsRef.current) {
           const camera = cameraRef.current;
           const cube = cubeRef.current;
-          
+
           // Pitch (Rotate around camera's Right vector)
           if (Math.abs(velocity.current.rotateX) > 0.001) {
             const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
             cube.rotateOnWorldAxis(camRight, velocity.current.rotateX * delta);
           }
-          
+
           // Yaw (Rotate around camera's Up vector)
           if (Math.abs(velocity.current.rotateY) > 0.001) {
             const camUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
             cube.rotateOnWorldAxis(camUp, -velocity.current.rotateY * delta);
           }
-          
+
           const orientation = getOrientation(camera, controlsRef.current.target, cube);
           setCameraOrientation(orientation);
           controlsRef.current.update();
@@ -1138,12 +1138,12 @@ export function Scene() {
           // Check if NEW position keeps the cube visible (5% margin)
           const visibility = getCubeVisibility(cubeRef.current!, camera, gridSize);
           if (visibility.isOffScreen) {
-              // Revert if it goes off screen
-              camera.position.copy(oldCamPos);
-              controls.target.copy(oldTarget);
-              controls.update();
+            // Revert if it goes off screen
+            camera.position.copy(oldCamPos);
+            controls.target.copy(oldTarget);
+            controls.update();
           } else {
-              needsUpdate = true;
+            needsUpdate = true;
           }
         }
 
@@ -1171,6 +1171,21 @@ export function Scene() {
     }
   });
 
+  // Track last reported orientation via ref to detect threshold crossings without stale closures.
+  const lastOrientationRef = useRef({ face: '' as string, rotation: '' as string | number });
+
+  // Continuously check orientation every frame — covers mouse drag, damping, keyboard snap,
+  // flight-sim rotation, and cube rotation. Only fires setCameraOrientation on actual changes.
+  useFrame(() => {
+    if (cameraRef.current && controlsRef.current && cubeRef.current) {
+      const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+      const prev = lastOrientationRef.current;
+      if (orientation.face !== prev.face || orientation.rotation !== prev.rotation) {
+        lastOrientationRef.current = { face: orientation.face, rotation: orientation.rotation };
+        setCameraOrientation(orientation);
+      }
+    }
+  });
 
   return (
     <>
@@ -1206,10 +1221,10 @@ export function Scene() {
         {!rotationMode && (
           <>
             <FaceLabels size={gridRef.current.size} />
-            <KeyboardSelector 
-              controlsRef={controlsRef} 
-              cubeRef={cubeRef} 
-              brushQuaternion={brushQuaternion} 
+            <KeyboardSelector
+              controlsRef={controlsRef}
+              cubeRef={cubeRef}
+              brushQuaternion={brushQuaternion}
             />
           </>
         )}
