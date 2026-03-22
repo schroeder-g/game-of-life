@@ -7,7 +7,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
-import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/cameraUtils";
+import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP, getExplicitRotationAxis, rotationLookup } from "../core/cameraUtils";
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -876,46 +876,29 @@ export function Scene() {
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
       },
       rotateBrushByDirection: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
-        if (!cameraRef.current || !cubeRef.current) return;
-        const camera = cameraRef.current;
-        let angle = Math.PI / 2;
-        const worldAxis = new THREE.Vector3();
+        // Use the dominant face/angle from cameraOrientation and rotationLookup
+        // to get grid-local axes that match the snapped orientation, not the raw camera.
+        const face = cameraOrientation.face;
+        const rotation = cameraOrientation.rotation;
+        if (face === 'unknown' || rotation === 'unknown') return;
 
-        // Compute axis from camera matrix columns — same logic as snapRotate
+        const mapping = (rotationLookup as any)[face][rotation];
+        let axisArray: number[];
+        let angle = Math.PI / 2;
+
+        // Map direction to the corresponding rotationLookup key + sign
         switch (direction) {
-          case 'up':
-            worldAxis.setFromMatrixColumn(camera.matrix, 0);
-            angle = Math.PI / 2;
-            break;
-          case 'down':
-            worldAxis.setFromMatrixColumn(camera.matrix, 0);
-            angle = -Math.PI / 2;
-            break;
-          case 'left':
-            worldAxis.setFromMatrixColumn(camera.matrix, 1);
-            angle = Math.PI / 2;
-            break;
-          case 'right':
-            worldAxis.setFromMatrixColumn(camera.matrix, 1);
-            angle = -Math.PI / 2;
-            break;
-          case 'rollLeft':
-            worldAxis.setFromMatrixColumn(camera.matrix, 2).negate();
-            angle = Math.PI / 2;
-            break;
-          case 'rollRight':
-            worldAxis.setFromMatrixColumn(camera.matrix, 2).negate();
-            angle = -Math.PI / 2;
-            break;
+          case 'up':      axisArray = mapping.o;         angle = Math.PI / 2;  break;
+          case 'down':    axisArray = mapping.period;    angle = Math.PI / 2;  break;
+          case 'right':   axisArray = mapping.k;         angle = Math.PI / 2;  break;
+          case 'left':    axisArray = mapping.semicolon; angle = Math.PI / 2;  break;
+          case 'rollLeft': axisArray = mapping.i;        angle = Math.PI / 2;  break;
+          case 'rollRight': axisArray = mapping.p;       angle = Math.PI / 2;  break;
+          default: return;
         }
 
-        // Transform the world-space axis into cube-local space,
-        // because brushQuaternion operates on grid-local offsets.
-        const cubeQuatInv = cubeRef.current.quaternion.clone().invert();
-        worldAxis.applyQuaternion(cubeQuatInv);
-
-        // Now call rotateBrush with the cube-local axis
-        cameraActionsRef.current?.rotateBrush(worldAxis, angle);
+        const axis = new THREE.Vector3().fromArray(axisArray);
+        cameraActionsRef.current?.rotateBrush(axis, angle);
       },
       birthBrushCells: () => {
         if (selectedShape === "None" || !selectorPos) return;
