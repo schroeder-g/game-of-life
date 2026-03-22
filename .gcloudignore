@@ -5,3 +5,4 @@ aider-env/
 dist/
 build/
 .aider*
+src/core/faceOrientationKeyMapping.ts
