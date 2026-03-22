@@ -1232,6 +1232,7 @@ export function AppHeaderPanel() {
       </div>
 
       <div className="button-group panel-actions">
+        <SceneSelectorDropdown />
         {!rotationMode && (
           <>
             <button
@@ -1270,32 +1271,6 @@ export function AppHeaderPanel() {
           {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
         </button>
 
-        <SceneSelectorDropdown />
-
-        <button
-          className="glass-button"
-          onClick={fitDisplay}
-          aria-label="Fit"
-          data-tooltip-bottom="Fit (F)"
-        >
-          <FitIcon />
-        </button>
-        <button
-          className="glass-button"
-          onClick={recenter}
-          aria-label="Recenter"
-          data-tooltip-bottom="Recenter (S)"
-        >
-          <RecenterIcon />
-        </button>
-        <button
-          className="glass-button"
-          onClick={squareUp}
-          aria-label="Square Up"
-          data-tooltip-bottom="Square Up (L)"
-        >
-          <SquareUpIcon />
-        </button>
 
         <button
           className="glass-button primary"
@@ -1347,6 +1322,32 @@ export function AppHeaderPanel() {
         >
           ↺
         </button>
+        <button
+          className="glass-button"
+          onClick={fitDisplay}
+          aria-label="Fit"
+          data-tooltip-bottom="Fit (F)"
+        >
+          <FitIcon />
+        </button>
+        <button
+          className="glass-button"
+          onClick={recenter}
+          aria-label="Recenter"
+          data-tooltip-bottom="Recenter (S)"
+        >
+          <RecenterIcon />
+        </button>
+        <button
+          className="glass-button"
+          onClick={squareUp}
+          aria-label="Square Up"
+          data-tooltip-bottom="Square Up (L)"
+        >
+          <SquareUpIcon />
+        </button>
+
+
       </div>
     </div>
   );
