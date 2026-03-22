@@ -106,11 +106,6 @@ function ActionsSection() {
     fitDisplay
   ]);
 
-  useEffect(() => {
-    if (!selectedConfigName && configOptions.length > 0) {
-      handleSelectConfig(configOptions[0]);
-    }
-  }, [selectedConfigName, configOptions, handleSelectConfig]);
 
   return (
     <section className="menu-section actions-section">
@@ -1247,8 +1242,17 @@ export function AppHeaderPanel() {
 export function MainMenu() {
   const {
     state: { running, rotationMode, community },
-    actions: { setRotationMode },
+    actions: {
+      setRotationMode, applyCells, setSpeed, setDensity, setSurviveMin, setSurviveMax,
+      setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
+      setNeighborFaces, setNeighborEdges, setNeighborCorners,
+      fitDisplay
+    },
   } = useSimulation();
+  const {
+    state: { savedConfigs, selectedConfigName },
+    actions: { setSelectedConfigName },
+  } = useGenesisConfig();
   const [collapsed, setCollapsed] = useState(() => {
     // Default to collapsed if starting on small screen
     if (typeof window !== "undefined") {
@@ -1258,6 +1262,46 @@ export function MainMenu() {
   });
 
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  const configOptions = Object.keys(savedConfigs);
+
+  const handleSelectConfig = useCallback((name: string) => {
+    setSelectedConfigName(name);
+    if (name && savedConfigs[name]) {
+      const config = savedConfigs[name];
+      applyCells(config.cells, config.settings.gridSize);
+      // apply saved settings as well
+      setSpeed(config.settings.speed);
+      setDensity(config.settings.density);
+      setSurviveMin(config.settings.surviveMin);
+      setSurviveMax(config.settings.surviveMax);
+      setBirthMin(config.settings.birthMin);
+      setBirthMax(config.settings.birthMax);
+      setBirthMargin(config.settings.birthMargin);
+      setCellMargin(config.settings.cellMargin);
+      if (config.settings.neighborFaces !== undefined) {
+        setNeighborFaces(config.settings.neighborFaces);
+      }
+      if (config.settings.neighborEdges !== undefined) {
+        setNeighborEdges(config.settings.neighborEdges);
+      }
+      if (config.settings.neighborCorners !== undefined) {
+        setNeighborCorners(config.settings.neighborCorners);
+      }
+      fitDisplay();
+    }
+  }, [
+    setSelectedConfigName, savedConfigs, applyCells, setSpeed, setDensity,
+    setSurviveMin, setSurviveMax, setBirthMin, setBirthMax, setBirthMargin,
+    setCellMargin, setNeighborFaces, setNeighborEdges, setNeighborCorners,
+    fitDisplay
+  ]);
+
+  useEffect(() => {
+    if (!selectedConfigName && configOptions.length > 0) {
+      handleSelectConfig(configOptions[0]);
+    }
+  }, [selectedConfigName, configOptions, handleSelectConfig]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
