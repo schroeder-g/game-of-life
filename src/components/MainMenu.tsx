@@ -6,6 +6,7 @@ import { isAnyBrushCellInside } from "../core/brushUtils";
 import { useSimulation } from "../contexts/SimulationContext";
 import { CommunitySidebar } from "./Controls";
 import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP } from "../core/cameraUtils";
+import { KEY_MAP, CameraFace, CameraRotation, rotationLookup } from "../core/faceOrientationKeyMapping";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 
@@ -655,8 +656,8 @@ function ShapeBrushSection() {
               }}
             >
               {SHAPES.map((shape) => (
-                <option 
-                  key={shape} 
+                <option
+                  key={shape}
                   value={shape}
                   disabled={shape === "Selected Community" && community.length === 0}
                 >
@@ -1133,7 +1134,7 @@ export function AppHeaderPanel() {
                 if (selectedShape !== "None") {
                   cameraActionsRef.current?.birthBrushCells();
                 } else if (selectorPos) {
-                   setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
+                  setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
                 }
               }}
               title="Birth Cells (Space)"
