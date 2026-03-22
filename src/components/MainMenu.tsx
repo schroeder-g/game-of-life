@@ -1275,7 +1275,7 @@ export function MainMenu() {
   return (
     <>
       <aside
-        className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${!running ? "has-sidebar" : ""}`}
+        className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${community.length > 0 && !rotationMode ? "has-sidebar" : ""}`}
       >
         <div className="menu-sticky-container">
           <header
