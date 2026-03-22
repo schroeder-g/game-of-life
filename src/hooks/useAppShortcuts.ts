@@ -32,7 +32,7 @@ export function useAppShortcuts() {
 
   const {
     state: { selectorPos, selectedShape },
-    actions: { changeSize, clearShape, setSelectorPos },
+    actions: { changeSize, clearShape, setSelectorPos, setIsBirthing, setIsClearing },
   } = useBrush();
 
   useEffect(() => {
@@ -153,21 +153,13 @@ export function useAppShortcuts() {
             case "l": squareUp(); break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
-              movement.current.space = true;
-              if (selectedShape !== "None") {
-                cameraActionsRef.current?.birthBrushCells();
-              } else if (selectorPos) {
-                setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
-              }
+              setIsBirthing(true);
+              setIsClearing(false);
               break;
             case "delete":
             case "backspace":
-              movement.current.delete = true;
-              if (selectedShape !== "None") {
-                cameraActionsRef.current?.clearBrushCells();
-              } else if (selectorPos) {
-                setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
-              }
+              setIsClearing(true);
+              setIsBirthing(false);
               break;
             case "arrowright":
               if (!running) step();
@@ -226,9 +218,6 @@ export function useAppShortcuts() {
         case ".": movement.current.rotatePeriod = false; break;
         case "i": movement.current.rotateI = false; break;
         case "p": movement.current.rotateP = false; break;
-        case " ": movement.current.space = false; break;
-        case "delete":
-        case "backspace": movement.current.delete = false; break;
         default: handled = false;
       }
       if (handled) e.preventDefault();
@@ -245,5 +234,6 @@ export function useAppShortcuts() {
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell,
+    setIsBirthing, setIsClearing,
   ]);
 }
