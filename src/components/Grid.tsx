@@ -202,31 +202,31 @@ function ShapePreview({
     }
   });
 
-  const previewCells = useMemo(() => {
-    if (selectedShape === "None" || !selectorPos) return [];
+  const { previewCells, maxDist } = useMemo(() => {
+    if (selectedShape === "None" || !selectorPos) return { previewCells: [], maxDist: 0 };
 
     const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-    return offsets
-      .map(([dx, dy, dz]) => {
+    if (offsets.length === 0) return { previewCells: [], maxDist: 0 };
+
+    const maxDist = Math.max(...offsets.map(o => Math.sqrt(o[0] ** 2 + o[1] ** 2 + o[2] ** 2)));
+
+    const previewCells = offsets
+      .map((originalOffset) => {
+        const [dx, dy, dz] = originalOffset;
         const v = new THREE.Vector3(dx, dy, dz);
 
         if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
-        return [
-          Math.round(v.x),
-          Math.round(v.y),
-          Math.round(v.z),
+
+        const cell = [
+          selectorPos[0] + Math.round(v.x),
+          selectorPos[1] + Math.round(v.y),
+          selectorPos[2] + Math.round(v.z),
         ] as [number, number, number];
+
+        return { originalOffset, cell };
       })
-      .map(
-        ([dx, dy, dz]) =>
-          [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [
-            number,
-            number,
-            number,
-          ],
-      )
       .filter(
-        ([x, y, z]) =>
+        ({ cell: [x, y, z] }) =>
           x >= 0 &&
           x < gridSize &&
           y >= 0 &&
@@ -234,6 +234,8 @@ function ShapePreview({
           z >= 0 &&
           z < gridSize,
       );
+
+    return { previewCells, maxDist };
   }, [
     selectorPos,
     selectedShape,
@@ -244,7 +246,8 @@ function ShapePreview({
     polar,
     brushRotationVersion,
     brushQuaternion,
-    cubeRef
+    cubeRef,
+    customOffsets,
   ]);
 
   if (previewCells.length === 0) return null;
