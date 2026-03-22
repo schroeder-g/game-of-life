@@ -282,7 +282,7 @@ function ShapePreview({
             {isAlive ? (
               <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
             ) : (
-              <meshBasicMaterial color="#fff4c2" transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
+              <meshBasicMaterial color="#ffdd44" transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
             )}
           </mesh>
         );
