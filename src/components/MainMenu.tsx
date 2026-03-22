@@ -1272,6 +1272,18 @@ export function MainMenu() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  // Add this new useEffect block:
+  useEffect(() => {
+    if (rotationMode) {
+      document.body.classList.add("view-mode");
+      document.body.classList.remove("edit-mode");
+    } else {
+      document.body.classList.add("edit-mode");
+      document.body.classList.remove("view-mode");
+    }
+  }, [rotationMode]);
+
+
   return (
     <>
       <aside

@@ -1,0 +1,4 @@
+/* Add this rule to your global stylesheet */
+.view-mode .community-sidebar {
+  display: none !important;
+}
