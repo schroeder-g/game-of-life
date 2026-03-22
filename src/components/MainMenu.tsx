@@ -1153,16 +1153,26 @@ function SceneSelectorDropdown() {
         <ImageIcon />
       </button>
       {isOpen && (
-        <div className="dropdown-menu">
-          {configOptions.map((name) => (
-            <button
-              key={name}
-              className={`dropdown-item ${name === selectedConfigName ? 'selected' : ''}`}
-              onClick={() => handleSelectConfig(name)}
-            >
-              {name}
-            </button>
-          ))}
+        <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
+          {configOptions.map((name) => {
+            const isSelected = name === selectedConfigName;
+            const isHovered = name === hoveredName;
+
+            // An item is highlighted if it's the one being hovered,
+            // or if nothing is hovered and it's the currently selected one.
+            const isActive = isHovered || (hoveredName === null && isSelected);
+
+            return (
+              <button
+                key={name}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`}
+                onClick={() => handleSelectConfig(name)}
+                onMouseEnter={() => setHoveredName(name)}
+              >
+                {name}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
