@@ -182,6 +182,7 @@ function ShapePreview({
 }) {
   const {
     state: { gridSize },
+    meta: { gridRef },
   } = useSimulation();
   const {
     state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion, customOffsets },
@@ -250,15 +251,23 @@ function ShapePreview({
 
   return (
     <group>
-      {previewCells.map((cell, i) => (
-        <mesh
-          key={i}
-          position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
-        >
-          <boxGeometry args={[0.9, 0.9, 0.9]} />
-          <meshBasicMaterial color="#ffaa00" transparent opacity={0.35} />
-        </mesh>
-      ))}
+      {previewCells.map((cell, i) => {
+        const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
+        return (
+          <mesh
+            key={i}
+            position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
+          >
+            <boxGeometry args={[0.9, 0.9, 0.9]} />
+            {isAlive ? (
+              <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
+            ) : (
+              <meshBasicMaterial color="#ffaa00" transparent opacity={0.08} depthWrite={false} />
+            )}
+          </mesh>
+        );
+      })}
+      {/* Yellow cell outlines for all brush cells — shows margins/interstices */}
       {previewCells.map((cell, i) => (
         <lineSegments
           key={`edge-${i}`}
@@ -421,8 +430,10 @@ function KeyboardSelector({
     meta: { gridRef },
   } = useSimulation();
   const {
-    state: { selectorPos },
+    state: { selectorPos, selectedShape },
   } = useBrush();
+
+  const isBrushActive = selectedShape !== "None";
 
   if (rotationMode || !selectorPos) return null;
 
@@ -441,54 +452,59 @@ function KeyboardSelector({
     <group>
       <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
       <ShapePreview controlsRef={controlsRef} cubeRef={cubeRef} brushQuaternion={brushQuaternion} />
-      {/* Glow Mesh */}
-      <mesh
-        raycast={() => null}
-        position={[
-          selectorPos[0] - offset,
-          selectorPos[1] - offset,
-          (gridSize - 1 - selectorPos[2]) - offset,
-        ]}
-      >
-        <boxGeometry args={[1.2, 1.2, 1.2]} />
-        <meshBasicMaterial
-          color={cursorColor}
-          transparent
-          opacity={0.15}
-          depthWrite={false}
-        />
-      </mesh>
-      {/* Primary Selector Mesh */}
-      <mesh
-        raycast={() => null}
-        position={[
-          selectorPos[0] - offset,
-          selectorPos[1] - offset,
-          (gridSize - 1 - selectorPos[2]) - offset,
-        ]}
-      >
-        <boxGeometry args={[1.05, 1.05, 1.05]} />
-        <meshBasicMaterial
-          color={cursorColor}
-          transparent
-          opacity={0.5}
-          depthWrite={false}
-          polygonOffset
-          polygonOffsetFactor={-4}
-          polygonOffsetUnits={-4}
-        />
-      </mesh>
-      <lineSegments
-        raycast={() => null}
-        position={[
-          selectorPos[0] - offset,
-          selectorPos[1] - offset,
-          (gridSize - 1 - selectorPos[2]) - offset,
-        ]}
-      >
-        <edgesGeometry args={[new THREE.BoxGeometry(1.06, 1.06, 1.06)]} />
-        <lineBasicMaterial color={cursorColor} linewidth={2} transparent opacity={0.8} />
-      </lineSegments>
+      {/* Hide cursor when brush is active — the ShapePreview replaces it */}
+      {!isBrushActive && (
+        <>
+          {/* Glow Mesh */}
+          <mesh
+            raycast={() => null}
+            position={[
+              selectorPos[0] - offset,
+              selectorPos[1] - offset,
+              (gridSize - 1 - selectorPos[2]) - offset,
+            ]}
+          >
+            <boxGeometry args={[1.2, 1.2, 1.2]} />
+            <meshBasicMaterial
+              color={cursorColor}
+              transparent
+              opacity={0.15}
+              depthWrite={false}
+            />
+          </mesh>
+          {/* Primary Selector Mesh */}
+          <mesh
+            raycast={() => null}
+            position={[
+              selectorPos[0] - offset,
+              selectorPos[1] - offset,
+              (gridSize - 1 - selectorPos[2]) - offset,
+            ]}
+          >
+            <boxGeometry args={[1.05, 1.05, 1.05]} />
+            <meshBasicMaterial
+              color={cursorColor}
+              transparent
+              opacity={0.5}
+              depthWrite={false}
+              polygonOffset
+              polygonOffsetFactor={-4}
+              polygonOffsetUnits={-4}
+            />
+          </mesh>
+          <lineSegments
+            raycast={() => null}
+            position={[
+              selectorPos[0] - offset,
+              selectorPos[1] - offset,
+              (gridSize - 1 - selectorPos[2]) - offset,
+            ]}
+          >
+            <edgesGeometry args={[new THREE.BoxGeometry(1.06, 1.06, 1.06)]} />
+            <lineBasicMaterial color={cursorColor} linewidth={2} transparent opacity={0.8} />
+          </lineSegments>
+        </>
+      )}
     </group>
   );
 }
