@@ -254,59 +254,56 @@ function ShapePreview({
 
   return (
     <group>
-      {/* Glow layer — yellow for dead, ghostly white for alive */}
-      {previewCells.map(({ cell }, i) => {
-        const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
-        return (
-          <mesh
-            key={`glow-${i}`}
-            raycast={() => null}
-            position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
-          >
-            <boxGeometry args={[1.1, 1.1, 1.1]} />
-            <meshBasicMaterial
-              color={isAlive ? "#ffffff" : "#ffdd44"}
-              transparent
-              opacity={isAlive ? 0.15 : 0.2}
-              depthWrite={false}
-            />
-          </mesh>
-        );
-      })}
-      {/* Cell fill — white for alive, translucent pale yellow for dead */}
       {previewCells.map(({ cell, originalOffset }, i) => {
         const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
+        const position: [number, number, number] = [
+          cell[0] - offset,
+          cell[1] - offset,
+          gridSize - 1 - cell[2] - offset,
+        ];
+
+        // Opacity logic for inactive cell fill
         const dist = Math.sqrt(originalOffset[0] ** 2 + originalOffset[1] ** 2 + originalOffset[2] ** 2);
         const relativeDist = maxDist > 0 ? dist / maxDist : 0;
-
         const minOpacity = 0.15;
         const maxOpacity = 0.7;
         const opacity = maxOpacity - relativeDist * (maxOpacity - minOpacity);
 
         return (
-          <mesh
-            key={i}
-            position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
-          >
-            <boxGeometry args={[0.9, 0.9, 0.9]} />
-            {isAlive ? (
-              <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
-            ) : (
-              <meshBasicMaterial color="#ffdd44" transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
-            )}
-          </mesh>
+          <React.Fragment key={i}>
+            {/* Glow layer */}
+            <mesh raycast={() => null} position={position}>
+              <boxGeometry args={[1.1, 1.1, 1.1]} />
+              <meshBasicMaterial
+                color={isAlive ? "#ffffff" : "#ffdd44"}
+                transparent
+                opacity={isAlive ? 0.15 : 0.2}
+                depthWrite={false}
+              />
+            </mesh>
+            {/* Cell fill */}
+            <mesh position={position}>
+              <boxGeometry args={[0.9, 0.9, 0.9]} />
+              {isAlive ? (
+                <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
+              ) : (
+                <meshBasicMaterial
+                  color="#ffdd44"
+                  transparent
+                  opacity={opacity}
+                  side={THREE.DoubleSide}
+                  depthWrite={false}
+                />
+              )}
+            </mesh>
+            {/* Dark outlines */}
+            <lineSegments position={position}>
+              <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
+              <lineBasicMaterial color="#333333" />
+            </lineSegments>
+          </React.Fragment>
         );
       })}
-      {/* Dark outlines matching unselected live cell edge style */}
-      {previewCells.map(({ cell }, i) => (
-        <lineSegments
-          key={`edge-${i}`}
-          position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
-        >
-          <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
-          <lineBasicMaterial color="#333333" />
-        </lineSegments>
-      ))}
     </group>
   );
 }
