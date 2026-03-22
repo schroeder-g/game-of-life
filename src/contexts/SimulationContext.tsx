@@ -134,6 +134,7 @@ export interface SimulationMeta {
     squareUp: () => void;
     snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
+    rotateBrushByDirection: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
   } | null>;

@@ -78,12 +78,20 @@ export function useAppShortcuts() {
             : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
 
           if (isBrushActive && !e.ctrlKey && !e.shiftKey) {
-            // Rotate the BRUSH using camera-relative axis from rotationLookup
-            const mapping = (rotationLookup as any)[f]?.[r];
-            const axisArray: number[] | undefined = mapping?.[rotKey];
-            if (axisArray) {
-              const axis = new THREE.Vector3().fromArray(axisArray);
-              cameraActionsRef.current?.rotateBrush(axis, Math.PI / 2);
+            // Rotate the BRUSH using the same direction as cube snapRotate,
+            // but transformed into grid-local space for the brush quaternion.
+            // Map key to the same direction + angle that snapRotate would use:
+            let direction: string | null = null;
+            switch (key) {
+              case 'o': direction = invertPitch ? 'down' : 'up'; break;
+              case '.': direction = invertPitch ? 'up' : 'down'; break;
+              case 'k': direction = invertYaw ? 'left' : 'right'; break;
+              case ';': direction = invertYaw ? 'right' : 'left'; break;
+              case 'i': direction = 'rollLeft'; break;
+              case 'p': direction = 'rollRight'; break;
+            }
+            if (direction) {
+              cameraActionsRef.current?.rotateBrushByDirection(direction as any);
             }
             e.preventDefault();
             e.stopPropagation();

@@ -819,6 +819,48 @@ export function Scene() {
         const { incrementBrushRotationVersion } = (window as any).brushActions || {};
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
       },
+      rotateBrushByDirection: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
+        if (!cameraRef.current || !cubeRef.current) return;
+        const camera = cameraRef.current;
+        let angle = Math.PI / 2;
+        const worldAxis = new THREE.Vector3();
+
+        // Compute axis from camera matrix columns — same logic as snapRotate
+        switch (direction) {
+          case 'up':
+            worldAxis.setFromMatrixColumn(camera.matrix, 0);
+            angle = Math.PI / 2;
+            break;
+          case 'down':
+            worldAxis.setFromMatrixColumn(camera.matrix, 0);
+            angle = -Math.PI / 2;
+            break;
+          case 'left':
+            worldAxis.setFromMatrixColumn(camera.matrix, 1);
+            angle = Math.PI / 2;
+            break;
+          case 'right':
+            worldAxis.setFromMatrixColumn(camera.matrix, 1);
+            angle = -Math.PI / 2;
+            break;
+          case 'rollLeft':
+            worldAxis.setFromMatrixColumn(camera.matrix, 2).negate();
+            angle = Math.PI / 2;
+            break;
+          case 'rollRight':
+            worldAxis.setFromMatrixColumn(camera.matrix, 2).negate();
+            angle = -Math.PI / 2;
+            break;
+        }
+
+        // Transform the world-space axis into cube-local space,
+        // because brushQuaternion operates on grid-local offsets.
+        const cubeQuatInv = cubeRef.current.quaternion.clone().invert();
+        worldAxis.applyQuaternion(cubeQuatInv);
+
+        // Now call rotateBrush with the cube-local axis
+        cameraActionsRef.current?.rotateBrush(worldAxis, angle);
+      },
       birthBrushCells: () => {
         if (selectedShape === "None" || !selectorPos) return;
         const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
