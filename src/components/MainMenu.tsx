@@ -1079,6 +1079,7 @@ function SceneManagementSection() {
 function SceneSelectorDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [hoveredName, setHoveredName] = useState<string | null>(null);
 
   const {
     state: { savedConfigs, selectedConfigName },
