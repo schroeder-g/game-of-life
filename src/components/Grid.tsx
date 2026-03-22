@@ -252,7 +252,7 @@ function ShapePreview({
   return (
     <group>
       {/* Glow layer — yellow for dead, ghostly white for alive */}
-      {previewCells.map((cell, i) => {
+      {previewCells.map(({ cell }, i) => {
         const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
         return (
           <mesh
@@ -271,8 +271,15 @@ function ShapePreview({
         );
       })}
       {/* Cell fill — white for alive, translucent pale yellow for dead */}
-      {previewCells.map((cell, i) => {
+      {previewCells.map(({ cell, originalOffset }, i) => {
         const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
+        const dist = Math.sqrt(originalOffset[0] ** 2 + originalOffset[1] ** 2 + originalOffset[2] ** 2);
+        const relativeDist = maxDist > 0 ? dist / maxDist : 0;
+
+        const minOpacity = 0.15;
+        const maxOpacity = 0.7;
+        const opacity = maxOpacity - relativeDist * (maxOpacity - minOpacity);
+
         return (
           <mesh
             key={i}
@@ -282,13 +289,13 @@ function ShapePreview({
             {isAlive ? (
               <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
             ) : (
-              <meshBasicMaterial color="#ffdd44" transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false} />
+              <meshBasicMaterial color="#ffdd44" transparent opacity={opacity} side={THREE.DoubleSide} depthWrite={false} />
             )}
           </mesh>
         );
       })}
       {/* Dark outlines matching unselected live cell edge style */}
-      {previewCells.map((cell, i) => (
+      {previewCells.map(({ cell }, i) => (
         <lineSegments
           key={`edge-${i}`}
           position={[cell[0] - offset, cell[1] - offset, (gridSize - 1 - cell[2]) - offset]}
