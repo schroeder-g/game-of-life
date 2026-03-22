@@ -181,7 +181,7 @@ function ShapePreview({
     state: { gridSize },
   } = useSimulation();
   const {
-    state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion },
+    state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion, customOffsets },
   } = useBrush();
   const offset = (gridSize - 1) / 2;
   const [azimuth, setAzimuth] = useState(0);
@@ -201,7 +201,7 @@ function ShapePreview({
   const previewCells = useMemo(() => {
     if (selectedShape === "None" || !selectorPos) return [];
 
-    const offsets = generateShape(selectedShape, shapeSize, isHollow);
+    const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
     return offsets
       .map(([dx, dy, dz]) => {
         const v = new THREE.Vector3(dx, dy, dz);
@@ -521,9 +521,9 @@ export function Scene() {
   } = state;
   const {
     state: brushState,
-    actions: { setSelectorPos },
+    actions: { setSelectorPos, setCustomBrush },
   } = useBrush();
-  const { selectorPos, selectedShape, shapeSize, isHollow, brushQuaternion } = brushState;
+  const { selectorPos, selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
 
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
@@ -794,7 +794,7 @@ export function Scene() {
         
         // Constraint: prevent rotation if all cells would be outside
         if (selectedShape !== "None" && selectorPos) {
-          const offsets = generateShape(selectedShape, shapeSize, isHollow);
+          const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
           const rotatedOffsets = offsets.map(off => {
             const v = new THREE.Vector3(...off);
             v.applyQuaternion(nextQ);
@@ -813,12 +813,12 @@ export function Scene() {
 
         brushQuaternion.current.copy(nextQ);
         // Trigger re-render of ShapePreview
-        const { incrementBrushRotationVersion } = (window as any).brushActions;
+        const { incrementBrushRotationVersion } = (window as any).brushActions || {};
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
       },
       birthBrushCells: () => {
         if (selectedShape === "None" || !selectorPos) return;
-        const offsets = generateShape(selectedShape, shapeSize, isHollow);
+        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
         const cells = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
@@ -836,7 +836,7 @@ export function Scene() {
       },
       clearBrushCells: () => {
         if (selectedShape === "None" || !selectorPos) return;
-        const offsets = generateShape(selectedShape, shapeSize, isHollow);
+        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
         const cells = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
@@ -870,6 +870,7 @@ export function Scene() {
     isHollow,
     actions,
     setCommunity,
+    customOffsets,
   ]);
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
@@ -940,7 +941,7 @@ export function Scene() {
                 allowMove = true;
               }
             } else {
-              const offsets = generateShape(selectedShape, shapeSize, isHollow);
+              const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
               const rotatedOffsets = offsets.map(off => {
                 const v = new THREE.Vector3(...off);
                 if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);

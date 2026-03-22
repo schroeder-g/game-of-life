@@ -1,6 +1,6 @@
 // Shape generation utilities for Cube of Life bulk editor
 
-export type ShapeType = "None" | "Cube" | "Square" | "Circle" | "Sphere" | "Triangle" | "Pyramid";
+export type ShapeType = "None" | "Cube" | "Square" | "Circle" | "Sphere" | "Triangle" | "Pyramid" | "Selected Community";
 
 export type Offset = [number, number, number];
 
@@ -145,7 +145,7 @@ function generatePyramid(size: number, hollow: boolean): Offset[] {
 }
 
 // Main dispatcher function
-export function generateShape(shape: ShapeType, size: number, hollow: boolean): Offset[] {
+export function generateShape(shape: ShapeType, size: number, hollow: boolean, customOffsets?: Offset[]): Offset[] {
   switch (shape) {
     case "Cube":
       return generateCube(size, hollow);
@@ -159,6 +159,8 @@ export function generateShape(shape: ShapeType, size: number, hollow: boolean): 
       return generateTriangle(size);
     case "Pyramid":
       return generatePyramid(size, hollow);
+    case "Selected Community":
+      return customOffsets || [];
     default:
       return [];
   }
@@ -170,4 +172,4 @@ export function supportsHollow(shape: ShapeType): boolean {
 }
 
 // All available shapes for dropdown
-export const SHAPES: ShapeType[] = ["None", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];
+export const SHAPES: ShapeType[] = ["Selected Community", "None", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];

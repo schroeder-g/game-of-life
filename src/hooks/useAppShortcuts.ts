@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/cameraUtils";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, rotationLookup } from "../core/cameraUtils";
 import { useBrush } from "../contexts/BrushContext";
+import * as THREE from "three";
 
 export function useAppShortcuts() {
   const {
@@ -55,28 +56,61 @@ export function useAppShortcuts() {
 
       const key = e.key.toLowerCase();
       const code = e.code;
+
+      // Rotation keys: i, p, o, k, ., ;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
-      const isBrushRotationCommand = e.ctrlKey && e.shiftKey && isRotationCode;
-
-      if (isTextBox && !isBrushRotationCommand) {
-        return;
-      }
-
-      let handled = true;
+      // Allow rotation keys through even in text boxes, but nothing else
+      if (isTextBox && !isRotationCode) return;
 
       const isBrushActive = selectedShape !== "None";
+      const face = cameraOrientation.face;
+      const rotation = cameraOrientation.rotation;
+      const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
-      if (isBrushRotationCommand && isBrushActive) {
-        if (cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
-          const face = cameraOrientation.face as CameraFace;
-          const rotation = cameraOrientation.rotation as CameraRotation;
-          const rotationKey = code === "Period" ? "period" : code === "Semicolon" ? "semicolon" : code.replace("Key", "").toLowerCase();
-          const axis = getExplicitRotationAxis(face, rotation, rotationKey as any);
-          
-          console.log(`[BRUSH ROTATION] Key: ${rotationKey}, Face: ${face}, Rot: ${rotation}, Axis:`, axis.toArray());
+      // --- ROTATION KEY HANDLING (i, p, o, k, ., ;) ---
+      if (isRotationCode && !rotationMode) {
+        if (hasValidOrientation) {
+          const f = face as CameraFace;
+          const r = rotation as CameraRotation;
+          // Normalize key name to match rotationLookup keys
+          const rotKey = code === "Period" ? "period"
+            : code === "Semicolon" ? "semicolon"
+            : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
 
-          if (axis.lengthSq() > 0) {
-            cameraActionsRef.current?.rotateBrush(axis, Math.PI / 2);
+          if (isBrushActive && !e.ctrlKey && !e.shiftKey) {
+            // Rotate the BRUSH using camera-relative axis from rotationLookup
+            const mapping = (rotationLookup as any)[f]?.[r];
+            const axisArray: number[] | undefined = mapping?.[rotKey];
+            if (axisArray) {
+              const axis = new THREE.Vector3().fromArray(axisArray);
+              cameraActionsRef.current?.rotateBrush(axis, Math.PI / 2);
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          } else if (e.ctrlKey && e.shiftKey) {
+            // Rotate the CUBE (environment snap) using the same lookup as before
+            switch (key) {
+              case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); break;
+              case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); break;
+              case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); break;
+              case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); break;
+              case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); break;
+              case 'p': cameraActionsRef.current?.snapRotate('rollRight'); break;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          } else if (!isBrushActive && !e.ctrlKey && !e.shiftKey) {
+            // No brush: rotation keys rotate the cube normally
+            switch (key) {
+              case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); break;
+              case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); break;
+              case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); break;
+              case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); break;
+              case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); break;
+              case 'p': cameraActionsRef.current?.snapRotate('rollRight'); break;
+            }
             e.preventDefault();
             e.stopPropagation();
             return;
@@ -84,88 +118,15 @@ export function useAppShortcuts() {
         }
       }
 
-      // --- Global Shortcuts ---
-      switch (key) {
-        case "e": setRotationMode(false); break;
-        case "v": setRotationMode(true); break;
-        case "f": fitDisplay(); break;
-        case "s": recenter(); break;
-        case "l": squareUp(); break;
-        case "r": if (hasInitialState) reset(); break;
-        case " ": // Spacebar for play/pause or activate/deactivate
-          if (rotationMode) {
-            playStop();
-          } else {
-            movement.current.space = true;
-            if (selectedShape !== "None") {
-              cameraActionsRef.current?.birthBrushCells();
-            } else if (selectorPos) {
-              setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
-            }
-            handled = true;
-          }
-          break;
-        case "delete":
-        case "backspace":
-          if (!rotationMode) {
-            movement.current.delete = true;
-            if (selectedShape !== "None") {
-              cameraActionsRef.current?.clearBrushCells();
-            } else if (selectorPos) {
-              setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
-            }
-            handled = true;
-          }
-          break;
-        case "arrowright": // Step forward
-          if (!running) step();
-          break;
-        case "arrowleft": // Step backward
-          if (!running && hasPastHistory) stepBackward();
-          break;
-        default: handled = false;
-      }
-      if (handled) { e.preventDefault(); return; }
+      let handled = true;
 
-
-      if (rotationMode) {
-        // --- VIEWING MODE ---
-        switch (key) {
-          // Camera Movement (Flight Sim style)
-          case "w": movement.current.forward = true; break;
-          case "x": movement.current.backward = true; break;
-          case "a": movement.current.left = true; break;
-          case "d": movement.current.right = true; break;
-          case "q": movement.current.up = true; break;
-          case "z": movement.current.down = true; break;
-          // Camera Look (Pitch/Yaw)
-          case ";": movement.current.rotateSemicolon = true; break;
-          case "k": movement.current.rotateK = true; break;
-          case "o": movement.current.rotateO = true; break;
-          case ".": movement.current.rotatePeriod = true; break;
-          // Camera Roll
-          case "i": movement.current.rotateI = true; break;
-          case "p": movement.current.rotateP = true; break;
-          default: handled = false;
-        }
-      } else {
-        // --- EDITING MODE ---
-        switch (key) {
-          case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); handled = true; break;
-          case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); handled = true; break;
-          case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); handled = true; break;
-          case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); handled = true; break;
-          case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); handled = true; break;
-          case 'p': cameraActionsRef.current?.snapRotate('rollRight'); handled = true; break;
-        }
-        if (handled) { e.preventDefault(); return; }
-
-
+      // --- MOVEMENT KEYS IN EDIT MODE ---
+      if (!rotationMode) {
         if (["w", "x", "a", "d", "q", "z"].includes(key)) {
-          if (cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
-            const face = cameraOrientation.face as CameraFace;
-            const rotation = cameraOrientation.rotation as CameraRotation;
-            const keymapForOrientation = KEY_MAP[face][rotation];
+          if (hasValidOrientation) {
+            const f = face as CameraFace;
+            const r = rotation as CameraRotation;
+            const keymapForOrientation = KEY_MAP[f][r];
             if (key in keymapForOrientation) {
               const delta = (keymapForOrientation as any)[key] as [number, number, number];
               eventBus.emit("moveSelector", { delta });
@@ -174,12 +135,66 @@ export function useAppShortcuts() {
           }
         } else {
           switch (key) {
-            case "[": changeSize(-1, 0); break; // Max size not needed here
+            case "[": changeSize(-1, 0); break;
             case "]": changeSize(1, 0); break;
             case "escape": clearShape(); break;
-            // Add other edit mode keys like space, delete etc. here if needed
+            case "e": setRotationMode(false); break;
+            case "v": setRotationMode(true); break;
+            case "f": fitDisplay(); break;
+            case "s": recenter(); break;
+            case "l": squareUp(); break;
+            case "r": if (hasInitialState) reset(); break;
+            case " ":
+              movement.current.space = true;
+              if (selectedShape !== "None") {
+                cameraActionsRef.current?.birthBrushCells();
+              } else if (selectorPos) {
+                setCell(selectorPos[0], selectorPos[1], selectorPos[2], true);
+              }
+              break;
+            case "delete":
+            case "backspace":
+              movement.current.delete = true;
+              if (selectedShape !== "None") {
+                cameraActionsRef.current?.clearBrushCells();
+              } else if (selectorPos) {
+                setCell(selectorPos[0], selectorPos[1], selectorPos[2], false);
+              }
+              break;
+            case "arrowright":
+              if (!running) step();
+              break;
+            case "arrowleft":
+              if (!running && hasPastHistory) stepBackward();
+              break;
             default: handled = false;
           }
+        }
+      } else {
+        // --- VIEWING MODE ---
+        switch (key) {
+          case "e": setRotationMode(false); break;
+          case "v": setRotationMode(true); break;
+          case "f": fitDisplay(); break;
+          case "s": recenter(); break;
+          case "l": squareUp(); break;
+          case "r": if (hasInitialState) reset(); break;
+          case " ": playStop(); break;
+          case "arrowright": if (!running) step(); break;
+          case "arrowleft": if (!running && hasPastHistory) stepBackward(); break;
+          case "w": movement.current.forward = true; break;
+          case "x": movement.current.backward = true; break;
+          case "a": movement.current.left = true; break;
+          case "d": movement.current.right = true; break;
+          case "q": movement.current.up = true; break;
+          case "z": movement.current.down = true; break;
+          case ";": movement.current.rotateSemicolon = true; break;
+          case "k": movement.current.rotateK = true; break;
+          case "o": movement.current.rotateO = true; break;
+          case ".": movement.current.rotatePeriod = true; break;
+          case "i": movement.current.rotateI = true; break;
+          case "p": movement.current.rotateP = true; break;
+          default: handled = false;
         }
       }
 
@@ -221,6 +236,6 @@ export function useAppShortcuts() {
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos, cameraActionsRef
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell,
   ]);
 }

@@ -509,10 +509,10 @@ function SelectorPositionSection() {
         // Conditional clamping:
         // If brush is active, allow outside as long as it overlaps the grid.
         // If no brush, clamp strictly to grid bounds.
-        const { selectedShape, shapeSize, isHollow, brushQuaternion } = brushState;
+        const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
 
         if (selectedShape !== "None") {
-          if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize)) {
+          if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
             return nextPos;
           } else {
             // If the move would pull it completely out, block it (return current)
@@ -590,11 +590,11 @@ function SelectorPositionSection() {
 
 function ShapeBrushSection() {
   const {
-    state: { gridSize },
+    state: { gridSize, community },
   } = useSimulation();
   const {
     state: { selectedShape, shapeSize, isHollow },
-    actions: { setSelectedShape, setShapeSize, setIsHollow },
+    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush },
   } = useBrush();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -615,36 +615,51 @@ function ShapeBrushSection() {
             <select
               className="glass-select"
               value={selectedShape}
-              onChange={(e) => setSelectedShape(e.target.value as ShapeType)}
+              onChange={(e) => {
+                const shape = e.target.value as ShapeType;
+                if (shape === "Selected Community") {
+                  setCustomBrush(community);
+                } else {
+                  setSelectedShape(shape);
+                }
+              }}
             >
               {SHAPES.map((shape) => (
-                <option key={shape} value={shape}>
+                <option 
+                  key={shape} 
+                  value={shape}
+                  disabled={shape === "Selected Community" && community.length === 0}
+                >
                   {shape}
                 </option>
               ))}
             </select>
           </label>
-          <label className="control-label">
-            <span>Size: {shapeSize}</span>
-            <input
-              type="range"
-              min={1}
-              max={gridSize}
-              step={1}
-              value={shapeSize}
-              onChange={(e) => setShapeSize(Number(e.target.value))}
-            />
-          </label>
-          <label className="control-label row">
-            <span>Hollow</span>
-            <input
-              type="checkbox"
-              className="glass-checkbox"
-              checked={isHollow}
-              disabled={!supportsHollow(selectedShape)}
-              onChange={(e) => setIsHollow(e.target.checked)}
-            />
-          </label>
+          {selectedShape !== "Selected Community" && (
+            <>
+              <label className="control-label">
+                <span>Size: {shapeSize}</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={gridSize}
+                  step={1}
+                  value={shapeSize}
+                  onChange={(e) => setShapeSize(Number(e.target.value))}
+                />
+              </label>
+              <label className="control-label row">
+                <span>Hollow</span>
+                <input
+                  type="checkbox"
+                  className="glass-checkbox"
+                  checked={isHollow}
+                  disabled={!supportsHollow(selectedShape)}
+                  onChange={(e) => setIsHollow(e.target.checked)}
+                />
+              </label>
+            </>
+          )}
         </>
       )}
     </section>
@@ -1035,6 +1050,7 @@ export function AppHeaderPanel() {
   } = useSimulation();
   const {
     state: { selectedShape, selectorPos },
+    actions: { setSelectedShape },
   } = useBrush();
 
   const faceName = cameraOrientation.face !== 'unknown'
@@ -1059,7 +1075,21 @@ export function AppHeaderPanel() {
         </div>
         {!rotationMode && selectedShape !== "None" && (
           <div className="shape-status">
-            Shape: {selectedShape} <span className="hint">(Esc to cancel)</span>
+            Shape: {selectedShape}{" "}
+            <span className="hint">
+              (Esc to{" "}
+              <a
+                href="#"
+                className="cancel-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedShape("None");
+                }}
+              >
+                Cancel
+              </a>
+              )
+            </span>
           </div>
         )}
       </div>

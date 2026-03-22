@@ -11,7 +11,8 @@ export function isAnyBrushCellInside(
   size: number,
   isHollow: boolean,
   quaternion: THREE.Quaternion,
-  gridSize: number
+  gridSize: number,
+  customOffsets?: [number, number, number][]
 ): boolean {
   if (shape === "None") {
     return (
@@ -21,7 +22,7 @@ export function isAnyBrushCellInside(
     );
   }
 
-  const offsets = generateShape(shape, size, isHollow);
+  const offsets = generateShape(shape, size, isHollow, customOffsets);
   return offsets.some(([dx, dy, dz]) => {
     const v = new THREE.Vector3(dx, dy, dz);
     v.applyQuaternion(quaternion);

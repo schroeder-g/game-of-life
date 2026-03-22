@@ -233,14 +233,28 @@ input[type="range"] {
   margin-top: 16px;
   width: 100%;
   flex: 0 0 auto;
-  padding: 20px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.community-sidebar.collapsed {
+  padding-bottom: 0;
 }
 
 .community-sidebar h3 {
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 14px;
   color: #8ab4f8;
   font-weight: 600;
+}
+
+.sidebar-header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.community-sidebar.collapsed .sidebar-header {
+  border-bottom: none;
 }
 
 .community-sidebar .no-community {
@@ -1196,4 +1210,42 @@ kbd {
 .key-map-row span {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: #8b949e;
+}
+
+.cancel-link {
+  color: #8ab4f8;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.cancel-link:hover {
+  color: #a1c2fa;
+  text-decoration: underline;
+}
+
+/* Icon Buttons */
+.icon-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.icon-button.danger:hover {
+  background: rgba(255, 82, 82, 0.2);
+  border-color: rgba(255, 82, 82, 0.4);
+  color: #ff5252;
 }
