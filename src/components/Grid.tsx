@@ -31,7 +31,10 @@ function getOrientation(
   else if (ax >= ay && ax >= az) face = lx > 0 ? "right" : "left";
   else face = ly > 0 ? "top" : "bottom";
 
-  _localUp.copy(camera.up).applyQuaternion(_cubeQuatInv);
+  // Use the camera's actual screen-up (Y axis from world matrix), NOT camera.up
+  // which is always (0,1,0) with OrbitControls and never changes during orbit.
+  const m = camera.matrixWorld.elements;
+  _localUp.set(m[4], m[5], m[6]).normalize().applyQuaternion(_cubeQuatInv);
   const { x: ux, y: uy, z: uz } = _localUp;
   const aux = Math.abs(ux), auy = Math.abs(uy), auz = Math.abs(uz);
 
