@@ -7,7 +7,8 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { rotateOffsets } from "../hooks/useKeyboardSelector"; // Import rotateOffsets
 import { Cells } from "./Cell";
-import { CameraFace, CameraOrientation, CameraRotation, KEY_MAP, getExplicitRotationAxis, rotationLookup } from "../core/cameraUtils";
+import { CameraFace, CameraOrientation, CameraRotation, getExplicitRotationAxis } from "../core/cameraUtils";
+import { KEY_MAP, rotationLookup, CameraFace, CameraRotation } from "../core/faceOrientationKeyMapping";
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -915,12 +916,12 @@ export function Scene() {
 
         // Map direction to the corresponding rotationLookup key + sign
         switch (direction) {
-          case 'up':      axisArray = mapping.o;         angle = Math.PI / 2;  break;
-          case 'down':    axisArray = mapping.period;    angle = Math.PI / 2;  break;
-          case 'right':   axisArray = mapping.k;         angle = Math.PI / 2;  break;
-          case 'left':    axisArray = mapping.semicolon; angle = Math.PI / 2;  break;
-          case 'rollLeft': axisArray = mapping.i;        angle = Math.PI / 2;  break;
-          case 'rollRight': axisArray = mapping.p;       angle = Math.PI / 2;  break;
+          case 'up': axisArray = mapping.o; angle = Math.PI / 2; break;
+          case 'down': axisArray = mapping.period; angle = Math.PI / 2; break;
+          case 'right': axisArray = mapping.k; angle = Math.PI / 2; break;
+          case 'left': axisArray = mapping.semicolon; angle = Math.PI / 2; break;
+          case 'rollLeft': axisArray = mapping.i; angle = Math.PI / 2; break;
+          case 'rollRight': axisArray = mapping.p; angle = Math.PI / 2; break;
           default: return;
         }
 
