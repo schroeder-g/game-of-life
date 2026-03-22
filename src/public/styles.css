@@ -19,13 +19,17 @@ body.view-mode .community-sidebar {
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: 1000; /* Ensures it floats above other content */
-  
+  z-index: 1000;
+  /* Ensures it floats above other content */
+
   /* Opaque background, outline, and corners */
-  background-color: rgba(20, 20, 25, 0.95); /* Nearly opaque dark background */
-  border: 1px solid rgba(255, 255, 255, 0.8); /* White outline */
-  border-radius: 8px; /* Radiused corners */
-  
+  background-color: rgba(20, 20, 25, 0.95);
+  /* Nearly opaque dark background */
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  /* White outline */
+  border-radius: 8px;
+  /* Radiused corners */
+
   /* Layout and appearance */
   padding: 4px;
   margin-top: 8px;
@@ -42,14 +46,16 @@ body.view-mode .community-sidebar {
   width: 100%;
   text-align: left;
   cursor: pointer;
-  
+
   /* Text and spacing */
-  color: silver; /* Silver text */
+  color: silver;
+  /* Silver text */
   font-size: 14px;
   padding: 8px 12px;
-  
+
   /* Separator line */
-  border-bottom: 1px solid rgba(192, 192, 192, 0.3); /* A subtle silver line */
+  border-bottom: 1px solid rgba(192, 192, 192, 0.3);
+  /* A subtle silver line */
 }
 
 /* Remove the separator line from the very last item */
@@ -59,15 +65,15 @@ body.view-mode .community-sidebar {
 
 /* Add a hover effect for better interactivity */
 .dropdown-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  background-color: rgba(26, 38, 62, 1);
+  color: silver;
 }
 
 /* Style for the currently selected item */
 .dropdown-item.selected {
   font-weight: bold;
   color: #ffffff;
-  background-color: rgba(0, 122, 255, 0.2);
+  background-color: rgba(26, 38, 62, 1);
 }
 
 html,
