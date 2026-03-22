@@ -63,13 +63,8 @@ body.view-mode .community-sidebar {
   border-bottom: none;
 }
 
-/* Add a hover effect for better interactivity */
-.dropdown-item:hover {
-  background-color: rgba(26, 38, 62, 1);
-  color: silver;
-}
-
-/* Style for the currently selected item */
+/* Style for hovered-over or selected item */
+.dropdown-item:hover,
 .dropdown-item.selected {
   font-weight: bold;
   color: #ffffff;
