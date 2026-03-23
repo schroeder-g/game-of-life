@@ -620,7 +620,10 @@ export function Scene() {
     state: brushState,
     actions: { setSelectorPos, setCustomBrush },
   } = useBrush();
-  const { selectorPos, selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
+  const brushStateRef = useRef(brushState);
+  useEffect(() => {
+    brushStateRef.current = brushState;
+  }, [brushState]);
 
   const lastTick = useRef(0);
   const controlsRef = useRef<any>(null);
