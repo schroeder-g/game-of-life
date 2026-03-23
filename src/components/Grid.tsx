@@ -1040,7 +1040,8 @@ export function Scene() {
     gridSize,
     actions,
     setCommunity,
-    brushState, // Depend on the whole brushState object
+    setSelectorPos,
+    setCustomBrush,
   ]);
   useFrame((state, delta) => {
     if (snapRotation.current.active && cubeRef.current) {
