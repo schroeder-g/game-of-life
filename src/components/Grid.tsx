@@ -544,10 +544,13 @@ function KeyboardSelector({
 
   return (
     <group>
-      <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />
-      <ShapePreview previewCells={previewCells} maxDist={maxDist} />
-      {/* Hide cursor when brush is active — the ShapePreview replaces it */}
-      {!isBrushActive && (
+      {/* Only show axis guides when NOT in brush mode */}
+      {!isBrushActive && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
+      
+      {/* Render either the brush preview OR the single cursor visualization */}
+      {isBrushActive ? (
+        <ShapePreview previewCells={previewCells} maxDist={maxDist} />
+      ) : (
         <>
           {/* Glow Mesh */}
           <mesh
