@@ -491,7 +491,14 @@ function KeyboardSelector({
     selectorPos[1],
     selectorPos[2],
   );
-  const cursorColor = "#ffffff";
+
+  let cursorColor = "#ffffff"; // Default white
+  if (isBirthing) {
+    cursorColor = "#8ab4f8"; // Blue, matching the "Birth" button
+  } else if (isClearing) {
+    cursorColor = "#f28b82"; // Red, matching the "Clear" button
+  }
+
   const glowColor = "#ffff00";
   const cursorOpacity = 0.3;
 
