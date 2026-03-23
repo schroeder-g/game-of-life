@@ -174,12 +174,14 @@ export function BoundingBox({ size }: { size: number }) {
 function BrushProjectionGuides({
   previewCells,
   gridSize,
+  cellMargin,
 }: {
   previewCells: { originalOffset: number[]; cell: [number, number, number] }[];
   gridSize: number;
+  cellMargin: number;
 }) {
   const offset = (gridSize - 1) / 2;
-  const channelWidth = 1.0; // Use a full cell width to make the guides look "filled"
+  const cellSize = 1 - cellMargin;
 
   const cellKeys = useMemo(() => new Set(previewCells.map(pc => pc.cell.join(','))), [previewCells]);
 
@@ -187,7 +189,8 @@ function BrushProjectionGuides({
     const pairs = new Set<string>();
     previewCells.forEach(({ cell }) => {
       const [x, y, z] = cell;
-      // Project if a cell is on the X-axis exterior of the shape
+      // Project if a cell is an endpoint along the X axis AND it's a surface cell
+      // (Being an endpoint along any axis already implies being a surface cell)
       if (!cellKeys.has(`${x - 1},${y},${z}`) || !cellKeys.has(`${x + 1},${y},${z}`)) {
         pairs.add(`${y},${z}`);
       }
@@ -199,7 +202,6 @@ function BrushProjectionGuides({
     const pairs = new Set<string>();
     previewCells.forEach(({ cell }) => {
       const [x, y, z] = cell;
-      // Project if a cell is on the Y-axis exterior of the shape
       if (!cellKeys.has(`${x},${y - 1},${z}`) || !cellKeys.has(`${x},${y + 1},${z}`)) {
         pairs.add(`${x},${z}`);
       }
@@ -211,7 +213,6 @@ function BrushProjectionGuides({
     const pairs = new Set<string>();
     previewCells.forEach(({ cell }) => {
       const [x, y, z] = cell;
-      // Project if a cell is on the Z-axis exterior of the shape
       if (!cellKeys.has(`${x},${y},${z - 1}`) || !cellKeys.has(`${x},${y},${z + 1}`)) {
         pairs.add(`${x},${y}`);
       }
@@ -219,40 +220,60 @@ function BrushProjectionGuides({
     return Array.from(pairs).map(p => p.split(',').map(Number));
   }, [previewCells, cellKeys]);
 
-  const material = (
-    <meshBasicMaterial
-      color="#ffffff"
-      transparent
-      opacity={0.07} // Lower opacity to handle bright overlaps from additive blending
-      blending={THREE.AdditiveBlending}
-      depthWrite={false} // Prevent z-fighting where guide bars intersect
-    />
-  );
+  const allGuidePositions = useMemo(() => {
+    const positions = new Set<string>();
+    
+    // X-axis channels: for each (y, z) projection, fill all x values
+    yzPairs.forEach(([y, z]) => {
+      for (let x = 0; x < gridSize; x++) {
+        positions.add(`${x},${y},${z}`);
+      }
+    });
+
+    // Y-axis channels: for each (x, z) projection, fill all y values
+    xzPairs.forEach(([x, z]) => {
+      for (let y = 0; y < gridSize; y++) {
+        positions.add(`${x},${y},${z}`);
+      }
+    });
+
+    // Z-axis channels: for each (x, y) projection, fill all z values
+    xyPairs.forEach(([x, y]) => {
+      for (let z = 0; z < gridSize; z++) {
+        positions.add(`${x},${y},${z}`);
+      }
+    });
+
+    return Array.from(positions).map(s => s.split(',').map(Number));
+  }, [yzPairs, xzPairs, xyPairs, gridSize]);
+
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const temp = new THREE.Object3D();
+    allGuidePositions.forEach((pos, i) => {
+      const [x, y, z] = pos;
+      temp.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
+      temp.scale.set(cellSize, cellSize, cellSize);
+      temp.updateMatrix();
+      meshRef.current!.setMatrixAt(i, temp.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+    meshRef.current.count = allGuidePositions.length;
+  }, [allGuidePositions, cellSize, offset, gridSize]);
 
   return (
-    <group raycast={() => null}>
-      {/* X-axis channels */}
-      {yzPairs.map(([y, z], i) => (
-        <mesh key={`x-chan-${i}`} position={[0, y - offset, gridSize - 1 - z - offset]}>
-          <boxGeometry args={[gridSize, channelWidth, channelWidth]} />
-          {material}
-        </mesh>
-      ))}
-      {/* Y-axis channels */}
-      {xzPairs.map(([x, z], i) => (
-        <mesh key={`y-chan-${i}`} position={[x - offset, 0, gridSize - 1 - z - offset]}>
-          <boxGeometry args={[channelWidth, gridSize, channelWidth]} />
-          {material}
-        </mesh>
-      ))}
-      {/* Z-axis channels */}
-      {xyPairs.map(([x, y], i) => (
-        <mesh key={`z-chan-${i}`} position={[x - offset, y - offset, 0]}>
-          <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
-          {material}
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, 50000]} raycast={() => null}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial
+        color="#ffffff"
+        transparent
+        opacity={0.07}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </instancedMesh>
   );
 }
 
@@ -381,11 +402,11 @@ function KeyboardSelector({
 }: {
   controlsRef: React.RefObject<any>;
   cubeRef: React.RefObject<THREE.Group>;
-  brushQuaternion: React.RefObject<THREE.Quaternion>;
+  brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
   cameraActionsRef: React.RefObject<any>;
 }) {
   const {
-    state: { gridSize, rotationMode },
+    state: { gridSize, rotationMode, cellMargin },
     meta: { gridRef },
   } = useSimulation();
   const {
@@ -441,15 +462,20 @@ function KeyboardSelector({
   if (rotationMode || !selectorPos) return null;
 
   const offset = (gridSize - 1) / 2;
+  const cellKeys = useMemo(() => new Set(previewCells.map(p => p.cell.join(','))), [previewCells]);
 
   return (
     <group>
       {/* Guides are now rendered based on a toggle, and from exterior faces */}
-      {showProjectionGuides && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
+      {showProjectionGuides && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} cellMargin={cellMargin} />}
       
       {/* Unified renderer for all brush cells */}
       {previewCells.map(({ cell }, i) => {
-        const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
+        const [x, y, z] = cell;
+        const isAlive = gridRef.current.get(x, y, z);
+        const isExternal = !cellKeys.has(`${x - 1},${y},${z}`) || !cellKeys.has(`${x + 1},${y},${z}`) ||
+                          !cellKeys.has(`${x},${y - 1},${z}`) || !cellKeys.has(`${x},${y + 1},${z}`) ||
+                          !cellKeys.has(`${x},${y},${z - 1}`) || !cellKeys.has(`${x},${y},${z + 1}`);
         
         let cellColor: string;
         let opacity: number;
@@ -473,16 +499,18 @@ function KeyboardSelector({
         
         return (
           <React.Fragment key={i}>
-            {/* Glow Mesh */}
-            <mesh raycast={() => null} position={position}>
-              <boxGeometry args={[1.2, 1.2, 1.2]} />
-              <meshBasicMaterial
-                color={cellColor}
-                transparent
-                opacity={opacity * 0.3}
-                depthWrite={false}
-              />
-            </mesh>
+            {/* Glow Mesh - Only for surface cells */}
+            {isExternal && (
+              <mesh raycast={() => null} position={position}>
+                <boxGeometry args={[1.2, 1.2, 1.2]} />
+                <meshBasicMaterial
+                  color={cellColor}
+                  transparent
+                  opacity={opacity * 0.3}
+                  depthWrite={false}
+                />
+              </mesh>
+            )}
             {/* Primary Cell Mesh */}
             <mesh position={position}>
               <boxGeometry args={[0.9, 0.9, 0.9]} />
