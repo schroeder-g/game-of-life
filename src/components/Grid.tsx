@@ -250,7 +250,7 @@ function BrushProjectionGuides({
   gridSize: number;
 }) {
   const offset = (gridSize - 1) / 2;
-  const channelWidth = 0.05;
+  const channelWidth = 1.0; // Use a full cell width to make the guides look "filled"
 
   const yzPairs = useMemo(() => {
     const pairs = new Set<string>();
@@ -274,8 +274,9 @@ function BrushProjectionGuides({
     <meshBasicMaterial
       color="#ffffff"
       transparent
-      opacity={0.1}
+      opacity={0.07} // Lower opacity to handle bright overlaps from additive blending
       blending={THREE.AdditiveBlending}
+      depthWrite={false} // Prevent z-fighting where guide bars intersect
     />
   );
 
