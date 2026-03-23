@@ -1269,7 +1269,7 @@ export function AppHeaderPanel() {
             <button
               className={`glass-button edit-action-button alive-button primary ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-              title="Toggle Cell(s) (Space)"
+              title="Activate/Deactivate (Paint) (Space)"
             >
               <BabyIcon />
             </button>

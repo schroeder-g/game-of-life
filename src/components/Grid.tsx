@@ -456,7 +456,7 @@ function CursorInfo() {
   let modeStyle: React.CSSProperties = {};
 
   if (paintMode === 1) {
-    modeText = "TOGGLE";
+    modeText = "ACTIVE";
     modeStyle = { color: "#8ab4f8", fontWeight: "bold" };
   } else if (paintMode === -1) {
     modeText = "CLEAR";
