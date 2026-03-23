@@ -403,7 +403,7 @@ function RulesSection() {
 function SelectorPositionSection() {
   const {
     state: { gridSize, cameraOrientation },
-    meta: { eventBus },
+    meta: { eventBus, cameraActionsRef },
   } = useSimulation();
   const {
     state: brushState,
@@ -517,41 +517,56 @@ function SelectorPositionSection() {
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
+      const { isBirthing, isClearing } = brushState;
+
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
-
+          
         const nextPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
           currentPos[2] + delta[2],
         ];
-
-        // Conditional clamping:
-        // If brush is active, allow outside as long as it overlaps the grid.
-        // If no brush, clamp strictly to grid bounds.
+    
         const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
-
+          
+        let finalPos: [number, number, number];
+        let moved = false;
+    
+        // Determine the final, allowed position
         if (selectedShape !== "None") {
           if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
-            return nextPos;
+            finalPos = nextPos;
+            moved = true;
           } else {
-            // If the move would pull it completely out, block it (return current)
-            return currentPos;
+            finalPos = currentPos;
           }
         } else {
-          // Strict clamping for single cell
           const clampedX = Math.max(0, Math.min(gridSize - 1, nextPos[0]));
           const clampedY = Math.max(0, Math.min(gridSize - 1, nextPos[1]));
           const clampedZ = Math.max(0, Math.min(gridSize - 1, nextPos[2]));
-          return [clampedX, clampedY, clampedZ];
+          finalPos = [clampedX, clampedY, clampedZ];
+          if (finalPos.join(',') !== currentPos.join(',')) {
+            moved = true;
+          }
         }
+          
+        // Perform the paint action as a side-effect if the cursor moved
+        if (moved && (isBirthing || isClearing)) {
+          if (isBirthing) {
+            cameraActionsRef.current?.birthBrushCells(finalPos, brushState);
+          } else if (isClearing) {
+            cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
+          }
+        }
+          
+        // Return the final position to update the state
+        return finalPos;
       });
     });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [eventBus, setSelectorPos, gridSize, brushState]);
+    
+    return () => unsubscribe();
+  }, [eventBus, setSelectorPos, gridSize, brushState, cameraActionsRef]);
 
   return (
     <section className="menu-section">

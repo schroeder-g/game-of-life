@@ -502,24 +502,6 @@ function KeyboardSelector({
 
   const isBrushActive = selectedShape !== "None";
 
-  const lastPaintedPos = useRef<string | null>(null);
-  useEffect(() => {
-    if (!selectorPos || (!isBirthing && !isClearing)) {
-      lastPaintedPos.current = null;
-      return;
-    }
-
-    const posKey = selectorPos.join(',');
-    if (posKey === lastPaintedPos.current) return;
-
-    if (isBirthing) {
-      cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
-    } else if (isClearing) {
-      cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
-    }
-    lastPaintedPos.current = posKey;
-
-  }, [selectorPos, isBirthing, isClearing, cameraActionsRef, brushState]);
 
   if (rotationMode || !selectorPos) return null;
 
