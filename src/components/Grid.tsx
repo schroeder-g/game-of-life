@@ -1108,56 +1108,6 @@ export function Scene() {
       }
     }
 
-    if (!rotationMode) {
-      const now = state.clock.getElapsedTime();
-      if (now - lastSelectorMoveTime.current > 0.1) {
-        let direction: string | null = null;
-        if (movement.current.backward) direction = "w";
-        else if (movement.current.forward) direction = "x";
-        else if (movement.current.left) direction = "a";
-        else if (movement.current.right) direction = "d";
-        else if (movement.current.up) direction = "q";
-        else if (movement.current.down) direction = "z";
-
-        if (selectorPos && direction && cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown') {
-          const face = cameraOrientation.face as CameraFace;
-          const rotation = cameraOrientation.rotation as CameraRotation;
-          const deltaMove = (KEY_MAP[face][rotation] as any)[direction];
-          if (deltaMove) {
-            const nextX = selectorPos[0] + deltaMove[0];
-            const nextY = selectorPos[1] + deltaMove[1];
-            const nextZ = selectorPos[2] + deltaMove[2];
-            // const nextPos: [number, number, number] = [nextX, nextY, nextZ]; // This line was removed in the diff, but it's not explicitly in the instruction. Keeping it as it was.
-
-            let allowMove = false;
-            if (selectedShape === "None") {
-              if (nextX >= 0 && nextX < gridSize && nextY >= 0 && nextY < gridSize && nextZ >= 0 && nextZ < gridSize) {
-                allowMove = true;
-              }
-            } else {
-              const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-              const rotatedOffsets = offsets.map(off => {
-                const v = new THREE.Vector3(...off);
-                if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
-                return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
-              });
-
-              const isAnyInside = rotatedOffsets.some(([dx, dy, dz]) => {
-                const tx = nextX + dx;
-                const ty = nextY + dy;
-                const tz = nextZ + dz;
-                return tx >= 0 && tx < gridSize && ty >= 0 && ty < gridSize && tz >= 0 && tz < gridSize;
-              });
-              if (isAnyInside) allowMove = true;
-            }
-
-            if (allowMove) {
-              eventBus.emit("moveSelector", { delta: deltaMove });
-              lastSelectorMoveTime.current = now;
-            }
-          }
-        }
-      }
     } else {
       const panMaxSpeed = panSpeed;
       const dollyMaxSpeed = panSpeed * 1.5;
