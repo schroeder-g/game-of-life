@@ -554,7 +554,7 @@ function SelectorPositionSection() {
         // If the cursor successfully moved and a paint mode is active, perform the action.
         if (moved && brushState.paintMode !== 0) {
           if (brushState.paintMode === 1) {
-            cameraActionsRef.current?.toggleBrushCells(finalPos, brushState);
+            cameraActionsRef.current?.activateBrushCells(finalPos, brushState);
           } else if (brushState.paintMode === -1) {
             cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
           }
@@ -1269,7 +1269,7 @@ export function AppHeaderPanel() {
             <button
               className={`glass-button edit-action-button alive-button primary ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-              title="Activate/Deactivate (Paint) (Space)"
+              title="Activate (Paint) (Space)"
             >
               <BabyIcon />
             </button>
