@@ -160,26 +160,6 @@ export function useAppShortcuts() {
               handled = true;
             }
           }
-        } else {
-          switch (key) {
-            case "[": changeSize(-1, 0); break;
-            case "]": changeSize(1, 0); break;
-            case "escape": clearShape(); break;
-            case "e": setRotationMode(false); break;
-            case "v": setRotationMode(true); break;
-            case "f": fitDisplay(); break;
-            case "s": recenter(); break;
-            case "l": squareUp(); break;
-            case "r": if (hasInitialState) reset(); break;
-            case " ":
-              setPaintMode(prev => (prev === 1 ? 0 : 1));
-              break;
-            case "delete":
-            case "backspace":
-              setPaintMode(prev => (prev === -1 ? 0 : -1));
-              break;
-            default: handled = false;
-          }
         } else if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
           const arrowMap: { [key: string]: string } = {
             "arrowup": e.shiftKey ? "q" : "w",

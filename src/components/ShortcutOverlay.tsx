@@ -114,13 +114,13 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                 <div className="shortcut-row">
                   <span className="shortcut-desc">Pan Camera</span>
                   <div className="shortcut-keys">
-                    <kbd>A</kbd> <kbd>D</kbd> (Left/Right), <kbd>Q</kbd> <kbd>Z</kbd> (Up/Down)
+                    <kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> (L/R), <kbd>Q</kbd><kbd>Z</kbd> / <kbd>⇧</kbd>+<kbd>↑</kbd><kbd>↓</kbd> (U/D)
                   </div>
                 </div>
                 <div className="shortcut-row">
                   <span className="shortcut-desc">Dolly Camera</span>
                   <div className="shortcut-keys">
-                    <kbd>W</kbd> (In) / <kbd>X</kbd> (Out)
+                    <kbd>W</kbd><kbd>X</kbd> / <kbd>↑</kbd><kbd>↓</kbd> (In/Out)
                   </div>
                 </div>
                 <div className="shortcut-row">
@@ -163,19 +163,13 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                     Move Cursor (screen relative)
                   </span>
                   <div className="shortcut-keys">
-                    <kbd>W</kbd> <kbd>X</kbd> <kbd>A</kbd> <kbd>D</kbd> <kbd>Q</kbd> <kbd>Z</kbd>
+                    <kbd>W</kbd><kbd>A</kbd><kbd>X</kbd><kbd>D</kbd><kbd>Q</kbd><kbd>Z</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
                   </div>
                 </div>
                 <div className="shortcut-row">
                   <span className="shortcut-desc">Activate Paint Mode</span>
                   <div className="shortcut-keys">
                     <kbd>␣ Space</kbd>
-                  </div>
-                </div>
-                <div className="shortcut-row">
-                  <span className="shortcut-desc">Deactivate Cell(s)</span>
-                  <div className="shortcut-keys">
-                    <kbd>Delete</kbd> / <kbd>Backspace</kbd>
                   </div>
                 </div>
               </div>
