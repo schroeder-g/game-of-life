@@ -188,68 +188,6 @@ function ShapePreview({
     state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion, customOffsets },
   } = useBrush();
   const offset = (gridSize - 1) / 2;
-  const [azimuth, setAzimuth] = useState(0);
-  const [polar, setPolar] = useState(Math.PI / 4);
-
-  useFrame(() => {
-    const newAzimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-    const newPolar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
-    if (Math.abs(newAzimuth - azimuth) > 0.1) {
-      setAzimuth(newAzimuth);
-    }
-    if (Math.abs(newPolar - polar) > 0.1) {
-      setPolar(newPolar);
-    }
-  });
-
-  const { previewCells, maxDist } = useMemo(() => {
-    if (selectedShape === "None" || !selectorPos) return { previewCells: [], maxDist: 0 };
-
-    const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-    if (offsets.length === 0) return { previewCells: [], maxDist: 0 };
-
-    const maxDist = Math.max(...offsets.map(o => Math.sqrt(o[0] ** 2 + o[1] ** 2 + o[2] ** 2)));
-
-    const previewCells = offsets
-      .map((originalOffset) => {
-        const [dx, dy, dz] = originalOffset;
-        const v = new THREE.Vector3(dx, dy, dz);
-
-        if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
-
-        const cell = [
-          selectorPos[0] + Math.round(v.x),
-          selectorPos[1] + Math.round(v.y),
-          selectorPos[2] + Math.round(v.z),
-        ] as [number, number, number];
-
-        return { originalOffset, cell };
-      })
-      .filter(
-        ({ cell: [x, y, z] }) =>
-          x >= 0 &&
-          x < gridSize &&
-          y >= 0 &&
-          y < gridSize &&
-          z >= 0 &&
-          z < gridSize,
-      );
-
-    return { previewCells, maxDist };
-  }, [
-    selectorPos,
-    selectedShape,
-    shapeSize,
-    isHollow,
-    gridSize,
-    azimuth,
-    polar,
-    brushRotationVersion,
-    brushQuaternion,
-    cubeRef,
-    customOffsets,
-  ]);
-
   if (previewCells.length === 0) return null;
 
   return (
@@ -502,6 +440,66 @@ function KeyboardSelector({
 
   const isBrushActive = selectedShape !== "None";
 
+  const [azimuth, setAzimuth] = useState(0);
+  const [polar, setPolar] = useState(Math.PI / 4);
+
+  useFrame(() => {
+    const newAzimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
+    const newPolar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+    if (Math.abs(newAzimuth - azimuth) > 0.1) {
+      setAzimuth(newAzimuth);
+    }
+    if (Math.abs(newPolar - polar) > 0.1) {
+      setPolar(newPolar);
+    }
+  });
+
+  const { previewCells, maxDist } = useMemo(() => {
+    if (selectedShape === "None" || !selectorPos) return { previewCells: [], maxDist: 0 };
+
+    const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+    if (offsets.length === 0) return { previewCells: [], maxDist: 0 };
+
+    const maxDist = Math.max(...offsets.map(o => Math.sqrt(o[0] ** 2 + o[1] ** 2 + o[2] ** 2)));
+
+    const previewCells = offsets
+      .map((originalOffset) => {
+        const [dx, dy, dz] = originalOffset;
+        const v = new THREE.Vector3(dx, dy, dz);
+
+        if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
+
+        const cell = [
+          selectorPos[0] + Math.round(v.x),
+          selectorPos[1] + Math.round(v.y),
+          selectorPos[2] + Math.round(v.z),
+        ] as [number, number, number];
+
+        return { originalOffset, cell };
+      })
+      .filter(
+        ({ cell: [x, y, z] }) =>
+          x >= 0 &&
+          x < gridSize &&
+          y >= 0 &&
+          y < gridSize &&
+          z >= 0 &&
+          z < gridSize,
+      );
+
+    return { previewCells, maxDist };
+  }, [
+    selectorPos,
+    selectedShape,
+    shapeSize,
+    isHollow,
+    gridSize,
+    azimuth,
+    polar,
+    brushRotationVersion,
+    brushQuaternion,
+    customOffsets,
+  ]);
 
   if (rotationMode || !selectorPos) return null;
 
@@ -525,8 +523,8 @@ function KeyboardSelector({
 
   return (
     <group>
-      <AxisChannels selectorPos={selectorPos} gridSize={gridSize} />
-      <ShapePreview controlsRef={controlsRef} cubeRef={cubeRef} brushQuaternion={brushQuaternion} />
+      <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />
+      <ShapePreview previewCells={previewCells} maxDist={maxDist} />
       {/* Hide cursor when brush is active — the ShapePreview replaces it */}
       {!isBrushActive && (
         <>
