@@ -1350,6 +1350,16 @@ kbd {
   color: #ff5252;
 }
 
+.glass-button.success {
+  background: rgba(87, 171, 90, 0.15); /* Greenish background */
+  border-color: rgba(87, 171, 90, 0.3);
+  color: #57ab5a;
+}
+
+.glass-button.success:hover:not(:disabled) {
+  background: rgba(87, 171, 90, 0.25);
+}
+
 /* Active state for glass buttons */
 .glass-button.active {
   transform: translateY(1px);
@@ -1364,5 +1374,10 @@ kbd {
   background: #f28b82;
   color: #0d1117;
   border-color: #f28b82;
+}
+.glass-button.success.active {
+  background: #57ab5a;
+  color: #ffffff;
+  border-color: #57ab5a;
 }
 
