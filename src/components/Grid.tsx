@@ -620,6 +620,7 @@ export function Scene() {
     state: brushState,
     actions: { setSelectorPos, setCustomBrush },
   } = useBrush();
+  const { selectorPos, brushQuaternion } = brushState;
   const brushStateRef = useRef(brushState);
   useEffect(() => {
     brushStateRef.current = brushState;
