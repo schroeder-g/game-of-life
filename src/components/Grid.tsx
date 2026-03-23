@@ -172,22 +172,18 @@ export function BoundingBox({ size }: { size: number }) {
 }
 
 function ShapePreview({
-  controlsRef,
-  cubeRef,
-  brushQuaternion,
+  previewCells,
+  maxDist,
 }: {
-  controlsRef: React.RefObject<any>;
-  cubeRef: React.RefObject<THREE.Group>;
-  brushQuaternion: React.RefObject<THREE.Quaternion>;
+  previewCells: { originalOffset: number[]; cell: [number, number, number] }[];
+  maxDist: number;
 }) {
   const {
     state: { gridSize },
     meta: { gridRef },
   } = useSimulation();
-  const {
-    state: { selectedShape, shapeSize, isHollow, selectorPos, brushRotationVersion, customOffsets },
-  } = useBrush();
   const offset = (gridSize - 1) / 2;
+
   if (previewCells.length === 0) return null;
 
   return (
@@ -461,7 +457,7 @@ function KeyboardSelector({
   const {
     state: brushState,
   } = useBrush();
-  const { selectorPos, selectedShape, paintMode } = brushState;
+  const { selectorPos, selectedShape, paintMode, shapeSize, isHollow, customOffsets, brushRotationVersion } = brushState;
 
   const isBrushActive = selectedShape !== "None";
 
