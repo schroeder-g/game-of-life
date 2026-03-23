@@ -79,6 +79,14 @@ const XSquareIcon = () => (
   </svg>
 );
 
+const PaintBrushIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18.37 2.63a2.12 2.12 0 1 1 3 3L12 15l-4 1 1-4Z" />
+    <path d="M14 14c.59-.59 1.5-1.5 2-2" />
+    <path d="M7 21a4 4 0 0 0 4-4" />
+  </svg>
+);
+
 const PlusIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19" />
@@ -1219,6 +1227,100 @@ function SceneSelectorDropdown() {
   );
 }
 
+function BrushSelectorDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [hoveredName, setHoveredName] = useState<string | null>(null);
+
+  const {
+    state: { selectedShape, brushQuaternion },
+    actions: { setSelectedShape, setCustomBrush, incrementBrushRotationVersion },
+  } = useBrush();
+  
+  const { state: { community, cameraOrientation } } = useSimulation();
+
+  const initBrushOrientation = useCallback(() => {
+    const face = cameraOrientation.face;
+    const rotation = cameraOrientation.rotation;
+    if (face === 'unknown' || rotation === 'unknown') {
+      brushQuaternion.current.identity();
+      return;
+    }
+    const mapping = KEY_MAP[face as CameraFace][rotation as CameraRotation] as any;
+    const right = mapping.d as number[];
+    const up = mapping.w as number[];
+    const depth = mapping.q as number[];
+    const m = new THREE.Matrix4().set(
+      right[0], up[0], depth[0], 0,
+      right[1], up[1], depth[1], 0,
+      right[2], up[2], depth[2], 0,
+      0, 0, 0, 1,
+    );
+    brushQuaternion.current.setFromRotationMatrix(m);
+    incrementBrushRotationVersion();
+  }, [cameraOrientation, brushQuaternion, incrementBrushRotationVersion]);
+
+  const handleSelectShape = useCallback((shape: ShapeType) => {
+    if (shape === "Selected Community") {
+      setCustomBrush(community);
+    } else {
+      setSelectedShape(shape);
+      initBrushOrientation();
+    }
+    setIsOpen(false);
+  }, [setCustomBrush, community, setSelectedShape, initBrushOrientation]);
+
+  // Effect to close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownRef]);
+
+  const handleButtonClick = () => {
+    setIsOpen(prev => !prev);
+  };
+
+  return (
+    <div className="scene-selector-dropdown" ref={dropdownRef}>
+      <button
+        className="glass-button"
+        onClick={handleButtonClick}
+        data-tooltip-bottom="Select Brush Shape"
+      >
+        <PaintBrushIcon />
+      </button>
+      {isOpen && (
+        <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
+          {SHAPES.map((name) => {
+            const isSelected = name === selectedShape;
+            const isHovered = name === hoveredName;
+            const isDisabled = name === "Selected Community" && community.length === 0;
+
+            const isActive = isHovered || (hoveredName === null && isSelected);
+
+            return (
+              <button
+                key={name}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`}
+                onClick={() => handleSelectShape(name)}
+                onMouseEnter={() => setHoveredName(name)}
+                disabled={isDisabled}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppHeaderPanel() {
   const {
     state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation },
@@ -1262,6 +1364,7 @@ export function AppHeaderPanel() {
         <SceneSelectorDropdown />
         {!rotationMode && (
           <>
+            <BrushSelectorDropdown />
             <button
               className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
