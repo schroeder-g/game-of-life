@@ -167,7 +167,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
                   </div>
                 </div>
                 <div className="shortcut-row">
-                  <span className="shortcut-desc">Activate Cell(s)</span>
+                  <span className="shortcut-desc">Toggle Cell(s)</span>
                   <div className="shortcut-keys">
                     <kbd>␣ Space</kbd>
                   </div>

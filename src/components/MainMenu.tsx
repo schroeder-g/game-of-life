@@ -1271,10 +1271,10 @@ export function AppHeaderPanel() {
               className="glass-button edit-action-button alive-button primary"
               onClick={() => {
                 if (selectorPos) {
-                  cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
+                  cameraActionsRef.current?.toggleBrushCells(selectorPos, brushState);
                 }
               }}
-              title="Birth (Space)"
+              title="Toggle Cell(s) (Space)"
             >
               <BabyIcon />
             </button>

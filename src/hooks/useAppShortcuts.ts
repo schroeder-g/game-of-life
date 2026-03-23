@@ -155,7 +155,7 @@ export function useAppShortcuts() {
             case "r": if (hasInitialState) reset(); break;
             case " ":
               if (selectorPos) {
-                cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
+                cameraActionsRef.current?.toggleBrushCells(selectorPos, brushState);
               }
               break;
             case "delete":

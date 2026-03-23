@@ -956,16 +956,16 @@ export function Scene() {
         const axis = new THREE.Vector3().fromArray(axisArray);
         cameraActionsRef.current?.rotateBrush(axis, angle);
       },
-      birthBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
+      toggleBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
         if (!pos) return;
 
-        let cellsToBirth: [number, number, number][];
+        let cellsToConsider: [number, number, number][];
 
         if (brush.selectedShape === "None") {
-          cellsToBirth = [pos];
+          cellsToConsider = [pos];
         } else {
           const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
-          cellsToBirth = offsets
+          cellsToConsider = offsets
             .map(([dx, dy, dz]) => {
               const v = new THREE.Vector3(dx, dy, dz);
               v.applyQuaternion(brush.brushQuaternion.current);
@@ -978,9 +978,26 @@ export function Scene() {
             .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
         }
 
-        if (cellsToBirth.length > 0) {
+        if (cellsToConsider.length > 0) {
+          const cellsToBirth: [number, number, number][] = [];
+          const cellsToClear: [number, number, number][] = [];
+
+          cellsToConsider.forEach(cellCoords => {
+            const [x, y, z] = cellCoords;
+            if (gridRef.current.get(x, y, z)) {
+              cellsToClear.push(cellCoords);
+            } else {
+              cellsToBirth.push(cellCoords);
+            }
+          });
+
+          if (cellsToBirth.length > 0) {
+            actions.setCells(cellsToBirth);
+          }
+          if (cellsToClear.length > 0) {
+            actions.deleteCells(cellsToClear);
+          }
           setCommunity([]); // Clear community view when manually editing
-          actions.setCells(cellsToBirth);
         }
       },
       clearBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
