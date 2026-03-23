@@ -517,9 +517,11 @@ function SelectorPositionSection() {
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
+      const { isBirthing, isClearing } = brushState;
+
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
-
+        
         const nextPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
@@ -527,13 +529,15 @@ function SelectorPositionSection() {
         ];
 
         const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
-
+        
         let finalPos: [number, number, number];
+        let moved = false;
 
-        // Determine the final, allowed position
+        // Determine the final, allowed position for the cursor
         if (selectedShape !== "None") {
           if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
             finalPos = nextPos;
+            moved = true;
           } else {
             finalPos = currentPos;
           }
@@ -542,15 +546,28 @@ function SelectorPositionSection() {
           const clampedY = Math.max(0, Math.min(gridSize - 1, nextPos[1]));
           const clampedZ = Math.max(0, Math.min(gridSize - 1, nextPos[2]));
           finalPos = [clampedX, clampedY, clampedZ];
+          if (finalPos.join(',') !== currentPos.join(',')) {
+            moved = true;
+          }
         }
-
+        
+        // --- THIS IS THE NEW PAINT-ON-MOVE LOGIC ---
+        // If the cursor successfully moved and a paint mode is active, perform the action.
+        if (moved && (isBirthing || isClearing)) {
+          if (isBirthing) {
+            cameraActionsRef.current?.birthBrushCells(finalPos, brushState);
+          } else if (isClearing) {
+            cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
+          }
+        }
+        
         // Return the final position to update the state
         return finalPos;
       });
     });
 
     return () => unsubscribe();
-  }, [eventBus, setSelectorPos, gridSize, brushState]);
+  }, [eventBus, setSelectorPos, gridSize, brushState, cameraActionsRef]);
 
   return (
     <section className="menu-section">
