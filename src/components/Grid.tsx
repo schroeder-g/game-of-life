@@ -1044,16 +1044,6 @@ export function Scene() {
 
         cubeRef.current.rotateOnWorldAxis(snapRotation.current.axis, angleThisFrame);
 
-        if (cameraRef.current && controlsRef.current) {
-          const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
-          setCameraOrientation(orientation);
-
-          if (orientation.face !== "unknown") {
-            const faceName = orientation.face.charAt(0).toUpperCase() + orientation.face.slice(1);
-            const rotationStr = orientation.rotation !== "unknown" ? `${orientation.rotation}°` : "";
-            setSnapMessage(`Rotating to: ${faceName}${rotationStr ? ` (${rotationStr})` : ""}`);
-          }
-        }
 
         snapRotation.current.lastAngle = currentAngle;
       }
