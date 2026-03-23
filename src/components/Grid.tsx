@@ -1048,6 +1048,31 @@ export function Scene() {
       }
     }
 
+    if (autoSquaringAnimation.current.active && cubeRef.current) {
+      if (autoSquaringAnimation.current.startTime === 0) {
+        autoSquaringAnimation.current.startTime = state.clock.getElapsedTime();
+      }
+      const elapsedTime = state.clock.getElapsedTime() - autoSquaringAnimation.current.startTime;
+      let progress = elapsedTime / autoSquaringAnimation.current.duration;
+
+      if (progress >= 1) {
+        cubeRef.current.quaternion.copy(autoSquaringAnimation.current.target);
+        autoSquaringAnimation.current.active = false;
+      } else {
+        // ease in-out cubic
+        progress = progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+        THREE.Quaternion.slerp(
+          autoSquaringAnimation.current.start,
+          autoSquaringAnimation.current.target,
+          cubeRef.current.quaternion,
+          progress
+        );
+      }
+    }
+     
     if (rotationMode) {
       const panMaxSpeed = panSpeed;
       const dollyMaxSpeed = panSpeed * 1.5;
