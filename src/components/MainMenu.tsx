@@ -79,6 +79,19 @@ const XSquareIcon = () => (
   </svg>
 );
 
+const PlusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const MinusIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
 function ActionsSection() {
   const {
     state: { savedConfigs, selectedConfigName },
@@ -1267,18 +1280,18 @@ export function AppHeaderPanel() {
         {!rotationMode && (
           <>
             <button
-              className={`glass-button edit-action-button alive-button primary ${paintMode === 1 ? 'active' : ''}`}
+              className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
               title="Activate (Paint) (Space)"
             >
-              <BabyIcon />
+              <PlusIcon />
             </button>
             <button
               className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
               title="Clear (Delete)"
             >
-              <XSquareIcon />
+              <MinusIcon />
             </button>
           </>
         )}
