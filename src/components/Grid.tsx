@@ -246,56 +246,81 @@ function ShapePreview({
   );
 }
 
-function AxisChannels({
-  selectorPos,
+function BrushProjectionGuides({
+  previewCells,
   gridSize,
 }: {
-  selectorPos: [number, number, number];
+  previewCells: { originalOffset: number[]; cell: [number, number, number] }[];
   gridSize: number;
 }) {
   const offset = (gridSize - 1) / 2;
   const channelWidth = 0.05;
 
+  const bounds = useMemo(() => {
+    if (previewCells.length === 0) return null;
+
+    const cells = previewCells.map(p => p.cell);
+
+    const minX = Math.min(...cells.map(c => c[0]));
+    const maxX = Math.max(...cells.map(c => c[0]));
+    const minY = Math.min(...cells.map(c => c[1]));
+    const maxY = Math.max(...cells.map(c => c[1]));
+    const minZ = Math.min(...cells.map(c => c[2]));
+    const maxZ = Math.max(...cells.map(c => c[2]));
+
+    return { minX, maxX, minY, maxY, minZ, maxZ };
+  }, [previewCells]);
+
+  if (!bounds) return null;
+
+  const { minX, maxX, minY, maxY, minZ, maxZ } = bounds;
+
+  // X-axis channel (projects onto YZ plane)
+  const xSize: [number, number, number] = [gridSize, maxY - minY + 1, maxZ - minZ + 1];
+  const xPos: [number, number, number] = [
+    0,
+    (minY + maxY) / 2 - offset,
+    gridSize - 1 - ((minZ + maxZ) / 2) - offset,
+  ];
+
+  // Y-axis channel (projects onto XZ plane)
+  const ySize: [number, number, number] = [maxX - minX + 1, gridSize, maxZ - minZ + 1];
+  const yPos: [number, number, number] = [
+    (minX + maxX) / 2 - offset,
+    0,
+    gridSize - 1 - ((minZ + maxZ) / 2) - offset,
+  ];
+
+  // Z-axis channel (projects onto XY plane)
+  const zSize: [number, number, number] = [maxX - minX + 1, maxY - minY + 1, gridSize];
+  const zPos: [number, number, number] = [
+    (minX + maxX) / 2 - offset,
+    (minY + maxY) / 2 - offset,
+    0,
+  ];
+
+  const material = (
+    <meshBasicMaterial
+      color="#ffffff"
+      transparent
+      opacity={0.1}
+      blending={THREE.AdditiveBlending}
+    />
+  );
+
   return (
-    <group>
-      {/* X-axis channel */}
-      <mesh
-        position={[0, selectorPos[1] - offset, (gridSize - 1 - selectorPos[2]) - offset]}
-        raycast={() => null}
-      >
-        <boxGeometry args={[gridSize, channelWidth, channelWidth]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.1}
-          blending={THREE.AdditiveBlending}
-        />
+    <group raycast={() => null}>
+      <mesh position={xPos}>
+        <boxGeometry args={xSize} />
+        {material}
       </mesh>
-      {/* Y-axis channel */}
-      <mesh
-        position={[selectorPos[0] - offset, 0, (gridSize - 1 - selectorPos[2]) - offset]}
-        raycast={() => null}
-      >
-        <boxGeometry args={[channelWidth, gridSize, channelWidth]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.1}
-          blending={THREE.AdditiveBlending}
-        />
+      <mesh position={yPos}>
+        <boxGeometry args={ySize} />
+        {material}
       </mesh>
-      {/* Z-axis channel */}
-      <mesh
-        position={[selectorPos[0] - offset, selectorPos[1] - offset, 0]}
-        raycast={() => null}
-      >
-        <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.1}
-          blending={THREE.AdditiveBlending}
-        />
+      <mesh position={zPos}>
+        <boxGeometry args={zSize} />
+        {material}
       </mesh>
     </group>
   );
