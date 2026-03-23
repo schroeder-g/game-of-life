@@ -1127,7 +1127,7 @@ export function Scene() {
       } else if (movement.current.rotatePeriod) {
         const dir = invertPitch ? -1 : 1;
         velocity.current.rotateX = THREE.MathUtils.clamp(velocity.current.rotateX - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
-      } else if (!coastingAnimation.current.active) {
+      } else {
         // Decelerate
         if (velocity.current.rotateX > 0) velocity.current.rotateX = Math.max(0, velocity.current.rotateX - rotationDeceleration * delta);
         else if (velocity.current.rotateX < 0) velocity.current.rotateX = Math.min(0, velocity.current.rotateX + rotationDeceleration * delta);
@@ -1140,7 +1140,7 @@ export function Scene() {
       } else if (movement.current.rotateSemicolon) {
         const dir = invertYaw ? -1 : 1;
         velocity.current.rotateY = THREE.MathUtils.clamp(velocity.current.rotateY - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
-      } else if (!coastingAnimation.current.active) {
+      } else {
         if (velocity.current.rotateY > 0) velocity.current.rotateY = Math.max(0, velocity.current.rotateY - rotationDeceleration * delta);
         else if (velocity.current.rotateY < 0) velocity.current.rotateY = Math.min(0, velocity.current.rotateY + rotationDeceleration * delta);
       }
@@ -1152,7 +1152,7 @@ export function Scene() {
       } else if (movement.current.rotateP) {
         const dir = invertRoll ? -1 : 1;
         velocity.current.roll = THREE.MathUtils.clamp(velocity.current.roll - dir * rollAcceleration * delta, -rollMaxSpeed, rollMaxSpeed);
-      } else if (!coastingAnimation.current.active) {
+      } else {
         if (velocity.current.roll > 0) velocity.current.roll = Math.max(0, velocity.current.roll - rollDeceleration * delta);
         else if (velocity.current.roll < 0) velocity.current.roll = Math.min(0, velocity.current.roll + rollDeceleration * delta);
       }
@@ -1278,7 +1278,12 @@ export function Scene() {
      
       const isRotating = Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001;
       if (!isRotating && wasRotating.current && autoSquare) {
-        // This block is now mostly handled by the coasting logic above
+        // This block fires when rotation stops.
+        if (coastingAnimation.current.active) {
+          // Coasting has finished without an orientation change.
+          coastingAnimation.current.active = false;
+          cameraActionsRef.current?.squareUp();
+        }
       }
       wasRotating.current = isRotating;
      
