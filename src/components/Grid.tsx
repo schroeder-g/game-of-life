@@ -616,6 +616,11 @@ export function Scene() {
   });
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
+  const coastingAnimation = useRef({
+    active: false,
+    startOrientation: null as CameraOrientation | null,
+  });
+  const wasPressingRotationKeyRef = useRef(false);
   const dragStartRef = useRef({
     active: false,
     azimuth: 0,
@@ -1081,6 +1086,29 @@ export function Scene() {
      
     if (rotationMode) {
       const panMaxSpeed = panSpeed;
+
+      const isPressingRotationKey =
+        movement.current.rotateO ||
+        movement.current.rotatePeriod ||
+        movement.current.rotateK ||
+        movement.current.rotateSemicolon ||
+        movement.current.rotateI ||
+        movement.current.rotateP;
+
+      if (autoSquare) {
+        if (!isPressingRotationKey && wasPressingRotationKeyRef.current && !coastingAnimation.current.active) {
+          // just released a key
+          if (Math.abs(velocity.current.rotateX) > 0.01 || Math.abs(velocity.current.rotateY) > 0.01) {
+            coastingAnimation.current.active = true;
+            coastingAnimation.current.startOrientation = { ...cameraOrientation };
+          }
+        } else if (isPressingRotationKey) {
+          coastingAnimation.current.active = false;
+        }
+      }
+      wasPressingRotationKeyRef.current = isPressingRotationKey;
+
+
       const dollyMaxSpeed = panSpeed * 1.5;
       const rotationSpeedAdj = (rotationSpeed - 1) / 99;
       const actualRotationSpeed = 10 + rotationSpeedAdj * (180 - 10);
@@ -1109,7 +1137,7 @@ export function Scene() {
       } else if (movement.current.rotatePeriod) {
         const dir = invertPitch ? -1 : 1;
         velocity.current.rotateX = THREE.MathUtils.clamp(velocity.current.rotateX - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
-      } else {
+      } else if (!coastingAnimation.current.active) {
         // Decelerate
         if (velocity.current.rotateX > 0) velocity.current.rotateX = Math.max(0, velocity.current.rotateX - rotationDeceleration * delta);
         else if (velocity.current.rotateX < 0) velocity.current.rotateX = Math.min(0, velocity.current.rotateX + rotationDeceleration * delta);
@@ -1122,7 +1150,7 @@ export function Scene() {
       } else if (movement.current.rotateSemicolon) {
         const dir = invertYaw ? -1 : 1;
         velocity.current.rotateY = THREE.MathUtils.clamp(velocity.current.rotateY - dir * rotationAcceleration * delta, -rotateMaxSpeed, rotateMaxSpeed);
-      } else {
+      } else if (!coastingAnimation.current.active) {
         if (velocity.current.rotateY > 0) velocity.current.rotateY = Math.max(0, velocity.current.rotateY - rotationDeceleration * delta);
         else if (velocity.current.rotateY < 0) velocity.current.rotateY = Math.min(0, velocity.current.rotateY + rotationDeceleration * delta);
       }
@@ -1134,7 +1162,7 @@ export function Scene() {
       } else if (movement.current.rotateP) {
         const dir = invertRoll ? -1 : 1;
         velocity.current.roll = THREE.MathUtils.clamp(velocity.current.roll - dir * rollAcceleration * delta, -rollMaxSpeed, rollMaxSpeed);
-      } else {
+      } else if (!coastingAnimation.current.active) {
         if (velocity.current.roll > 0) velocity.current.roll = Math.max(0, velocity.current.roll - rollDeceleration * delta);
         else if (velocity.current.roll < 0) velocity.current.roll = Math.min(0, velocity.current.roll + rollDeceleration * delta);
       }
@@ -1191,10 +1219,6 @@ export function Scene() {
           camera.up.applyQuaternion(quaternion);
 
           controlsRef.current.update();
-          const orientation = getOrientation(camera, controlsRef.current.target, cubeRef.current);
-          if (!isMoving && (orientation.face !== cameraOrientation.face || orientation.rotation !== cameraOrientation.rotation)) {
-            setCameraOrientation(orientation);
-          }
         }
       } else {
         velocity.current.roll = 0;
@@ -1218,8 +1242,17 @@ export function Scene() {
             cube.rotateOnWorldAxis(camUp, -velocity.current.rotateY * delta);
           }
 
-          const orientation = getOrientation(camera, controlsRef.current.target, cube);
-          setCameraOrientation(orientation);
+          if (coastingAnimation.current.active) {
+            const start = coastingAnimation.current.startOrientation;
+            const currentOrientation = getOrientation(camera, controlsRef.current.target, cube);
+            if (start && (currentOrientation.face !== start.face || currentOrientation.rotation !== start.rotation)) {
+              coastingAnimation.current.active = false;
+              velocity.current.rotateX = 0;
+              velocity.current.rotateY = 0;
+              cameraActionsRef.current?.squareUp();
+            }
+          }
+
           controlsRef.current.update();
         }
       }
@@ -1249,17 +1282,13 @@ export function Scene() {
         }
 
         if (needsUpdate) {
-          const orientation = getOrientation(camera, controls.target, cubeRef.current!);
-          if (!isMoving && (orientation.face !== cameraOrientation.face || orientation.rotation !== cameraOrientation.rotation)) {
-            setCameraOrientation(orientation);
-          }
           controls.update();
         }
       }
      
       const isRotating = Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001;
       if (!isRotating && wasRotating.current && autoSquare) {
-        cameraActionsRef.current?.squareUp();
+        // This block is now mostly handled by the coasting logic above
       }
       wasRotating.current = isRotating;
      
@@ -1340,7 +1369,7 @@ export function Scene() {
       <OrbitControls
         ref={controlsRef}
         makeDefault
-        enableDamping
+        enableDamping={!autoSquare}
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
@@ -1353,40 +1382,33 @@ export function Scene() {
           }
         }}
         onEnd={() => {
-          if (autoSquare && controlsRef.current && cameraRef.current) {
-            if (dragStartRef.current.active) {
-              dragStartRef.current.active = false;
-              
-              const endDistance = cameraRef.current.position.distanceTo(controlsRef.current.target);
-              const distanceChanged = Math.abs(endDistance - dragStartRef.current.distance) > 0.01;
-
-              if (distanceChanged) {
-                // It was a zoom, just square up
-                cameraActionsRef.current?.squareUp();
-                return;
-              }
-
-              // It was a drag, check for swipe
-              const endAzimuth = controlsRef.current.getAzimuthalAngle();
-              const endPolar = controlsRef.current.getPolarAngle();
-              const deltaAzimuth = endAzimuth - dragStartRef.current.azimuth;
-              const deltaPolar = endPolar - dragStartRef.current.polar;
-              const threshold = 0.1; // radians
-
-              if (Math.abs(deltaAzimuth) > Math.abs(deltaPolar) && Math.abs(deltaAzimuth) > threshold) {
-                cameraActionsRef.current?.snapRotate(deltaAzimuth > 0 ? 'left' : 'right');
-              } else if (Math.abs(deltaPolar) > Math.abs(deltaAzimuth) && Math.abs(deltaPolar) > threshold) {
-                cameraActionsRef.current?.snapRotate(deltaPolar > 0 ? 'up' : 'down');
-              } else {
-                cameraActionsRef.current?.squareUp();
-              }
+          if (autoSquare && dragStartRef.current.active && controlsRef.current && cameraRef.current) {
+            dragStartRef.current.active = false;
+    
+            const endDistance = cameraRef.current.position.distanceTo(controlsRef.current.target);
+            if (Math.abs(endDistance - dragStartRef.current.distance) > 0.1) {
+              // It was a zoom, not a drag. Square up.
+              cameraActionsRef.current?.squareUp();
+              return;
             }
-          }
-        }}
-        onChange={() => {
-          if (cameraRef.current && controlsRef.current && cubeRef.current) {
-            const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
-            setCameraOrientation(orientation);
+    
+            const endAzimuth = controlsRef.current.getAzimuthalAngle();
+            const endPolar = controlsRef.current.getPolarAngle();
+            const deltaAzimuth = endAzimuth - dragStartRef.current.azimuth;
+            const deltaPolar = endPolar - dragStartRef.current.polar;
+            const threshold = 0.05; // radians
+    
+            if (Math.abs(deltaAzimuth) < threshold && Math.abs(deltaPolar) < threshold) {
+              cameraActionsRef.current?.squareUp(); // small drag, treat as click/adjust
+            } else {
+              // It was a swipe, start coasting
+              const swipeSpeed = 1.5;
+              velocity.current.rotateY = -deltaAzimuth * swipeSpeed;
+              velocity.current.rotateX = -deltaPolar * swipeSpeed;
+    
+              coastingAnimation.current.active = true;
+              coastingAnimation.current.startOrientation = { ...cameraOrientation };
+            }
           }
         }}
       />

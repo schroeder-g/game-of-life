@@ -1460,7 +1460,7 @@ export function AppHeaderPanel() {
           <RecenterIcon />
         </button>
         <button
-          className={`glass-button ${autoSquare ? "success active" : ""}`}
+          className={`glass-button ${autoSquare ? "primary active" : ""}`}
           onClick={() => {
             if (!autoSquare) {
               squareUp();
