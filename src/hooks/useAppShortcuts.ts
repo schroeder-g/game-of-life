@@ -42,11 +42,11 @@ export function useAppShortcuts() {
     // If we just transitioned into a paint mode from an idle state...
     if (paintMode === 1 && prevPaintModeRef.current !== 1) {
       if (selectorPos) {
-        cameraActionsRef.current?.activateBrushCells(selectorPos, brushState);
+        cameraActionsRef.current?.birthBrushCells();
       }
     } else if (paintMode === -1 && prevPaintModeRef.current !== -1) {
       if (selectorPos) {
-        cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
+        cameraActionsRef.current?.clearBrushCells();
       }
     }
 
