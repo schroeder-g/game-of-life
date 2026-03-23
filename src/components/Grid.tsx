@@ -1068,7 +1068,7 @@ export function Scene() {
       }
     }
 
-    } else {
+    if (rotationMode) {
       const panMaxSpeed = panSpeed;
       const dollyMaxSpeed = panSpeed * 1.5;
       const rotationSpeedAdj = (rotationSpeed - 1) / 99;
