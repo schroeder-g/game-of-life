@@ -461,7 +461,7 @@ function KeyboardSelector({
   const {
     state: brushState,
   } = useBrush();
-  const { selectorPos, isBirthing, isClearing } = brushState;
+  const { selectorPos, selectedShape, isBirthing, isClearing } = brushState;
 
   const isBrushActive = selectedShape !== "None";
 
