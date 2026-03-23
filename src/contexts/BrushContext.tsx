@@ -6,6 +6,7 @@ export interface BrushState {
   selectedShape: ShapeType;
   shapeSize: number;
   isHollow: boolean;
+  showProjectionGuides: boolean;
   selectorPos: [number, number, number] | null;
   brushRotationVersion: number;
   brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
@@ -17,6 +18,7 @@ export interface BrushActions {
   setSelectedShape: (shape: ShapeType) => void;
   setShapeSize: (size: number) => void;
   setIsHollow: (hollow: boolean) => void;
+  setShowProjectionGuides: (show: boolean) => void;
   setSelectorPos: (
     pos:
       | [number, number, number]
@@ -40,9 +42,10 @@ export interface BrushContextValue {
 const BrushContext = createContext<BrushContextValue | null>(null);
 
 export function BrushProvider({ children }: { children: ReactNode }) {
-  const [selectedShape, setSelectedShape] = useState<ShapeType>("None");
-  const [shapeSize, setShapeSize] = useState<number>(6); // Midpoint of 1-12 range
+  const [selectedShape, setSelectedShape] = useState<ShapeType>("Cube");
+  const [shapeSize, setShapeSize] = useState<number>(1);
   const [isHollow, setIsHollow] = useState<boolean>(false);
+  const [showProjectionGuides, setShowProjectionGuides] = useState<boolean>(true);
   const [selectorPos, setSelectorPos] = useState<
     [number, number, number] | null
   >(null);
@@ -63,6 +66,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       selectedShape,
       shapeSize,
       isHollow,
+      showProjectionGuides,
       selectorPos,
       brushRotationVersion,
       brushQuaternion,
@@ -73,8 +77,12 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       setSelectedShape,
       setShapeSize,
       setIsHollow,
+      setShowProjectionGuides,
       setSelectorPos,
-      clearShape: () => setSelectedShape("None"),
+      clearShape: () => {
+        setSelectedShape("Cube");
+        setShapeSize(1);
+      },
       changeSize: (delta: number, maxGridSize: number) => {
         setShapeSize((prev) => Math.max(1, Math.min(maxGridSize, prev + delta)));
       },
