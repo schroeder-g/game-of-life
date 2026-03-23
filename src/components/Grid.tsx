@@ -476,9 +476,13 @@ function KeyboardSelector({
   });
 
   const { previewCells, maxDist } = useMemo(() => {
-    if (selectedShape === "None" || !selectorPos) return { previewCells: [], maxDist: 0 };
+    if (!selectorPos) return { previewCells: [], maxDist: 0 }; // Only bail if no cursor
 
-    const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+    // If no shape is selected, create a dummy offset for the single cursor
+    const offsets = (selectedShape === "None")
+      ? [[0, 0, 0] as [number, number, number]]
+      : generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+    
     if (offsets.length === 0) return { previewCells: [], maxDist: 0 };
 
     const maxDist = Math.max(...offsets.map(o => Math.sqrt(o[0] ** 2 + o[1] ** 2 + o[2] ** 2)));
@@ -487,8 +491,11 @@ function KeyboardSelector({
       .map((originalOffset) => {
         const [dx, dy, dz] = originalOffset;
         const v = new THREE.Vector3(dx, dy, dz);
-
-        if (brushQuaternion.current) v.applyQuaternion(brushQuaternion.current);
+        
+        // Only apply the brush's rotation if a shape is active
+        if (brushQuaternion.current && selectedShape !== "None") {
+          v.applyQuaternion(brushQuaternion.current);
+        }
 
         const cell = [
           selectorPos[0] + Math.round(v.x),
@@ -545,7 +552,7 @@ function KeyboardSelector({
   return (
     <group>
       {/* Only show axis guides when NOT in brush mode */}
-      {!isBrushActive && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
+      {isBrushActive && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
       
       {/* Render either the brush preview OR the single cursor visualization */}
       {isBrushActive ? (
