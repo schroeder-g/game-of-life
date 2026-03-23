@@ -892,6 +892,7 @@ export function Scene() {
       },
       snapRotate,
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
+        const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
         const nextQ = brushQuaternion.current.clone().premultiply(q);
 
@@ -985,13 +986,14 @@ export function Scene() {
         cameraActionsRef.current?.rotateBrush(axis, angle);
       },
       birthBrushCells: () => {
+        const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         if (!selectorPos) return;
 
-        const offsets = generateShape(brushState.selectedShape, brushState.shapeSize, brushState.isHollow, brushState.customOffsets);
+        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
         const cellsToActivate = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brushState.brushQuaternion.current);
+            v.applyQuaternion(brushQuaternion.current);
             return [
               Math.round(v.x) + selectorPos[0],
               Math.round(v.y) + selectorPos[1],
@@ -1006,13 +1008,14 @@ export function Scene() {
         }
       },
       clearBrushCells: () => {
+        const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         if (!selectorPos) return;
 
-        const offsets = generateShape(brushState.selectedShape, brushState.shapeSize, brushState.isHollow, brushState.customOffsets);
+        const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
         const cellsToClear = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brushState.brushQuaternion.current);
+            v.applyQuaternion(brushQuaternion.current);
             return [
               Math.round(v.x) + selectorPos[0],
               Math.round(v.y) + selectorPos[1],
