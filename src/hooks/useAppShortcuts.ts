@@ -293,9 +293,10 @@ export function useAppShortcuts() {
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [
+    autoSquare,
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
-    fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
+    setAutoSquare, fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode,
   ]);
 }
