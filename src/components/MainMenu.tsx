@@ -547,21 +547,11 @@ function SelectorPositionSection() {
         let moved = false;
 
         // Determine the final, allowed position for the cursor
-        if (selectedShape !== "None") {
-          if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
-            finalPos = nextPos;
-            moved = true;
-          } else {
-            finalPos = currentPos;
-          }
+        if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
+          finalPos = nextPos;
+          moved = true;
         } else {
-          const clampedX = Math.max(0, Math.min(gridSize - 1, nextPos[0]));
-          const clampedY = Math.max(0, Math.min(gridSize - 1, nextPos[1]));
-          const clampedZ = Math.max(0, Math.min(gridSize - 1, nextPos[2]));
-          finalPos = [clampedX, clampedY, clampedZ];
-          if (finalPos.join(',') !== currentPos.join(',')) {
-            moved = true;
-          }
+          finalPos = currentPos;
         }
         
         // If the cursor successfully moved and a paint mode is active, perform the action.

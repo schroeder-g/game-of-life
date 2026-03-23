@@ -250,7 +250,7 @@ function BrushProjectionGuides({
         <mesh key={`z-chan-${i}`} position={[x - offset, y - offset, 0]}>
           <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
           {material}
-        </boxGeometry>
+        </mesh>
       ))}
     </group>
   );
@@ -810,7 +810,7 @@ export function Scene() {
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
         const nextQ = brushQuaternion.current.clone().premultiply(q);
 
-        if (selectedShape !== "None" && selectorPos) {
+        if (selectorPos) {
           const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
 
           // Compute current rotated offsets with existing quaternion
