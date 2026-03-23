@@ -696,6 +696,19 @@ export function Scene() {
       snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
     };
 
+    const snapRotateWithAxis = (axis: THREE.Vector3, angle: number) => {
+      if (snapRotation.current.active || !cubeRef.current) return;
+
+      snapRotation.current.active = true;
+      snapRotation.current.axis.copy(axis);
+      snapRotation.current.totalAngle = angle;
+      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
+      snapRotation.current.startTime = 0;
+      snapRotation.current.lastAngle = 0;
+      // After snapping, always perform a full square up
+      snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
+    };
+
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!controlsRef.current || !cameraRef.current) return;
@@ -862,6 +875,7 @@ export function Scene() {
         setSnapMessage(message);
       },
       snapRotate,
+      snapRotateWithAxis,
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
@@ -930,31 +944,6 @@ export function Scene() {
         // Trigger re-render of ShapePreview
         const { incrementBrushRotationVersion } = (window as any).brushActions || {};
         if (incrementBrushRotationVersion) incrementBrushRotationVersion();
-      },
-      rotateBrushByDirection: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
-        // Use the dominant face/angle from cameraOrientation and rotationLookup
-        // to get grid-local axes that match the snapped orientation, not the raw camera.
-        const face = cameraOrientation.face;
-        const rotation = cameraOrientation.rotation;
-        if (face === 'unknown' || rotation === 'unknown') return;
-
-        const mapping = (rotationLookup as any)[face][rotation];
-        let axisArray: number[];
-        let angle = Math.PI / 2;
-
-        // Map direction to the corresponding rotationLookup key + sign
-        switch (direction) {
-          case 'up': axisArray = mapping.o; angle = Math.PI / 2; break;
-          case 'down': axisArray = mapping.period; angle = Math.PI / 2; break;
-          case 'right': axisArray = mapping.k; angle = Math.PI / 2; break;
-          case 'left': axisArray = mapping.semicolon; angle = Math.PI / 2; break;
-          case 'rollLeft': axisArray = mapping.i; angle = Math.PI / 2; break;
-          case 'rollRight': axisArray = mapping.p; angle = Math.PI / 2; break;
-          default: return;
-        }
-
-        const axis = new THREE.Vector3().fromArray(axisArray);
-        cameraActionsRef.current?.rotateBrush(axis, angle);
       },
       birthBrushCells: () => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;

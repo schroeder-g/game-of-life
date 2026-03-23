@@ -135,8 +135,8 @@ export interface SimulationMeta {
     recenter: () => void;
     squareUp: () => void;
     snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
+    snapRotateWithAxis: (axis: THREE.Vector3, angle: number) => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
-    rotateBrushByDirection: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
   } | null>;

@@ -1,3 +1,9 @@
+// AGENT INSTRUCTION:
+// This file is the single source of truth for keyboard controls related to orientation.
+// Do not add orientation-based keyboard logic elsewhere. Modify this file instead.
+// All keyboard actions for rotation and translation should derive their behavior
+// from the mappings defined in this file.
+
 import * as THREE from "three";
 
 export const KEY_MAP = {

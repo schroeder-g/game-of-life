@@ -1,6 +1,12 @@
+// AGENT INSTRUCTION:
+// The keyboard control logic, especially for rotation, is sourced from
+// `src/core/faceOrientationKeyMapping.ts`. To ensure consistency, please avoid
+// adding new keyboard control logic here. Instead, modify the mappings in
+// the source of truth file.
+
 import { useEffect, useRef } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, rotationLookup } from "../core/cameraUtils";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 
@@ -15,6 +21,7 @@ export function useAppShortcuts() {
       hasPastHistory,
       invertYaw,
       invertPitch,
+      invertRoll,
       gridSize,
     },
     actions: {
@@ -88,63 +95,40 @@ export function useAppShortcuts() {
       const rotation = cameraOrientation.rotation;
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
-      // --- ROTATION KEY HANDLING (i, p, o, k, ., ;) ---
       if (isRotationCode && !rotationMode) {
         if (hasValidOrientation) {
           const f = face as CameraFace;
           const r = rotation as CameraRotation;
-          // Normalize key name to match rotationLookup keys
-          const rotKey = code === "Period" ? "period"
+          let rotKey = code === "Period" ? "period"
             : code === "Semicolon" ? "semicolon"
             : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
 
-          if (isBrushActive && !e.ctrlKey && !e.shiftKey) {
-            // Rotate the BRUSH using the same direction as cube snapRotate,
-            // but transformed into grid-local space for the brush quaternion.
-            // Map key to the same direction + angle that snapRotate would use:
-            let direction: string | null = null;
-            switch (key) {
-              case 'o': direction = invertPitch ? 'down' : 'up'; break;
-              case '.': direction = invertPitch ? 'up' : 'down'; break;
-              case 'k': direction = invertYaw ? 'left' : 'right'; break;
-              case ';': direction = invertYaw ? 'right' : 'left'; break;
-              case 'i': direction = 'rollLeft'; break;
-              case 'p': direction = 'rollRight'; break;
-            }
-            if (direction) {
-              cameraActionsRef.current?.rotateBrushByDirection(direction as any);
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          } else if (e.ctrlKey && e.shiftKey) {
-            // Rotate the CUBE (environment snap) using the same lookup as before
-            switch (key) {
-              case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); break;
-              case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); break;
-              case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); break;
-              case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); break;
-              case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); break;
-              case 'p': cameraActionsRef.current?.snapRotate('rollRight'); break;
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          } else if (!isBrushActive && !e.ctrlKey && !e.shiftKey) {
-            // No brush: rotation keys rotate the cube normally
-            switch (key) {
-              case 'o': cameraActionsRef.current?.snapRotate(invertPitch ? 'down' : 'up'); break;
-              case '.': cameraActionsRef.current?.snapRotate(invertPitch ? 'up' : 'down'); break;
-              case 'k': cameraActionsRef.current?.snapRotate(invertYaw ? 'left' : 'right'); break;
-              case ';': cameraActionsRef.current?.snapRotate(invertYaw ? 'right' : 'left'); break;
-              case 'i': cameraActionsRef.current?.snapRotate('rollLeft'); break;
-              case 'p': cameraActionsRef.current?.snapRotate('rollRight'); break;
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            return;
+          // Handle inversion by swapping key pairs before lookup
+          if (invertPitch) {
+            if (rotKey === 'o') rotKey = 'period';
+            else if (rotKey === 'period') rotKey = 'o';
+          }
+          if (invertYaw) {
+            if (rotKey === 'k') rotKey = 'semicolon';
+            else if (rotKey === 'semicolon') rotKey = 'k';
+          }
+          if (invertRoll) {
+            if (rotKey === 'i') rotKey = 'p';
+            else if (rotKey === 'p') rotKey = 'i';
+          }
+
+          const axis = getExplicitRotationAxis(f, r, rotKey);
+          const angle = Math.PI / 2;
+
+          if (isBrushActive) {
+            cameraActionsRef.current?.rotateBrush(axis, angle);
+          } else {
+            cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
           }
         }
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
 
       let handled = true;
@@ -294,8 +278,8 @@ export function useAppShortcuts() {
     };
   }, [
     autoSquare,
-    running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
-    invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
+    running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
+    invertPitch, invertRoll, setRotationMode, playStop, step, stepBackward, reset,
     setAutoSquare, fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode,
   ]);
