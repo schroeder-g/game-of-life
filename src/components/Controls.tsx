@@ -76,7 +76,7 @@ function CommunityPreview({
         const hue = (x / gridSize) * 300;
         const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
         const color = chroma.hsl(240 - hue, saturation, 0.55).darken(0.5).hex();
-        
+
         return (
           <lineSegments key={`edge-${i}`} position={[cell[0], cell[1], cell[2]]}>
             <edgesGeometry args={[new THREE.BoxGeometry(0.9, 0.9, 0.9)]} />
@@ -100,21 +100,21 @@ export function CommunitySidebar({
 
   return (
     <div className={`community-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}>
-      <header 
-        className="sidebar-header" 
+      <header
+        className="sidebar-header"
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isCollapsed ? 0 : '12px' }}
       >
-        <div 
+        <div
           onClick={() => setIsCollapsed(!isCollapsed)}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
         >
           <span style={{ fontSize: "12px", opacity: 0.6, width: '12px' }}>{isCollapsed ? "▼" : "▲"}</span>
           <h3 style={{ margin: 0 }}>Community Selection</h3>
         </div>
-        
+
         {community.length > 0 && (
           <div className="header-actions" style={{ display: 'flex', gap: '8px' }}>
-            <button 
+            <button
               className="icon-button"
               title="Activate Brush"
               onClick={(e) => {
@@ -123,11 +123,11 @@ export function CommunitySidebar({
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-                <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
               </svg>
             </button>
-            <button 
+            <button
               className="icon-button danger"
               title="Deselect"
               onClick={(e) => {
@@ -136,7 +136,7 @@ export function CommunitySidebar({
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
               </svg>
             </button>
           </div>

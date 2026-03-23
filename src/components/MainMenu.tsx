@@ -541,7 +541,7 @@ function SelectorPositionSection() {
 
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
-        
+
         const nextPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
@@ -549,7 +549,7 @@ function SelectorPositionSection() {
         ];
 
         const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
-        
+
         let finalPos: [number, number, number];
         let moved = false;
 
@@ -560,7 +560,7 @@ function SelectorPositionSection() {
         } else {
           finalPos = currentPos;
         }
-        
+
         // If the cursor successfully moved and a paint mode is active, perform the action.
         if (moved && brushState.paintMode !== 0) {
           if (brushState.paintMode === 1) {
@@ -569,7 +569,7 @@ function SelectorPositionSection() {
             cameraActionsRef.current?.clearBrushCells();
           }
         }
-        
+
         // Return the final position to update the state
         return finalPos;
       });
@@ -1235,7 +1235,7 @@ function BrushSelectorDropdown() {
     state: { selectedShape, brushQuaternion },
     actions: { setSelectedShape, setCustomBrush, incrementBrushRotationVersion },
   } = useBrush();
-  
+
   const { state: { community, cameraOrientation } } = useSimulation();
 
   const initBrushOrientation = useCallback(() => {
@@ -1360,10 +1360,14 @@ export function AppHeaderPanel() {
       </div>
 
       <div className="button-group panel-actions">
+
         <SceneSelectorDropdown />
+
+
+
         {!rotationMode && (
           <>
-            <BrushSelectorDropdown />
+
             <button
               className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
@@ -1378,6 +1382,7 @@ export function AppHeaderPanel() {
             >
               <MinusIcon />
             </button>
+            <BrushSelectorDropdown />
           </>
         )}
         <button
@@ -1387,7 +1392,6 @@ export function AppHeaderPanel() {
         >
           {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
         </button>
-
 
         <button
           className="glass-button primary"

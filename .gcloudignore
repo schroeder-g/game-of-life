@@ -6,3 +6,4 @@ dist/
 build/
 .aider*
 src/core/faceOrientationKeyMapping.ts
+src/index.css

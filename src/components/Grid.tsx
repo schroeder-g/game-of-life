@@ -175,10 +175,18 @@ function BrushProjectionGuides({
   previewCells,
   gridSize,
   cellMargin,
+  paintMode,
+  gridRef,
+  selectedShape,
+  shapeSize,
 }: {
   previewCells: { originalOffset: number[]; cell: [number, number, number] }[];
   gridSize: number;
   cellMargin: number;
+  paintMode: number;
+  gridRef: React.MutableRefObject<any>;
+  selectedShape: string;
+  shapeSize: number;
 }) {
   const offset = (gridSize - 1) / 2;
   const cellSize = 1 - cellMargin;
@@ -222,7 +230,7 @@ function BrushProjectionGuides({
 
   const allGuidePositions = useMemo(() => {
     const positions = new Set<string>();
-    
+
     // X-axis channels: for each (y, z) projection, fill all x values
     yzPairs.forEach(([y, z]) => {
       for (let x = 0; x < gridSize; x++) {
@@ -248,9 +256,13 @@ function BrushProjectionGuides({
   }, [yzPairs, xzPairs, xyPairs, gridSize]);
 
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const redOutlineRef = useRef<THREE.InstancedMesh>(null);
+  const redWireframeRef = useRef<THREE.InstancedMesh>(null);
+
+  const showAxisChannels = selectedShape === "Cube" && shapeSize === 1;
 
   useEffect(() => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !showAxisChannels) return;
     const temp = new THREE.Object3D();
     allGuidePositions.forEach((pos, i) => {
       const [x, y, z] = pos;
@@ -261,19 +273,83 @@ function BrushProjectionGuides({
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
     meshRef.current.count = allGuidePositions.length;
-  }, [allGuidePositions, cellSize, offset, gridSize]);
+  }, [allGuidePositions, cellSize, offset, gridSize, showAxisChannels]);
+
+  // Handle outlines for live cells in Deactivate mode
+  useEffect(() => {
+    if (!redOutlineRef.current || !redWireframeRef.current) return;
+    const temp = new THREE.Object3D();
+    const tempWire = new THREE.Object3D();
+    let count = 0;
+
+    if (paintMode === -1) {
+      allGuidePositions.forEach((pos) => {
+        const [x, y, z] = pos;
+        if (gridRef.current.get(x, y, z)) {
+          // Outer thick glow
+          temp.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
+          temp.scale.set(cellSize * 1.35, cellSize * 1.35, cellSize * 1.35); // increased scale
+          temp.updateMatrix();
+          redOutlineRef.current!.setMatrixAt(count, temp.matrix);
+
+          // Inner tight wireframe
+          tempWire.position.set(x - offset, y - offset, (gridSize - 1 - z) - offset);
+          tempWire.scale.set(cellSize * 1.15, cellSize * 1.15, cellSize * 1.15); // increased scale
+          tempWire.updateMatrix();
+          redWireframeRef.current!.setMatrixAt(count, tempWire.matrix);
+
+          count++;
+        }
+      });
+    }
+
+    redOutlineRef.current.instanceMatrix.needsUpdate = true;
+    redOutlineRef.current.count = count;
+    redWireframeRef.current.instanceMatrix.needsUpdate = true;
+    redWireframeRef.current.count = count;
+  }, [allGuidePositions, paintMode, cellSize, offset, gridSize, gridRef]);
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, 50000]} raycast={() => null}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshBasicMaterial
-        color="#ffffff"
-        transparent
-        opacity={0.07}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </instancedMesh>
+    <>
+      {showAxisChannels && (
+        <instancedMesh ref={meshRef} args={[undefined, undefined, 50000]} raycast={() => null}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.07}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </instancedMesh>
+      )}
+
+      {paintMode === -1 && (
+        <>
+          <instancedMesh ref={redOutlineRef} args={[undefined, undefined, 50000]} raycast={() => null}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial
+              color="#ff0000"
+              transparent
+              opacity={0.7}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </instancedMesh>
+          <instancedMesh ref={redWireframeRef} args={[undefined, undefined, 50000]} raycast={() => null}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial
+              color="#ff0000"
+              wireframe
+              transparent
+              opacity={1}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </instancedMesh>
+        </>
+      )}
+    </>
   );
 }
 
@@ -418,14 +494,14 @@ function KeyboardSelector({
     if (!selectorPos) return [];
 
     const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
-    
+
     if (offsets.length === 0) return [];
 
     const cells = offsets
       .map((originalOffset) => {
         const [dx, dy, dz] = originalOffset;
         const v = new THREE.Vector3(dx, dy, dz);
-        
+
         v.applyQuaternion(brushQuaternion.current);
 
         const cell = [
@@ -445,7 +521,7 @@ function KeyboardSelector({
           z >= 0 &&
           z < gridSize,
       );
-    
+
     // De-duplicate cells that land on the same spot after rotation+rounding.
     return Array.from(new Map(cells.map(p => [p.cell.join(','), p])).values());
 
@@ -467,64 +543,42 @@ function KeyboardSelector({
   return (
     <group>
       {/* Guides are now rendered based on a toggle, and from exterior faces */}
-      {showProjectionGuides && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} cellMargin={cellMargin} />}
-      
+      {showProjectionGuides && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} cellMargin={cellMargin} paintMode={paintMode} gridRef={gridRef} selectedShape={selectedShape} shapeSize={shapeSize} />}
+
       {/* Unified renderer for all brush cells */}
       {previewCells.map(({ cell }, i) => {
         const [x, y, z] = cell;
         const isAlive = gridRef.current.get(x, y, z);
         const isExternal = !cellKeys.has(`${x - 1},${y},${z}`) || !cellKeys.has(`${x + 1},${y},${z}`) ||
-                          !cellKeys.has(`${x},${y - 1},${z}`) || !cellKeys.has(`${x},${y + 1},${z}`) ||
-                          !cellKeys.has(`${x},${y},${z - 1}`) || !cellKeys.has(`${x},${y},${z + 1}`);
-        
-        let cellColor: string;
-        let opacity: number;
+          !cellKeys.has(`${x},${y - 1},${z}`) || !cellKeys.has(`${x},${y + 1},${z}`) ||
+          !cellKeys.has(`${x},${y},${z - 1}`) || !cellKeys.has(`${x},${y},${z + 1}`);
 
-        if (paintMode === 1) { // Activate/Toggle mode
-          cellColor = isAlive ? "#f28b82" : "#8ab4f8"; // Red (erase) or Blue (paint)
-          opacity = 0.7;
-        } else if (paintMode === -1) { // Clear-only mode
-          cellColor = isAlive ? "#f28b82" : "#555555"; // Red (erase) or Dark Grey (noop)
-          opacity = isAlive ? 0.7 : 0.3;
-        } else { // Idle mode
-          cellColor = "#ffffff";
-          opacity = 0.5;
-        }
-        
+        let cellColor = isAlive ? "#ffffff" : paintMode == -1 ? "#ff9999" : "#ffff55";
+        let opacity = 1;
+        let outlineColor = "#222222";
+
         const position: [number, number, number] = [
           cell[0] - offset,
           cell[1] - offset,
           gridSize - 1 - cell[2] - offset,
         ];
-        
+
         return (
           <React.Fragment key={i}>
-            {/* Glow Mesh - Only for surface cells */}
-            {isExternal && (
-              <mesh raycast={() => null} position={position}>
-                <boxGeometry args={[1.2, 1.2, 1.2]} />
-                <meshBasicMaterial
-                  color={cellColor}
-                  transparent
-                  opacity={opacity * 0.3}
-                  depthWrite={false}
-                />
-              </mesh>
-            )}
             {/* Primary Cell Mesh */}
             <mesh position={position}>
               <boxGeometry args={[0.9, 0.9, 0.9]} />
               <meshBasicMaterial
                 color={cellColor}
-                transparent
+                transparent={isAlive}
                 opacity={opacity}
-                depthWrite={false}
+                depthWrite={!isAlive}
               />
             </mesh>
-            {/* Dark outlines */}
+            {/* Outlines */}
             <lineSegments position={position}>
               <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
-              <lineBasicMaterial color="#333333" />
+              <lineBasicMaterial color={outlineColor} />
             </lineSegments>
           </React.Fragment>
         );
@@ -927,18 +981,18 @@ export function Scene() {
         const axis = new THREE.Vector3().fromArray(axisArray);
         cameraActionsRef.current?.rotateBrush(axis, angle);
       },
-      activateBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
-        if (!pos) return;
+      birthBrushCells: () => {
+        if (!selectorPos) return;
 
-        const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
+        const offsets = generateShape(brushState.selectedShape, brushState.shapeSize, brushState.isHollow, brushState.customOffsets);
         const cellsToActivate = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brush.brushQuaternion.current);
+            v.applyQuaternion(brushState.brushQuaternion.current);
             return [
-              Math.round(v.x) + pos[0],
-              Math.round(v.y) + pos[1],
-              Math.round(v.z) + pos[2],
+              Math.round(v.x) + selectorPos[0],
+              Math.round(v.y) + selectorPos[1],
+              Math.round(v.z) + selectorPos[2],
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
@@ -948,18 +1002,18 @@ export function Scene() {
           setCommunity([]); // Clear community view when manually editing
         }
       },
-      clearBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
-        if (!pos) return;
+      clearBrushCells: () => {
+        if (!selectorPos) return;
 
-        const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
+        const offsets = generateShape(brushState.selectedShape, brushState.shapeSize, brushState.isHollow, brushState.customOffsets);
         const cellsToClear = offsets
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
-            v.applyQuaternion(brush.brushQuaternion.current);
+            v.applyQuaternion(brushState.brushQuaternion.current);
             return [
-              Math.round(v.x) + pos[0],
-              Math.round(v.y) + pos[1],
-              Math.round(v.z) + pos[2],
+              Math.round(v.x) + selectorPos[0],
+              Math.round(v.y) + selectorPos[1],
+              Math.round(v.z) + selectorPos[2],
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);

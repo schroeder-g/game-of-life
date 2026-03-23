@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/public/index.tsx --outdir dist",
+    "test": "vitest run",
     "deploy": "./deploy.sh prod",
     "deploy:test": "./deploy.sh test"
   },
@@ -16,11 +17,16 @@
     "three": "^0.159.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/bun": "latest",
+    "@types/chroma-js": "^2.4.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/three": "^0.159.0",
-    "@types/chroma-js": "^2.4.0",
-    "typescript": "^5.0.0"
+    "@vitejs/plugin-react": "^6.0.1",
+    "jsdom": "^29.0.1",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.1"
   }
 }
