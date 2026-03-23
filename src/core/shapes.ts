@@ -175,6 +175,8 @@ function generatePyramid(size: number, hollow: boolean): Offset[] {
 // Main dispatcher function
 export function generateShape(shape: ShapeType, size: number, hollow: boolean, customOffsets?: Offset[]): Offset[] {
   switch (shape) {
+    case "None":
+      return [[0, 0, 0]];
     case "Cube":
       return generateCube(size, hollow);
     case "Square":

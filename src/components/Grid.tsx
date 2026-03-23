@@ -171,77 +171,6 @@ export function BoundingBox({ size }: { size: number }) {
   );
 }
 
-function ShapePreview({
-  previewCells,
-  maxDist,
-}: {
-  previewCells: { originalOffset: number[]; cell: [number, number, number] }[];
-  maxDist: number;
-}) {
-  const {
-    state: { gridSize },
-    meta: { gridRef },
-  } = useSimulation();
-  const offset = (gridSize - 1) / 2;
-
-  if (previewCells.length === 0) return null;
-
-  return (
-    <group>
-      {previewCells.map(({ cell, originalOffset }, i) => {
-        const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
-        const position: [number, number, number] = [
-          cell[0] - offset,
-          cell[1] - offset,
-          gridSize - 1 - cell[2] - offset,
-        ];
-
-        // Opacity logic for inactive cell fill
-        const dist = Math.sqrt(originalOffset[0] ** 2 + originalOffset[1] ** 2 + originalOffset[2] ** 2);
-        const relativeDist = maxDist > 0 ? dist / maxDist : 0;
-        const minOpacity = 0.15;
-        const maxOpacity = 0.7;
-        const opacity = maxOpacity - relativeDist * (maxOpacity - minOpacity);
-
-        return (
-          <React.Fragment key={i}>
-            {/* Glow layer */}
-            <mesh raycast={() => null} position={position}>
-              <boxGeometry args={[1.1, 1.1, 1.1]} />
-              <meshBasicMaterial
-                color={isAlive ? "#ffffff" : "#ffdd44"}
-                transparent
-                opacity={isAlive ? 0.15 : 0.2}
-                depthWrite={false}
-              />
-            </mesh>
-            {/* Cell fill */}
-            <mesh position={position}>
-              <boxGeometry args={[0.9, 0.9, 0.9]} />
-              {isAlive ? (
-                <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
-              ) : (
-                <meshBasicMaterial
-                  color="#ffdd44"
-                  transparent
-                  opacity={opacity}
-                  side={THREE.DoubleSide}
-                  depthWrite={false}
-                />
-              )}
-            </mesh>
-            {/* Dark outlines */}
-            <lineSegments position={position}>
-              <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
-              <lineBasicMaterial color="#333333" />
-            </lineSegments>
-          </React.Fragment>
-        );
-      })}
-    </group>
-  );
-}
-
 function BrushProjectionGuides({
   previewCells,
   gridSize,
@@ -444,40 +373,18 @@ function KeyboardSelector({
   } = useBrush();
   const { selectorPos, selectedShape, paintMode, shapeSize, isHollow, customOffsets, brushRotationVersion } = brushState;
 
-  const isBrushActive = selectedShape !== "None";
+  const previewCells = useMemo(() => {
+    if (!selectorPos) return [];
 
-  const [azimuth, setAzimuth] = useState(0);
-  const [polar, setPolar] = useState(Math.PI / 4);
-
-  useFrame(() => {
-    const newAzimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-    const newPolar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
-    if (Math.abs(newAzimuth - azimuth) > 0.1) {
-      setAzimuth(newAzimuth);
-    }
-    if (Math.abs(newPolar - polar) > 0.1) {
-      setPolar(newPolar);
-    }
-  });
-
-  const { previewCells, maxDist } = useMemo(() => {
-    if (!selectorPos) return { previewCells: [], maxDist: 0 }; // Only bail if no cursor
-
-    // If no shape is selected, create a dummy offset for the single cursor
-    const offsets = (selectedShape === "None")
-      ? [[0, 0, 0] as [number, number, number]]
-      : generateShape(selectedShape, shapeSize, isHollow, customOffsets);
+    const offsets = generateShape(selectedShape, shapeSize, isHollow, customOffsets);
     
-    if (offsets.length === 0) return { previewCells: [], maxDist: 0 };
+    if (offsets.length === 0) return [];
 
-    const maxDist = Math.max(...offsets.map(o => Math.sqrt(o[0] ** 2 + o[1] ** 2 + o[2] ** 2)));
-
-    const previewCells = offsets
+    const cells = offsets
       .map((originalOffset) => {
         const [dx, dy, dz] = originalOffset;
         const v = new THREE.Vector3(dx, dy, dz);
         
-        // Only apply the brush's rotation if a shape is active
         if (brushQuaternion.current && selectedShape !== "None") {
           v.applyQuaternion(brushQuaternion.current);
         }
@@ -499,101 +406,83 @@ function KeyboardSelector({
           z >= 0 &&
           z < gridSize,
       );
+    
+    // De-duplicate cells that land on the same spot after rotation+rounding.
+    return Array.from(new Map(cells.map(p => [p.cell.join(','), p])).values());
 
-    return { previewCells, maxDist };
   }, [
     selectorPos,
     selectedShape,
     shapeSize,
     isHollow,
     gridSize,
-    azimuth,
-    polar,
     brushRotationVersion,
-    brushQuaternion,
     customOffsets,
   ]);
 
   if (rotationMode || !selectorPos) return null;
 
-  const isAlive = gridRef.current.get(
-    selectorPos[0],
-    selectorPos[1],
-    selectorPos[2],
-  );
-
-  let cursorColor = "#ffffff"; // Default white
-  if (paintMode === 1) {
-    cursorColor = "#8ab4f8"; // Blue, matching the "Toggle" button
-  } else if (paintMode === -1) {
-    cursorColor = "#f28b82"; // Red, matching the "Clear" button
-  }
-
-  const glowColor = "#ffff00";
-  const cursorOpacity = 0.3;
-
   const offset = (gridSize - 1) / 2;
 
   return (
     <group>
-      {/* Only show axis guides when NOT in brush mode */}
-      {isBrushActive && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
+      {/* Guides are now always rendered, based on the final preview cells */}
+      <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />
       
-      {/* Render either the brush preview OR the single cursor visualization */}
-      {isBrushActive ? (
-        <ShapePreview previewCells={previewCells} maxDist={maxDist} />
-      ) : (
-        <>
-          {/* Glow Mesh */}
-          <mesh
-            raycast={() => null}
-            position={[
-              selectorPos[0] - offset,
-              selectorPos[1] - offset,
-              (gridSize - 1 - selectorPos[2]) - offset,
-            ]}
-          >
-            <boxGeometry args={[1.2, 1.2, 1.2]} />
-            <meshBasicMaterial
-              color={cursorColor}
-              transparent
-              opacity={0.15}
-              depthWrite={false}
-            />
-          </mesh>
-          {/* Primary Selector Mesh */}
-          <mesh
-            raycast={() => null}
-            position={[
-              selectorPos[0] - offset,
-              selectorPos[1] - offset,
-              (gridSize - 1 - selectorPos[2]) - offset,
-            ]}
-          >
-            <boxGeometry args={[1.05, 1.05, 1.05]} />
-            <meshBasicMaterial
-              color={cursorColor}
-              transparent
-              opacity={0.5}
-              depthWrite={false}
-              polygonOffset
-              polygonOffsetFactor={-4}
-              polygonOffsetUnits={-4}
-            />
-          </mesh>
-          <lineSegments
-            raycast={() => null}
-            position={[
-              selectorPos[0] - offset,
-              selectorPos[1] - offset,
-              (gridSize - 1 - selectorPos[2]) - offset,
-            ]}
-          >
-            <edgesGeometry args={[new THREE.BoxGeometry(1.06, 1.06, 1.06)]} />
-            <lineBasicMaterial color={cursorColor} linewidth={2} transparent opacity={0.8} />
-          </lineSegments>
-        </>
-      )}
+      {/* Unified renderer for all brush cells */}
+      {previewCells.map(({ cell }, i) => {
+        const isAlive = gridRef.current.get(cell[0], cell[1], cell[2]);
+        
+        let cellColor: string;
+        let opacity: number;
+
+        if (paintMode === 1) { // Activate/Toggle mode
+          cellColor = isAlive ? "#f28b82" : "#8ab4f8"; // Red (erase) or Blue (paint)
+          opacity = 0.7;
+        } else if (paintMode === -1) { // Clear-only mode
+          cellColor = isAlive ? "#f28b82" : "#555555"; // Red (erase) or Dark Grey (noop)
+          opacity = isAlive ? 0.7 : 0.3;
+        } else { // Idle mode
+          cellColor = "#ffffff";
+          opacity = 0.5;
+        }
+        
+        const position: [number, number, number] = [
+          cell[0] - offset,
+          cell[1] - offset,
+          gridSize - 1 - cell[2] - offset,
+        ];
+        
+        return (
+          <React.Fragment key={i}>
+            {/* Glow Mesh */}
+            <mesh raycast={() => null} position={position}>
+              <boxGeometry args={[1.2, 1.2, 1.2]} />
+              <meshBasicMaterial
+                color={cellColor}
+                transparent
+                opacity={opacity * 0.3}
+                depthWrite={false}
+              />
+            </mesh>
+            {/* Primary Cell Mesh */}
+            <mesh position={position}>
+              <boxGeometry args={[0.9, 0.9, 0.9]} />
+              <meshBasicMaterial
+                color={cellColor}
+                transparent
+                opacity={opacity}
+                depthWrite={false}
+              />
+            </mesh>
+            {/* Dark outlines */}
+            <lineSegments position={position}>
+              <edgesGeometry args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]} />
+              <lineBasicMaterial color="#333333" />
+            </lineSegments>
+          </React.Fragment>
+        );
+      })}
     </group>
   );
 }
