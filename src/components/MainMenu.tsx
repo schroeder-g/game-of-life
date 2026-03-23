@@ -538,7 +538,6 @@ function SelectorPositionSection() {
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
-      const { isBirthing, isClearing } = brushState;
 
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
@@ -565,9 +564,9 @@ function SelectorPositionSection() {
         // If the cursor successfully moved and a paint mode is active, perform the action.
         if (moved && brushState.paintMode !== 0) {
           if (brushState.paintMode === 1) {
-            cameraActionsRef.current?.activateBrushCells(finalPos, brushState);
+            cameraActionsRef.current?.birthBrushCells();
           } else if (brushState.paintMode === -1) {
-            cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
+            cameraActionsRef.current?.clearBrushCells();
           }
         }
         
