@@ -1322,8 +1322,8 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp, setCell },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, autoSquare },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp, setAutoSquare, setCell },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
@@ -1460,10 +1460,10 @@ export function AppHeaderPanel() {
           <RecenterIcon />
         </button>
         <button
-          className="glass-button"
-          onClick={squareUp}
+          className={`glass-button ${autoSquare ? "active" : ""}`}
+          onClick={() => setAutoSquare(prev => !prev)}
           aria-label="Square Up"
-          data-tooltip-bottom="Square Up (L)"
+          data-tooltip-bottom={`Auto Square Up: ${autoSquare ? "On" : "Off"} (L)`}
         >
           <SquareUpIcon />
         </button>

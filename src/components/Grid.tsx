@@ -576,6 +576,7 @@ export function Scene() {
     invertPitch,
     invertRoll,
     easeIn,
+    autoSquare,
     easeOut,
     cameraOrientation,
   } = state;
@@ -605,7 +606,16 @@ export function Scene() {
     lastAngle: 0,
     onComplete: undefined as (() => void) | undefined,
   });
+  const autoSquaringAnimation = useRef({
+    active: false,
+    start: new THREE.Quaternion(),
+    target: new THREE.Quaternion(),
+    startTime: 0,
+    duration: 0.4,
+    onComplete: undefined as (() => void) | undefined,
+  });
   const lastSelectorMoveTime = useRef(0);
+  const wasRotating = useRef(false);
 
   const {
     meta: { cameraActionsRef },
@@ -795,10 +805,16 @@ export function Scene() {
         const targetMatrix = new THREE.Matrix4();
         targetMatrix.makeBasis(localXTarget, localYTarget, localZTarget);
         const finalQuaternion = new THREE.Quaternion().setFromRotationMatrix(targetMatrix);
-
-        // 4. Apply this rotation to the cube.
-        cubeRef.current.quaternion.copy(finalQuaternion);
-
+     
+        // 4. Animate this rotation.
+        if (autoSquaringAnimation.current.active && autoSquaringAnimation.current.target.equals(finalQuaternion)) return;
+        if (!autoSquaringAnimation.current.active && cubeRef.current.quaternion.angleTo(finalQuaternion) < 0.01) return;
+     
+        autoSquaringAnimation.current.start.copy(cubeRef.current.quaternion);
+        autoSquaringAnimation.current.target.copy(finalQuaternion);
+        autoSquaringAnimation.current.active = true;
+        autoSquaringAnimation.current.startTime = 0; // Will be set in useFrame
+            
         // Determine face name and orientation for message
         let faceName = "";
         if (absX > absY && absX > absZ) {
@@ -808,7 +824,7 @@ export function Scene() {
         } else {
           faceName = Math.sign(localZ) > 0 ? "Front" : "Back";
         }
-
+     
         const localFaces = [
           { name: 'Top', vector: new THREE.Vector3(0, 1, 0) },
           { name: 'Bottom', vector: new THREE.Vector3(0, -1, 0) },
@@ -817,11 +833,11 @@ export function Scene() {
           { name: 'Right', vector: new THREE.Vector3(1, 0, 0) },
           { name: 'Left', vector: new THREE.Vector3(-1, 0, 0) },
         ];
-
+     
         const worldUp = new THREE.Vector3(0, 1, 0);
         let topFaceName = '';
         let maxDot = -Infinity;
-
+     
         for (const face of localFaces) {
           const worldVector = face.vector.clone().applyQuaternion(finalQuaternion);
           const dot = worldVector.dot(worldUp);
@@ -830,29 +846,9 @@ export function Scene() {
             topFaceName = face.name;
           }
         }
-
+     
         const message = `Snapped to: ${faceName}${topFaceName ? `, ${topFaceName}` : ''}`;
         setSnapMessage(message);
-
-        // 5. Do the rest of squareUp: reset camera roll and snap position.
-        cameraRef.current.up.set(0, 1, 0);
-
-        const snappedPolar = Math.PI / 2; // Level with the horizon
-        const distance = cameraRef.current.position.distanceTo(
-          controlsRef.current.target,
-        );
-
-        // Calculate new camera position based on snapped angles
-        const x =
-          distance * Math.sin(snappedAzimuth) * Math.sin(snappedPolar);
-        const y = distance * Math.cos(snappedPolar);
-        const z =
-          distance * Math.cos(snappedAzimuth) * Math.sin(snappedPolar);
-
-        cameraRef.current.position
-          .set(x, y, z)
-          .add(controlsRef.current.target);
-        controlsRef.current.update();
       },
       snapRotate,
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
@@ -1229,7 +1225,13 @@ export function Scene() {
           controls.update();
         }
       }
-
+     
+      const isRotating = Math.abs(velocity.current.rotateX) > 0.001 || Math.abs(velocity.current.rotateY) > 0.001;
+      if (!isRotating && wasRotating.current && autoSquare) {
+        cameraActionsRef.current?.squareUp();
+      }
+      wasRotating.current = isRotating;
+     
       if (Math.abs(velocity.current.rotateX) < 0.01) velocity.current.rotateX = 0;
       if (Math.abs(velocity.current.rotateY) < 0.01) velocity.current.rotateY = 0;
     }
@@ -1311,6 +1313,9 @@ export function Scene() {
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
+        onEnd={() => {
+          if (autoSquare) cameraActionsRef.current?.squareUp();
+        }}
         onChange={() => {
           if (cameraRef.current && controlsRef.current && cubeRef.current) {
             const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);

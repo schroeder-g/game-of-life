@@ -68,6 +68,7 @@ export interface SimulationState {
   snapMessage: string;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
+  autoSquare: boolean;
 }
 
 export interface SimulationActions {
@@ -95,6 +96,7 @@ export interface SimulationActions {
   setEaseOut: (val: number) => void;
   setSnapMessage: (message: string) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
+  setAutoSquare: (val: boolean | ((prev: boolean) => boolean)) => void;
 
   playStop: () => void;
   step: () => void;
@@ -210,6 +212,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [snapMessage, setSnapMessage] = useState("");
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
+  const [autoSquare, setAutoSquare] = useState(false);
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);
@@ -625,6 +628,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       easeIn,
       easeOut,
       rollSpeed,
+      autoSquare,
       isAnimatingInit,
     },
     actions: {
@@ -649,6 +653,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setEaseIn,
       setEaseOut,
       setRollSpeed,
+      setAutoSquare,
       playStop,
       step,
       stepBackward,

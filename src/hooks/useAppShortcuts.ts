@@ -10,6 +10,7 @@ export function useAppShortcuts() {
       running,
       rotationMode,
       cameraOrientation,
+      autoSquare,
       hasInitialState,
       hasPastHistory,
       invertYaw,
@@ -22,6 +23,7 @@ export function useAppShortcuts() {
       step,
       stepBackward,
       reset,
+      setAutoSquare,
       fitDisplay,
       recenter,
       squareUp,
@@ -187,7 +189,10 @@ export function useAppShortcuts() {
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
             case "s": recenter(); break;
-            case "l": squareUp(); break;
+            case "l":
+              if (!autoSquare) squareUp(); // one-shot when activating
+              setAutoSquare(prev => !prev);
+              break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
               setPaintMode(prev => (prev === 1 ? 0 : 1));
@@ -206,7 +211,10 @@ export function useAppShortcuts() {
           case "v": setRotationMode(true); break;
           case "f": fitDisplay(); break;
           case "s": recenter(); break;
-          case "l": squareUp(); break;
+          case "l":
+            if (!autoSquare) squareUp(); // one-shot when activating
+            setAutoSquare(prev => !prev);
+            break;
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
           case "arrowup":
