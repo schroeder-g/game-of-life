@@ -1350,3 +1350,19 @@ kbd {
   color: #ff5252;
 }
 
+/* Active state for glass buttons */
+.glass-button.active {
+  transform: translateY(1px);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
+}
+.glass-button.primary.active {
+  background: #8ab4f8;
+  color: #0d1117;
+  border-color: #8ab4f8;
+}
+.glass-button.danger.active {
+  background: #f28b82;
+  color: #0d1117;
+  border-color: #f28b82;
+}
+

@@ -551,12 +551,11 @@ function SelectorPositionSection() {
           }
         }
         
-        // --- THIS IS THE NEW PAINT-ON-MOVE LOGIC ---
         // If the cursor successfully moved and a paint mode is active, perform the action.
-        if (moved && (isBirthing || isClearing)) {
-          if (isBirthing) {
-            cameraActionsRef.current?.birthBrushCells(finalPos, brushState);
-          } else if (isClearing) {
+        if (moved && brushState.paintMode !== 0) {
+          if (brushState.paintMode === 1) {
+            cameraActionsRef.current?.toggleBrushCells(finalPos, brushState);
+          } else if (brushState.paintMode === -1) {
             cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
           }
         }
@@ -1218,9 +1217,9 @@ export function AppHeaderPanel() {
   } = useSimulation();
   const {
     state: brushState, // Get the whole state object
-    actions: { setSelectedShape },
+    actions: { setSelectedShape, setPaintMode },
   } = useBrush();
-  const { selectedShape, selectorPos } = brushState;
+  const { selectedShape, selectorPos, paintMode } = brushState;
 
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
@@ -1268,23 +1267,15 @@ export function AppHeaderPanel() {
         {!rotationMode && (
           <>
             <button
-              className="glass-button edit-action-button alive-button primary"
-              onClick={() => {
-                if (selectorPos) {
-                  cameraActionsRef.current?.toggleBrushCells(selectorPos, brushState);
-                }
-              }}
+              className={`glass-button edit-action-button alive-button primary ${paintMode === 1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
               title="Toggle Cell(s) (Space)"
             >
               <BabyIcon />
             </button>
             <button
-              className="glass-button edit-action-button clear-button danger"
-              onClick={() => {
-                if (selectorPos) {
-                  cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
-                }
-              }}
+              className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
               title="Clear (Delete)"
             >
               <XSquareIcon />

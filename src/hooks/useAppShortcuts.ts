@@ -32,7 +32,7 @@ export function useAppShortcuts() {
 
   const {
     state: brushState,
-    actions: { changeSize, clearShape, setSelectorPos },
+    actions: { changeSize, clearShape, setSelectorPos, setPaintMode },
   } = useBrush();
   const { selectorPos, selectedShape } = brushState;
 
@@ -154,15 +154,11 @@ export function useAppShortcuts() {
             case "l": squareUp(); break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
-              if (selectorPos) {
-                cameraActionsRef.current?.toggleBrushCells(selectorPos, brushState);
-              }
+              setPaintMode(prev => (prev === 1 ? 0 : 1));
               break;
             case "delete":
             case "backspace":
-              if (selectorPos) {
-                cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
-              }
+              setPaintMode(prev => (prev === -1 ? 0 : -1));
               break;
             case "arrowright":
               if (!running) step();
@@ -236,6 +232,6 @@ export function useAppShortcuts() {
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell,
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode,
   ]);
 }
