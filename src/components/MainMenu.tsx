@@ -517,27 +517,23 @@ function SelectorPositionSection() {
   useEffect(() => {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
-      const { isBirthing, isClearing } = brushState;
-
       setSelectorPos((currentPos: [number, number, number] | null) => {
         if (!currentPos) return null;
-          
+
         const nextPos: [number, number, number] = [
           currentPos[0] + delta[0],
           currentPos[1] + delta[1],
           currentPos[2] + delta[2],
         ];
-    
+
         const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
-          
+
         let finalPos: [number, number, number];
-        let moved = false;
-    
+
         // Determine the final, allowed position
         if (selectedShape !== "None") {
           if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
             finalPos = nextPos;
-            moved = true;
           } else {
             finalPos = currentPos;
           }
@@ -546,27 +542,15 @@ function SelectorPositionSection() {
           const clampedY = Math.max(0, Math.min(gridSize - 1, nextPos[1]));
           const clampedZ = Math.max(0, Math.min(gridSize - 1, nextPos[2]));
           finalPos = [clampedX, clampedY, clampedZ];
-          if (finalPos.join(',') !== currentPos.join(',')) {
-            moved = true;
-          }
         }
-          
-        // Perform the paint action as a side-effect if the cursor moved
-        if (moved && (isBirthing || isClearing)) {
-          if (isBirthing) {
-            cameraActionsRef.current?.birthBrushCells(finalPos, brushState);
-          } else if (isClearing) {
-            cameraActionsRef.current?.clearBrushCells(finalPos, brushState);
-          }
-        }
-          
+
         // Return the final position to update the state
         return finalPos;
       });
     });
-    
+
     return () => unsubscribe();
-  }, [eventBus, setSelectorPos, gridSize, brushState, cameraActionsRef]);
+  }, [eventBus, setSelectorPos, gridSize, brushState]);
 
   return (
     <section className="menu-section">
@@ -1216,9 +1200,10 @@ export function AppHeaderPanel() {
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
-    state: { selectedShape, selectorPos, isBirthing, isClearing },
-    actions: { setSelectedShape, setIsBirthing, setIsClearing },
+    state: brushState, // Get the whole state object
+    actions: { setSelectedShape },
   } = useBrush();
+  const { selectedShape, selectorPos } = brushState;
 
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
@@ -1266,20 +1251,22 @@ export function AppHeaderPanel() {
         {!rotationMode && (
           <>
             <button
-              className={`glass-button edit-action-button alive-button primary ${isBirthing ? 'active' : ''}`}
+              className="glass-button edit-action-button alive-button primary"
               onClick={() => {
-                setIsBirthing(current => !current);
-                if (!isBirthing) setIsClearing(false);
+                if (selectorPos) {
+                  cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
+                }
               }}
               title="Birth (Space)"
             >
               <BabyIcon />
             </button>
             <button
-              className={`glass-button edit-action-button clear-button danger ${isClearing ? 'active' : ''}`}
+              className="glass-button edit-action-button clear-button danger"
               onClick={() => {
-                setIsClearing(current => !current);
-                if (!isClearing) setIsBirthing(false);
+                if (selectorPos) {
+                  cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
+                }
               }}
               title="Clear (Delete)"
             >

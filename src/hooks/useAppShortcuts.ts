@@ -31,9 +31,10 @@ export function useAppShortcuts() {
   } = useSimulation();
 
   const {
-    state: { selectorPos, selectedShape },
-    actions: { changeSize, clearShape, setSelectorPos, setIsBirthing, setIsClearing },
+    state: brushState,
+    actions: { changeSize, clearShape, setSelectorPos },
   } = useBrush();
+  const { selectorPos, selectedShape } = brushState;
 
   useEffect(() => {
     // When entering edit mode, if cursor is not set, center it.
@@ -153,13 +154,15 @@ export function useAppShortcuts() {
             case "l": squareUp(); break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
-              setIsBirthing(true);
-              setIsClearing(false);
+              if (selectorPos) {
+                cameraActionsRef.current?.birthBrushCells(selectorPos, brushState);
+              }
               break;
             case "delete":
             case "backspace":
-              setIsClearing(true);
-              setIsBirthing(false);
+              if (selectorPos) {
+                cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
+              }
               break;
             case "arrowright":
               if (!running) step();
@@ -234,6 +237,5 @@ export function useAppShortcuts() {
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell,
-    setIsBirthing, setIsClearing,
   ]);
 }

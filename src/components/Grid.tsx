@@ -445,22 +445,11 @@ function FaceLabels({ size }: { size: number }) {
 
 function CursorInfo() {
   const { state: { rotationMode } } = useSimulation();
-  const { state: { selectorPos, isBirthing, isClearing } } = useBrush();
+  const { state: { selectorPos } } = useBrush();
 
   // This overlay is only for Edit Mode and when a cursor exists.
   if (rotationMode || !selectorPos) {
     return null;
-  }
-
-  let modeText: string | null = null;
-  let modeStyle: React.CSSProperties = {};
-
-  if (isBirthing) {
-    modeText = "BIRTH";
-    modeStyle = { color: "#8ab4f8", fontWeight: "bold" };
-  } else if (isClearing) {
-    modeText = "CLEAR";
-    modeStyle = { color: "#f28b82", fontWeight: "bold" };
   }
 
   const coordinates = `X:${selectorPos[0]} Y:${selectorPos[1]} Z:${selectorPos[2]}`;
@@ -469,12 +458,6 @@ function CursorInfo() {
     <Html as='div' wrapperClass="cursor-info-wrapper" fullscreen>
       <div className="cursor-info-panel">
         <span>{coordinates}</span>
-        {modeText && (
-          <>
-            <span style={{ margin: '0 12px', color: '#555' }}>|</span>
-            <span style={modeStyle}>{modeText}</span>
-          </>
-        )}
       </div>
     </Html>
   );
@@ -498,7 +481,7 @@ function KeyboardSelector({
   const {
     state: brushState,
   } = useBrush();
-  const { selectorPos, selectedShape, isBirthing, isClearing } = brushState;
+  const { selectorPos, selectedShape } = brushState;
 
   const isBrushActive = selectedShape !== "None";
 
@@ -511,12 +494,7 @@ function KeyboardSelector({
     selectorPos[2],
   );
 
-  let cursorColor = "#ffffff"; // Default white
-  if (isBirthing) {
-    cursorColor = "#8ab4f8"; // Blue, matching the "Birth" button
-  } else if (isClearing) {
-    cursorColor = "#f28b82"; // Red, matching the "Clear" button
-  }
+  const cursorColor = "#ffffff"; // Always white, as paint mode is removed
 
   const glowColor = "#ffff00";
   const cursorOpacity = 0.3;
