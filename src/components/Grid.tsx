@@ -616,6 +616,12 @@ export function Scene() {
   });
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
+  const dragStartRef = useRef({
+    active: false,
+    azimuth: 0,
+    polar: 0,
+    distance: 0,
+  });
 
   const {
     meta: { cameraActionsRef },
@@ -1338,8 +1344,44 @@ export function Scene() {
         dampingFactor={0.05}
         enabled={true} // always allow dragging/zooming even in edit mode
         maxDistance={maxDistance}
+        onStart={() => {
+          if (controlsRef.current) {
+            dragStartRef.current.active = true;
+            dragStartRef.current.azimuth = controlsRef.current.getAzimuthalAngle();
+            dragStartRef.current.polar = controlsRef.current.getPolarAngle();
+            dragStartRef.current.distance = cameraRef.current!.position.distanceTo(controlsRef.current.target);
+          }
+        }}
         onEnd={() => {
-          if (autoSquare) cameraActionsRef.current?.squareUp();
+          if (autoSquare && controlsRef.current && cameraRef.current) {
+            if (dragStartRef.current.active) {
+              dragStartRef.current.active = false;
+              
+              const endDistance = cameraRef.current.position.distanceTo(controlsRef.current.target);
+              const distanceChanged = Math.abs(endDistance - dragStartRef.current.distance) > 0.01;
+
+              if (distanceChanged) {
+                // It was a zoom, just square up
+                cameraActionsRef.current?.squareUp();
+                return;
+              }
+
+              // It was a drag, check for swipe
+              const endAzimuth = controlsRef.current.getAzimuthalAngle();
+              const endPolar = controlsRef.current.getPolarAngle();
+              const deltaAzimuth = endAzimuth - dragStartRef.current.azimuth;
+              const deltaPolar = endPolar - dragStartRef.current.polar;
+              const threshold = 0.1; // radians
+
+              if (Math.abs(deltaAzimuth) > Math.abs(deltaPolar) && Math.abs(deltaAzimuth) > threshold) {
+                cameraActionsRef.current?.snapRotate(deltaAzimuth > 0 ? 'left' : 'right');
+              } else if (Math.abs(deltaPolar) > Math.abs(deltaAzimuth) && Math.abs(deltaPolar) > threshold) {
+                cameraActionsRef.current?.snapRotate(deltaPolar > 0 ? 'up' : 'down');
+              } else {
+                cameraActionsRef.current?.squareUp();
+              }
+            }
+          }
         }}
         onChange={() => {
           if (cameraRef.current && controlsRef.current && cubeRef.current) {

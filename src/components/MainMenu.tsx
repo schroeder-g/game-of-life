@@ -1460,8 +1460,13 @@ export function AppHeaderPanel() {
           <RecenterIcon />
         </button>
         <button
-          className={`glass-button ${autoSquare ? "active" : ""}`}
-          onClick={() => setAutoSquare(prev => !prev)}
+          className={`glass-button ${autoSquare ? "success active" : ""}`}
+          onClick={() => {
+            if (!autoSquare) {
+              squareUp();
+            }
+            setAutoSquare((prev) => !prev);
+          }}
           aria-label="Square Up"
           data-tooltip-bottom={`Auto Square Up: ${autoSquare ? "On" : "Off"} (L)`}
         >
