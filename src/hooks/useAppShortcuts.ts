@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, rotationLookup } from "../core/cameraUtils";
 import { useBrush } from "../contexts/BrushContext";
@@ -34,7 +34,25 @@ export function useAppShortcuts() {
     state: brushState,
     actions: { changeSize, clearShape, setSelectorPos, setPaintMode },
   } = useBrush();
-  const { selectorPos, selectedShape } = brushState;
+  const { selectorPos, selectedShape, paintMode } = brushState;
+
+  const prevPaintModeRef = useRef<1 | 0 | -1>();
+
+  useEffect(() => {
+    // If we just transitioned into a paint mode from an idle state...
+    if (paintMode === 1 && prevPaintModeRef.current !== 1) {
+      if (selectorPos) {
+        cameraActionsRef.current?.activateBrushCells(selectorPos, brushState);
+      }
+    } else if (paintMode === -1 && prevPaintModeRef.current !== -1) {
+      if (selectorPos) {
+        cameraActionsRef.current?.clearBrushCells(selectorPos, brushState);
+      }
+    }
+
+    // Update the ref for the next render.
+    prevPaintModeRef.current = paintMode;
+  }, [paintMode, selectorPos, brushState, cameraActionsRef]);
 
   useEffect(() => {
     // When entering edit mode, if cursor is not set, center it.
@@ -232,6 +250,6 @@ export function useAppShortcuts() {
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory,
     invertYaw, invertPitch, setRotationMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode,
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode,
   ]);
 }
