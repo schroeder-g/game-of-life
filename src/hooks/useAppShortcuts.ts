@@ -178,11 +178,43 @@ export function useAppShortcuts() {
             case "backspace":
               setPaintMode(prev => (prev === -1 ? 0 : -1));
               break;
-            case "arrowright":
-              if (!running) step();
+            default: handled = false;
+          }
+        } else if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+          const arrowMap: { [key: string]: string } = {
+            "arrowup": e.shiftKey ? "q" : "w",
+            "arrowdown": e.shiftKey ? "z" : "x",
+            "arrowleft": "a",
+            "arrowright": "d"
+          };
+          const mappedKey = arrowMap[key];
+          if (mappedKey && hasValidOrientation) {
+            const f = face as CameraFace;
+            const r = rotation as CameraRotation;
+            const keymapForOrientation = KEY_MAP[f][r];
+            if (mappedKey in keymapForOrientation) {
+              const delta = (keymapForOrientation as any)[mappedKey] as [number, number, number];
+              eventBus.emit("moveSelector", { delta });
+              handled = true;
+            }
+          }
+        } else {
+          switch (key) {
+            case "[": changeSize(-1, 0); break;
+            case "]": changeSize(1, 0); break;
+            case "escape": clearShape(); break;
+            case "e": setRotationMode(false); break;
+            case "v": setRotationMode(true); break;
+            case "f": fitDisplay(); break;
+            case "s": recenter(); break;
+            case "l": squareUp(); break;
+            case "r": if (hasInitialState) reset(); break;
+            case " ":
+              setPaintMode(prev => (prev === 1 ? 0 : 1));
               break;
-            case "arrowleft":
-              if (!running && hasPastHistory) stepBackward();
+            case "delete":
+            case "backspace":
+              setPaintMode(prev => (prev === -1 ? 0 : -1));
               break;
             default: handled = false;
           }
@@ -197,8 +229,20 @@ export function useAppShortcuts() {
           case "l": squareUp(); break;
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
-          case "arrowright": if (!running) step(); break;
-          case "arrowleft": if (!running && hasPastHistory) stepBackward(); break;
+          case "arrowup":
+            if(e.shiftKey) movement.current.up = true;
+            else movement.current.forward = true;
+            break;
+          case "arrowdown":
+            if(e.shiftKey) movement.current.down = true;
+            else movement.current.backward = true;
+            break;
+          case "arrowleft":
+            movement.current.left = true;
+            break;
+          case "arrowright":
+            movement.current.right = true;
+            break;
           case "w": movement.current.forward = true; break;
           case "x": movement.current.backward = true; break;
           case "a": movement.current.left = true; break;
@@ -229,6 +273,20 @@ export function useAppShortcuts() {
         case "d": movement.current.right = false; break;
         case "q": movement.current.up = false; break;
         case "z": movement.current.down = false; break;
+        case "arrowup":
+          movement.current.up = false;
+          movement.current.forward = false;
+          break;
+        case "arrowdown":
+          movement.current.down = false;
+          movement.current.backward = false;
+          break;
+        case "arrowleft":
+          movement.current.left = false;
+          break;
+        case "arrowright":
+          movement.current.right = false;
+          break;
         case ";": movement.current.rotateSemicolon = false; break;
         case "k": movement.current.rotateK = false; break;
         case "o": movement.current.rotateO = false; break;
