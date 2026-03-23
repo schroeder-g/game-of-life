@@ -252,48 +252,23 @@ function BrushProjectionGuides({
   const offset = (gridSize - 1) / 2;
   const channelWidth = 0.05;
 
-  const bounds = useMemo(() => {
-    if (previewCells.length === 0) return null;
-
-    const cells = previewCells.map(p => p.cell);
-
-    const minX = Math.min(...cells.map(c => c[0]));
-    const maxX = Math.max(...cells.map(c => c[0]));
-    const minY = Math.min(...cells.map(c => c[1]));
-    const maxY = Math.max(...cells.map(c => c[1]));
-    const minZ = Math.min(...cells.map(c => c[2]));
-    const maxZ = Math.max(...cells.map(c => c[2]));
-
-    return { minX, maxX, minY, maxY, minZ, maxZ };
+  const yzPairs = useMemo(() => {
+    const pairs = new Set<string>();
+    previewCells.forEach(({ cell }) => pairs.add(`${cell[1]},${cell[2]}`));
+    return Array.from(pairs).map(p => p.split(',').map(Number));
   }, [previewCells]);
 
-  if (!bounds) return null;
+  const xzPairs = useMemo(() => {
+    const pairs = new Set<string>();
+    previewCells.forEach(({ cell }) => pairs.add(`${cell[0]},${cell[2]}`));
+    return Array.from(pairs).map(p => p.split(',').map(Number));
+  }, [previewCells]);
 
-  const { minX, maxX, minY, maxY, minZ, maxZ } = bounds;
-
-  // X-axis channel (projects onto YZ plane)
-  const xSize: [number, number, number] = [gridSize, maxY - minY + 1, maxZ - minZ + 1];
-  const xPos: [number, number, number] = [
-    0,
-    (minY + maxY) / 2 - offset,
-    gridSize - 1 - ((minZ + maxZ) / 2) - offset,
-  ];
-
-  // Y-axis channel (projects onto XZ plane)
-  const ySize: [number, number, number] = [maxX - minX + 1, gridSize, maxZ - minZ + 1];
-  const yPos: [number, number, number] = [
-    (minX + maxX) / 2 - offset,
-    0,
-    gridSize - 1 - ((minZ + maxZ) / 2) - offset,
-  ];
-
-  // Z-axis channel (projects onto XY plane)
-  const zSize: [number, number, number] = [maxX - minX + 1, maxY - minY + 1, gridSize];
-  const zPos: [number, number, number] = [
-    (minX + maxX) / 2 - offset,
-    (minY + maxY) / 2 - offset,
-    0,
-  ];
+  const xyPairs = useMemo(() => {
+    const pairs = new Set<string>();
+    previewCells.forEach(({ cell }) => pairs.add(`${cell[0]},${cell[1]}`));
+    return Array.from(pairs).map(p => p.split(',').map(Number));
+  }, [previewCells]);
 
   const material = (
     <meshBasicMaterial
@@ -306,18 +281,27 @@ function BrushProjectionGuides({
 
   return (
     <group raycast={() => null}>
-      <mesh position={xPos}>
-        <boxGeometry args={xSize} />
-        {material}
-      </mesh>
-      <mesh position={yPos}>
-        <boxGeometry args={ySize} />
-        {material}
-      </mesh>
-      <mesh position={zPos}>
-        <boxGeometry args={zSize} />
-        {material}
-      </mesh>
+      {/* X-axis channels */}
+      {yzPairs.map(([y, z], i) => (
+        <mesh key={`x-chan-${i}`} position={[0, y - offset, gridSize - 1 - z - offset]}>
+          <boxGeometry args={[gridSize, channelWidth, channelWidth]} />
+          {material}
+        </mesh>
+      ))}
+      {/* Y-axis channels */}
+      {xzPairs.map(([x, z], i) => (
+        <mesh key={`y-chan-${i}`} position={[x - offset, 0, gridSize - 1 - z - offset]}>
+          <boxGeometry args={[channelWidth, gridSize, channelWidth]} />
+          {material}
+        </mesh>
+      ))}
+      {/* Z-axis channels */}
+      {xyPairs.map(([x, y], i) => (
+        <mesh key={`z-chan-${i}`} position={[x - offset, y - offset, 0]}>
+          <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
+          {material}
+        </mesh>
+      ))}
     </group>
   );
 }
