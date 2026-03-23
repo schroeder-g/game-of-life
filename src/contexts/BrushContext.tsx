@@ -10,8 +10,7 @@ export interface BrushState {
   brushRotationVersion: number;
   brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
   customOffsets: [number, number, number][];
-  isBirthing: boolean;
-  isClearing: boolean;
+  paintMode: 1 | 0 | -1; // 1: Toggle, 0: Idle, -1: Clear
 }
 
 export interface BrushActions {
@@ -30,8 +29,7 @@ export interface BrushActions {
   changeSize: (delta: number, maxGridSize: number) => void;
   incrementBrushRotationVersion: () => void;
   setCustomBrush: (cells: [number, number, number][]) => void;
-  setIsBirthing: (isBirthing: boolean | ((prev: boolean) => boolean)) => void;
-  setIsClearing: (isClearing: boolean | ((prev: boolean) => boolean)) => void;
+  setPaintMode: (mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1)) => void;
 }
 
 export interface BrushContextValue {
@@ -50,8 +48,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
   >(null);
   const [brushRotationVersion, setBrushRotationVersion] = useState<number>(0);
   const [customOffsets, setCustomOffsets] = useState<[number, number, number][]>([]);
-  const [isBirthing, setIsBirthing] = useState<boolean>(false);
-  const [isClearing, setIsClearing] = useState<boolean>(false);
+  const [paintMode, setPaintMode] = useState<1 | 0 | -1>(0); // 1: Toggle, 0: Idle, -1: Clear
   const brushQuaternion = useRef(new THREE.Quaternion());
 
   // clear hollow when switching to an unsupported shape
@@ -70,8 +67,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       brushRotationVersion,
       brushQuaternion,
       customOffsets,
-      isBirthing,
-      isClearing,
+      paintMode,
     },
     actions: {
       setSelectedShape,
@@ -110,8 +106,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
         setCustomOffsets(offsets);
         setSelectedShape("Selected Community");
       },
-      setIsBirthing,
-      setIsClearing,
+      setPaintMode,
     },
   };
 
