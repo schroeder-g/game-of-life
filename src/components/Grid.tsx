@@ -181,23 +181,43 @@ function BrushProjectionGuides({
   const offset = (gridSize - 1) / 2;
   const channelWidth = 1.0; // Use a full cell width to make the guides look "filled"
 
+  const cellKeys = useMemo(() => new Set(previewCells.map(pc => pc.cell.join(','))), [previewCells]);
+
   const yzPairs = useMemo(() => {
     const pairs = new Set<string>();
-    previewCells.forEach(({ cell }) => pairs.add(`${cell[1]},${cell[2]}`));
+    previewCells.forEach(({ cell }) => {
+      const [x, y, z] = cell;
+      // Project if a cell is on the X-axis exterior of the shape
+      if (!cellKeys.has(`${x - 1},${y},${z}`) || !cellKeys.has(`${x + 1},${y},${z}`)) {
+        pairs.add(`${y},${z}`);
+      }
+    });
     return Array.from(pairs).map(p => p.split(',').map(Number));
-  }, [previewCells]);
+  }, [previewCells, cellKeys]);
 
   const xzPairs = useMemo(() => {
     const pairs = new Set<string>();
-    previewCells.forEach(({ cell }) => pairs.add(`${cell[0]},${cell[2]}`));
+    previewCells.forEach(({ cell }) => {
+      const [x, y, z] = cell;
+      // Project if a cell is on the Y-axis exterior of the shape
+      if (!cellKeys.has(`${x},${y - 1},${z}`) || !cellKeys.has(`${x},${y + 1},${z}`)) {
+        pairs.add(`${x},${z}`);
+      }
+    });
     return Array.from(pairs).map(p => p.split(',').map(Number));
-  }, [previewCells]);
+  }, [previewCells, cellKeys]);
 
   const xyPairs = useMemo(() => {
     const pairs = new Set<string>();
-    previewCells.forEach(({ cell }) => pairs.add(`${cell[0]},${cell[1]}`));
+    previewCells.forEach(({ cell }) => {
+      const [x, y, z] = cell;
+      // Project if a cell is on the Z-axis exterior of the shape
+      if (!cellKeys.has(`${x},${y},${z - 1}`) || !cellKeys.has(`${x},${y},${z + 1}`)) {
+        pairs.add(`${x},${y}`);
+      }
+    });
     return Array.from(pairs).map(p => p.split(',').map(Number));
-  }, [previewCells]);
+  }, [previewCells, cellKeys]);
 
   const material = (
     <meshBasicMaterial
@@ -230,7 +250,7 @@ function BrushProjectionGuides({
         <mesh key={`z-chan-${i}`} position={[x - offset, y - offset, 0]}>
           <boxGeometry args={[channelWidth, channelWidth, gridSize]} />
           {material}
-        </mesh>
+        </boxGeometry>
       ))}
     </group>
   );
@@ -371,7 +391,7 @@ function KeyboardSelector({
   const {
     state: brushState,
   } = useBrush();
-  const { selectorPos, selectedShape, paintMode, shapeSize, isHollow, customOffsets, brushRotationVersion } = brushState;
+  const { selectorPos, selectedShape, paintMode, shapeSize, isHollow, customOffsets, brushRotationVersion, showProjectionGuides } = brushState;
 
   const previewCells = useMemo(() => {
     if (!selectorPos) return [];
@@ -385,9 +405,7 @@ function KeyboardSelector({
         const [dx, dy, dz] = originalOffset;
         const v = new THREE.Vector3(dx, dy, dz);
         
-        if (brushQuaternion.current && selectedShape !== "None") {
-          v.applyQuaternion(brushQuaternion.current);
-        }
+        v.applyQuaternion(brushQuaternion.current);
 
         const cell = [
           selectorPos[0] + Math.round(v.x),
@@ -426,8 +444,8 @@ function KeyboardSelector({
 
   return (
     <group>
-      {/* Guides are now always rendered, based on the final preview cells */}
-      <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />
+      {/* Guides are now rendered based on a toggle, and from exterior faces */}
+      {showProjectionGuides && <BrushProjectionGuides previewCells={previewCells} gridSize={gridSize} />}
       
       {/* Unified renderer for all brush cells */}
       {previewCells.map(({ cell }, i) => {
@@ -884,24 +902,18 @@ export function Scene() {
       activateBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
         if (!pos) return;
 
-        let cellsToActivate: [number, number, number][];
-
-        if (brush.selectedShape === "None") {
-          cellsToActivate = [pos];
-        } else {
-          const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
-          cellsToActivate = offsets
-            .map(([dx, dy, dz]) => {
-              const v = new THREE.Vector3(dx, dy, dz);
-              v.applyQuaternion(brush.brushQuaternion.current);
-              return [
-                Math.round(v.x) + pos[0],
-                Math.round(v.y) + pos[1],
-                Math.round(v.z) + pos[2],
-              ] as [number, number, number];
-            })
-            .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
-        }
+        const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
+        const cellsToActivate = offsets
+          .map(([dx, dy, dz]) => {
+            const v = new THREE.Vector3(dx, dy, dz);
+            v.applyQuaternion(brush.brushQuaternion.current);
+            return [
+              Math.round(v.x) + pos[0],
+              Math.round(v.y) + pos[1],
+              Math.round(v.z) + pos[2],
+            ] as [number, number, number];
+          })
+          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
 
         if (cellsToActivate.length > 0) {
           actions.setCells(cellsToActivate);
@@ -911,24 +923,18 @@ export function Scene() {
       clearBrushCells: (pos: [number, number, number], brush: typeof brushState) => {
         if (!pos) return;
 
-        let cellsToClear: [number, number, number][];
-
-        if (brush.selectedShape === "None") {
-          cellsToClear = [pos];
-        } else {
-          const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
-          cellsToClear = offsets
-            .map(([dx, dy, dz]) => {
-              const v = new THREE.Vector3(dx, dy, dz);
-              v.applyQuaternion(brush.brushQuaternion.current);
-              return [
-                Math.round(v.x) + pos[0],
-                Math.round(v.y) + pos[1],
-                Math.round(v.z) + pos[2],
-              ] as [number, number, number];
-            })
-            .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
-        }
+        const offsets = generateShape(brush.selectedShape, brush.shapeSize, brush.isHollow, brush.customOffsets);
+        const cellsToClear = offsets
+          .map(([dx, dy, dz]) => {
+            const v = new THREE.Vector3(dx, dy, dz);
+            v.applyQuaternion(brush.brushQuaternion.current);
+            return [
+              Math.round(v.x) + pos[0],
+              Math.round(v.y) + pos[1],
+              Math.round(v.z) + pos[2],
+            ] as [number, number, number];
+          })
+          .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
 
         if (cellsToClear.length > 0) {
           setCommunity([]);

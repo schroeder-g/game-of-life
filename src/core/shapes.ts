@@ -202,4 +202,4 @@ export function supportsHollow(shape: ShapeType): boolean {
 }
 
 // All available shapes for dropdown
-export const SHAPES: ShapeType[] = ["Selected Community", "None", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];
+export const SHAPES: ShapeType[] = ["Selected Community", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];

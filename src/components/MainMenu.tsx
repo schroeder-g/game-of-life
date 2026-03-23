@@ -641,8 +641,8 @@ function ShapeBrushSection() {
     state: { gridSize, community, cameraOrientation },
   } = useSimulation();
   const {
-    state: { selectedShape, shapeSize, isHollow, brushQuaternion },
-    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush, incrementBrushRotationVersion },
+    state: { selectedShape, shapeSize, isHollow, brushQuaternion, showProjectionGuides },
+    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush, incrementBrushRotationVersion, setShowProjectionGuides },
   } = useBrush();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -694,10 +694,8 @@ function ShapeBrushSection() {
                   setCustomBrush(community);
                 } else {
                   setSelectedShape(shape);
-                  if (shape !== "None") {
-                    // Initialize brush orientation to match current face/angle
-                    initBrushOrientation();
-                  }
+                  // Initialize brush orientation to match current face/angle
+                  initBrushOrientation();
                 }
               }}
             >
@@ -733,6 +731,15 @@ function ShapeBrushSection() {
                   checked={isHollow}
                   disabled={!supportsHollow(selectedShape)}
                   onChange={(e) => setIsHollow(e.target.checked)}
+                />
+              </label>
+              <label className="control-label row">
+                <span>Show Guides</span>
+                <input
+                  type="checkbox"
+                  className="glass-checkbox"
+                  checked={showProjectionGuides}
+                  onChange={(e) => setShowProjectionGuides(e.target.checked)}
                 />
               </label>
             </>
@@ -1254,23 +1261,9 @@ export function AppHeaderPanel() {
         <div className="orientation-status">
           Face: {faceName}, {rotationDegrees}
         </div>
-        {!rotationMode && selectedShape !== "None" && (
+        {!rotationMode && (
           <div className="shape-status">
-            Shape: {selectedShape}{" "}
-            <span className="hint">
-              (Esc to{" "}
-              <a
-                href="#"
-                className="cancel-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setSelectedShape("None");
-                }}
-              >
-                Cancel
-              </a>
-              )
-            </span>
+            Shape: {selectedShape} (Size: {brushState.shapeSize})
           </div>
         )}
       </div>
