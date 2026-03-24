@@ -65,7 +65,7 @@ gcloud artifacts repositories create "$REPOSITORY" \
 
 echo
 echo "--- Building and pushing the Docker image using Cloud Build... ---"
-gcloud builds submit --tag "$IMAGE_TAG" --substitutions=_BUILD_DISTRIBUTION=$ENV . --project="$PROJECT_ID"
+gcloud builds submit --tag "$IMAGE_TAG" --build-arg BUILD_DISTRIBUTION=$ENV . --project="$PROJECT_ID"
 
 echo
 echo "--- Deploying to Cloud Run... ---"
