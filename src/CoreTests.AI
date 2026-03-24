@@ -1,36 +1,54 @@
 These instructions are for the AI agent.
 
-[x] Update this file with a preceding "[x]" before each instruction if you believe you have implemented it, and include it as a claim in the documentation to be tested. 
+Do not Update this file.
 
-Uncheck "[x]" before each instruction if you believe you have not implemented it or if it is no longer satisfied.
+As you fulfill prompts, keep these instructions in mind. 
 
-[x] Ensure that the project is well-documented and easy to understand.
+Ensure that the project is well-documented and easy to understand.
 
-[x] Ensure that the project is well-tested and easy to maintain.
+Ensure that the project is well-tested and easy to maintain.
 
-[x] Documentation claims should have a minimum of one corresponding test.
+Documentation claims should have a minimum of one corresponding test.
 
-[x] The test and the claim should be cross-referenced. 
+Documentaion should be written in a user-friendly style, with attractive Headers, Subheaders, Sub-Sub headers in bold.
 
-[x] No feature will prevent specific keypresses from reaching focused text input controls.  
+Documentation claims and corresponding tests should be cross-referenced. 
 
+Each claim should be followed by the TestIds of the Test(s) associated with it.
 
-[x] Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
+No feature will prevent specific keypresses from reaching focused text input controls.  
+
+Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
 
 Ensure that these instructions are followed and that the project is updated accordingly.
 
 
-
-[x] core/faceOrientationKeyMapping should not be modified without express approval.
-
 core/faceOrientationKeyMapping.ts is a critical file that maps the face orientation to the key mapping.
+
+
+core/faceOrientationKeyMapping should not be modified without express approval.
 
 It also can be used to determine the orientation of the next dominant face.
 
 Understand that I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
 
-Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them
+If the Top side is on top, then this means the current angle is zero degrees.
 
-[x] Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
+Documentation claims should be in HTML not markdown.
 
-For deprecated claims, explain why they are deprecated (e.g. Core claim functionality still exists, but has been extended or corrected.;  BUG: Claim is not currently supported." , "OTHER: {explain} )
+Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them, and include the Date,time, and effective prompt.
+
+Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
+
+Documentation should be structured in a visually-pleasing manner, with Headings, Subheadings,  and labels bolded.
+
+For deprecated claims, explain clearly why they are deprecated if they are not already deprecated.
+
+Ensure that each claim has a unique ID.  This unique ID should be displayed as a link in the TestingPanel before the test item  
+
+Clicking the claim link should pop up a hint displaying the content of the corresponding documentation claim. 
+
+Tests panel components should align horizontally.
+
+Tests panel items should include explanatory text so the tester knows exactly what to do.
+

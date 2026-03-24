@@ -1384,3 +1384,109 @@ kbd {
   color: #ffffff;
   border-color: #57ab5a;
 }
+
+/* Welcome Modal & Banner */
+.modal-overlay.welcome-modal {
+  z-index: 10000;
+}
+
+.welcome-modal .modal-content {
+  width: 400px;
+  padding: 40px;
+  text-align: center;
+}
+
+.dist-tag {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.name-form {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.name-form input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  color: white;
+}
+
+.welcome-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  padding: 5px 20px;
+  font-size: 0.85em;
+  z-index: 900;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  text-align: right;
+}
+
+
+.claim-item p {
+  color: #cccccc;
+}
+
+/* Documentation Modal */
+.doc-modal {
+  width: 800px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+
+}
+
+.claim-tag {
+  background: rgba(255, 221, 0, 0.2);
+  color: #ffdd00;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+/* Tests Panel */
+.tests-panel {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 166, 87, 0.05);
+  border: 1px solid rgba(255, 166, 87, 0.2);
+  border-radius: 8px;
+}
+
+.tests-panel h3 {
+  margin-top: 0;
+  font-size: 0.9em;
+  color: #ffa657;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+}
+
+.test-id {
+  color: #ffa657;
+  font-weight: bold;
+  min-width: 60px;
+}

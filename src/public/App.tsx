@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Scene } from "../components/Grid";
 import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
-import { WelcomeBanner, WelcomeModal } from "../components/WelcomeModal";
+import { WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
@@ -76,7 +76,7 @@ export default function App() {
   return (
     <div className="app">
       <AppHeaderPanel />
-      
+
       <div className="main-content-layout">
         <aside className="ui-overlay">
           <p className="explainer">
@@ -111,7 +111,6 @@ export default function App() {
             ⌘ Shortcuts
           </button>
 
-          <WelcomeBanner />
           <MainMenu />
         </aside>
 

@@ -54,7 +54,7 @@ export function TestsPanel() {
     transition: 'opacity 0.2s, transform 0.2s, visibility 0.2s',
   });
   const popupContent = useRef('');
-  
+
   const tooltipRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
@@ -125,7 +125,7 @@ export function TestsPanel() {
       <div ref={panelRef} className="tests-panel glass-panel">
         <h3
           onClick={() => setIsCollapsed(!isCollapsed)}
-          style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          style={{ marginBottom: 5, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
         >
           Manual Tests
           <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
@@ -133,7 +133,8 @@ export function TestsPanel() {
         {!isCollapsed && MANUAL_TESTS.map((test) => {
           const isExpanded = expandedTests.has(test.id);
           return (
-            <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+
+            <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', marginTop: '20px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               {/* Row 1: Checkbox and IDs */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ThreeStateCheckbox
@@ -154,11 +155,11 @@ export function TestsPanel() {
                           const itemRow = (e.target as HTMLElement).closest('.test-item-container');
                           const panel = panelRef.current;
                           if (!itemRow || !panel) return;
-                          
+
                           const panelRect = panel.getBoundingClientRect();
                           const itemRect = itemRow.getBoundingClientRect();
-                          
-                          setActiveTooltip({ 
+
+                          setActiveTooltip({
                             id: claimId,
                             x: panelRect.right + 5,
                             y: itemRect.top,
@@ -182,6 +183,7 @@ export function TestsPanel() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   marginTop: '4px',
+
                   paddingLeft: '28px', // Indent to align with text content below
                 }}
               >
@@ -190,28 +192,31 @@ export function TestsPanel() {
                   {isExpanded ? "▲" : "▼"}
                 </span>
               </div>
-              
+
               {/* Collapsible steps */}
-              {isExpanded && (
-                <div className="test-steps" style={{ paddingLeft: '28px', marginTop: '8px', fontSize: '13px', color: '#ccc' }}>
-                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                    {test.steps.map((step, index) => (
-                      <li key={index} dangerouslySetInnerHTML={{ __html: step }} style={{ marginBottom: '4px' }} />
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {
+                isExpanded && (
+                  <div className="test-steps" style={{ paddingLeft: '28px', marginTop: '8px', fontSize: '13px', color: '#ccc' }}>
+                    <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
+                      {test.steps.map((step, index) => (
+                        <li key={index} dangerouslySetInnerHTML={{ __html: step }} style={{ marginBottom: '4px' }} />
+                      ))}
+                    </ul>
+                  </div>
+                )
+              }
             </div>
           );
         })}
-      </div>
+      </div >
 
       {isClient && createPortal(
         <div ref={tooltipRef} style={popupStyle}>
           {popupContent.current}
         </div>,
         document.body
-      )}
+      )
+      }
     </>
   );
 }

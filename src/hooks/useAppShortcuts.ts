@@ -4,7 +4,7 @@
 // adding new keyboard control logic here. Instead, modify the mappings in
 // the source of truth file.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
@@ -90,11 +90,26 @@ export function useAppShortcuts() {
       // Allow rotation keys through even in text boxes, but nothing else
       if (isTextBox && !isRotationCode) return;
 
-      const isBrushActive = selectedShape !== "None";
       const face = cameraOrientation.face;
       const rotation = cameraOrientation.rotation;
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
+      // 1. Continuous rotation (View Mode OR Edit Mode with Auto-Square off and no active brush)
+      const isContinuousMode = rotationMode || (!autoSquare && paintMode === 0);
+      if (isRotationCode && isContinuousMode) {
+        switch (key) {
+          case ";": movement.current.rotateSemicolon = true; break;
+          case "k": movement.current.rotateK = true; break;
+          case "o": movement.current.rotateO = true; break;
+          case ".": movement.current.rotatePeriod = true; break;
+          case "i": movement.current.rotateI = true; break;
+          case "p": movement.current.rotateP = true; break;
+        }
+        e.preventDefault();
+        return;
+      }
+
+      // 2. Snap/Brush rotation (Edit Mode only)
       if (isRotationCode && !rotationMode) {
         if (hasValidOrientation) {
           const f = face as CameraFace;
@@ -120,7 +135,8 @@ export function useAppShortcuts() {
           const axis = getExplicitRotationAxis(f, r, rotKey);
           let angle = Math.PI / 2;
 
-          if (isBrushActive) {
+          // Only rotate brush (and reverse i/p) if we are in an active paint mode
+          if (selectedShape !== "None" && paintMode !== 0) {
             // Reverse direction for roll (i/p) to match user expectations
             if (["i", "p"].includes(rotKey)) {
               angle = -angle;
@@ -137,8 +153,8 @@ export function useAppShortcuts() {
 
       let handled = true;
 
-      // --- MOVEMENT KEYS IN EDIT MODE ---
       if (!rotationMode) {
+        // --- EDIT MODE CONTROLS ---
         if (["w", "x", "a", "d", "q", "z"].includes(key)) {
           if (hasValidOrientation) {
             const f = face as CameraFace;
@@ -147,7 +163,6 @@ export function useAppShortcuts() {
             if (key in keymapForOrientation) {
               const delta = (keymapForOrientation as any)[key] as [number, number, number];
               eventBus.emit("moveSelector", { delta });
-              handled = true;
             }
           }
         } else if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
@@ -165,7 +180,6 @@ export function useAppShortcuts() {
             if (mappedKey in keymapForOrientation) {
               const delta = (keymapForOrientation as any)[mappedKey] as [number, number, number];
               eventBus.emit("moveSelector", { delta });
-              handled = true;
             }
           }
         } else {
@@ -193,7 +207,7 @@ export function useAppShortcuts() {
           }
         }
       } else {
-        // --- VIEWING MODE ---
+        // --- VIEW MODE CONTROLS ---
         switch (key) {
           case "e": setRotationMode(false); break;
           case "v": setRotationMode(true); break;
@@ -240,7 +254,13 @@ export function useAppShortcuts() {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (!rotationMode) return; // Key up only matters for continuous view mode movement
+      const code = e.code;
+      const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
+
+      // Key up matters for continuous movement in View mode OR Edit mode (if auto-square is off)
+      const isContinuousAllowed = rotationMode || (!autoSquare && isRotationCode);
+      if (!isContinuousAllowed) return;
+
       let handled = true;
       switch (key) {
         case "w": movement.current.forward = false; break;

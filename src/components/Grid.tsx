@@ -1,6 +1,6 @@
 import { Html, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -652,63 +652,69 @@ export function Scene() {
     return distance * 2;
   }, [gridSize, camera]);
 
+  const snapRotate = useCallback((direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
+    if (snapRotation.current.active || !cubeRef.current || !cameraRef.current) return;
+
+    const camera = cameraRef.current;
+    let angle = Math.PI / 2;
+    let axis = new THREE.Vector3();
+
+    switch (direction) {
+      case 'up':
+        axis.setFromMatrixColumn(camera.matrix, 0); // camera's right vector
+        angle = Math.PI / 2;
+        break;
+      case 'down':
+        axis.setFromMatrixColumn(camera.matrix, 0);
+        angle = -Math.PI / 2;
+        break;
+      case 'left':
+        axis.setFromMatrixColumn(camera.matrix, 1); // camera's up vector
+        angle = Math.PI / 2;
+        break;
+      case 'right':
+        axis.setFromMatrixColumn(camera.matrix, 1);
+        angle = -Math.PI / 2;
+        break;
+      case 'rollLeft':
+        axis.setFromMatrixColumn(camera.matrix, 2).negate(); // camera's forward vector
+        angle = Math.PI / 2;
+        break;
+      case 'rollRight':
+        axis.setFromMatrixColumn(camera.matrix, 2).negate();
+        angle = -Math.PI / 2;
+        break;
+    }
+
+    snapRotation.current.active = true;
+    snapRotation.current.axis.copy(axis);
+    snapRotation.current.totalAngle = angle;
+    snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
+    snapRotation.current.startTime = 0;
+    snapRotation.current.lastAngle = 0;
+    snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
+  }, [cameraActionsRef]);
+
   useEffect(() => {
-    const snapRotate = (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
-      if (snapRotation.current.active || !cubeRef.current || !cameraRef.current) return;
+    if (!autoSquare && autoSquaringAnimation.current.active) {
+      autoSquaringAnimation.current.active = false;
+    }
+  }, [autoSquare]);
 
-      const camera = cameraRef.current;
-      let angle = Math.PI / 2;
-      let axis = new THREE.Vector3();
+  const snapRotateWithAxis = useCallback((axis: THREE.Vector3, angle: number) => {
+    if (snapRotation.current.active || !cubeRef.current) return;
 
-      switch (direction) {
-        case 'up':
-          axis.setFromMatrixColumn(camera.matrix, 0); // camera's right vector
-          angle = Math.PI / 2;
-          break;
-        case 'down':
-          axis.setFromMatrixColumn(camera.matrix, 0);
-          angle = -Math.PI / 2;
-          break;
-        case 'left':
-          axis.setFromMatrixColumn(camera.matrix, 1); // camera's up vector
-          angle = Math.PI / 2;
-          break;
-        case 'right':
-          axis.setFromMatrixColumn(camera.matrix, 1);
-          angle = -Math.PI / 2;
-          break;
-        case 'rollLeft':
-          axis.setFromMatrixColumn(camera.matrix, 2).negate(); // camera's forward vector
-          angle = Math.PI / 2;
-          break;
-        case 'rollRight':
-          axis.setFromMatrixColumn(camera.matrix, 2).negate();
-          angle = -Math.PI / 2;
-          break;
-      }
+    snapRotation.current.active = true;
+    snapRotation.current.axis.copy(axis);
+    snapRotation.current.totalAngle = angle;
+    snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
+    snapRotation.current.startTime = 0;
+    snapRotation.current.lastAngle = 0;
+    // After snapping, always perform a full square up
+    snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
+  }, [cameraActionsRef]);
 
-      snapRotation.current.active = true;
-      snapRotation.current.axis.copy(axis);
-      snapRotation.current.totalAngle = angle;
-      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
-      snapRotation.current.startTime = 0;
-      snapRotation.current.lastAngle = 0;
-      snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
-    };
-
-    const snapRotateWithAxis = (axis: THREE.Vector3, angle: number) => {
-      if (snapRotation.current.active || !cubeRef.current) return;
-
-      snapRotation.current.active = true;
-      snapRotation.current.axis.copy(axis);
-      snapRotation.current.totalAngle = angle;
-      snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
-      snapRotation.current.startTime = 0;
-      snapRotation.current.lastAngle = 0;
-      // After snapping, always perform a full square up
-      snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
-    };
-
+  useEffect(() => {
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!controlsRef.current || !cameraRef.current) return;
