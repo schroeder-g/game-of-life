@@ -46,35 +46,33 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
   }, []);
 
   const { testResults, summary, testDate } = useMemo(() => {
-    const totalTests = automatedTestIds.size;
     if (!report) {
-      const summary = { total: totalTests, passed: 0, failed: 0, skipped: totalTests };
+      const summary = { total: automatedTestIds.size, passed: 0, failed: 0, skipped: automatedTestIds.size };
       return { testResults: [], summary, testDate: "N/A" };
     }
 
     // Parse the Jest-style test report.
     const allParsedTests: VitestTest[] = [];
-    // The report format is from Jest, so we cast to 'any' to parse it.
     (report as any).testResults.forEach((fileResult: any) => {
       if (fileResult.assertionResults) {
         fileResult.assertionResults.forEach((assertion: any) => {
-          // Extract the test ID from the title, e.g., "[UX-1] should..."
-          const match = assertion.title.match(/\[(.*?)\]/);
+          // Look for an ID in both ancestor titles and the test title itself.
+          const fullTitle = [...(assertion.ancestorTitles || []), assertion.title].join(' ');
+          const match = fullTitle.match(/\[(.*?)\]/);
+          // Use the matched ID, or the plain title as a fallback key
           const testId = match ? match[1] : assertion.title;
 
           allParsedTests.push({
             name: testId,
-            // Normalize status from Jest's 'passed' to the expected 'pass'
             status: assertion.status === "passed" ? "pass" : assertion.status,
             duration: assertion.duration,
-            // Adapt Jest's `failureMessages` to the expected `errors` structure.
             errors: assertion.failureMessages?.map((msg: string) => ({ message: msg })) || [],
           });
         });
       }
     });
 
-    const results: AutomatedTestResult[] = Array.from(automatedTestIds).map((testId) => {
+    const trackedResults: AutomatedTestResult[] = Array.from(automatedTestIds).map((testId) => {
       const manualTest = manualTests.find((mt) => mt.id === testId);
       const vitestTest = allParsedTests.find((vt) => vt.name === testId);
       const title = manualTest ? manualTest.title : "Unknown Test";
@@ -96,13 +94,34 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       return { id: testId, title, status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
     });
 
-    const passed = results.filter((r) => r.status === "pass").length;
-    const failed = results.filter((r) => r.status === "fail").length;
-    const skipped = totalTests - passed - failed;
+    // Find tests that were in the report but not in the automatedTestIds list
+    const untrackedResults: AutomatedTestResult[] = allParsedTests
+      .filter(parsedTest => !automatedTestIds.has(parsedTest.name))
+      .map(parsedTest => {
+        const manualTest = manualTests.find((mt) => mt.id === parsedTest.name);
+        const title = manualTest ? manualTest.title : `(Untracked) ${parsedTest.name}`;
+        
+        const narrative =
+          parsedTest.status === "fail"
+            ? parsedTest.errors?.[0]?.message || "No error message provided."
+            : `${parsedTest.status} in ${(parsedTest.duration ?? 0).toFixed(2)}ms`;
+
+        return {
+          id: `untracked-${parsedTest.name}`,
+          title: title,
+          status: parsedTest.status as "pass" | "fail" | "skipped",
+          narrative,
+        };
+      });
+
+    const combinedResults = [...trackedResults, ...untrackedResults].sort((a, b) => a.title.localeCompare(b.title));
+    const passed = combinedResults.filter((r) => r.status === "pass").length;
+    const failed = combinedResults.filter((r) => r.status === "fail").length;
+    const skipped = combinedResults.length - passed - failed;
 
     return {
-      testResults: results,
-      summary: { total: totalTests, passed, failed, skipped },
+      testResults: combinedResults,
+      summary: { total: combinedResults.length, passed, failed, skipped },
       testDate: new Date(report.startTime).toLocaleString(),
     };
   }, [report, manualTests, automatedTestIds]);
