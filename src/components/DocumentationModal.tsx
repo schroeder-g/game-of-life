@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
 
 interface DocumentationModalProps {
@@ -23,20 +24,36 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
     };
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const rootEl = document.getElementById('root');
+    if (!rootEl) return;
+
+    // Save the original display style and hide the root element
+    const originalDisplay = rootEl.style.display;
+    rootEl.style.display = 'none';
+
+    // When the component unmounts or isOpen changes, restore the original display
+    return () => {
+      rootEl.style.display = originalDisplay;
+    };
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay">
       <div
         className="glass-panel modal-content doc-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
           display: 'flex',
           flexDirection: 'column',
-          width: 'clamp(320px, 90vw, 1200px)',
-          height: 'clamp(400px, 85vh, 900px)',
+          width: '100vw',
+          height: '100vh',
+          borderRadius: 0,
         }}
       >
         <div className="modal-header">
@@ -72,6 +89,7 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
