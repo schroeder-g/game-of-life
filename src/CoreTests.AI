@@ -30,7 +30,7 @@ core/faceOrientationKeyMapping.ts is a critical file that maps the face orientat
 
 It also can be used to determine the orientation of the next dominant face.
 
-When I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
+Understand that I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
 
 [x] Create a Documentation markdown file in the data directory. Provide a button in the button bar with a question mark to display the documentation, 
 
@@ -42,4 +42,9 @@ Some tests for UX and data management claims and other claims could be also test
 
 [x] There shall be a Testing panel after the community panel, with a list of UI changes to test.  Maintain the Testing with appropriate changes, and remove untested items that are no longer relevant due to more recent changes.
 
+The Dev/Test user can check-off the items they have tested manually, and this will be remembered.
+
+Add items marked with an [x] to the Documentation, and update the tests.
+
+Update the documentation so that each claim  is followed by a reference to the corresponding Test(s)
 
