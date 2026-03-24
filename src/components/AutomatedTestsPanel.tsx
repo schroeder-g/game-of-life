@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ManualTest } from "../types";
-import { VitestReport, VitestTest, VitestSuite } from "../test-report-parser";
+import { ManualTest, VitestReport, VitestTest } from "../types/testing";
 
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
