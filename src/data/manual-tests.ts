@@ -226,4 +226,15 @@ export const MANUAL_TESTS: ManualTest[] = [
     ],
     claimIds: ["header-shortcuts"],
   },
+  {
+    id: "UX-7",
+    title: "Verify Input Focus in Welcome Modal",
+    steps: [
+      "Trigger the Welcome Modal (e.g., by clearing local storage and reloading the app).",
+      "Click into the 'Enter your name' input field.",
+      "Press camera rotation keys (e.g., W, A, S, D, Q, E).",
+      "<b>Expected</b>: The camera should not move. The keys pressed should appear as text in the input field.",
+    ],
+    claimIds: ["quality-input-focus"],
+  },
 ];

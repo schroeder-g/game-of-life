@@ -183,8 +183,9 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: "quality-input-focus",
     type: 'p',
-    text: "To prevent accidental actions while typing, global keyboard shortcuts are disabled when an input field (e.g., in the Configuration Panel) is focused. This ensures typing does not trigger camera movement or simulation controls.",
-    testIds: ["QA-1"],
+    text: "To prevent accidental actions while typing, global keyboard shortcuts are disabled when an input field (e.g., in the Configuration Panel or the Welcome Modal) is focused. This ensures typing does not trigger camera movement or simulation controls.",
+    testIds: ["QA-1", "UX-7"],
+    references: ["src/hooks/useAppShortcuts.ts", "src/components/WelcomeModal.tsx"],
   },
   {
     id: "quality-key-mapping",
