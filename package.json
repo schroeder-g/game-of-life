@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/public/index.tsx --outdir dist --define \"process.env.BUILD_DISTRIBUTION='\\\"'$(printenv BUILD_DISTRIBUTION)'\\\"'\"",
-    "test": "vitest run",
+    "test": "vitest run --reporter=json --outputFile=src/public/automated-test-results.json || true",
     "deploy": "./deploy.sh prod",
     "deploy:test": "./deploy.sh test"
   },

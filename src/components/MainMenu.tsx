@@ -12,6 +12,7 @@ import { DEFAULT_CONFIGS } from "../data/default-configs";
 import { DocumentationModal } from "./DocumentationModal";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { TestsPanel } from "./TestsPanel";
+import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1613,6 +1614,7 @@ export function MainMenu() {
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
 
       {buildInfo.distribution !== "prod" && <TestsPanel />}
+      {buildInfo.distribution !== "prod" && <AutomatedTestsPanel />}
     </>
   );
 }
