@@ -1,52 +1,215 @@
 export interface ManualTest {
   id: string;
-  description: string;
-  claimReference?: string; // For later use
+  title: string;
+  steps: string[];
+  claimIds: string[];
 }
 
 export const MANUAL_TESTS: ManualTest[] = [
+  // Existing Tests (Rewritten)
   {
     id: "UX-1",
-    description: "Verify brush rotation (I/P reversed)",
+    title: "Verify Brush Rotation",
+    steps: [
+      "Enter Edit Mode.",
+      "Select a non-symmetrical brush (e.g., Triangle).",
+      "Press 'I' and 'P' keys.",
+      "**Expected**: The brush preview rotates around an axis perpendicular to the screen.",
+    ],
+    claimIds: ["config-shape-brush"],
   },
   {
     id: "UX-2",
-    description: "Verify Square-Up toggle stop action",
+    title: "Verify 'Auto Square Up' Toggle Action",
+    steps: [
+      "Click the 'Auto Square Up' button or press 'L' to toggle the mode.",
+      "While rotating the camera, observe its behavior in both modes.",
+      "**Expected**: When enabled, camera stops should snap to the nearest grid face. When disabled, it should stop smoothly.",
+    ],
+    claimIds: ["header-camera"],
   },
   {
     id: "UX-3",
-    description: "Verify continuous rotation (L Off)",
+    title: "Verify Continuous Camera Rotation",
+    steps: [
+      "Ensure 'Auto Square Up' is disabled (press 'L' if the icon is highlighted).",
+      "Click and drag to rotate the camera.",
+      "**Expected**: The camera should rotate freely and smoothly without snapping to a face.",
+    ],
+    claimIds: ["header-camera"],
   },
   {
     id: "UX-4",
-    description: "Enter name in welcome modal, refresh. Verify name persists and modal is gone.",
+    title: "Verify User Name Persistence",
+    steps: [
+      "On first launch (clear local storage if needed), enter a name in the welcome modal and proceed.",
+      "Refresh the page.",
+      "**Expected**: The welcome modal should not appear, and the header should show the entered name.",
+    ],
+    claimIds: ["dev-welcome"],
   },
   {
     id: "UX-5",
-    description: "In a dev build, verify header shows 'Welcome, [Name]! Build: [Version] (dev)'.",
+    title: "Verify Development Build Info in Header",
+    steps: [
+      "Run the application in a development environment.",
+      "Look at the header text.",
+      "**Expected**: The header contains 'Welcome, [Name]! Build: [Version] (Dev build)'.",
+    ],
+    claimIds: ["dev-welcome"],
   },
   {
     id: "UX-6",
-    description: "Check a test in the Tests Panel, refresh. Verify it remains checked.",
+    title: "Verify Test Panel Persistence",
+    steps: [
+      "In a non-production build, open the 'Manual Tests' panel.",
+      "Check any checkbox next to a test.",
+      "Refresh the page.",
+      "**Expected**: The test panel should remain open and the checkbox should remain checked.",
+    ],
+    claimIds: ["dev-testing-panel"],
   },
   {
     id: "UI-1",
-    description: "Verify 'Manual Tests' panel is visible. (Confirm it's hidden in prod).",
+    title: "Verify 'Manual Tests' Panel Visibility",
+    steps: [
+      "Run a non-production build.",
+      "**Expected**: The 'Manual Tests' panel should be visible.",
+      "Run a production build (if possible).",
+      "**Expected**: The 'Manual Tests' panel should NOT be visible.",
+    ],
+    claimIds: ["dev-testing-panel"],
   },
   {
     id: "UI-2",
-    description: "Click the '?' button and verify this documentation modal appears.",
+    title: "Verify Documentation Modal Access",
+    steps: [
+      "Click the '?' button in the header.",
+      "**Expected**: The documentation modal appears.",
+      "Close the modal and press '?' or 'Shift+/' on the keyboard.",
+      "**Expected**: The documentation modal appears.",
+    ],
+    claimIds: ["header-docs"],
   },
   {
     id: "QA-1",
-    description: "Verify global shortcuts are ignored when a text input is focused. E.g., try 'L' or spacebar in the 'Grid Size' input.",
+    title: "Verify Text Inputs Ignore Global Shortcuts",
+    steps: [
+      "Click into a text or number input field (e.g., 'Grid Size').",
+      "Press keys that are global shortcuts (e.g., 'L', 'F', 'R', 'Spacebar').",
+      "**Expected**: The keys should only perform their text-input function and not trigger global actions (e.g., camera squaring, simulation reset).",
+    ],
+    claimIds: ["quality-input-focus"],
   },
   {
     id: "QA-2",
-    description: "Verify documentation contains a warning about modifying 'core/faceOrientationKeyMapping.ts'.",
+    title: "Verify Key Mapping Warning in Documentation",
+    steps: [
+      "Open the documentation modal ('?').",
+      "Scroll to the 'Architectural & Quality Claims' section.",
+      "**Expected**: A claim must exist stating that `core/faceOrientationKeyMapping.ts` is critical and should not be modified lightly.",
+    ],
+    claimIds: ["quality-key-mapping"],
   },
   {
     id: "QA-3",
-    description: "Verify all documentation claims have at least one test ID, and all tests are referenced.",
+    title: "Verify All Claims Have Tests",
+    steps: [
+      "Open the documentation modal ('?').",
+      "Review every claim (paragraph of text).",
+      "**Expected**: Every functional claim should be followed by one or more test IDs (e.g., '[UX-1]').",
+    ],
+    claimIds: ["quality-doc-test-process"],
+  },
+
+  // New Tests for User Controls
+  {
+    id: "UC-1",
+    title: "Toggle Edit/View Mode",
+    steps: ["Click the '✏️'/'📽️' icon in the header.", "**Expected**: The UI and available controls should switch between View and Edit modes."],
+    claimIds: ["header-mode-toggle"],
+  },
+  {
+    id: "UC-2",
+    title: "Use Playback Controls",
+    steps: [
+      "Press Play (▶) or Spacebar. **Expected**: Simulation runs.",
+      "Press Pause (⏸) or Spacebar. **Expected**: Simulation pauses.",
+      "While paused, press Step Forward (⏭) or '→'. **Expected**: Simulation advances one generation.",
+      "Press Step Backward (⏮) or '←'. **Expected**: Simulation reverts one generation.",
+      "Press Reset (↺) or 'R'. **Expected**: Grid reverts to its initial saved state.",
+    ],
+    claimIds: ["header-playback"],
+  },
+  {
+    id: "UC-3",
+    title: "Use Scene Selector",
+    steps: ["Click the '🖼️' icon.", "**Expected**: A dropdown of pre-made and saved scenes appears.", "Select a scene.", "**Expected**: The grid and rules update to the selected scene."],
+    claimIds: ["header-scene-selector"],
+  },
+  {
+    id: "UC-4",
+    title: "Use Paint/Clear Edit Modes",
+    steps: [
+      "Enter Edit Mode.",
+      "Select Paint mode (+). Click or drag on the grid. **Expected**: Cells are activated.",
+      "Select Clear mode (-). Click or drag on the grid. **Expected**: Cells are deactivated.",
+    ],
+    claimIds: ["edit-paint-clear"],
+  },
+  {
+    id: "UC-5",
+    title: "Use Brush Selector",
+    steps: [
+      "Enter Edit Mode.",
+      "Click the '🖌️' icon.",
+      "**Expected**: A dropdown with shape brushes (Cube, Sphere, etc.) and 'Community' appears.",
+      "Select a shape. **Expected**: The cursor preview updates to that shape.",
+    ],
+    claimIds: ["edit-brush-selector"],
+  },
+  {
+    id: "UC-6",
+    title: "Adjust Simulation Speed",
+    steps: ["In View Mode, move the 'Speed' slider.", "**Expected**: The rate of generations per second changes when the simulation is playing."],
+    claimIds: ["config-speed"],
+  },
+  {
+    id: "UC-7",
+    title: "Use Environment Controls",
+    steps: [
+      "Adjust 'Grid Size'. **Expected**: The grid resizes.",
+      "Click 'Clear'. **Expected**: All cells are removed.",
+      "Adjust 'Density' and click 'Random'. **Expected**: The grid is populated with a new random pattern at the specified density.",
+    ],
+    claimIds: ["config-environment"],
+  },
+  {
+    id: "UC-8",
+    title: "Adjust Automaton Rules",
+    steps: ["Adjust the 'Survive' and 'Born' sliders.", "Toggle the 'Faces', 'Edges', 'Corners' checkboxes.", "Step the simulation.", "**Expected**: The next generation is calculated based on the new rules."],
+    claimIds: ["config-rules"],
+  },
+  {
+    id: "UC-9",
+    title: "Use Cursor Position Controls",
+    steps: ["In Edit Mode, manually change the X, Y, Z coordinates in the 'Cursor Position' inputs.", "**Expected**: The cursor teleports to the new coordinates."],
+    claimIds: ["config-cursor"],
+  },
+  {
+    id: "UC-10",
+    title: "Use Scene Management Controls",
+    steps: [
+      "Modify the grid and click 'Save New'. Name the scene. **Expected**: The new scene appears in the Scene Selector.",
+      "Select a scene and click 'Export'. **Expected**: A file download is triggered.",
+      "Click 'Import'. Select a valid scene file. **Expected**: The scene is loaded.",
+    ],
+    claimIds: ["config-scene-management"],
+  },
+  {
+    id: "UC-11",
+    title: "Adjust Camera Controls",
+    steps: ["Go to the 'Camera Controls' section.", "Adjust 'Pan Sensitivity' and move the camera. **Expected**: Camera movement speed changes.", "Toggle an 'Invert' checkbox. **Expected**: The corresponding camera rotation axis is inverted."],
+    claimIds: ["config-camera-controls"],
   },
 ];

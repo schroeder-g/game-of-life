@@ -3,6 +3,7 @@ export interface DocItem {
   type: 'h3' | 'p'; // h3 for section headings, p for paragraphs/claims
   text: string;
   testIds?: string[];
+  references?: string[];
 }
 
 const DEPRECATED_CONTENT: DocItem[] = [
@@ -54,79 +55,101 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: "header-mode-toggle",
     type: 'p',
-    text: "Mode Toggle (✏️/📽️): Switches between Edit Mode (Pencil icon), where you can modify the grid, and View Mode (Projector icon), where you can run the simulation and freely move the camera."
+    text: "Mode Toggle (✏️/📽️): Switches between Edit Mode (Pencil icon), where you can modify the grid, and View Mode (Projector icon), where you can run the simulation and freely move the camera.",
+    testIds: ["UC-1"],
+    references: ["src/contexts/BrushContext.tsx"],
   },
   {
     id: "header-playback",
     type: 'p',
-    text: "Playback Controls (▶/⏸, ⏮/⏭, ↺): Play/Pause the simulation (Spacebar), step forward/backward one generation (→/←), or reset the grid to its initial state (R). Step and Reset are only available when paused."
+    text: "Playback Controls (▶/⏸, ⏮/⏭, ↺): Play/Pause the simulation (Spacebar), step forward/backward one generation (→/←), or reset the grid to its initial state (R). Step and Reset are only available when paused.",
+    testIds: ["UC-2"],
+    references: ["src/core/Grid3D.ts"],
   },
   {
     id: "header-camera",
     type: 'p',
     text: "Camera Actions (Fit/Recenter/Square Up): Use 'Fit' (F) to zoom and frame all live cells. 'Recenter' (S) moves the camera to the origin. 'Auto Square Up' (L) toggles a mode where the camera snaps to the nearest face-on view. When Auto Square is off, the camera rotates freely.",
     testIds: ["UX-2", "UX-3"],
+    references: ["src/contexts/SimulationContext.tsx"],
   },
   {
     id: "header-scene-selector",
     type: 'p',
-    text: "Select Scene (🖼️): Opens a dropdown to quickly load pre-made or user-saved scenes, including their patterns and rules."
+    text: "Select Scene (🖼️): Opens a dropdown to quickly load pre-made or user-saved scenes, including their patterns and rules.",
+    testIds: ["UC-3"],
   },
   {
     id: "header-docs",
     type: 'p',
     text: "Documentation (?): Opens this user manual. (Shortcut: ? or Shift+/)",
     testIds: ["UI-2"],
+    references: ["src/components/DocumentationModal.tsx"],
   },
 
   { id: 'heading-edit', type: 'h3', text: 'Editing the Grid (Edit Mode)' },
   {
     id: "edit-paint-clear",
     type: 'p',
-    text: "Paint/Clear Modes (+/-): Select Paint (+) to add cells or Clear (-) to remove them. You can click-and-drag on the grid, or use the Spacebar (paint) and Delete (clear) keys to apply the current brush."
+    text: "Paint/Clear Modes (+/-): Select Paint (+) to add cells or Clear (-) to remove them. You can click-and-drag on the grid, or use the Spacebar (paint) and Delete (clear) keys to apply the current brush.",
+    testIds: ["UC-4"],
+    references: ["src/contexts/BrushContext.tsx"],
   },
   {
     id: "edit-brush-selector",
     type: 'p',
-    text: "Select Brush (🖌️): Opens a dropdown to choose a brush shape, such as Cube or Sphere. You can also select a 'Community' of cells from the grid to use as a custom brush."
+    text: "Select Brush (🖌️): Opens a dropdown to choose a brush shape, such as Cube or Sphere. You can also select a 'Community' of cells from the grid to use as a custom brush.",
+    testIds: ["UC-5"],
+    references: ["src/contexts/BrushContext.tsx", "src/core/Grid3D.ts"],
   },
 
   { id: 'heading-config', type: 'h3', text: 'Configuration Panel' },
   {
     id: "config-speed",
     type: 'p',
-    text: "Speed: In View Mode, this slider controls the simulation speed in generations per second."
+    text: "Speed: In View Mode, this slider controls the simulation speed in generations per second.",
+    testIds: ["UC-6"],
+    references: ["src/contexts/SimulationContext.tsx"],
   },
   {
     id: "config-environment",
     type: 'p',
-    text: "Environment Section: Controls the grid's properties. Adjust 'Grid Size' and 'Cell Margin'. 'Reset' reverts to the initial state, 'Clear' removes all cells, and 'Random' populates the grid based on the 'Density' slider."
+    text: "Environment Section: Controls the grid's properties. Adjust 'Grid Size' and 'Cell Margin'. 'Reset' reverts to the initial state, 'Clear' removes all cells, and 'Random' populates the grid based on the 'Density' slider.",
+    testIds: ["UC-7"],
+    references: ["src/contexts/SimulationContext.tsx", "src/core/Grid3D.ts"],
   },
   {
     id: "config-rules",
     type: 'p',
-    text: "Rules Section: Defines the automaton's logic. Set the neighbor count for a cell to 'Survive' or for a new cell to be 'Born'. Checkboxes for Faces, Edges, and Corners determine which neighbor types are counted."
+    text: "Rules Section: Defines the automaton's logic. Set the neighbor count for a cell to 'Survive' or for a new cell to be 'Born'. Checkboxes for Faces, Edges, and Corners determine which neighbor types are counted.",
+    testIds: ["UC-8"],
+    references: ["src/contexts/SimulationContext.tsx"],
   },
   {
     id: "config-cursor",
     type: 'p',
-    text: "Cursor Position Section: Provides inputs to set the editor cursor's X, Y, and Z coordinates. It also shows the keyboard shortcuts for moving the cursor, which change based on your camera angle."
+    text: "Cursor Position Section: Provides inputs to set the editor cursor's X, Y, and Z coordinates. It also shows the keyboard shortcuts for moving the cursor, which change based on your camera angle.",
+    testIds: ["UC-9"],
+    references: ["src/contexts/BrushContext.tsx"],
   },
   {
     id: "config-shape-brush",
     type: 'p',
     text: "Shape Brush Section: Customize the selected brush's 'Size' and 'Hollow' properties. Brush rotation is controlled with the 'I' and 'P' keys.",
     testIds: ["UX-1"],
+    references: ["src/core/shapes.ts", "src/contexts/BrushContext.tsx"],
   },
   {
     id: "config-scene-management",
     type: 'p',
-    text: "Scene Management Section: Save the current grid, rules, and settings as a new named scene. You can also 'Export' scenes to a file, 'Import' them from a file, or 'Delete' saved scenes."
+    text: "Scene Management Section: Save the current grid, rules, and settings as a new named scene. You can also 'Export' scenes to a file, 'Import' them from a file, or 'Delete' saved scenes.",
+    testIds: ["UC-10"],
   },
   {
     id: "config-camera-controls",
     type: 'p',
-    text: "Camera Controls Section: Adjust sensitivity for Pan, Yaw (swivel), and Roll. You can invert controls and set camera easing (acceleration/deceleration) for smoother movements."
+    text: "Camera Controls Section: Adjust sensitivity for Pan, Yaw (swivel), and Roll. You can invert controls and set camera easing (acceleration/deceleration) for smoother movements.",
+    testIds: ["UC-11"],
   },
 
   { id: 'heading-dev', type: 'h3', text: 'Developer & Testing Features' },
@@ -135,12 +158,14 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "A welcome message with your name and build info is shown in the header. Your name is remembered between sessions.",
     testIds: ["UX-4", "UX-5"],
+    references: ["src/hooks/useSettings.ts"],
   },
   {
     id: "dev-testing-panel",
     type: 'p',
     text: "The 'Manual Tests' panel is available in non-production builds for feature verification. Your checked items are saved for your next session.",
     testIds: ["UI-1", "UX-6"],
+    references: ["src/hooks/useManualTests.ts"],
   },
 
   {
@@ -159,6 +184,7 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "The file `core/faceOrientationKeyMapping.ts` is critical for predictable camera and brush orientation. It must not be modified without a deep understanding of its spatial rotation logic. This ensures that user controls for navigation remain consistent and reliable.",
     testIds: ["QA-2"],
+    references: ["src/core/faceOrientationKeyMapping.ts"],
   },
   {
     id: "quality-doc-test-process",
