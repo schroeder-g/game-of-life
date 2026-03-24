@@ -9,6 +9,7 @@ import { type CameraOrientation } from "../core/cameraUtils";
 import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from "../core/faceOrientationKeyMapping";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
+import { DocumentationModal } from "./DocumentationModal";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1332,6 +1333,8 @@ export function AppHeaderPanel() {
   } = useBrush();
   const { selectedShape, selectorPos, paintMode } = brushState;
 
+  const [showDocumentation, setShowDocumentation] = useState(false);
+
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
     : 'Unknown';
@@ -1473,6 +1476,19 @@ export function AppHeaderPanel() {
           <SquareUpIcon />
         </button>
 
+        <button
+          className="glass-button"
+          onClick={() => setShowDocumentation(true)}
+          title="Documentation (?)"
+        >
+          <strong>?</strong>
+        </button>
+
+        <DocumentationModal
+          isOpen={showDocumentation}
+          onClose={() => setShowDocumentation(false)}
+        />
+
 
       </div>
     </div>
@@ -1481,8 +1497,14 @@ export function AppHeaderPanel() {
 
 export function MainMenu() {
   const {
-    state: { running, rotationMode, community },
+    state: { running, rotationMode, community, buildInfo },
     actions: {
+      playStop,
+      step,
+      stepBackward,
+      reset,
+      randomize,
+      clear,
       setRotationMode, applyCells, setSpeed, setDensity, setSurviveMin, setSurviveMax,
       setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
       setNeighborFaces, setNeighborEdges, setNeighborCorners,
@@ -1599,6 +1621,24 @@ export function MainMenu() {
         </div>
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
+
+      {buildInfo.distribution !== "prod" && (
+        <div className="tests-panel">
+          <h3>Manual Tests</h3>
+          <div className="test-item">
+            <span className="test-id">[UX-1]</span>
+            <span>Verify brush rotation (I/P reversed)</span>
+          </div>
+          <div className="test-item">
+            <span className="test-id">[UX-2]</span>
+            <span>Verify Square-Up toggle stop action</span>
+          </div>
+          <div className="test-item">
+            <span className="test-id">[UX-3]</span>
+            <span>Verify continuous rotation (L Off)</span>
+          </div>
+        </div>
+      )}
     </>
   );
 }
