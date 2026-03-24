@@ -11,6 +11,10 @@ RUN bun install --frozen-lockfile
 # Copy the rest of the application source code
 COPY . .
 
+# Add these lines
+ARG BUILD_DISTRIBUTION=prod
+ENV BUILD_DISTRIBUTION=$BUILD_DISTRIBUTION
+
 # Build the frontend - this generates /app/dist/index.js
 RUN bun run build
 
