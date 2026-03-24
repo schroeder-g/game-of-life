@@ -29,5 +29,8 @@ It also can be used to determine the orientation of the next dominant face.
 
 Understand that I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
 
+Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them
 
+Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
 
+For deprecated claims, explain why they are deprecated (e.g. Core claim functionality still exists, but has been extended or corrected.;  BUG: Claim is not currently supported." , "OTHER: {explain} )
