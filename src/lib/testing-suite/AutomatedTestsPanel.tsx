@@ -52,18 +52,31 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       return { testResults: [], summary, testDate: "N/A" };
     }
 
-    const allVitestTests: VitestTest[] = [];
-    const collectTests = (suite: VitestSuite) => {
-      suite.tests.forEach((test: VitestTest) => allVitestTests.push(test));
-      suite.suites.forEach(collectTests);
-    };
-    report.testResults.forEach((fileResult) => {
-      fileResult.suites.forEach(collectTests);
+    // Parse the Jest-style test report.
+    const allParsedTests: VitestTest[] = [];
+    // The report format is from Jest, so we cast to 'any' to parse it.
+    (report as any).testResults.forEach((fileResult: any) => {
+      if (fileResult.assertionResults) {
+        fileResult.assertionResults.forEach((assertion: any) => {
+          // Extract the test ID from the title, e.g., "[UX-1] should..."
+          const match = assertion.title.match(/\[(.*?)\]/);
+          const testId = match ? match[1] : assertion.title;
+
+          allParsedTests.push({
+            name: testId,
+            // Normalize status from Jest's 'passed' to the expected 'pass'
+            status: assertion.status === "passed" ? "pass" : assertion.status,
+            duration: assertion.duration,
+            // Adapt Jest's `failureMessages` to the expected `errors` structure.
+            errors: assertion.failureMessages?.map((msg: string) => ({ message: msg })) || [],
+          });
+        });
+      }
     });
 
     const results: AutomatedTestResult[] = automatedTestIds.map((testId) => {
       const manualTest = manualTests.find((mt) => mt.id === testId);
-      const vitestTest = allVitestTests.find((vt) => vt.name === testId);
+      const vitestTest = allParsedTests.find((vt) => vt.name === testId);
       const title = manualTest ? manualTest.title : "Unknown Test";
 
       if (!vitestTest) {
@@ -77,12 +90,10 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
 
       const narrative =
         vitestTest.status === "fail"
-          ? vitestTest.errors?.[0]?.messageStack ||
-            vitestTest.errors?.[0]?.message ||
-            "No error message provided."
+          ? vitestTest.errors?.[0]?.message || "No error message provided."
           : `${vitestTest.status} in ${(vitestTest.duration ?? 0).toFixed(2)}ms`;
 
-      return { id: testId, title, status: vitestTest.status, narrative };
+      return { id: testId, title, status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
     });
 
     const passed = results.filter((r) => r.status === "pass").length;
