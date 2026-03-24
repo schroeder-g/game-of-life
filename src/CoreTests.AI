@@ -42,7 +42,7 @@ Some tests for UX and data management claims and other claims could be also test
 
 [x] There shall be a Testing panel after the community panel, with a list of UI changes to test.  Maintain the Testing with appropriate changes, and remove untested items that are no longer relevant due to more recent changes.
 
-The Dev/Test user can check-off the items they have tested manually, and this will be remembered.
+[x] The Dev/Test user can check-off the items they have tested manually, and this will be remembered.
 
 Add items marked with an [x] to the Documentation, and update the tests.
 

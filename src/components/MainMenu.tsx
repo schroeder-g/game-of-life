@@ -11,6 +11,8 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 import { DocumentationModal } from "./DocumentationModal";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { MANUAL_TESTS } from "../data/manual-tests";
+import { useManualTests } from "../hooks/useManualTests";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1484,21 +1486,25 @@ export function AppHeaderPanel() {
 }
 
 function TestsPanel() {
+  const { checkedTests, toggleTest } = useManualTests();
+
   return (
     <div className="tests-panel glass-panel">
       <h3>Manual Tests</h3>
-      <div className="test-item">
-        <span className="test-id">[UX-1]</span>
-        <span>Verify brush rotation (I/P reversed)</span>
-      </div>
-      <div className="test-item">
-        <span className="test-id">[UX-2]</span>
-        <span>Verify Square-Up toggle stop action</span>
-      </div>
-      <div className="test-item">
-        <span className="test-id">[UX-3]</span>
-        <span>Verify continuous rotation (L Off)</span>
-      </div>
+      {MANUAL_TESTS.map((test) => (
+        <div key={test.id} className="test-item">
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', width: '100%' }}>
+            <input
+              type="checkbox"
+              className="glass-checkbox"
+              checked={checkedTests.has(test.id)}
+              onChange={() => toggleTest(test.id)}
+            />
+            <span className="test-id">[{test.id}]</span>
+            <span>{test.description}</span>
+          </label>
+        </div>
+      ))}
     </div>
   );
 }
