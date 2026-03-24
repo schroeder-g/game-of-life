@@ -10,6 +10,7 @@ import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from ".
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 import { DocumentationModal } from "./DocumentationModal";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1174,15 +1175,7 @@ function SceneSelectorDropdown() {
   ]);
 
   // Effect to close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownRef]);
+  useClickOutside(dropdownRef, () => setIsOpen(false));
 
   const handleButtonClick = () => {
     if (running) {
@@ -1271,15 +1264,7 @@ function BrushSelectorDropdown() {
   }, [setCustomBrush, community, setSelectedShape, initBrushOrientation]);
 
   // Effect to close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownRef]);
+  useClickOutside(dropdownRef, () => setIsOpen(false));
 
   const handleButtonClick = () => {
     setIsOpen(prev => !prev);
