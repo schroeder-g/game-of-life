@@ -1,38 +1,7 @@
 #include <iostream>
-#include <vector>
-#include <set>
-#include <string>
-#include <algorithm>
 #include <cstdlib>
 #include <ctime>
-
-using namespace std;
-
-struct Cell { int x, y, z; };
-
-Cell makeCell(int x, int y, int z) {
-    Cell c; c.x = x; c.y = y; c.z = z; return c;
-}
-
-string norm(const vector<Cell>& cells) {
-    if(cells.empty()) return "";
-    int mx=cells[0].x, my=cells[0].y, mz=cells[0].z;
-    for(size_t i=0; i<cells.size(); ++i) {
-        mx = min(mx, cells[i].x); my = min(my, cells[i].y); mz = min(mz, cells[i].z);
-    }
-    vector<Cell> n = cells;
-    for(size_t i=0; i<n.size(); ++i) { n[i].x-=mx; n[i].y-=my; n[i].z-=mz; }
-    sort(n.begin(), n.end(), [](const Cell& a, const Cell& b) {
-        if(a.x != b.x) return a.x < b.x;
-        if(a.y != b.y) return a.y < b.y;
-        return a.z < b.z;
-    });
-    string res = "";
-    for(size_t i=0; i<n.size(); ++i) {
-        res += std::to_string(n[i].x) + "," + std::to_string(n[i].y) + "," + std::to_string(n[i].z) + "|";
-    }
-    return res;
-}
+#include "common.h"
 
 set<string> forbidden;
 
@@ -71,36 +40,16 @@ int fastTick(int sMin, int sMax, int bMin, int bMax) {
     return aliveCount;
 }
 
-vector<Cell> getCells() {
-    vector<Cell> out;
-    for(int z=0; z<S; ++z)
-        for(int y=0; y<S; ++y)
-            for(int x=0; x<S; ++x)
-                if(grid[idx(x,y,z)]) {
-                    Cell c; c.x = x; c.y = y; c.z = z;
-                    out.push_back(c);
-                }
-    return out;
-}
-
-bool getBB(const vector<Cell>& cells, int& mx, int& my, int& mz) {
-    if(cells.empty()) return false;
-    mx=cells[0].x; my=cells[0].y; mz=cells[0].z;
-    for(size_t i=0; i<cells.size(); ++i) {
-        mx = min(mx, cells[i].x); my = min(my, cells[i].y); mz = min(mz, cells[i].z);
-    }
-    return true;
-}
 
 int main() {
     srand(time(NULL));
     
     // Forbidden gliders
-    vector<Cell> k1; k1.push_back(makeCell(0,0,2)); k1.push_back(makeCell(1,1,0)); k1.push_back(makeCell(1,0,2)); k1.push_back(makeCell(1,1,1));
+    vector<Cell> k1; k1.push_back(Cell(0,0,2)); k1.push_back(Cell(1,1,0)); k1.push_back(Cell(1,0,2)); k1.push_back(Cell(1,1,1));
     forbidden.insert(norm(k1));
-    vector<Cell> k2; k2.push_back(makeCell(0,1,1)); k2.push_back(makeCell(0,1,0)); k2.push_back(makeCell(1,1,2)); k2.push_back(makeCell(1,0,2));
+    vector<Cell> k2; k2.push_back(Cell(0,1,1)); k2.push_back(Cell(0,1,0)); k2.push_back(Cell(1,1,2)); k2.push_back(Cell(1,0,2));
     forbidden.insert(norm(k2));
-    vector<Cell> k3; k3.push_back(makeCell(1,0,0)); k3.push_back(makeCell(0,1,0)); k3.push_back(makeCell(2,1,0)); k3.push_back(makeCell(1,2,0)); k3.push_back(makeCell(0,0,1)); k3.push_back(makeCell(2,2,2));
+    vector<Cell> k3; k3.push_back(Cell(1,0,0)); k3.push_back(Cell(0,1,0)); k3.push_back(Cell(2,1,0)); k3.push_back(Cell(1,2,0)); k3.push_back(Cell(0,0,1)); k3.push_back(Cell(2,2,2));
     forbidden.insert(norm(k3));
     
     cout << "Symmetry-Enforced search for Gemini Spaceship..." << endl;
@@ -138,7 +87,7 @@ int main() {
             grid[idx(8-rx, 7+ry, 7+rz)] = 1;
         }
         
-        vector<Cell> initialCells = getCells();
+        vector<Cell> initialCells = getCells(grid, S);
         if(initialCells.size() < 8) continue;
         
         string initialNorm = norm(initialCells);
@@ -151,7 +100,7 @@ int main() {
             int cnt = fastTick(sMin, sMax, bMin, bMax);
             if(cnt < 8 || cnt > 200) break; 
             
-            vector<Cell> curCells = getCells();
+            vector<Cell> curCells = getCells(grid, S);
             string curNorm = norm(curCells);
             
             if(curNorm == initialNorm) {

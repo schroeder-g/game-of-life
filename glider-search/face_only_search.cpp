@@ -1,38 +1,7 @@
 #include <iostream>
-#include <vector>
-#include <set>
-#include <string>
-#include <algorithm>
 #include <cstdlib>
 #include <ctime>
-
-using namespace std;
-
-struct Cell { int x, y, z; };
-
-Cell makeCell(int x, int y, int z) {
-    Cell c; c.x = x; c.y = y; c.z = z; return c;
-}
-
-string norm(const vector<Cell>& cells) {
-    if(cells.empty()) return "";
-    int mx=cells[0].x, my=cells[0].y, mz=cells[0].z;
-    for(size_t i=0; i<cells.size(); ++i) {
-        mx = min(mx, cells[i].x); my = min(my, cells[i].y); mz = min(mz, cells[i].z);
-    }
-    vector<Cell> n = cells;
-    for(size_t i=0; i<n.size(); ++i) { n[i].x-=mx; n[i].y-=my; n[i].z-=mz; }
-    sort(n.begin(), n.end(), [](const Cell& a, const Cell& b) {
-        if(a.x != b.x) return a.x < b.x;
-        if(a.y != b.y) return a.y < b.y;
-        return a.z < b.z;
-    });
-    string res = "";
-    for(size_t i=0; i<n.size(); ++i) {
-        res += std::to_string(n[i].x) + "," + std::to_string(n[i].y) + "," + std::to_string(n[i].z) + "|";
-    }
-    return res;
-}
+#include "common.h"
 
 set<string> forbidden;
 
@@ -71,26 +40,6 @@ int fastTick(int sMin, int sMax, int bMin, int bMax) {
     return aliveCount;
 }
 
-vector<Cell> getCells() {
-    vector<Cell> out;
-    for(int z=0; z<S; ++z)
-        for(int y=0; y<S; ++y)
-            for(int x=0; x<S; ++x)
-                if(grid[idx(x,y,z)]) {
-                    Cell c; c.x = x; c.y = y; c.z = z;
-                    out.push_back(c);
-                }
-    return out;
-}
-
-bool getBB(const vector<Cell>& cells, int& mx, int& my, int& mz) {
-    if(cells.empty()) return false;
-    mx=cells[0].x; my=cells[0].y; mz=cells[0].z;
-    for(size_t i=0; i<cells.size(); ++i) {
-        mx = min(mx, cells[i].x); my = min(my, cells[i].y); mz = min(mz, cells[i].z);
-    }
-    return true;
-}
 
 int main() {
     srand(time(NULL));
@@ -121,7 +70,7 @@ int main() {
             grid[idx(6+(rand()%4), 6+(rand()%4), 6+(rand()%4))] = 1;
         }
         
-        vector<Cell> initialCells = getCells();
+        vector<Cell> initialCells = getCells(grid, S);
         if(initialCells.size() < 4) continue;
         
         string initialNorm = norm(initialCells);
@@ -132,7 +81,7 @@ int main() {
             int cnt = fastTick(sMin, sMax, bMin, bMax);
             if(cnt < 3 || cnt > 100) break; 
             
-            vector<Cell> curCells = getCells();
+            vector<Cell> curCells = getCells(grid, S);
             string curNorm = norm(curCells);
             
             if(curNorm == initialNorm) {
