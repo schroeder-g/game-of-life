@@ -1,13 +1,2 @@
-import React from 'react';
-
-export { AutomatedTestsPanel } from './AutomatedTestsPanel';
-
-// Dummy component to satisfy imports from MainMenu.tsx
-export const TestsPanel = () => {
-    // In the future, this will show manual testing checklists.
-    return null;
-};
-import React from 'react';
-
-export { AutomatedTestsPanel } from './AutomatedTestsPanel';
-export { TestsPanel } from './components/TestsPanel';
+export * from './components/AutomatedTestsPanel';
+export * from './components/TestsPanel';

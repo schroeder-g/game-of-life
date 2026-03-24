@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useClickOutside } from "../../../hooks/useClickOutside";
 import { useManualTests } from "../hooks/useManualTests";
-import { DocItem, ManualTest } from "../types";
+import { DocItem, ManualTest, ManualTestStatus } from "../types";
 
 // This sub-component is unchanged
-const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' | undefined, onClick: () => void }) => {
+const ThreeStateCheckbox = ({ status, onClick }: { status: ManualTestStatus, onClick: () => void }) => {
   const styles: React.CSSProperties = {
     width: '16px',
     height: '16px',

@@ -13,4 +13,4 @@ export interface ManualTest {
   claimIds: string[];
 }
 
-export type TestStatus = 'checked' | 'failed' | undefined;
+export type ManualTestStatus = 'checked' | 'failed' | undefined;

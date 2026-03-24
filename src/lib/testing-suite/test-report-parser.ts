@@ -1,4 +1,4 @@
-export type TestStatus = 'pass' | 'fail' | 'skipped';
+export type VitestStatus = 'pass' | 'fail' | 'skipped';
 
 export interface VitestError {
   message: string;
@@ -7,7 +7,7 @@ export interface VitestError {
 
 export interface VitestTest {
   name: string;
-  status: TestStatus;
+  status: VitestStatus;
   duration?: number;
   errors?: VitestError[];
 }
