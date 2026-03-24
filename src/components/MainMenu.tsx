@@ -1497,40 +1497,80 @@ export function AppHeaderPanel() {
 
 function TestsPanel() {
   const { checkedTests, toggleTest } = useManualTests();
+  const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number } | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(tooltipRef, (event) => {
+    // Ignore clicks on the claim links themselves, as they have their own toggle logic.
+    if ((event.target as HTMLElement).closest('.claim-link')) {
+      return;
+    }
+    setActiveTooltip(null);
+  });
 
   return (
-    <div className="tests-panel glass-panel">
-      <h3>Manual Tests</h3>
-      {MANUAL_TESTS.map((test) => (
-        <div key={test.id} className="test-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <input
-            type="checkbox"
-            className="glass-checkbox"
-            checked={checkedTests.has(test.id)}
-            onChange={() => toggleTest(test.id)}
-            style={{ cursor: 'pointer', flexShrink: 0 }}
-          />
-          <span className="test-id" style={{ flexShrink: 0 }}>[{test.id}]</span>
+    <>
+      <div className="tests-panel glass-panel">
+        <h3>Manual Tests</h3>
+        {MANUAL_TESTS.map((test) => (
+          <div key={test.id} className="test-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <input
+              type="checkbox"
+              className="glass-checkbox"
+              checked={checkedTests.has(test.id)}
+              onChange={() => toggleTest(test.id)}
+              style={{ cursor: 'pointer', flexShrink: 0 }}
+            />
+            <span className="test-id" style={{ flexShrink: 0 }}>[{test.id}]</span>
 
-          <div className="claim-links" style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-            {test.claimIds.map((claimId) => (
-              <span
-                key={claimId}
-                className="claim-link"
-                title={claimTextMap.get(claimId) || 'Claim not found'}
-                style={{ cursor: 'help', color: '#a5d6ff', textDecoration: 'underline dotted 1px' }}
-              >
-                {claimId}
-              </span>
-            ))}
+            <div className="claim-links" style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+              {test.claimIds.map((claimId) => (
+                <span
+                  key={claimId}
+                  className="claim-link"
+                  style={{ cursor: 'pointer', color: '#a5d6ff', textDecoration: 'underline dotted 1px' }}
+                  onClick={(e) => {
+                    if (activeTooltip && activeTooltip.id === claimId) {
+                      setActiveTooltip(null); // Toggle off if clicking the same one
+                    } else {
+                      // Position the popup relative to the link
+                      const rect = (e.target as HTMLElement).getBoundingClientRect();
+                      setActiveTooltip({ id: claimId, x: rect.right + 5, y: rect.top });
+                    }
+                  }}
+                >
+                  {claimId}
+                </span>
+              ))}
+            </div>
+
+            <span onClick={() => toggleTest(test.id)} style={{ cursor: 'pointer', flex: 1, marginLeft: '4px' }}>
+              {test.title}
+            </span>
           </div>
+        ))}
+      </div>
 
-          <span onClick={() => toggleTest(test.id)} style={{ cursor: 'pointer', flex: 1, marginLeft: '4px' }}>
-            {test.title}
-          </span>
+      {activeTooltip && (
+        <div
+          ref={tooltipRef}
+          className="tooltip-popup"
+          style={{
+            position: 'fixed',
+            top: `${activeTooltip.y}px`,
+            left: `${activeTooltip.x}px`,
+            background: 'rgba(20, 20, 22, 0.95)',
+            border: '1px solid #444',
+            borderRadius: '4px',
+            padding: '10px',
+            maxWidth: '300px',
+            zIndex: 1000,
+          }}
+        >
+          {claimTextMap.get(activeTooltip.id)}
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
