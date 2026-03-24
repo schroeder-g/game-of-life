@@ -4,6 +4,7 @@ import { DOCUMENTATION_CONTENT } from "../data/documentation";
 import { MANUAL_TESTS } from "../data/manual-tests";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { useManualTests } from "../hooks/useManualTests";
+import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 
 const claimTextMap = new Map<string, string>();
 DOCUMENTATION_CONTENT.forEach(item => {
@@ -187,7 +188,9 @@ export function TestsPanel() {
                   paddingLeft: '28px', // Indent to align with text content below
                 }}
               >
-                <span style={{ flex: 1 }}>{test.title}</span>
+                <span style={{ flex: 1, fontWeight: AUTOMATED_TEST_IDS.has(test.id) ? 'normal' : 'bold' }}>
+                  {test.title}
+                </span>
                 <span style={{ fontSize: '12px', opacity: 0.6, marginLeft: '8px', flexShrink: 0 }}>
                   {isExpanded ? "▲" : "▼"}
                 </span>
