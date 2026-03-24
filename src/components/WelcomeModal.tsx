@@ -24,7 +24,7 @@ export function WelcomeModal() {
         <h2>Welcome to Game of Life 3D</h2>
         <p>Distribution: <span className="dist-tag">{buildInfo.distribution}</span></p>
         <p>Build: {buildInfo.version}</p>
-        
+
         <form onSubmit={handleSubmit} className="name-form">
           <label htmlFor="user-name">Please enter your name to continue:</label>
           <input
@@ -44,16 +44,4 @@ export function WelcomeModal() {
   );
 }
 
-export function WelcomeBanner() {
-  const {
-    state: { userName, buildInfo },
-  } = useSimulation();
 
-  if (!userName || buildInfo.distribution === "prod") return null;
-
-  return (
-    <div className="welcome-banner">
-      Welcome, <strong>{userName}</strong> | Build: {buildInfo.version} ({buildInfo.distribution})
-    </div>
-  );
-}
