@@ -1,25 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
-import { MANUAL_TESTS } from "../data/manual-tests";
+import { useEffect, useState } from "react";
+import { ManualTest } from "../types.ts";
 
 type TestStatus = 'pass' | 'fail' | 'skipped';
 
-interface VitestTest {
-  name: string;
-  status: TestStatus;
-}
-interface VitestSuite {
-  name: string;
-  suites: VitestSuite[];
-  tests: VitestTest[];
-}
-interface VitestFileResult {
-  suites: VitestSuite[];
-}
-interface VitestReport {
-  testResults: VitestFileResult[];
-}
+// ... (Vitest report interfaces are unchanged)
+interface VitestTest { name: string; status: TestStatus; }
+interface VitestSuite { name: string; suites: VitestSuite[]; tests: VitestTest[]; }
+interface VitestFileResult { suites: VitestSuite[]; }
+interface VitestReport { testResults: VitestFileResult[]; }
 
+// ... (StatusIndicator sub-component is unchanged)
 const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
   const styles: React.CSSProperties = {
     width: '16px',
@@ -53,18 +43,15 @@ const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
   );
 };
 
+// ... (parseVitestReport function is unchanged)
 function parseVitestReport(report: VitestReport): Map<string, TestStatus> {
   const results = new Map<string, TestStatus>();
   const idRegex = /\[([A-Z]{2,3}-\d+)\]/g;
 
   function getSuiteStatus(suite: VitestSuite): TestStatus {
-    const hasFailedTest = suite.tests.some(t => t.status === 'fail');
-    if (hasFailedTest) return 'fail';
-
+    if (suite.tests.some(t => t.status === 'fail')) return 'fail';
     for (const subSuite of suite.suites) {
-      if (getSuiteStatus(subSuite) === 'fail') {
-        return 'fail';
-      }
+      if (getSuiteStatus(subSuite) === 'fail') return 'fail';
     }
     return 'pass';
   }
@@ -72,30 +59,31 @@ function parseVitestReport(report: VitestReport): Map<string, TestStatus> {
   function processSuite(suite: VitestSuite) {
     const suiteName = suite.name;
     const matches = [...suiteName.matchAll(idRegex)];
-    
     if (matches.length > 0) {
       const suiteStatus = getSuiteStatus(suite);
       for (const match of matches) {
         const testId = match[1];
-        // A failure status should always take precedence.
         if (results.get(testId) !== 'fail') {
           results.set(testId, suiteStatus);
         }
       }
     }
-    
-    // Recurse into sub-suites
     suite.suites.forEach(processSuite);
   }
 
   report.testResults.forEach(fileResult => {
     fileResult.suites.forEach(processSuite);
   });
-
   return results;
 }
 
-export function AutomatedTestsPanel() {
+interface AutomatedTestsPanelProps {
+  manualTests: ManualTest[];
+  automatedTestIds: Set<string>;
+  reportUrl?: string;
+}
+
+export function AutomatedTestsPanel({ manualTests, automatedTestIds, reportUrl = '/automated-test-results.json' }: AutomatedTestsPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [testResults, setTestResults] = useState<Map<string, TestStatus>>(new Map());
@@ -109,7 +97,7 @@ export function AutomatedTestsPanel() {
   };
 
   useEffect(() => {
-    fetch('/automated-test-results.json')
+    fetch(reportUrl)
       .then(res => {
         if (!res.ok) throw new Error("File not found");
         return res.json();
@@ -120,9 +108,13 @@ export function AutomatedTestsPanel() {
       .catch(err => {
         console.warn("Could not load or parse automated test results:", err);
       });
-  }, []);
+  }, [reportUrl]);
 
-  const automatedTests = MANUAL_TESTS.filter(test => AUTOMATED_TEST_IDS.has(test.id));
+  const automatedTests = manualTests.filter(test => automatedTestIds.has(test.id));
+
+  if (automatedTests.length === 0) {
+    return null;
+  }
 
   return (
     <div className="tests-panel glass-panel">
@@ -136,7 +128,6 @@ export function AutomatedTestsPanel() {
       {!isCollapsed && automatedTests.map((test) => {
         const isExpanded = expandedTests.has(test.id);
         const status = testResults.get(test.id) || 'not_run';
-
         return (
           <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

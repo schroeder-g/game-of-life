@@ -1,21 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { DOCUMENTATION_CONTENT } from "../data/documentation";
-import { MANUAL_TESTS } from "../data/manual-tests";
-import { useClickOutside } from "../hooks/useClickOutside";
-import { useManualTests } from "../hooks/useManualTests";
-import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
+import { useClickOutside } from "../../../hooks/useClickOutside.ts";
+import { useManualTests } from "../hooks/useManualTests.ts";
+import { DocItem, ManualTest } from "../types.ts";
 
-const claimTextMap = new Map<string, string>();
-DOCUMENTATION_CONTENT.forEach(item => {
-  // Remove HTML tags and deprecated notices for clean tooltip text
-  const cleanText = item.text
-    .replace(/<[^>]*>/g, '') // strip html tags
-    .replace(/\[DEPRECATED[^\]]*\]\s*/, ''); // strip deprecated prefix
-  claimTextMap.set(item.id, cleanText);
-});
-
-// A component for our custom 3-state checkbox
+// This sub-component is unchanged
 const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' | undefined, onClick: () => void }) => {
   const styles: React.CSSProperties = {
     width: '16px',
@@ -45,7 +34,13 @@ const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' 
   );
 };
 
-export function TestsPanel() {
+interface TestsPanelProps {
+  manualTests: ManualTest[];
+  automatedTestIds: Set<string>;
+  documentation: DocItem[];
+}
+
+export function TestsPanel({ manualTests, automatedTestIds, documentation }: TestsPanelProps) {
   const { testStatuses, cycleTestStatus } = useManualTests();
   const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number; minHeight: number; } | null>(null);
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({
@@ -61,6 +56,15 @@ export function TestsPanel() {
   const [isClient, setIsClient] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
+
+  // Generate claimTextMap from props
+  const claimTextMap = new Map<string, string>();
+  documentation.forEach(item => {
+    const cleanText = item.text
+      .replace(/<[^>]*>/g, '')
+      .replace(/\[DEPRECATED[^\]]*\]\s*/, '');
+    claimTextMap.set(item.id, cleanText);
+  });
 
   const toggleExpandedTest = (testId: string) => {
     setExpandedTests(prev => {
@@ -102,7 +106,6 @@ export function TestsPanel() {
         transition: 'transform 0.2s ease-out, opacity 0.2s ease-out, min-height 0.2s ease-out',
       });
     } else {
-      // Animate out
       setPopupStyle(prev => ({
         ...prev,
         opacity: 0,
@@ -111,10 +114,9 @@ export function TestsPanel() {
         transition: 'transform 0.2s ease-out, opacity 0.2s ease-out, min-height 0.2s ease-out, visibility 0s 0.2s',
       }));
     }
-  }, [activeTooltip]);
+  }, [activeTooltip, claimTextMap]);
 
   useClickOutside(tooltipRef, (event) => {
-    // Ignore clicks on the claim links themselves and the main panel to prevent immediate closing.
     if ((event.target as HTMLElement).closest('.claim-link') || (event.target as HTMLElement).closest('.tests-panel')) {
       return;
     }
@@ -131,12 +133,10 @@ export function TestsPanel() {
           Manual Tests
           <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
         </h3>
-        {!isCollapsed && MANUAL_TESTS.map((test) => {
+        {!isCollapsed && manualTests.map((test) => {
           const isExpanded = expandedTests.has(test.id);
           return (
-
             <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', marginTop: '20px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              {/* Row 1: Checkbox and IDs */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ThreeStateCheckbox
                   status={testStatuses.get(test.id)}
@@ -156,10 +156,8 @@ export function TestsPanel() {
                           const itemRow = (e.target as HTMLElement).closest('.test-item-container');
                           const panel = panelRef.current;
                           if (!itemRow || !panel) return;
-
                           const panelRect = panel.getBoundingClientRect();
                           const itemRect = itemRow.getBoundingClientRect();
-
                           setActiveTooltip({
                             id: claimId,
                             x: panelRect.right + 5,
@@ -174,52 +172,39 @@ export function TestsPanel() {
                   ))}
                 </div>
               </div>
-
-              {/* Row 2: Title and expand button */}
               <div
                 onClick={() => toggleExpandedTest(test.id)}
                 style={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '4px',
-
-                  paddingLeft: '28px', // Indent to align with text content below
+                  cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'center', marginTop: '4px', paddingLeft: '28px',
                 }}
               >
-                <span style={{ flex: 1, fontWeight: AUTOMATED_TEST_IDS.has(test.id) ? 'normal' : 'bold' }}>
+                <span style={{ flex: 1, fontWeight: automatedTestIds.has(test.id) ? 'normal' : 'bold' }}>
                   {test.title}
                 </span>
                 <span style={{ fontSize: '12px', opacity: 0.6, marginLeft: '8px', flexShrink: 0 }}>
                   {isExpanded ? "▲" : "▼"}
                 </span>
               </div>
-
-              {/* Collapsible steps */}
-              {
-                isExpanded && (
-                  <div className="test-steps" style={{ paddingLeft: '28px', marginTop: '8px', fontSize: '13px', color: '#ccc' }}>
-                    <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
-                      {test.steps.map((step, index) => (
-                        <li key={index} dangerouslySetInnerHTML={{ __html: step }} style={{ marginBottom: '4px' }} />
-                      ))}
-                    </ul>
-                  </div>
-                )
-              }
+              {isExpanded && (
+                <div className="test-steps" style={{ paddingLeft: '28px', marginTop: '8px', fontSize: '13px', color: '#ccc' }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
+                    {test.steps.map((step, index) => (
+                      <li key={index} dangerouslySetInnerHTML={{ __html: step }} style={{ marginBottom: '4px' }} />
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           );
         })}
       </div >
-
       {isClient && createPortal(
         <div ref={tooltipRef} style={popupStyle}>
           {popupContent.current}
         </div>,
         document.body
-      )
-      }
+      )}
     </>
   );
 }

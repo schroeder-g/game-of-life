@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
+import { TestStatus } from "../types";
 
 const STORAGE_KEY = "manual-tests-statuses";
-
-export type TestStatus = 'checked' | 'failed';
 
 function loadTestStatuses(): Map<string, TestStatus> {
   if (typeof window === "undefined") {

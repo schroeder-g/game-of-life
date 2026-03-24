@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { useBrush } from "../contexts/BrushContext";
-import { useGenesisConfig } from "../contexts/GenesisConfigContext";
-import { isAnyBrushCellInside } from "../core/brushUtils";
-import { useSimulation } from "../contexts/SimulationContext";
-import { CommunitySidebar } from "./Controls";
-import { type CameraOrientation } from "../core/cameraUtils";
-import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from "../core/faceOrientationKeyMapping";
-import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
-import { DEFAULT_CONFIGS } from "../data/default-configs";
-import { DocumentationModal } from "./DocumentationModal";
-import { useClickOutside } from "../hooks/useClickOutside";
-import { TestsPanel } from "./TestsPanel";
-import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
+import { useBrush } from "../contexts/BrushContext.tsx";
+import { useGenesisConfig } from "../contexts/GenesisConfigContext.tsx";
+import { isAnyBrushCellInside } from "../core/brushUtils.ts";
+import { useSimulation } from "../contexts/SimulationContext.tsx";
+import { CommunitySidebar } from "./Controls.tsx";
+import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
+import { SHAPES, ShapeType, supportsHollow } from "../core/shapes.ts";
+import { DEFAULT_CONFIGS } from "../data/default-configs.ts";
+import { DocumentationModal } from "./DocumentationModal.tsx";
+import { useClickOutside } from "../hooks/useClickOutside.ts";
+// Import from the new library and bring in the data dependencies
+import { AutomatedTestsPanel, TestsPanel } from "../lib/testing-suite/index.ts";
+import { MANUAL_TESTS } from "../data/manual-tests.ts";
+import { AUTOMATED_TEST_IDS } from "../data/automated-tests.ts";
+import { DOCUMENTATION_CONTENT } from "../data/documentation.ts";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1613,8 +1615,19 @@ export function MainMenu() {
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
 
-      {buildInfo.distribution !== "prod" && <TestsPanel />}
-      {buildInfo.distribution !== "prod" && <AutomatedTestsPanel />}
+      {buildInfo.distribution !== "prod" && (
+        <>
+          <TestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
+          />
+          <AutomatedTestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+          />
+        </>
+      )}
     </>
   );
 }
