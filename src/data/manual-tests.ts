@@ -212,4 +212,18 @@ export const MANUAL_TESTS: ManualTest[] = [
     steps: ["Go to the 'Camera Controls' section.", "Adjust 'Pan Sensitivity' and move the camera. **Expected**: Camera movement speed changes.", "Toggle an 'Invert' checkbox. **Expected**: The corresponding camera rotation axis is inverted."],
     claimIds: ["config-camera-controls"],
   },
+  {
+    id: "UC-12",
+    title: "Access and Dismiss Shortcut Overlay",
+    steps: [
+      "Open the shortcut overlay (Note: a dedicated button or key may exist for this).",
+      "**Expected**: A modal titled 'Shortcuts' appears, with 'View Mode' and 'Edit Mode' tabs.",
+      "Click the dark backdrop area outside the modal.",
+      "**Expected**: The modal closes.",
+      "Re-open the shortcut overlay.",
+      "Press the 'Escape' key.",
+      "**Expected**: The modal closes.",
+    ],
+    claimIds: ["header-shortcuts"],
+  },
 ];

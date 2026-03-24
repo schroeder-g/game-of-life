@@ -15,31 +15,31 @@ const DEPRECATED_CONTENT: DocItem[] = [
   {
     id: "deprecated-camera-control",
     type: 'p',
-    text: "[DEPRECATED] You can toggle the 'Auto Square Up' mode using the 'L' key. When this mode is disabled, the camera can be rotated freely for cinematic views. When enabled, camera movement will snap to the nearest face of the cube, which is ideal for editing the grid.",
+    text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'header-camera'] You can toggle the 'Auto Square Up' mode using the 'L' key. When this mode is disabled, the camera can be rotated freely for cinematic views. When enabled, camera movement will snap to the nearest face of the cube, which is ideal for editing the grid.",
     testIds: ["UX-2", "UX-3"],
   },
   {
     id: "deprecated-brush-control",
     type: 'p',
-    text: "[DEPRECATED] While in Edit Mode, you can use a 'brush' to place patterns of cells. This brush can be rotated using the 'I' and 'P' keys. These rotations are always relative to your current screen orientation, making them intuitive to use regardless of the camera's angle.",
+    text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'config-shape-brush'] While in Edit Mode, you can use a 'brush' to place patterns of cells. This brush can be rotated using the 'I' and 'P' keys. These rotations are always relative to your current screen orientation, making them intuitive to use regardless of the camera's angle.",
     testIds: ["UX-1"],
   },
   {
     id: "deprecated-dev-welcome",
     type: 'p',
-    text: "[DEPRECATED] For development and test builds, the application provides a personalized experience. Your name is requested on first launch and remembered across sessions, with a welcome message displayed in the header.",
+    text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'dev-welcome'] For development and test builds, the application provides a personalized experience. Your name is requested on first launch and remembered across sessions, with a welcome message displayed in the header.",
     testIds: ["UX-4", "UX-5"],
   },
   {
     id: "deprecated-dev-testing-panel",
     type: 'p',
-    text: "[DEPRECATED] A 'Manual Tests' panel is also available in non-production builds. This panel allows you to track which features you have tested. Your checked items are saved in your browser's local storage and will be remembered on your next visit.",
+    text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'dev-testing-panel'] A 'Manual Tests' panel is also available in non-production builds. This panel allows you to track which features you have tested. Your checked items are saved in your browser's local storage and will be remembered on your next visit.",
     testIds: ["UI-1", "UX-6"],
   },
   {
     id: "deprecated-accessing-documentation",
     type: 'p',
-    text: "[DEPRECATED] This documentation modal can be opened at any time by clicking the '?' button located in the main control panel.",
+    text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'header-docs'] This documentation modal can be opened at any time by clicking the '?' button located in the main control panel.",
     testIds: ["UI-2"],
   },
 ];
@@ -82,9 +82,16 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: "header-docs",
     type: 'p',
-    text: "Documentation (?): Opens this user manual. (Shortcut: ? or Shift+/)",
+    text: "**Documentation (?):** Opens this user manual. (Shortcut: ? or Shift+/)",
     testIds: ["UI-2"],
     references: ["src/components/DocumentationModal.tsx"],
+  },
+  {
+    id: "header-shortcuts",
+    type: 'p',
+    text: "**Shortcuts Help:** Opens a modal displaying all keyboard shortcuts for both View and Edit modes. The overlay can be closed by clicking its backdrop or pressing 'Escape'.",
+    testIds: ["UC-12"],
+    references: ["src/components/ShortcutOverlay.tsx"],
   },
 
   { id: 'heading-edit', type: 'h3', text: 'Editing the Grid (Edit Mode)' },
