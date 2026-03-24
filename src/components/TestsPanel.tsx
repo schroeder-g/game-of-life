@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useClickOutside } from "../../../hooks/useClickOutside.ts";
+import { useClickOutside } from "../hooks/useClickOutside.ts";
 import { useManualTests } from "../hooks/useManualTests.ts";
 import { DocItem, ManualTest } from "../types.ts";
+import { AutomatedTestsPanel } from "./AutomatedTestsPanel.tsx";
+import { BuildStatusPanel } from "./BuildStatusPanel.tsx";
 
 // This sub-component is unchanged
 const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' | undefined, onClick: () => void }) => {
@@ -40,7 +42,7 @@ interface TestsPanelProps {
   documentation: DocItem[];
 }
 
-export function TestsPanel({ manualTests, automatedTestIds, documentation }: TestsPanelProps) {
+function ManualTestsPanel({ manualTests, automatedTestIds, documentation }: TestsPanelProps) {
   const { testStatuses, cycleTestStatus } = useManualTests();
   const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number; minHeight: number; } | null>(null);
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({
@@ -207,4 +209,14 @@ export function TestsPanel({ manualTests, automatedTestIds, documentation }: Tes
       )}
     </>
   );
+}
+
+export function TestsPanel(props: TestsPanelProps) {
+  return (
+    <Fragment>
+      <BuildStatusPanel />
+      <AutomatedTestsPanel manualTests={props.manualTests} automatedTestIds={props.automatedTestIds} />
+      <ManualTestsPanel {...props} />
+    </Fragment>
+  )
 }
