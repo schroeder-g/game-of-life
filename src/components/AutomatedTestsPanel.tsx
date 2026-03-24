@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import { ManualTest } from "../types.ts";
+import { type TestStatus } from '../lib/testing-suite/test-report-parser';
 
-type TestStatus = 'pass' | 'fail' | 'skipped';
-
-// ... (Vitest report interfaces are unchanged)
-interface VitestTest { name: string; status: TestStatus; }
-interface VitestSuite { name: string; suites: VitestSuite[]; tests: VitestTest[]; }
-interface VitestFileResult { suites: VitestSuite[]; }
-interface VitestReport { testResults: VitestFileResult[]; }
-
-// ... (StatusIndicator sub-component is unchanged)
 const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
   const styles: React.CSSProperties = {
     width: '16px',
@@ -43,47 +35,12 @@ const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
   );
 };
 
-// ... (parseVitestReport function is unchanged)
-function parseVitestReport(report: VitestReport): Map<string, TestStatus> {
-  const results = new Map<string, TestStatus>();
-  const idRegex = /\[([A-Z]{2,3}-\d+)\]/g;
-
-  function getSuiteStatus(suite: VitestSuite): TestStatus {
-    if (suite.tests.some(t => t.status === 'fail')) return 'fail';
-    for (const subSuite of suite.suites) {
-      if (getSuiteStatus(subSuite) === 'fail') return 'fail';
-    }
-    return 'pass';
-  }
-
-  function processSuite(suite: VitestSuite) {
-    const suiteName = suite.name;
-    const matches = [...suiteName.matchAll(idRegex)];
-    if (matches.length > 0) {
-      const suiteStatus = getSuiteStatus(suite);
-      for (const match of matches) {
-        const testId = match[1];
-        if (results.get(testId) !== 'fail') {
-          results.set(testId, suiteStatus);
-        }
-      }
-    }
-    suite.suites.forEach(processSuite);
-  }
-
-  report.testResults.forEach(fileResult => {
-    fileResult.suites.forEach(processSuite);
-  });
-  return results;
-}
-
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
   automatedTestIds: Set<string>;
-  reportUrl?: string;
 }
 
-export function AutomatedTestsPanel({ manualTests, automatedTestIds, reportUrl = '/automated-test-results.json' }: AutomatedTestsPanelProps) {
+export function AutomatedTestsPanel({ manualTests, automatedTestIds }: AutomatedTestsPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [testResults, setTestResults] = useState<Map<string, TestStatus>>(new Map());
@@ -97,18 +54,23 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds, reportUrl =
   };
 
   useEffect(() => {
-    fetch(reportUrl)
-      .then(res => {
-        if (!res.ok) throw new Error("File not found");
-        return res.json();
-      })
-      .then((report: VitestReport) => {
-        setTestResults(parseVitestReport(report));
-      })
-      .catch(err => {
-        console.warn("Could not load or parse automated test results:", err);
-      });
-  }, [reportUrl]);
+    async function fetchStatuses() {
+      try {
+        const response = await fetch('/data/automated-test-results.json');
+        if (!response.ok) throw new Error('Failed to fetch test results');
+        const statusesObj = await response.json();
+        const statusesMap = new Map<string, TestStatus>(Object.entries(statusesObj));
+        setTestResults(statusesMap);
+      } catch (error) {
+        console.error("Failed to load automated test statuses:", error);
+        const errorStatuses = new Map<string, TestStatus>();
+        automatedTestIds.forEach(id => errorStatuses.set(id, 'skipped'));
+        setTestResults(errorStatuses);
+      }
+    }
+
+    fetchStatuses();
+  }, [automatedTestIds]);
 
   const automatedTests = manualTests.filter(test => automatedTestIds.has(test.id));
 
