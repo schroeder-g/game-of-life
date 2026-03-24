@@ -6,28 +6,28 @@ export interface Claim {
 
 export const DOCUMENTATION_CLAIMS: Claim[] = [
   {
-    id: "user-persistence",
-    text: "In non-production builds, the application remembers the user's name between sessions. The user is prompted for their name only if it is not already known.",
-    testIds: ["UX-4"],
+    id: "camera-control",
+    text: "Toggle 'Auto Square Up' mode with the 'L' key. When disabled, the camera rotates freely. When enabled, it snaps to the nearest square face.",
+    testIds: ["UX-2", "UX-3"],
   },
   {
-    id: "user-welcome",
-    text: "A welcome message, including the user's name, build version, and distribution type, is displayed in non-production builds.",
-    testIds: ["UX-5"],
+    id: "brush-control",
+    text: "Rotate the brush using the 'I' and 'P' keys. These rotations are relative to your screen's orientation, not the grid's.",
+    testIds: ["UX-1"],
   },
   {
-    id: "tests-panel-visibility",
-    text: "Development and Test builds provide a 'Manual Tests' panel. This panel is hidden in the Production build.",
-    testIds: ["UI-1"],
+    id: "dev-welcome",
+    text: "Your name is remembered across sessions, and a personalized welcome message is displayed in the header. (Dev/Test builds only).",
+    testIds: ["UX-4", "UX-5"],
   },
   {
-    id: "tests-panel-state",
-    text: "Progress in the 'Manual Tests' panel (i.e., which items are checked) is saved and restored across browser sessions.",
-    testIds: ["UX-6"],
+    id: "dev-testing-panel",
+    text: "A 'Manual Tests' panel is available for you to track testing progress. Your selections are automatically saved for your next session. (Dev/Test builds only).",
+    testIds: ["UI-1", "UX-6"],
   },
   {
-    id: "documentation-modal",
-    text: "A documentation modal can be accessed, displaying project claims and their corresponding test references.",
+    id: "accessing-documentation",
+    text: "You can access this documentation modal at any time by clicking the '?' button in the main control panel.",
     testIds: ["UI-2"],
   },
 ];
