@@ -4,7 +4,7 @@ import { watch } from "fs";
 // Read version from package.json for dev mode display
 const packageJson = await Bun.file(join(process.cwd(), "package.json")).json();
 const baseVersion = packageJson.version;
-let currentVersion = baseVersion;
+let buildTime = new Date().toISOString();
 
 let buildOutput: any; 
 const srcDir = join(process.cwd(), "src");
@@ -28,7 +28,8 @@ async function buildMainJs() {
   console.log("Building index.tsx for development...");
 
   // Update the version timestamp to the current build time
-  currentVersion = new Date().toLocaleString() + " (Dev build)";
+  // Update the build time on each rebuild
+  buildTime = new Date().toISOString();
 
   const build = await Bun.build({
     entrypoints: [mainJsEntrypoint],
@@ -74,29 +75,33 @@ const server = Bun.serve({
       });
     }
 
-    // 2. Serve other static assets like CSS directly
-    const staticAssetPath = join(publicDir, path);
-    const staticAsset = Bun.file(staticAssetPath);
-    if (await staticAsset.exists()) {
-      // Direct file response is fast and fine for non-HTML assets.
-      return new Response(staticAsset);
+    // 2. Serve other static assets like CSS and data files.
+    const isFileRequest = path.includes('.');
+    if (isFileRequest) {
+      const staticAssetPath = join(publicDir, path);
+      const staticAsset = Bun.file(staticAssetPath);
+      if (await staticAsset.exists()) {
+        return new Response(staticAsset);
+      }
+      // Return a 404 for missing files to prevent serving index.html.
+      console.warn(`Static file not found: ${staticAssetPath}`);
+      return new Response(`File not found: ${path}`, { status: 404 });
     }
 
     // 3. For the root path or any other non-asset path, serve the main HTML file.
-    // This handles the entry point and client-side routing fallbacks.
-    // We MUST read it to text to allow Bun to inject the hot-reload script.
     const indexFile = Bun.file(join(publicDir, "index.html"));
     let html = await indexFile.text();
 
-    // Inject the dynamic dev version
+    // Inject the dynamic dev version info, including the buildTime.
     const buildInfo = {
-      version: currentVersion,
-      distribution: "dev"
+      version: baseVersion,
+      distribution: "dev",
+      buildTime: buildTime,
     };
     const buildInfoScript = `window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};`;
     html = html.replace("__BUILD_INFO_PLACEHOLDER__", buildInfoScript);
 
-    // Manually inject the hot reload listener script
+    // Manually inject the hot reload listener script.
     const hotReloadScript = `
       <script>
         (function() {
