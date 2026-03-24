@@ -18,7 +18,11 @@ declare global {
 // process.env.BUILD_DISTRIBUTION is defined by the bun build command.
 // We fall back to 'dev' for the local development server.
 if (typeof window !== "undefined") {
-  const buildDistribution = (process.env.BUILD_DISTRIBUTION || 'dev') as 'dev' | 'test' | 'prod';
+  // In the dev server (`bun --hot`), `process` is not defined in the browser,
+  // so we safely check for its existence and default to 'dev'.
+  const buildDistribution = (
+    (typeof process !== "undefined" && process.env.BUILD_DISTRIBUTION) || "dev"
+  ) as "dev" | "test" | "prod";
 
   window.__BUILD_INFO__ = {
     version: pkg.version,
