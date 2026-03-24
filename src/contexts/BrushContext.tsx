@@ -11,7 +11,7 @@ export interface BrushState {
   brushRotationVersion: number;
   brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
   customOffsets: [number, number, number][];
-  paintMode: 1 | 0 | -1; // 1: Toggle, 0: Idle, -1: Clear
+  paintMode: 1 | 0 | -1; // 1: Activate, 0: Idle, -1: Clear
 }
 
 export interface BrushActions {
@@ -24,8 +24,8 @@ export interface BrushActions {
       | [number, number, number]
       | null
       | ((
-          prev: [number, number, number] | null,
-        ) => [number, number, number] | null),
+        prev: [number, number, number] | null,
+      ) => [number, number, number] | null),
   ) => void;
   clearShape: () => void;
   changeSize: (delta: number, maxGridSize: number) => void;

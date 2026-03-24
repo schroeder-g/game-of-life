@@ -99,7 +99,7 @@ export function useAppShortcuts() {
         if (hasValidOrientation) {
           const f = face as CameraFace;
           const r = rotation as CameraRotation;
-          let rotKey = code === "Period" ? "period"
+          let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
             : code === "Semicolon" ? "semicolon"
             : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
 
@@ -118,9 +118,13 @@ export function useAppShortcuts() {
           }
 
           const axis = getExplicitRotationAxis(f, r, rotKey);
-          const angle = Math.PI / 2;
+          let angle = Math.PI / 2;
 
           if (isBrushActive) {
+            // Reverse direction for roll (i/p) to match user expectations
+            if (["i", "p"].includes(rotKey)) {
+              angle = -angle;
+            }
             cameraActionsRef.current?.rotateBrush(axis, angle);
           } else {
             cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
