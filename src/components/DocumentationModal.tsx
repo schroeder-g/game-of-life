@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { DOCUMENTATION_CLAIMS } from "../data/documentation";
+import { DOCUMENTATION_CONTENT } from "../data/documentation";
 
 interface DocumentationModalProps {
   isOpen: boolean;
@@ -29,26 +29,33 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="glass-panel modal-content doc-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="glass-panel modal-content doc-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
         <div className="modal-header">
-          <h2>Project Documentation & Claims</h2>
+          <h2>User Manual</h2>
           <button className="glass-button" onClick={onClose}>&times;</button>
         </div>
-        <div className="doc-content">
-          <p>This document lists the formal claims made about the application's behavior and features. Each claim is cross-referenced with one or more manual test IDs.</p>
-
-          <div className="claims-list">
-            {DOCUMENTATION_CLAIMS.map((claim) => (
-              <div key={claim.id} className="claim-item">
-                <p><strong>{claim.text}</strong></p>
-                <p style={{marginTop: '-10px'}}>
-                  <small>
-                    <i>Verified by test(s): <span className="claim-tag">[{claim.testIds.join("], [")}]</span></i>
-                  </small>
-                </p>
-              </div>
-            ))}
-          </div>
+        <div className="doc-content" style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1rem' }}>
+          {DOCUMENTATION_CONTENT.map((item) => {
+            switch (item.type) {
+              case 'h3':
+                return <h3 key={item.id} style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>{item.text}</h3>;
+              case 'p':
+                return (
+                  <div key={item.id} className="claim-item" style={{ marginBottom: '1rem' }}>
+                    <p style={{ margin: 0 }}>{item.text}</p>
+                    {item.testIds && item.testIds.length > 0 && (
+                      <p style={{ marginTop: '0.25rem', marginBottom: 0 }}>
+                        <small>
+                          <i>Verified by test(s): <span className="claim-tag">[{item.testIds.join("], [")}]</span></i>
+                        </small>
+                      </p>
+                    )}
+                  </div>
+                );
+              default:
+                return null;
+            }
+          })}
         </div>
         <div className="modal-actions">
           <button className="glass-button" onClick={onClose}>
