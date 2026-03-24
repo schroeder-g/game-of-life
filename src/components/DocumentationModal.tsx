@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { DOCUMENTATION_CLAIMS } from "../data/documentation";
 
 interface DocumentationModalProps {
   isOpen: boolean;
@@ -6,46 +7,53 @@ interface DocumentationModalProps {
 }
 
 export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps) {
-  const [content, setContent] = useState("");
-
   useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
     if (isOpen) {
-      fetch("/src/public/data/Documentation.md")
-        .then(res => res.text())
-        .then(text => setContent(text))
-        .catch(err => setContent("Error loading documentation."));
+      document.addEventListener("keydown", handleEscapeKey);
     }
-  }, [isOpen]);
 
-  if (!isOpen) return null;
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [isOpen, onClose]);
 
-  // Simple markdown renderer for tags
-  const renderContent = (text: string) => {
-    return text.split("\n").map((line, i) => {
-      // Basic [UX-1] tag replacement
-      const parts = line.split(/(\[UX-\d+\])/g);
-      return (
-        <p key={i}>
-          {parts.map((part, j) => {
-            if (part.match(/\[UX-\d+\]/)) {
-              return <span key={j} className="claim-tag">{part}</span>;
-            }
-            return part;
-          })}
-        </p>
-      );
-    });
-  };
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="glass-panel modal-content doc-modal" onClick={e => e.stopPropagation()}>
+      <div className="glass-panel modal-content doc-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Documentation</h2>
+          <h2>Project Documentation & Claims</h2>
           <button className="glass-button" onClick={onClose}>&times;</button>
         </div>
         <div className="doc-content">
-          {renderContent(content)}
+          <p>This document lists the formal claims made about the application's behavior and features. Each claim is cross-referenced with one or more manual test IDs.</p>
+
+          <div className="claims-list">
+            {DOCUMENTATION_CLAIMS.map((claim) => (
+              <div key={claim.id} className="claim-item">
+                <p><strong>{claim.text}</strong></p>
+                <p style={{marginTop: '-10px'}}>
+                  <small>
+                    <i>Verified by test(s): <span className="claim-tag">[{claim.testIds.join("], [")}]</span></i>
+                  </small>
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button className="glass-button" onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
     </div>
