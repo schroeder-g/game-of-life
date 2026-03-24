@@ -69,6 +69,11 @@ export interface SimulationState {
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
   autoSquare: boolean;
+  userName?: string;
+  buildInfo: {
+    version: string;
+    distribution: "dev" | "test" | "prod";
+  };
 }
 
 export interface SimulationActions {
@@ -97,6 +102,7 @@ export interface SimulationActions {
   setSnapMessage: (message: string) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setAutoSquare: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setUserName: (name: string) => void;
 
   playStop: () => void;
   step: () => void;
@@ -213,6 +219,18 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
   const [autoSquare, setAutoSquare] = useState(false);
+  const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
+
+  const distribution = (process.env.NODE_ENV === "development" ? "dev" : (process.env.DISTRIBUTION === "test" ? "test" : "prod")) as "dev" | "test" | "prod";
+  const buildInfo = {
+    version: "2.0.0-dev",
+    distribution
+  };
+
+  const setUserName = useCallback((name: string) => {
+    localStorage.setItem("userName", name);
+    setUserNameState(name);
+  }, []);
 
   const [speed, setSpeed] = useState(storedSettings.speed);
   const [density, setDensity] = useState(storedSettings.density);
@@ -630,6 +648,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       rollSpeed,
       autoSquare,
       isAnimatingInit,
+      userName,
+      buildInfo,
     },
     actions: {
       setSpeed,
@@ -654,6 +674,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setEaseOut,
       setRollSpeed,
       setAutoSquare,
+      setUserName,
       playStop,
       step,
       stepBackward,
