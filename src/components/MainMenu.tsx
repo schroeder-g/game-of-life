@@ -1308,7 +1308,7 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, autoSquare },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, autoSquare, userName, buildInfo },
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp, setAutoSquare, setCell },
     meta: { cameraActionsRef },
   } = useSimulation();
@@ -1332,6 +1332,9 @@ export function AppHeaderPanel() {
       <div className="title-section">
         <h1>Cube of Life</h1>
         <div className="version-info">
+          {userName && buildInfo.distribution !== "prod" && (
+            <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
+          )}
           <a>{typeof document !== "undefined" ? document.getElementById("version-data")?.textContent : ""}</a>
         </div>
       </div>
@@ -1480,6 +1483,26 @@ export function AppHeaderPanel() {
   );
 }
 
+function TestsPanel() {
+  return (
+    <div className="tests-panel glass-panel">
+      <h3>Manual Tests</h3>
+      <div className="test-item">
+        <span className="test-id">[UX-1]</span>
+        <span>Verify brush rotation (I/P reversed)</span>
+      </div>
+      <div className="test-item">
+        <span className="test-id">[UX-2]</span>
+        <span>Verify Square-Up toggle stop action</span>
+      </div>
+      <div className="test-item">
+        <span className="test-id">[UX-3]</span>
+        <span>Verify continuous rotation (L Off)</span>
+      </div>
+    </div>
+  );
+}
+
 export function MainMenu() {
   const {
     state: { running, rotationMode, community, buildInfo },
@@ -1607,23 +1630,7 @@ export function MainMenu() {
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
 
-      {buildInfo.distribution !== "prod" && (
-        <div className="tests-panel">
-          <h3>Manual Tests</h3>
-          <div className="test-item">
-            <span className="test-id">[UX-1]</span>
-            <span>Verify brush rotation (I/P reversed)</span>
-          </div>
-          <div className="test-item">
-            <span className="test-id">[UX-2]</span>
-            <span>Verify Square-Up toggle stop action</span>
-          </div>
-          <div className="test-item">
-            <span className="test-id">[UX-3]</span>
-            <span>Verify continuous rotation (L Off)</span>
-          </div>
-        </div>
-      )}
+      {buildInfo.distribution !== "prod" && <TestsPanel />}
     </>
   );
 }
