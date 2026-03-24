@@ -221,11 +221,16 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [autoSquare, setAutoSquare] = useState(false);
   const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
 
-  const distribution = (process.env.NODE_ENV === "development" ? "dev" : (process.env.DISTRIBUTION === "test" ? "test" : "prod")) as "dev" | "test" | "prod";
-  const buildInfo = {
-    version: "2.0.0-dev",
-    distribution
-  };
+  const [buildInfo, setBuildInfo] = useState<SimulationState['buildInfo']>({
+    version: "loading...",
+    distribution: "prod",
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).__BUILD_INFO__) {
+      setBuildInfo((window as any).__BUILD_INFO__);
+    }
+  }, []);
 
   const setUserName = useCallback((name: string) => {
     localStorage.setItem("userName", name);

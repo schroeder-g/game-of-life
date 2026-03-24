@@ -89,7 +89,12 @@ const server = Bun.serve({
     let html = await indexFile.text();
 
     // Inject the dynamic dev version
-    html = html.replace("__VERSION__", currentVersion);
+    const buildInfo = {
+      version: currentVersion,
+      distribution: "dev"
+    };
+    const buildInfoScript = `window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};`;
+    html = html.replace("__BUILD_INFO_PLACEHOLDER__", buildInfoScript);
 
     // Manually inject the hot reload listener script
     const hotReloadScript = `
