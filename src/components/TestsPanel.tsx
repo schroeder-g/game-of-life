@@ -134,14 +134,13 @@ export function TestsPanel() {
           const isExpanded = expandedTests.has(test.id);
           return (
             <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="test-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Row 1: Checkbox and IDs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ThreeStateCheckbox
                   status={testStatuses.get(test.id)}
                   onClick={() => cycleTestStatus(test.id)}
                 />
-
                 <span className="test-id" style={{ flexShrink: 0 }}>[{test.id}]</span>
-
                 <div className="claim-links" style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                   {test.claimIds.map((claimId) => (
                     <span
@@ -172,11 +171,27 @@ export function TestsPanel() {
                     </span>
                   ))}
                 </div>
+              </div>
 
-                <span onClick={() => toggleExpandedTest(test.id)} style={{ cursor: 'pointer', flex: 1, marginLeft: '4px' }}>
-                  {test.title}
+              {/* Row 2: Title and expand button */}
+              <div
+                onClick={() => toggleExpandedTest(test.id)}
+                style={{
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '4px',
+                  paddingLeft: '28px', // Indent to align with text content below
+                }}
+              >
+                <span style={{ flex: 1 }}>{test.title}</span>
+                <span style={{ fontSize: '12px', opacity: 0.6, marginLeft: '8px', flexShrink: 0 }}>
+                  {isExpanded ? "▲" : "▼"}
                 </span>
               </div>
+              
+              {/* Collapsible steps */}
               {isExpanded && (
                 <div className="test-steps" style={{ paddingLeft: '28px', marginTop: '8px', fontSize: '13px', color: '#ccc' }}>
                   <ul style={{ margin: 0, paddingLeft: '20px', listStyleType: 'disc' }}>
