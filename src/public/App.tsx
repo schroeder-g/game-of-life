@@ -4,6 +4,7 @@ import { Scene } from "../components/Grid";
 import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
 import { CommunitySidebar } from "../components/Controls";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
+import { WelcomeBanner, WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
@@ -114,6 +115,7 @@ export default function App() {
             ⌘ Shortcuts
           </button>
 
+          <WelcomeBanner />
           <MainMenu />
           <CommunitySidebar community={community} />
         </aside>
@@ -125,6 +127,7 @@ export default function App() {
         </main>
       </div>
 
+      <WelcomeModal />
       <ShortcutOverlay
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
