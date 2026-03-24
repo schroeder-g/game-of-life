@@ -2,7 +2,6 @@ import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { Scene } from "../components/Grid";
 import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
-import { CommunitySidebar } from "../components/Controls";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { WelcomeBanner, WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
@@ -46,7 +45,7 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, community, running, snapMessage },
+    state: { rotationMode, running, snapMessage },
     actions: { setRotationMode, recenter, squareUp, fitDisplay, setSnapMessage },
   } = useSimulation();
   const {
@@ -64,9 +63,6 @@ export default function App() {
     }
   }, [rotationMode, recenter, squareUp, fitDisplay]);
 
-  useEffect(() => {
-    console.log("APP STATE - community length:", community.length);
-  }, [community]);
 
   useEffect(() => {
     if (snapMessage) {
@@ -117,7 +113,6 @@ export default function App() {
 
           <WelcomeBanner />
           <MainMenu />
-          <CommunitySidebar community={community} />
         </aside>
 
         <main className="canvas-container">
