@@ -29,7 +29,16 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="glass-panel modal-content doc-modal" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+      <div
+        className="glass-panel modal-content doc-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: 'clamp(320px, 90vw, 1200px)',
+          height: 'clamp(400px, 85vh, 900px)',
+        }}
+      >
         <div className="modal-header">
           <h2>User Manual</h2>
           <button className="glass-button" onClick={onClose}>&times;</button>
