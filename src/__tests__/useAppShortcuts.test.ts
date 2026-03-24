@@ -43,7 +43,7 @@ describe('useAppShortcuts - UX Claims', () => {
     // Set paintMode to 1 (Birth)
     (useBrush as any).mockReturnValue({
       state: { selectedShape: 'Cube', paintMode: 1 },
-      actions: {}
+      actions: { setSelectorPos: vi.fn() }
     });
 
     renderHook(() => useAppShortcuts());

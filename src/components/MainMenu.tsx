@@ -1623,7 +1623,7 @@ export function MainMenu() {
 
       {buildInfo.distribution !== "prod" && (
         <>
-          <TestsPanel
+          <ManualTestsPanel
             manualTests={MANUAL_TESTS}
             automatedTestIds={AUTOMATED_TEST_IDS}
             documentation={DOCUMENTATION_CONTENT}
@@ -1632,6 +1632,7 @@ export function MainMenu() {
             manualTests={MANUAL_TESTS}
             automatedTestIds={AUTOMATED_TEST_IDS}
           />
+          <ImportedTestsPanel />
         </>
       )}
     </>

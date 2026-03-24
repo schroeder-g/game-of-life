@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ManualTest } from "../types";
-import { VitestReport, VitestTest, VitestSuite } from "../test-report-parser";
+import { ManualTest, VitestReport, VitestTest, VitestSuite } from "../types/testing";
 
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
@@ -114,10 +113,10 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
         };
       });
 
-    const combinedResults = [...trackedResults, ...untrackedResults].sort((a, b) => a.title.localeCompare(b.title));
+    const combinedResults = [...trackedResults, ...untrackedResults].sort((a, b) => a.id.localeCompare(b.id));
     const passed = combinedResults.filter((r) => r.status === "pass").length;
     const failed = combinedResults.filter((r) => r.status === "fail").length;
-    const skipped = combinedResults.length - passed - failed;
+    const skipped = combinedResults.filter((r) => r.status !== "pass" && r.status !== "fail").length;
 
     return {
       testResults: combinedResults,
