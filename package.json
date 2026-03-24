@@ -12,6 +12,7 @@
     "@react-three/drei": "^9.88.0",
     "@react-three/fiber": "^8.15.0",
     "chroma-js": "^2.4.2",
+    "game-of-life": ".",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.159.0"
