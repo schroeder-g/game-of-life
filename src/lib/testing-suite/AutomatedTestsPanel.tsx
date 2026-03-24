@@ -28,7 +28,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const response = await fetch("/data/vitest-report.json");
+        const response = await fetch("/automated-test-results.json");
         if (!response.ok) {
           throw new Error(`Test report not found or failed to load (status: ${response.status})`);
         }
