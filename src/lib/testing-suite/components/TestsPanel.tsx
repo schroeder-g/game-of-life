@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useClickOutside } from "../../../hooks/useClickOutside";
 import { useManualTests } from "../hooks/useManualTests";
@@ -57,14 +57,17 @@ export function TestsPanel({ manualTests, automatedTestIds, documentation }: Tes
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
 
-  // Generate claimTextMap from props
-  const claimTextMap = new Map<string, string>();
-  documentation.forEach(item => {
-    const cleanText = item.text
-      .replace(/<[^>]*>/g, '')
-      .replace(/\[DEPRECATED[^\]]*\]\s*/, '');
-    claimTextMap.set(item.id, cleanText);
-  });
+  // Generate claimTextMap from props, memoize it to prevent re-renders
+  const claimTextMap = useMemo(() => {
+    const map = new Map<string, string>();
+    documentation.forEach(item => {
+      const cleanText = item.text
+        .replace(/<[^>]*>/g, '')
+        .replace(/\[DEPRECATED[^\]]*\]\s*/, '');
+      map.set(item.id, cleanText);
+    });
+    return map;
+  }, [documentation]);
 
   const toggleExpandedTest = (testId: string) => {
     setExpandedTests(prev => {

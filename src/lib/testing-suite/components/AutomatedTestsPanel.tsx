@@ -4,7 +4,7 @@ import { VitestReport, VitestTest, VitestSuite } from "../test-report-parser";
 
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
-  automatedTestIds: string[];
+  automatedTestIds: Set<string>;
 }
 
 interface AutomatedTestResult {
@@ -46,7 +46,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
   }, []);
 
   const { testResults, summary, testDate } = useMemo(() => {
-    const totalTests = automatedTestIds.length;
+    const totalTests = automatedTestIds.size;
     if (!report) {
       const summary = { total: totalTests, passed: 0, failed: 0, skipped: totalTests };
       return { testResults: [], summary, testDate: "N/A" };
@@ -74,7 +74,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       }
     });
 
-    const results: AutomatedTestResult[] = automatedTestIds.map((testId) => {
+    const results: AutomatedTestResult[] = Array.from(automatedTestIds).map((testId) => {
       const manualTest = manualTests.find((mt) => mt.id === testId);
       const vitestTest = allParsedTests.find((vt) => vt.name === testId);
       const title = manualTest ? manualTest.title : "Unknown Test";
