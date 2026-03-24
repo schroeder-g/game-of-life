@@ -1,54 +1,73 @@
 import { useState, useCallback, useEffect } from "react";
 
-const STORAGE_KEY = "manual-tests-checked";
+const STORAGE_KEY = "manual-tests-statuses";
 
-function loadCheckedTests(): Set<string> {
+export type TestStatus = 'checked' | 'failed';
+
+function loadTestStatuses(): Map<string, TestStatus> {
   if (typeof window === "undefined") {
-    return new Set();
+    return new Map();
   }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return new Set(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      // Migration from old format (array of strings)
+      if (Array.isArray(parsed)) {
+        const newMap = new Map<string, TestStatus>();
+        parsed.forEach(id => newMap.set(id, 'checked'));
+        return newMap;
+      }
+      return new Map(Object.entries(parsed));
     }
   } catch (error) {
-    console.error("Failed to load checked manual tests:", error);
+    console.error("Failed to load manual test statuses:", error);
   }
-  return new Set();
+  return new Map();
 }
 
-function saveCheckedTests(checkedIds: Set<string>) {
+function saveTestStatuses(statuses: Map<string, TestStatus>) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(checkedIds)));
+    const obj = Object.fromEntries(statuses);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    // Also clean up old storage key if it exists
+    if (localStorage.getItem("manual-tests-checked")) {
+      localStorage.removeItem("manual-tests-checked");
+    }
   } catch (error) {
-    console.error("Failed to save checked manual tests:", error);
+    console.error("Failed to save manual test statuses:", error);
   }
 }
 
 export function useManualTests() {
-  const [checkedTests, setCheckedTests] = useState<Set<string>>(new Set());
+  const [testStatuses, setTestStatuses] = useState<Map<string, TestStatus>>(new Map());
 
   // Load initial state from localStorage on mount
   useEffect(() => {
-    setCheckedTests(loadCheckedTests());
+    setTestStatuses(loadTestStatuses());
   }, []);
 
-  const toggleTest = useCallback((testId: string) => {
-    setCheckedTests((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(testId)) {
-        newSet.delete(testId);
-      } else {
-        newSet.add(testId);
+  const cycleTestStatus = useCallback((testId: string) => {
+    setTestStatuses((prev) => {
+      const newMap = new Map(prev);
+      const currentStatus = newMap.get(testId);
+
+      if (currentStatus === 'checked') {
+        newMap.set(testId, 'failed');
+      } else if (currentStatus === 'failed') {
+        newMap.delete(testId);
+      } else { // currentStatus is undefined
+        newMap.set(testId, 'checked');
       }
-      saveCheckedTests(newSet);
-      return newSet;
+
+      saveTestStatuses(newMap);
+      return newMap;
     });
   }, []);
 
   return {
-    checkedTests,
-    toggleTest,
+    testStatuses,
+    cycleTestStatus,
   };
 }
