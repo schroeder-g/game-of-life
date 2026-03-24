@@ -56,7 +56,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
   useEffect(() => {
     async function fetchStatuses() {
       try {
-        const response = await fetch('/data/automated-test-results.json');
+        const response = await fetch('/data/automated-test-statuses.json');
         if (!response.ok) throw new Error('Failed to fetch test results');
         const statusesObj = await response.json();
         const statusesMap = new Map<string, TestStatus>(Object.entries(statusesObj));

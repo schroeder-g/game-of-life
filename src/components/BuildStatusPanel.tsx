@@ -34,7 +34,7 @@ const StatusPill = ({ label, count, color, backgroundColor }: { label: string, c
   );
 };
 
-export function BuildStatusPanel() {
+export function ImportedTestsPanel() {
   const [report, setReport] = useState<BuildReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -42,7 +42,7 @@ export function BuildStatusPanel() {
   useEffect(() => {
     async function fetchBuildStatus() {
       try {
-        const response = await fetch('/data/build-status.json');
+        const response = await fetch('/data/vitest-report.json');
         if (response.status === 404) {
           // File not found is a normal state (e.g., on first run), not an error.
           setReport(null);
@@ -67,11 +67,10 @@ export function BuildStatusPanel() {
   if (error) {
     return (
       <div className="tests-panel glass-panel" style={{ borderColor: 'orange' }}>
-        <h3>Build Status</h3>
+        <h3>Imported Tests</h3>
         <p style={{ color: 'orange' }}>Could not load build status report.</p>
       </div>
     );
-  );
   }
 
   if (!report) {
@@ -87,7 +86,7 @@ export function BuildStatusPanel() {
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
         <span>
-          Build Status: <span style={{ color: report.success ? '#4caf50' : '#f44336', fontWeight: 'bold' }}>{report.success ? 'Success' : 'Failed'}</span>
+          Imported Tests: <span style={{ color: report.success ? '#4caf50' : '#f44336', fontWeight: 'bold' }}>{report.success ? 'Success' : 'Failed'}</span>
         </span>
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>

@@ -4,7 +4,7 @@ import { useClickOutside } from "../hooks/useClickOutside.ts";
 import { useManualTests } from "../hooks/useManualTests.ts";
 import { DocItem, ManualTest } from "../types.ts";
 import { AutomatedTestsPanel } from "./AutomatedTestsPanel.tsx";
-import { BuildStatusPanel } from "./BuildStatusPanel.tsx";
+import { ImportedTestsPanel } from "./ImportedTestsPanel.tsx";
 
 // This sub-component is unchanged
 const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' | undefined, onClick: () => void }) => {
@@ -214,8 +214,8 @@ function ManualTestsPanel({ manualTests, automatedTestIds, documentation }: Test
 export function TestsPanel(props: TestsPanelProps) {
   return (
     <Fragment>
-      <BuildStatusPanel />
       <AutomatedTestsPanel manualTests={props.manualTests} automatedTestIds={props.automatedTestIds} />
+      <ImportedTestsPanel />
       <ManualTestsPanel {...props} />
     </Fragment>
   )
