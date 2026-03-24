@@ -1339,7 +1339,12 @@ export function AppHeaderPanel() {
           {userName && buildInfo.distribution !== "prod" && (
             <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
           )}
-          <a>Build: {buildInfo.version} ({buildInfo.distribution})</a>
+          <a>
+            Build: {buildInfo.version}
+            {buildInfo.distribution !== "prod" && buildInfo.buildTime
+              ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
+              : ""} ({buildInfo.distribution})
+          </a>
         </div>
       </div>
 

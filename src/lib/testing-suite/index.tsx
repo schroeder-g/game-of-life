@@ -7,3 +7,7 @@ export const TestsPanel = () => {
     // In the future, this will show manual testing checklists.
     return null;
 };
+import React from 'react';
+
+export { AutomatedTestsPanel } from './AutomatedTestsPanel';
+export { TestsPanel } from './components/TestsPanel';
