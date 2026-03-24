@@ -1335,7 +1335,7 @@ export function AppHeaderPanel() {
           {userName && buildInfo.distribution !== "prod" && (
             <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
           )}
-          <a>Build: {buildInfo.version}</a>
+          <a>Build: {buildInfo.version} ({buildInfo.distribution})</a>
         </div>
       </div>
 
