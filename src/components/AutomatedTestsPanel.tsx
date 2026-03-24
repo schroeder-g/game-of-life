@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { ManualTest } from "../types.ts";
-import { type TestStatus } from '../lib/testing-suite/test-report-parser';
+import { type TestStatus as VitestStatus } from '../lib/testing-suite/test-report-parser';
 
-const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
+type DisplayStatus = VitestStatus | 'not_run';
+
+const StatusIndicator = ({ status }: { status: DisplayStatus }) => {
   const styles: React.CSSProperties = {
     width: '16px',
     height: '16px',
@@ -18,7 +20,11 @@ const StatusIndicator = ({ status }: { status: TestStatus | 'not_run' }) => {
   let color = '#888';
   let backgroundColor = 'rgba(128, 128, 128, 0.2)';
 
-  if (status === 'pass') {
+  if (status === 'skipped') {
+    content = '-';
+    color = '#ffab40'; // amber
+    backgroundColor = 'rgba(255, 171, 64, 0.2)';
+  } else if (status === 'pass') {
     content = '✓';
     color = '#4caf50';
     backgroundColor = 'rgba(76, 175, 80, 0.2)';
@@ -43,7 +49,7 @@ interface AutomatedTestsPanelProps {
 export function AutomatedTestsPanel({ manualTests, automatedTestIds }: AutomatedTestsPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
-  const [testResults, setTestResults] = useState<Map<string, TestStatus>>(new Map());
+  const [testResults, setTestResults] = useState<Map<string, VitestStatus>>(new Map());
 
   const toggleExpandedTest = (testId: string) => {
     setExpandedTests(prev => {
@@ -59,11 +65,11 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
         const response = await fetch('/data/automated-test-statuses.json');
         if (!response.ok) throw new Error('Failed to fetch test results');
         const statusesObj = await response.json();
-        const statusesMap = new Map<string, TestStatus>(Object.entries(statusesObj));
+        const statusesMap = new Map<string, VitestStatus>(Object.entries(statusesObj));
         setTestResults(statusesMap);
       } catch (error) {
         console.error("Failed to load automated test statuses:", error);
-        const errorStatuses = new Map<string, TestStatus>();
+        const errorStatuses = new Map<string, VitestStatus>();
         automatedTestIds.forEach(id => errorStatuses.set(id, 'skipped'));
         setTestResults(errorStatuses);
       }
@@ -89,7 +95,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       </h3>
       {!isCollapsed && automatedTests.map((test) => {
         const isExpanded = expandedTests.has(test.id);
-        const status = testResults.get(test.id) || 'not_run';
+        const status: DisplayStatus = testResults.get(test.id) || 'not_run';
         return (
           <div key={test.id} className="test-item-container" style={{ marginBottom: '8px', paddingBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

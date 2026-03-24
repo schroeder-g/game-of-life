@@ -1,23 +1,15 @@
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
 import { parseVitestReport, type VitestReport } from '../src/lib/testing-suite/test-report-parser';
 
-const reportUrl = process.argv[2];
-if (!reportUrl) {
-  console.error("Usage: bun scripts/process-vitest-report.ts <URL_TO_VITEST_REPORT>");
-  process.exit(1);
-}
-
+const inputFile = resolve(process.cwd(), 'src/public/data/vitest-report.json');
 const outputFile = resolve(process.cwd(), 'src/public/data/automated-test-statuses.json');
 
 async function main() {
   try {
-    console.log(`Fetching report from: ${reportUrl}`);
-    const response = await fetch(reportUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch report: ${response.statusText}`);
-    }
-    const report: VitestReport = await response.json();
+    console.log(`Reading report from: ${inputFile}`);
+    const fileContent = await readFile(inputFile, 'utf-8');
+    const report: VitestReport = JSON.parse(fileContent);
 
     console.log("Parsing report...");
     const statusesMap = parseVitestReport(report);
