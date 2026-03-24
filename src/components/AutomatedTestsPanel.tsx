@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { ManualTest } from "../types.ts";
-import { type TestStatus as VitestStatus } from '../lib/testing-suite/test-report-parser';
+import { ManualTest, VitestReport, VitestTest, VitestStatus } from "../types/testing";
 
 type DisplayStatus = VitestStatus | 'not_run';
 

@@ -21,7 +21,7 @@ describe('useAppShortcuts - UX Claims', () => {
     vi.clearAllMocks();
     (useBrush as any).mockReturnValue({
       state: { selectorPos: [0,0,0], selectedShape: 'Cube', paintMode: 0, shapeSize: 1 },
-      actions: {}
+      actions: { setSelectorPos: vi.fn() }
     });
     (useSimulation as any).mockReturnValue({
       state: { 

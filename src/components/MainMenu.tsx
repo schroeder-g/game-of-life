@@ -11,7 +11,8 @@ import { DEFAULT_CONFIGS } from "../data/default-configs";
 import { DocumentationModal } from "./DocumentationModal";
 import { useClickOutside } from "../hooks/useClickOutside";
 // Import from the new library and bring in the data dependencies
-import { AutomatedTestsPanel, TestsPanel } from "../lib/testing-suite";
+import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
+import { TestsPanel } from "./TestsPanel";
 import { MANUAL_TESTS } from "../data/manual-tests";
 import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";

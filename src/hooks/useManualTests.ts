@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
-import { TestStatus } from "../types";
+import { ManualTestStatus } from "../types/testing";
 
 const STORAGE_KEY = "manual-tests-statuses";
 
-function loadTestStatuses(): Map<string, TestStatus> {
+function loadTestStatuses(): Map<string, ManualTestStatus> {
   if (typeof window === "undefined") {
     return new Map();
   }
@@ -13,7 +13,7 @@ function loadTestStatuses(): Map<string, TestStatus> {
       const parsed = JSON.parse(stored);
       // Migration from old format (array of strings)
       if (Array.isArray(parsed)) {
-        const newMap = new Map<string, TestStatus>();
+        const newMap = new Map<string, ManualTestStatus>();
         parsed.forEach(id => newMap.set(id, 'checked'));
         return newMap;
       }
@@ -25,7 +25,7 @@ function loadTestStatuses(): Map<string, TestStatus> {
   return new Map();
 }
 
-function saveTestStatuses(statuses: Map<string, TestStatus>) {
+function saveTestStatuses(statuses: Map<string, ManualTestStatus>) {
   if (typeof window === "undefined") return;
   try {
     const obj = Object.fromEntries(statuses);
@@ -40,7 +40,7 @@ function saveTestStatuses(statuses: Map<string, TestStatus>) {
 }
 
 export function useManualTests() {
-  const [testStatuses, setTestStatuses] = useState<Map<string, TestStatus>>(new Map());
+  const [testStatuses, setTestStatuses] = useState<Map<string, ManualTestStatus>>(new Map());
 
   // Load initial state from localStorage on mount
   useEffect(() => {
