@@ -46,8 +46,17 @@ const ThreeStateCheckbox = ({ status, onClick }: { status: 'checked' | 'failed' 
 
 export function TestsPanel() {
   const { testStatuses, cycleTestStatus } = useManualTests();
-  const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number; minHeight: number; } | null>(null);
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({
+    opacity: 0,
+    visibility: 'hidden',
+    transform: 'translateX(-20px)',
+    transition: 'opacity 0.2s, transform 0.2s, visibility 0.2s',
+  });
+  const popupContent = useRef('');
+  
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
@@ -68,8 +77,44 @@ export function TestsPanel() {
     setIsClient(true);
   }, []);
 
+  useEffect(() => {
+    if (activeTooltip) {
+      popupContent.current = claimTextMap.get(activeTooltip.id) || 'Claim not found.';
+      setPopupStyle({
+        position: 'fixed',
+        top: `${activeTooltip.y}px`,
+        left: `${activeTooltip.x}px`,
+        minHeight: `${activeTooltip.minHeight}px`,
+        height: 'auto',
+        background: 'rgba(40, 40, 44, 0.97)',
+        border: '1px solid #555',
+        borderRadius: '4px',
+        padding: '12px',
+        maxWidth: '600px',
+        zIndex: 1001,
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        opacity: 1,
+        visibility: 'visible',
+        transform: 'translateX(0)',
+        transition: 'transform 0.2s ease-out, opacity 0.2s ease-out, min-height 0.2s ease-out',
+      });
+    } else {
+      // Animate out
+      setPopupStyle(prev => ({
+        ...prev,
+        opacity: 0,
+        transform: 'translateX(-20px)',
+        visibility: 'hidden',
+        transition: 'transform 0.2s ease-out, opacity 0.2s ease-out, min-height 0.2s ease-out, visibility 0s 0.2s',
+      }));
+    }
+  }, [activeTooltip]);
+
   useClickOutside(tooltipRef, (event) => {
-    if ((event.target as HTMLElement).closest('.claim-link')) {
+    // Ignore clicks on the claim links themselves and the main panel to prevent immediate closing.
+    if ((event.target as HTMLElement).closest('.claim-link') || (event.target as HTMLElement).closest('.tests-panel')) {
       return;
     }
     setActiveTooltip(null);
@@ -77,7 +122,7 @@ export function TestsPanel() {
 
   return (
     <>
-      <div className="tests-panel glass-panel">
+      <div ref={panelRef} className="tests-panel glass-panel">
         <h3
           onClick={() => setIsCollapsed(!isCollapsed)}
           style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
@@ -107,8 +152,19 @@ export function TestsPanel() {
                         if (activeTooltip && activeTooltip.id === claimId) {
                           setActiveTooltip(null);
                         } else {
-                          const rect = (e.target as HTMLElement).getBoundingClientRect();
-                          setActiveTooltip({ id: claimId, x: rect.right + 5, y: rect.top });
+                          const itemRow = (e.target as HTMLElement).closest('.test-item-container');
+                          const panel = panelRef.current;
+                          if (!itemRow || !panel) return;
+                          
+                          const panelRect = panel.getBoundingClientRect();
+                          const itemRect = itemRow.getBoundingClientRect();
+                          
+                          setActiveTooltip({ 
+                            id: claimId,
+                            x: panelRect.right + 5,
+                            y: itemRect.top,
+                            minHeight: itemRect.height,
+                          });
                         }
                       }}
                     >
@@ -135,23 +191,9 @@ export function TestsPanel() {
         })}
       </div>
 
-      {isClient && activeTooltip && createPortal(
-        <div
-          ref={tooltipRef}
-          className="tooltip-popup"
-          style={{
-            position: 'fixed',
-            top: `${activeTooltip.y}px`,
-            left: `${activeTooltip.x}px`,
-            background: 'rgba(40, 40, 44, 0.97)',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            padding: '12px',
-            maxWidth: '600px',
-            zIndex: 1001,
-          }}
-        >
-          {claimTextMap.get(activeTooltip.id)}
+      {isClient && createPortal(
+        <div ref={tooltipRef} style={popupStyle}>
+          {popupContent.current}
         </div>,
         document.body
       )}
