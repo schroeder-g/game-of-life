@@ -187,7 +187,7 @@ export const MANUAL_TESTS: ManualTest[] = [
   {
     id: "UC-8",
     title: "Adjust Automaton Rules",
-    steps: ["Adjust the 'Survive' and 'Born' sliders.", "Toggle the 'Faces', 'Edges', 'Corners' checkboxes.", "Step the simulation.", "**Expected**: The next generation is calculated based on the new rules."],
+    steps: ["Adjust the 'Survive' and 'Born' sliders.", "Toggle the 'Faces', 'Edges', 'Corners' checkboxes.", "Step the simulation.", "<b>Expected</b>: The next generation is calculated based on the new rules."],
     claimIds: ["config-rules"],
   },
   {
@@ -209,7 +209,7 @@ export const MANUAL_TESTS: ManualTest[] = [
   {
     id: "UC-11",
     title: "Adjust Camera Controls",
-    steps: ["Go to the 'Camera Controls' section.", "Adjust 'Pan Sensitivity' and move the camera. **Expected**: Camera movement speed changes.", "Toggle an 'Invert' checkbox. **Expected**: The corresponding camera rotation axis is inverted."],
+    steps: ["Go to the 'Camera Controls' section.", "Adjust 'Pan Sensitivity' and move the camera. <b>Expected</b>: Camera movement speed changes.", "Toggle an 'Invert' checkbox. <b>Expected</b>: The corresponding camera rotation axis is inverted."],
     claimIds: ["config-camera-controls"],
   },
   {
