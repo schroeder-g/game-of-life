@@ -1,27 +1,27 @@
 These instructions are for the AI agent.
 
-Update this file with a preceding "[x]" before each instruction if you believe you have implemented it, and include it as a claim in the documentation to be tested. 
+[x] Update this file with a preceding "[x]" before each instruction if you believe you have implemented it, and include it as a claim in the documentation to be tested. 
 
 Uncheck "[x]" before each instruction if you believe you have not implemented it or if it is no longer satisfied.
 
-Ensure that the project is well-documented and easy to understand.
+[x] Ensure that the project is well-documented and easy to understand.
 
-Ensure that the project is well-tested and easy to maintain.
+[x] Ensure that the project is well-tested and easy to maintain.
 
-Documentation claims should have a minimum of one corresponding test.
+[x] Documentation claims should have a minimum of one corresponding test.
 
-The test and the claim should be cross-referenced. 
+[x] The test and the claim should be cross-referenced. 
 
-No feature will prevent specific keypresses from reaching focused text input controls.  
+[x] No feature will prevent specific keypresses from reaching focused text input controls.  
 
 
-Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
+[x] Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
 
 Ensure that these instructions are followed and that the project is updated accordingly.
 
 
 
-core/faceOrientationKeyMapping should not be modified without express approval.
+[x] core/faceOrientationKeyMapping should not be modified without express approval.
 
 core/faceOrientationKeyMapping.ts is a critical file that maps the face orientation to the key mapping.
 
@@ -31,6 +31,6 @@ Understand that I refer to a "face" I am referring to one of the 24 possible ori
 
 Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them
 
-Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
+[x] Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
 
 For deprecated claims, explain why they are deprecated (e.g. Core claim functionality still exists, but has been extended or corrected.;  BUG: Claim is not currently supported." , "OTHER: {explain} )

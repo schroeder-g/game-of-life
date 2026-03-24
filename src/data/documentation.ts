@@ -142,6 +142,30 @@ const CURRENT_MANUAL: DocItem[] = [
     text: "The 'Manual Tests' panel is available in non-production builds for feature verification. Your checked items are saved for your next session.",
     testIds: ["UI-1", "UX-6"],
   },
+
+  {
+    id: 'heading-quality',
+    type: 'h3',
+    text: 'Architectural & Quality Claims'
+  },
+  {
+    id: "quality-input-focus",
+    type: 'p',
+    text: "To prevent accidental actions while typing, global keyboard shortcuts are disabled when an input field (e.g., in the Configuration Panel) is focused. This ensures typing does not trigger camera movement or simulation controls.",
+    testIds: ["QA-1"],
+  },
+  {
+    id: "quality-key-mapping",
+    type: 'p',
+    text: "The file `core/faceOrientationKeyMapping.ts` is critical for predictable camera and brush orientation. It must not be modified without a deep understanding of its spatial rotation logic. This ensures that user controls for navigation remain consistent and reliable.",
+    testIds: ["QA-2"],
+  },
+  {
+    id: "quality-doc-test-process",
+    type: 'p',
+    text: "This project adheres to a strict quality process. Every feature or claim documented in this manual is cross-referenced with one or more manual tests (e.g., UX-1, QA-1). This ensures all documented functionality is verifiable and that the documentation stays in sync with the application's behavior. (`src/data/documentation.ts`, `src/data/manual-tests.ts`)",
+    testIds: ["QA-3"],
+  },
 ];
 
 export const DOCUMENTATION_CONTENT: DocItem[] = [ ...CURRENT_MANUAL, ...DEPRECATED_CONTENT ];

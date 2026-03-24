@@ -37,4 +37,16 @@ export const MANUAL_TESTS: ManualTest[] = [
     id: "UI-2",
     description: "Click the '?' button and verify this documentation modal appears.",
   },
+  {
+    id: "QA-1",
+    description: "Verify global shortcuts are ignored when a text input is focused. E.g., try 'L' or spacebar in the 'Grid Size' input.",
+  },
+  {
+    id: "QA-2",
+    description: "Verify documentation contains a warning about modifying 'core/faceOrientationKeyMapping.ts'.",
+  },
+  {
+    id: "QA-3",
+    description: "Verify all documentation claims have at least one test ID, and all tests are referenced.",
+  },
 ];
