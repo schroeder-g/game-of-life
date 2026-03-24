@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { useBrush } from "../contexts/BrushContext";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
@@ -1499,6 +1500,11 @@ function TestsPanel() {
   const { checkedTests, toggleTest } = useManualTests();
   const [activeTooltip, setActiveTooltip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useClickOutside(tooltipRef, (event) => {
     // Ignore clicks on the claim links themselves, as they have their own toggle logic.
@@ -1551,7 +1557,7 @@ function TestsPanel() {
         ))}
       </div>
 
-      {activeTooltip && (
+      {isClient && activeTooltip && createPortal(
         <div
           ref={tooltipRef}
           className="tooltip-popup"
@@ -1559,16 +1565,17 @@ function TestsPanel() {
             position: 'fixed',
             top: `${activeTooltip.y}px`,
             left: `${activeTooltip.x}px`,
-            background: 'rgba(20, 20, 22, 0.95)',
-            border: '1px solid #444',
+            background: 'rgba(40, 40, 44, 0.97)',
+            border: '1px solid #555',
             borderRadius: '4px',
-            padding: '10px',
-            maxWidth: '300px',
-            zIndex: 1000,
+            padding: '12px',
+            maxWidth: '600px',
+            zIndex: 1001,
           }}
         >
           {claimTextMap.get(activeTooltip.id)}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
