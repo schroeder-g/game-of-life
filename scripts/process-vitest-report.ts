@@ -8,7 +8,7 @@ if (!reportUrl) {
   process.exit(1);
 }
 
-const outputFile = resolve(process.cwd(), 'src/public/data/automated-test-results.json');
+const outputFile = resolve(process.cwd(), 'src/public/data/automated-test-statuses.json');
 
 async function main() {
   try {
