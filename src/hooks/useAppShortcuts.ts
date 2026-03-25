@@ -94,56 +94,53 @@ export function useAppShortcuts() {
       const rotation = cameraOrientation.rotation;
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
-      // 1. Continuous rotation (View Mode OR Edit Mode with Auto-Square off and no active brush)
-      const isContinuousMode = rotationMode || (!autoSquare && paintMode === 0);
-      if (isRotationCode && isContinuousMode) {
-        switch (key) {
-          case ";": movement.current.rotateSemicolon = true; break;
-          case "k": movement.current.rotateK = true; break;
-          case "o": movement.current.rotateO = true; break;
-          case ".": movement.current.rotatePeriod = true; break;
-          case "i": movement.current.rotateI = true; break;
-          case "p": movement.current.rotateP = true; break;
-        }
-        e.preventDefault();
-        return;
-      }
+      if (isRotationCode) {
+        if (autoSquare) {
+          // Snap/Brush rotation when autoSquare is ON
+          if (hasValidOrientation) {
+            const f = face as CameraFace;
+            const r = rotation as CameraRotation;
+            let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
+              : code === "Semicolon" ? "semicolon"
+              : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
 
-      // 2. Snap/Brush rotation (Edit Mode only)
-      if (isRotationCode && !rotationMode) {
-        if (hasValidOrientation) {
-          const f = face as CameraFace;
-          const r = rotation as CameraRotation;
-          let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
-            : code === "Semicolon" ? "semicolon"
-            : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
-
-          // Handle inversion by swapping key pairs before lookup
-          if (invertPitch) {
-            if (rotKey === 'o') rotKey = 'period';
-            else if (rotKey === 'period') rotKey = 'o';
-          }
-          if (invertYaw) {
-            if (rotKey === 'k') rotKey = 'semicolon';
-            else if (rotKey === 'semicolon') rotKey = 'k';
-          }
-          if (invertRoll) {
-            if (rotKey === 'i') rotKey = 'p';
-            else if (rotKey === 'p') rotKey = 'i';
-          }
-
-          const axis = getExplicitRotationAxis(f, r, rotKey);
-          let angle = Math.PI / 2;
-
-          // Only rotate brush (and reverse i/p) if we are in an active paint mode
-          if (selectedShape !== "None" && paintMode !== 0) {
-            // Reverse direction for roll (i/p) to match user expectations
-            if (["i", "p"].includes(rotKey)) {
-              angle = -angle;
+            // Handle inversion by swapping key pairs before lookup
+            if (invertPitch) {
+              if (rotKey === 'o') rotKey = 'period';
+              else if (rotKey === 'period') rotKey = 'o';
             }
-            cameraActionsRef.current?.rotateBrush(axis, angle);
-          } else {
-            cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
+            if (invertYaw) {
+              if (rotKey === 'k') rotKey = 'semicolon';
+              else if (rotKey === 'semicolon') rotKey = 'k';
+            }
+            if (invertRoll) {
+              if (rotKey === 'i') rotKey = 'p';
+              else if (rotKey === 'p') rotKey = 'i';
+            }
+
+            const axis = getExplicitRotationAxis(f, r, rotKey);
+            let angle = Math.PI / 2;
+
+            // In Edit mode, if painting, rotate brush. Otherwise snap-rotate camera.
+            if (!rotationMode && selectedShape !== "None" && paintMode !== 0) {
+              // Reverse direction for roll (i/p) to match user expectations
+              if (["i", "p"].includes(rotKey)) {
+                angle = -angle;
+              }
+              cameraActionsRef.current?.rotateBrush(axis, angle);
+            } else {
+              cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
+            }
+          }
+        } else {
+          // Continuous rotation when autoSquare is OFF
+          switch (key) {
+            case ";": movement.current.rotateSemicolon = true; break;
+            case "k": movement.current.rotateK = true; break;
+            case "o": movement.current.rotateO = true; break;
+            case ".": movement.current.rotatePeriod = true; break;
+            case "i": movement.current.rotateI = true; break;
+            case "p": movement.current.rotateP = true; break;
           }
         }
         e.preventDefault();
@@ -239,12 +236,6 @@ export function useAppShortcuts() {
           case "d": movement.current.right = true; break;
           case "q": movement.current.up = true; break;
           case "z": movement.current.down = true; break;
-          case ";": movement.current.rotateSemicolon = true; break;
-          case "k": movement.current.rotateK = true; break;
-          case "o": movement.current.rotateO = true; break;
-          case ".": movement.current.rotatePeriod = true; break;
-          case "i": movement.current.rotateI = true; break;
-          case "p": movement.current.rotateP = true; break;
           default: handled = false;
         }
       }
