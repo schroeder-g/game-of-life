@@ -954,42 +954,103 @@ export function Scene() {
     }
     
     // --- Physics Update (only runs when not slerping) ---
-    if (rotationMode || !autoSquare) {
-      const { lerp } = THREE.MathUtils;
-      const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
-      const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
-      
-      const rotSpeed = rotationSpeed * 0.0004;
-      const rSpeed = rollSpeed * 0.0004;
+    const { lerp } = THREE.MathUtils;
+    const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
+    const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
+    
+    // --- Calculate All Velocities ---
+    
+    // Rotation velocities
+    const rotSpeed = rotationSpeed * 0.0004;
+    const rSpeed = rollSpeed * 0.0004;
+    
+    const pitchSpeed = rotSpeed * (invertPitch ? -1 : 1);
+    if (movement.current.rotateO) velocity.current.rotateO = lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
+    else velocity.current.rotateO *= easeOutVal;
+    if (movement.current.rotatePeriod) velocity.current.rotatePeriod = lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
+    else velocity.current.rotatePeriod *= easeOutVal;
 
-      const pitchSpeed = rotSpeed * (invertPitch ? -1 : 1);
-      if (movement.current.rotateO) velocity.current.rotateO = lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
-      else velocity.current.rotateO *= easeOutVal;
-      if (movement.current.rotatePeriod) velocity.current.rotatePeriod = lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
-      else velocity.current.rotatePeriod *= easeOutVal;
+    const yawSpeed = rotSpeed * (invertYaw ? -1 : 1);
+    if (movement.current.rotateK) velocity.current.rotateK = lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
+    else velocity.current.rotateK *= easeOutVal;
+    if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
+    else velocity.current.rotateSemicolon *= easeOutVal;
+    
+    const rollSpeedVal = rSpeed * (invertRoll ? -1 : 1);
+    if (movement.current.rotateI) velocity.current.rotateI = lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
+    else velocity.current.rotateI *= easeOutVal;
+    if (movement.current.rotateP) velocity.current.rotateP = lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
+    else velocity.current.rotateP *= easeOutVal;
 
-      const yawSpeed = rotSpeed * (invertYaw ? -1 : 1);
-      if (movement.current.rotateK) velocity.current.rotateK = lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
-      else velocity.current.rotateK *= easeOutVal;
-      if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
-      else velocity.current.rotateSemicolon *= easeOutVal;
-      
-      const rollSpeedVal = rSpeed * (invertRoll ? -1 : 1);
-      if (movement.current.rotateI) velocity.current.rotateI = lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
-      else velocity.current.rotateI *= easeOutVal;
-      if (movement.current.rotateP) velocity.current.rotateP = lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
-      else velocity.current.rotateP *= easeOutVal;
-      
-      const totalPitch = velocity.current.rotateO + velocity.current.rotatePeriod;
-      const totalYaw = velocity.current.rotateK + velocity.current.rotateSemicolon;
-      const totalRoll = velocity.current.rotateI + velocity.current.rotateP;
+    // Pan/Dolly velocities for View Mode
+    const pSpeed = panSpeed * 0.05;
+    if (movement.current.right) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
+    else if (movement.current.left) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
+    else velocity.current.panX *= easeOutVal;
+    
+    if (movement.current.up) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
+    else if (movement.current.down) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
+    else velocity.current.panY *= easeOutVal;
 
+    const dSpeed = panSpeed * 0.05;
+    if (movement.current.forward) velocity.current.dolly = lerp(velocity.current.dolly, dSpeed, easeInVal);
+    else if (movement.current.backward) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
+    else velocity.current.dolly *= easeOutVal;
+    
+    const totalPitch = velocity.current.rotateO + velocity.current.rotatePeriod;
+    const totalYaw = velocity.current.rotateK + velocity.current.rotateSemicolon;
+    const totalRoll = velocity.current.rotateI + velocity.current.rotateP;
+    
+    const totalPanX = velocity.current.panX;
+    const totalPanY = velocity.current.panY;
+    const totalDolly = velocity.current.dolly;
+
+    // --- Apply Velocities ---
+    if (rotationMode) {
+      // VIEW MODE: Manipulate the camera
+      if (controlsRef.current && cameraRef.current) {
+        const controls = controlsRef.current;
+        const cam = cameraRef.current;
+
+        // Apply Rotations
+        const rotMultiplier = 2.5; // Make keyboard rotation feel responsive
+        if (Math.abs(totalYaw) > 1e-6) controls.rotateLeft(-totalYaw * rotMultiplier);
+        if (Math.abs(totalPitch) > 1e-6) controls.rotateUp(totalPitch * rotMultiplier);
+        if (Math.abs(totalRoll) > 1e-6) {
+          const lookDir = new THREE.Vector3().subVectors(controls.target, cam.position).normalize();
+          cam.up.applyAxisAngle(lookDir, totalRoll);
+        }
+
+        // Apply Pans & Dolly
+        const hasPan = Math.abs(totalPanX) > 1e-7 || Math.abs(totalPanY) > 1e-7;
+        const hasDolly = Math.abs(totalDolly) > 1e-7;
+
+        if (hasPan) {
+          const dist = cam.position.distanceTo(controls.target);
+          controls.panLeft(-totalPanX * delta * dist, cam.matrix);
+          controls.panUp(totalPanY * delta * dist, cam.matrix);
+        }
+        if (hasDolly) {
+          controls.dollyTo(controls.getDistance() * (1 - totalDolly * delta));
+        }
+        
+        const needsUpdate = Math.abs(totalYaw) > 1e-6 || Math.abs(totalPitch) > 1e-6 || Math.abs(totalRoll) > 1e-6 || hasPan || hasDolly;
+        if (needsUpdate) {
+          controls.update();
+        }
+      }
+    } else if (!autoSquare) {
+      // EDIT MODE: Continuous cube rotation
       if (cameraRef.current && cubeRef.current) {
         const cam = cameraRef.current;
         const cube = cubeRef.current;
         if (Math.abs(totalPitch) > 1e-6) cube.rotateOnWorldAxis(cam.right, totalPitch);
         if (Math.abs(totalYaw) > 1e-6) cube.rotateOnWorldAxis(cam.up, totalYaw);
-        if(Math.abs(totalRoll) > 1e-6) cube.rotateOnWorldAxis(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2), totalRoll);
+        if (Math.abs(totalRoll) > 1e-6) {
+          // Use the camera's forward vector for roll
+          const forward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2);
+          cube.rotateOnWorldAxis(forward, totalRoll);
+        }
       }
     }
   });
