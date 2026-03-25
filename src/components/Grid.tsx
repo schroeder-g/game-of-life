@@ -852,8 +852,8 @@ export function Scene() {
     setCustomBrush,
   ]);
   useFrame((state, delta) => {
-    const { storedSettings } = useSimulation.getState();
-    const { movement, velocity } = useSimulation.getState().meta;
+    // Correctly use variables already in scope from the top-level useSimulation() hook.
+    // DO NOT call useSimulation.getState() here.
 
     const hasMoved =
       Object.values(movement.current).some(Boolean) ||
@@ -865,10 +865,9 @@ export function Scene() {
     
     // --- Animation Logic ---
     
-    const easeIn = 1 - Math.exp(-2 * delta * (storedSettings.easeIn || 0.2));
-    let currentEaseOut = 1 - Math.exp(-2 * delta * (storedSettings.easeOut || 0.5));
-    const { invertPitch, invertYaw, invertRoll } = storedSettings;
-
+    const easeInVal = 1 - Math.exp(-2 * delta * (easeIn || 0.2));
+    let currentEaseOut = 1 - Math.exp(-2 * delta * (easeOut || 0.5));
+    
     if (snapAnimation.current.active && cubeRef.current && cameraRef.current && controlsRef.current) {
       if (!snapAnimation.current.startOrientation) {
         // First frame: activate the movement
@@ -924,7 +923,7 @@ export function Scene() {
         const lookFactor = Math.min(1, currentLookErrorAngle / (initialLookErrorAngle || 1));
         const upFactor = Math.min(1, currentUpErrorAngle / (initialUpErrorAngle || 1));
         const maxFactor = Math.max(lookFactor, upFactor);
-        const easeOutVal = storedSettings.easeOut || 0.5;
+        const easeOutVal = easeOut || 0.5;
         currentEaseOut = 1 - Math.exp(-2 * delta * easeOutVal * (1 / (maxFactor + 1e-6) - 1)); // High decel near target
 
         // Determine movement direction simultaneously for all axes
@@ -951,30 +950,28 @@ export function Scene() {
     // --- Physics Update ---
     
     if (rotationMode) {
-      const { lerp } = THREE.MathUtils;
-      
       const rotSpeed = rotationSpeed * 0.0004; // scaled for lerp
       const rSpeed = rollSpeed * 0.0004;
 
       // Pitch
       const pitchSpeed = rotSpeed * (invertPitch ? -1 : 1);
-      if (movement.current.rotateO) velocity.current.rotateO = lerp(velocity.current.rotateO, pitchSpeed, easeIn);
+      if (movement.current.rotateO) velocity.current.rotateO = THREE.MathUtils.lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
       else velocity.current.rotateO *= currentEaseOut;
-      if (movement.current.rotatePeriod) velocity.current.rotatePeriod = lerp(velocity.current.rotatePeriod, -pitchSpeed, easeIn);
+      if (movement.current.rotatePeriod) velocity.current.rotatePeriod = THREE.MathUtils.lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
       else velocity.current.rotatePeriod *= currentEaseOut;
 
       // Yaw
       const yawSpeed = rotSpeed * (invertYaw ? -1 : 1);
-      if (movement.current.rotateK) velocity.current.rotateK = lerp(velocity.current.rotateK, -yawSpeed, easeIn);
+      if (movement.current.rotateK) velocity.current.rotateK = THREE.MathUtils.lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
       else velocity.current.rotateK *= currentEaseOut;
-      if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = lerp(velocity.current.rotateSemicolon, yawSpeed, easeIn);
+      if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = THREE.MathUtils.lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
       else velocity.current.rotateSemicolon *= currentEaseOut;
 
       // Roll
       const rollSpeedVal = rSpeed * (invertRoll ? -1 : 1);
-      if (movement.current.rotateI) velocity.current.rotateI = lerp(velocity.current.rotateI, -rollSpeedVal, easeIn);
+      if (movement.current.rotateI) velocity.current.rotateI = THREE.MathUtils.lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
       else velocity.current.rotateI *= currentEaseOut;
-      if (movement.current.rotateP) velocity.current.rotateP = lerp(velocity.current.rotateP, rollSpeedVal, easeIn);
+      if (movement.current.rotateP) velocity.current.rotateP = THREE.MathUtils.lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
       else velocity.current.rotateP *= currentEaseOut;
       
       const totalPitch = velocity.current.rotateO + velocity.current.rotatePeriod;
