@@ -94,7 +94,7 @@ export function AutomatedTestsPanel({
         }
 
         if (!vitestTest) {
-          return { id: testId, title, status: "skipped", narrative: "Test not found in report. It may be pending implementation or misconfigured." };
+          return { id: testId, title, claimIds: manualTest?.claimIds || [], status: "skipped", narrative: "Test not found in report. It may be pending implementation or misconfigured." };
         }
 
         const narrative =
