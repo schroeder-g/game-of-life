@@ -95,53 +95,8 @@ export function useAppShortcuts() {
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
       if (isRotationCode) {
-        if (autoSquare) {
-          // Snap/Brush rotation when autoSquare is ON
-          if (hasValidOrientation) {
-            const f = face as CameraFace;
-            const r = rotation as CameraRotation;
-            let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
-              : code === "Semicolon" ? "semicolon"
-              : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
-
-            // Handle inversion by swapping key pairs before lookup
-            if (invertPitch) {
-              if (rotKey === 'o') rotKey = 'period';
-              else if (rotKey === 'period') rotKey = 'o';
-            }
-            if (invertYaw) {
-              if (rotKey === 'k') rotKey = 'semicolon';
-              else if (rotKey === 'semicolon') rotKey = 'k';
-            }
-            if (invertRoll) {
-              if (rotKey === 'i') rotKey = 'p';
-              else if (rotKey === 'p') rotKey = 'i';
-            }
-
-            let angle = Math.PI / 2;
-
-            // In Edit mode, if painting, rotate brush. Otherwise snap-rotate camera.
-            if (!rotationMode && selectedShape !== "None" && paintMode !== 0) {
-              // Reverse direction for roll (i/p) to match user expectations
-              if (["i", "p"].includes(rotKey)) {
-                angle = -angle;
-              }
-              const axis = getExplicitRotationAxis(f, r, rotKey); // Brush rotation uses explicit (screen-relative) axis
-              cameraActionsRef.current?.rotateBrush(axis, angle);
-            } else {
-              // For camera snapping, use the dedicated SnapRotationLookup axes.
-              const axis = getSnapRotationAxis(f, r, rotKey);
-              let snapAngle = angle;
-              // The lookup tables may have inverted i/p axes, so we apply a fix
-              // to ensure consistent roll direction.
-              if (["i", "p"].includes(rotKey)) {
-                snapAngle = -angle;
-              }
-              cameraActionsRef.current?.snapRotateWithAxis(axis, snapAngle);
-            }
-          }
-        } else {
-          // Continuous rotation when autoSquare is OFF
+        // Ctrl+Shift is a hard override for continuous rotation.
+        if (e.ctrlKey && e.shiftKey) {
           switch (key) {
             case ";": movement.current.rotateSemicolon = true; break;
             case "k": movement.current.rotateK = true; break;
@@ -150,7 +105,54 @@ export function useAppShortcuts() {
             case "i": movement.current.rotateI = true; break;
             case "p": movement.current.rotateP = true; break;
           }
+          e.preventDefault();
+          e.stopPropagation();
+          return;
         }
+
+        let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
+          : code === "Semicolon" ? "semicolon"
+          : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
+
+        // Handle inversion by swapping key pairs before lookup
+        if (invertPitch) {
+          if (rotKey === 'o') rotKey = 'period'; else if (rotKey === 'period') rotKey = 'o';
+        }
+        if (invertYaw) {
+          if (rotKey === 'k') rotKey = 'semicolon'; else if (rotKey === 'semicolon') rotKey = 'k';
+        }
+        if (invertRoll) {
+          if (rotKey === 'i') rotKey = 'p'; else if (rotKey === 'p') rotKey = 'i';
+        }
+
+        if (autoSquare) {
+          // In Edit Mode with an active brush, rotate the brush.
+          if (!rotationMode && selectedShape !== "None" && paintMode !== 0) {
+            if (hasValidOrientation) {
+              const f = face as CameraFace;
+              const r = rotation as CameraRotation;
+              const axis = getExplicitRotationAxis(f, r, rotKey);
+              let angle = Math.PI / 2;
+              // Reverse direction for roll (i/p) to match user expectations
+              if (["i", "p"].includes(rotKey)) { angle = -angle; }
+              cameraActionsRef.current?.rotateBrush(axis, angle);
+            }
+          } else {
+            // Otherwise, trigger a smooth snap-rotation animation.
+            cameraActionsRef.current?.startSnapAnimation(rotKey);
+          }
+        } else {
+          // If autoSquare is OFF, always do continuous rotation.
+          switch (rotKey) {
+            case "semicolon": movement.current.rotateSemicolon = true; break;
+            case "k": movement.current.rotateK = true; break;
+            case "o": movement.current.rotateO = true; break;
+            case "period": movement.current.rotatePeriod = true; break;
+            case "i": movement.current.rotateI = true; break;
+            case "p": movement.current.rotateP = true; break;
+          }
+        }
+
         e.preventDefault();
         e.stopPropagation();
         return;
