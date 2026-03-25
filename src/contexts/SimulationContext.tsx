@@ -72,6 +72,7 @@ export interface SimulationState {
   userName?: string;
   buildInfo: {
     version: string;
+    buildTime: string;
     distribution: "dev" | "test" | "prod";
   };
 }
@@ -222,6 +223,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const [buildInfo, setBuildInfo] = useState<SimulationState['buildInfo']>({
     version: "loading...",
+    buildTime: "",
     distribution: "prod",
   });
 
