@@ -16,7 +16,6 @@ import { ManualTestsPanel } from "./ManualTestsPanel";
 import { MANUAL_TESTS } from "../data/manual-tests";
 import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
-import { ImportedTestsPanel } from "./ImportedTestsPanel";
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1633,7 +1632,6 @@ export function MainMenu() {
             manualTests={MANUAL_TESTS}
             automatedTestIds={AUTOMATED_TEST_IDS}
           />
-          <ImportedTestsPanel />
         </>
       )}
     </>
