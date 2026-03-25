@@ -1,9 +1,4 @@
-export interface ManualTest {
-  id: string;
-  title: string;
-  steps: string[];
-  claimIds: string[];
-}
+import { ManualTest } from "../types/testing";
 
 export const MANUAL_TESTS: ManualTest[] = [
   // Existing Tests (Rewritten)
@@ -237,4 +232,54 @@ export const MANUAL_TESTS: ManualTest[] = [
     ],
     claimIds: ["quality-input-focus"],
   },
+
+ // CORE Tests for Grid3D data model integrity
+ {
+   id: 'CORE-1',
+   title: 'Grid3D: Initialization',
+   steps: ['Automated test verifies correct initialization.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-2',
+   title: 'Grid3D: Out of Bounds Get',
+   steps: ['Automated test verifies graceful handling of out-of-bounds get requests.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-3',
+   title: 'Grid3D: Set and Get State',
+   steps: ['Automated test verifies correct setting and getting of cell states.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-4',
+   title: 'Grid3D: Out of Bounds Set',
+   steps: ['Automated test verifies graceful handling of out-of-bounds set requests.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-5',
+   title: 'Grid3D: Toggle State',
+   steps: ['Automated test verifies correct toggling of cell states.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-6',
+   title: 'Grid3D: Clear',
+   steps: ['Automated test verifies correct clearing of the grid.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-7',
+   title: 'Grid3D: Save and Restore',
+   steps: ['Automated test verifies state is saved and restored without data loss.'],
+   claimIds: ['DS-1'],
+ },
+ {
+   id: 'CORE-8',
+   title: 'Grid3D: Tick Simulation',
+   steps: ['Automated test verifies the simulation tick correctly applies rules.'],
+   claimIds: ['DS-1'],
+ },
 ];
