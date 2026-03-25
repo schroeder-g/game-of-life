@@ -140,8 +140,7 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    snapRotate: (direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => void;
-    snapRotateWithAxis: (axis: THREE.Vector3, angle: number) => void;
+    startSnapAnimation: (key: string) => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;

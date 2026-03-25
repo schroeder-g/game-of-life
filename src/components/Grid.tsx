@@ -596,24 +596,8 @@ export function Scene() {
   const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
-  const snapRotation = useRef({
-    active: false,
-    axis: new THREE.Vector3(),
-    totalAngle: 0,
-    startQuaternion: new THREE.Quaternion(),
-    startTime: 0,
-    duration: 1.0,
-    lastAngle: 0,
-    onComplete: undefined as (() => void) | undefined,
-  });
-  const autoSquaringAnimation = useRef({
-    active: false,
-    start: new THREE.Quaternion(),
-    target: new THREE.Quaternion(),
-    startTime: 0,
-    duration: 0.4,
-    onComplete: undefined as (() => void) | undefined,
-  });
+  const snapAnimation = useRef({ active: false, key: null as string | null, startOrientation: null as CameraOrientation | null });
+  const squareUpAnimation = useRef({ active: false, phase: 1, targetLook: new THREE.Vector3(), targetUp: new THREE.Vector3() });
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
   const coastingAnimation = useRef({

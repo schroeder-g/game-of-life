@@ -94,6 +94,35 @@ const CURRENT_MANUAL: DocItem[] = [
     references: ["src/components/ShortcutOverlay.tsx"],
   },
 
+  {
+    id: 'heading-camera-rotation',
+    type: 'h3',
+    text: 'Camera Controls & Rotation'
+  },
+  {
+    id: 'rotation-free-form',
+    type: 'p',
+    text: "<b>Free-Form Rotation (Square Up: OFF):</b> This is the default mode. Use the rotation keys (<b>O/Period</b> for Pitch, <b>K/Semicolon</b> for Yaw, <b>I/P</b> for Roll) for smooth, continuous 'flight-sim' style rotation. This mode is ideal for cinematic views.",
+  },
+  {
+    id: 'rotation-snap',
+    type: 'p',
+    text: "<b>Snap Rotation (Square Up: ON):</b> In this mode, the camera is locked to 90-degree-increment views of the cube's faces. A single press of a rotation key will smoothly animate the camera 90 degrees in the corresponding direction and then lock it into a perfectly square alignment.",
+    testIds: ["UX-4"],
+  },
+  {
+    id: 'rotation-edit-mode',
+    type: 'p',
+    text: "<b>Special Rules in Edit Mode:</b> When a brush shape is active (e.g., 'Cube', 'Sphere'), the rotation keys will rotate the brush instead of the camera. To rotate the camera while a brush is active, you must use the <b>Ctrl+Shift</b> override.",
+    testIds: ["UX-6"],
+  },
+  {
+    id: 'rotation-override',
+    type: 'p',
+    text: "<b>Ctrl+Shift Override:</b> At any time, holding <b>Ctrl+Shift</b> while pressing a rotation key will temporarily perform smooth, continuous rotation, even if 'Auto Square Up' is ON.",
+    testIds: ["UX-5"],
+  },
+
   { id: 'heading-edit', type: 'h3', text: 'Editing the Grid (Edit Mode)' },
   {
     id: "edit-paint-clear",

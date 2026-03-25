@@ -81,3 +81,90 @@ describe('useAppShortcuts - UX Claims', () => {
     expect((movementRef.current as any).rotateO).toBe(true);
   });
 });
+
+describe('useAppShortcuts - New Rotation Logic', () => {
+  const mockRotateBrush = vi.fn();
+  const mockStartSnapAnimation = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useBrush as any).mockReturnValue({
+      state: { paintMode: 0, selectedShape: "None" },
+      actions: {}
+    });
+  });
+
+  it('[UX-4] should trigger a snap-rotation animation when a rotation key is pressed and autoSquare is ON', () => {
+    const movementRef = { current: {} };
+    (useSimulation as any).mockReturnValue({
+      state: {
+        rotationMode: true, // View mode
+        autoSquare: true,   // Snap mode
+        cameraOrientation: { face: 'front', rotation: 0 },
+        invertYaw: false, invertPitch: false, invertRoll: false
+      },
+      actions: {},
+      meta: {
+        movement: movementRef,
+        cameraActionsRef: { current: { startSnapAnimation: mockStartSnapAnimation } }
+      }
+    });
+
+    renderHook(() => useAppShortcuts());
+    const event = new KeyboardEvent('keydown', { code: 'KeyO', key: 'o' });
+    window.dispatchEvent(event);
+
+    expect(mockStartSnapAnimation).toHaveBeenCalledWith('o');
+    expect((movementRef.current as any).rotateO).toBeFalsy();
+  });
+
+  it('[UX-5] should perform continuous rotation when Ctrl+Shift is held, even if autoSquare is ON', () => {
+    const movementRef = { current: {} };
+    (useSimulation as any).mockReturnValue({
+      state: {
+        autoSquare: true, // Snap mode is on
+        cameraOrientation: { face: 'front', rotation: 0 },
+        invertYaw: false, invertPitch: false, invertRoll: false
+      },
+      actions: {},
+      meta: {
+        movement: movementRef,
+        cameraActionsRef: { current: { startSnapAnimation: mockStartSnapAnimation } }
+      }
+    });
+
+    renderHook(() => useAppShortcuts());
+    const event = new KeyboardEvent('keydown', { code: 'KeyO', key: 'o', ctrlKey: true, shiftKey: true });
+    window.dispatchEvent(event);
+
+    expect((movementRef.current as any).rotateO).toBe(true);
+    expect(mockStartSnapAnimation).not.toHaveBeenCalled();
+  });
+
+  it('[UX-6] should rotate the brush, not the camera, when in Edit Mode with an active brush and autoSquare is ON', () => {
+    (useBrush as any).mockReturnValue({
+      state: { selectedShape: 'Cube', paintMode: 1 }, // Active brush
+      actions: {}
+    });
+    (useSimulation as any).mockReturnValue({
+      state: {
+        rotationMode: false, // Edit mode
+        autoSquare: true,    // Snap mode
+        cameraOrientation: { face: 'front', rotation: 0 },
+        invertYaw: false, invertPitch: false, invertRoll: false
+      },
+      actions: {},
+      meta: {
+        movement: { current: {} },
+        cameraActionsRef: { current: { rotateBrush: mockRotateBrush, startSnapAnimation: mockStartSnapAnimation } }
+      }
+    });
+
+    renderHook(() => useAppShortcuts());
+    const event = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
+    window.dispatchEvent(event);
+
+    expect(mockRotateBrush).toHaveBeenCalled();
+    expect(mockStartSnapAnimation).not.toHaveBeenCalled();
+  });
+});
