@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { ManualTestStatus } from "../types/testing";
+import { ManualTestStatus } from "../types";
 
 const STORAGE_KEY = "manual-tests-statuses";
 
