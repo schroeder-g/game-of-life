@@ -200,6 +200,16 @@ const CURRENT_MANUAL: DocItem[] = [
     text: "This project adheres to a strict quality process. Every feature or claim documented in this manual is cross-referenced with one or more manual tests (e.g., UX-1, QA-1). This ensures all documented functionality is verifiable and that the documentation stays in sync with the application's behavior. (`src/data/documentation.ts`, `src/data/manual-tests.ts`)",
     testIds: ["QA-3"],
   },
+  {
+    id: 'DS-1',
+    type: 'p',
+    text: `<b>Data Structure Integrity (DS-1):</b> The core <code>Grid3D</code> data structure shall
+     reliably manage cell states. It must initialize correctly, handle out-of-bounds
+     access gracefully, accurately set, get, and toggle cell states, and support
+     clearing, saving, and restoring its state without data loss. Its simulation
+     tick must correctly apply the rules of life.`,
+    testIds: ['CORE-1', 'CORE-2', 'CORE-3', 'CORE-4', 'CORE-5', 'CORE-6', 'CORE-7', 'CORE-8'],
+  },
 ];
 
 export const DOCUMENTATION_CONTENT: DocItem[] = [ ...CURRENT_MANUAL, ...DEPRECATED_CONTENT ];
