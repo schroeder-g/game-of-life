@@ -85,45 +85,6 @@ export const rotationLookup = {
   }
 };
 
-//3 Snap ROTATION LOOKUP (o, k, ., ;)
-export const SnapRotationLookup = {
-  "front": { // look -Z, up +Y
-    0: { o: [1, 0, 0], period: [-1, 0, 0], semicolon: [0, -1, 0], k: [0, 1, 0], i: [0, 0, 1], p: [0, 0, -1] },
-    90: { o: [0, -1, 0], period: [0, 1, 0], k: [1, 0, 0], semicolon: [-1, 0, 0], i: [0, 0, 1], p: [0, 0, -1] },
-    180: { o: [-1, 0, 0], period: [1, 0, 0], k: [0, -1, 0], semicolon: [0, 1, 0], i: [0, 0, 1], p: [0, 0, -1] },
-    270: { o: [0, 1, 0], period: [0, -1, 0], k: [-1, 0, 0], semicolon: [1, 0, 0], i: [0, 0, 1], p: [0, 0, -1] }
-  },
-  "back": { // look +Z, up +Y
-    0: { o: [-1, 0, 0], period: [1, 0, 0], k: [0, 1, 0], semicolon: [0, -1, 0], i: [0, 0, -1], p: [0, 0, 1] },
-    90: { o: [0, -1, 0], period: [0, 1, 0], k: [-1, 0, 0], semicolon: [1, 0, 0], i: [0, 0, -1], p: [0, 0, 1] },
-    180: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, -1, 0], semicolon: [0, 1, 0], i: [0, 0, -1], p: [0, 0, 1] },
-    270: { o: [0, 1, 0], period: [0, -1, 0], k: [1, 0, 0], semicolon: [-1, 0, 0], i: [0, 0, -1], p: [0, 0, 1] }
-  },
-  "top": { // look -Y, up +Z
-    0: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, 1, 0], semicolon: [0, -1, 0], i: [0, 1, 0], p: [0, -1, 0] },
-    90: { o: [-1, 0, 0], period: [1, 0, 0], k: [0, 0, 1], semicolon: [0, 0, -1], i: [0, 1, 0], p: [0, -1, 0] },
-    180: { o: [0, 0, -1], period: [0, 0, 1], k: [-1, 0, 0], semicolon: [1, 0, 0], i: [0, 1, 0], p: [0, -1, 0] },
-    270: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, 0, -1], semicolon: [0, 0, 1], i: [0, 1, 0], p: [0, -1, 0] }
-  },
-  "bottom": { // look +Y, up -Z
-    0: { o: [0, 0, -1], period: [0, 0, 1], i: [1, 0, 0], semicolon: [-1, 0, 0], k: [0, -1, 0], p: [0, 1, 0] },
-    90: { o: [-1, 0, 0], period: [1, 0, 0], k: [0, 0, -1], semicolon: [0, 0, 1], i: [0, -1, 0], p: [0, 1, 0] },
-    180: { o: [0, 0, 1], period: [0, 0, -1], k: [-1, 0, 0], semicolon: [1, 0, 0], i: [0, -1, 0], p: [0, 1, 0] },
-    270: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, 0, 1], semicolon: [0, 0, -1], i: [0, -1, 0], p: [0, 1, 0] }
-  },
-  "right": { // look -X, up +Y
-    0: { o: [0, 0, 1], period: [0, 0, -1], k: [0, 1, 0], semicolon: [0, -1, 0], i: [1, 0, 0], p: [-1, 0, 0] },
-    90: { o: [0, 1, 0], period: [0, -1, 0], k: [0, 0, -1], semicolon: [0, 0, 1], i: [1, 0, 0], p: [-1, 0, 0] },
-    180: { o: [0, 0, -1], period: [0, 0, 1], k: [0, -1, 0], semicolon: [0, 1, 0], i: [1, 0, 0], p: [-1, 0, 0] },
-    270: { o: [0, -1, 0], period: [0, 1, 0], k: [0, 0, 1], semicolon: [0, 0, -1], i: [1, 0, 0], p: [-1, 0, 0] }
-  },
-  "left": { // look +X, up +Y
-    0: { o: [0, 0, -1], period: [0, 0, 1], k: [0, 1, 0], semicolon: [0, -1, 0], i: [-1, 0, 0], p: [1, 0, 0] },
-    90: { o: [0, 1, 0], period: [0, -1, 0], k: [0, 0, 1], semicolon: [0, 0, -1], i: [-1, 0, 0], p: [1, 0, 0] },
-    180: { o: [0, 0, 1], period: [0, 0, -1], k: [0, -1, 0], semicolon: [0, 1, 0], i: [-1, 0, 0], p: [1, 0, 0] },
-    270: { o: [0, -1, 0], period: [0, 1, 0], k: [0, 0, -1], semicolon: [0, 0, 1], i: [-1, 0, 0], p: [1, 0, 0] }
-  }
-};
 
 export type CameraFace = keyof typeof KEY_MAP;
 export type CameraRotation = 0 | 90 | 180 | 270;
@@ -148,13 +109,6 @@ export function getRotationAxis(face: CameraFace, rotation: CameraRotation, type
 
 export function getExplicitRotationAxis(face: CameraFace, rotation: CameraRotation, key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p'): THREE.Vector3 {
   const mapping = (rotationLookup as any)[face][rotation];
-  const axisArray = (mapping as any)[key];
-  if (!axisArray) return new THREE.Vector3(0, 0, 0);
-  return new THREE.Vector3().fromArray(axisArray);
-}
-
-export function getSnapRotationAxis(face: CameraFace, rotation: CameraRotation, key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p'): THREE.Vector3 {
-  const mapping = (SnapRotationLookup as any)[face][rotation];
   const axisArray = (mapping as any)[key];
   if (!axisArray) return new THREE.Vector3(0, 0, 0);
   return new THREE.Vector3().fromArray(axisArray);

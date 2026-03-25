@@ -2,6 +2,8 @@ These instructions are for the AI agent.
 
 Do not Update this file.
 
+Every build must continue to display the major and minor version numbers, build date and time, and  {dev ? "(Dev)" : test ? "(Test) : "" }
+
 As you fulfill prompts, keep these instructions in mind. 
 
 Ensure that the project is well-documented and easy to understand.
@@ -14,7 +16,7 @@ Documentaion should be written in a user-friendly style, with attractive Headers
 
 Documentation claims and corresponding tests should be cross-referenced. 
 
-Each claim should be followed by the TestIds of the Test(s) associated with it.
+Each claim should be followed by the  { TestId, Last Test Date/Time, and Pass/Fail } of the Test(s) associated with it.
 
 No feature will prevent specific keypresses from reaching focused text input controls.  
 
@@ -41,6 +43,10 @@ Don't ever remove documentation claims. Mark sections DEPRECATED if you would li
 Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
 
 Documentation should be structured in a visually-pleasing manner, with Headings, Subheadings,  and labels bolded.
+
+A documentation Index shall be provided, accessible via a button in the Documentation panel.
+
+
 
 For deprecated claims, explain clearly why they are deprecated if they are not already deprecated.
 

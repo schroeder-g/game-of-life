@@ -13,6 +13,7 @@
     "@react-three/fiber": "^8.15.0",
     "chroma-js": "^2.4.2",
     "game-of-life": ".",
+    "lucide-react": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.159.0"
