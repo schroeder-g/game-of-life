@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
-import { ManualTestStatus } from "../types";
+import { ManualTestResult, ManualTestStatus } from "../types/testing";
 
 const STORAGE_KEY = "manual-tests-statuses";
 
-function loadTestStatuses(): Map<string, ManualTestStatus> {
+function loadTestStatuses(): Map<string, ManualTestResult> {
   if (typeof window === "undefined") {
     return new Map();
   }
@@ -11,13 +11,26 @@ function loadTestStatuses(): Map<string, ManualTestStatus> {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Migration from old format (array of strings)
+      // Migration from very old format (array of strings)
       if (Array.isArray(parsed)) {
-        const newMap = new Map<string, ManualTestStatus>();
-        parsed.forEach(id => newMap.set(id, 'checked'));
+        const newMap = new Map<string, ManualTestResult>();
+        parsed.forEach(id => newMap.set(id, { status: 'checked', timestamp: undefined }));
         return newMap;
       }
-      return new Map(Object.entries(parsed));
+
+      // Migration from string status to object { status, timestamp }
+      const newMap = new Map<string, ManualTestResult>();
+      for (const key in parsed) {
+        if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+          const value = parsed[key];
+          if (typeof value === "string") {
+            newMap.set(key, { status: value as ManualTestStatus, timestamp: undefined });
+          } else if (typeof value === "object" && value !== null && 'status' in value) {
+            newMap.set(key, value as ManualTestResult);
+          }
+        }
+      }
+      return newMap;
     }
   } catch (error) {
     console.error("Failed to load manual test statuses:", error);
@@ -25,7 +38,7 @@ function loadTestStatuses(): Map<string, ManualTestStatus> {
   return new Map();
 }
 
-function saveTestStatuses(statuses: Map<string, ManualTestStatus>) {
+function saveTestStatuses(statuses: Map<string, ManualTestResult>) {
   if (typeof window === "undefined") return;
   try {
     const obj = Object.fromEntries(statuses);
@@ -40,7 +53,7 @@ function saveTestStatuses(statuses: Map<string, ManualTestStatus>) {
 }
 
 export function useManualTests() {
-  const [testStatuses, setTestStatuses] = useState<Map<string, ManualTestStatus>>(new Map());
+  const [testStatuses, setTestStatuses] = useState<Map<string, ManualTestResult>>(new Map());
 
   // Load initial state from localStorage on mount
   useEffect(() => {
@@ -50,14 +63,22 @@ export function useManualTests() {
   const cycleTestStatus = useCallback((testId: string) => {
     setTestStatuses((prev) => {
       const newMap = new Map(prev);
-      const currentStatus = newMap.get(testId);
+      const currentResult = newMap.get(testId);
+      const currentStatus = currentResult?.status;
 
+      let nextStatus: ManualTestStatus;
       if (currentStatus === 'checked') {
-        newMap.set(testId, 'failed');
+        nextStatus = 'failed';
       } else if (currentStatus === 'failed') {
-        newMap.delete(testId);
+        nextStatus = undefined;
       } else { // currentStatus is undefined
-        newMap.set(testId, 'checked');
+        nextStatus = 'checked';
+      }
+
+      if (nextStatus) {
+        newMap.set(testId, { status: nextStatus, timestamp: Date.now() });
+      } else {
+        newMap.delete(testId);
       }
 
       saveTestStatuses(newMap);

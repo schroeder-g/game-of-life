@@ -1,6 +1,8 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
+import { useManualTests } from "../hooks/useManualTests";
+import { CheckCircle, XCircle, Circle } from 'lucide-react';
 
 interface DocumentationModalProps {
   isOpen: boolean;
@@ -8,7 +10,10 @@ interface DocumentationModalProps {
 }
 
 export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps) {
+  const [showIndex, setShowIndex] = useState(false);
   const [deprecatedCollapsed, setDeprecatedCollapsed] = useState(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { testStatuses } = useManualTests();
 
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -39,20 +44,48 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
   const deprecatedHeader = deprecatedItems.find(item => item.id === 'heading-deprecated');
   const deprecatedClaims = deprecatedItems.filter(item => item.id !== 'heading-deprecated');
 
+  const headings = DOCUMENTATION_CONTENT.filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-'));
+
+  const handleIndexClick = (id: string) => {
+    const el = contentRef.current?.querySelector(`#${id}`);
+    el?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const StatusIcon = ({ status }: { status: 'checked' | 'failed' | undefined }) => {
+    const iconProps = { size: 14, style: { verticalAlign: 'middle', marginRight: '4px' } };
+    if (status === 'checked') return <CheckCircle color="#4ade80" {...iconProps} />;
+    if (status === 'failed') return <XCircle color="#f87171" {...iconProps} />;
+    return <Circle color="#9ca3af" {...iconProps} />;
+  };
+
   const renderItem = (item: any) => {
     switch (item.type) {
       case 'h3':
-        return <h3 key={item.id} style={{ marginTop: '1.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.25rem' }}>{item.text}</h3>;
+        return <h3 id={item.id} key={item.id} style={{ marginTop: '1.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.25rem' }}>{item.text}</h3>;
       case 'p':
         return (
           <div key={item.id} className="claim-item" style={{ marginBottom: '1rem', paddingLeft: '0.5rem' }}>
             <p style={{ margin: 0, lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: item.text }} />
             {item.testIds && item.testIds.length > 0 && (
-              <p style={{ marginTop: '0.25rem', marginBottom: 0 }}>
-                <small style={{ color: '#aaa', fontStyle: 'italic' }}>
-                  Verified by test(s): <span className="claim-tag" style={{ backgroundColor: 'rgba(0,100,200,0.3)', padding: '2px 6px', borderRadius: '4px', fontStyle: 'normal', color: '#a5d6ff' }}>[{item.testIds.join("], [")}]</span>
-                </small>
-              </p>
+              <div style={{ marginTop: '0.5rem' }}>
+                {item.testIds.map((testId: string) => {
+                  const result = testStatuses.get(testId);
+                  const status = result?.status;
+                  const timestamp = result?.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'N/A';
+                  // NOTE: Automated test results are not yet available here.
+                  const isManual = testId.match(/^(UC|UX|QA|UI|CORE|DS)-/);
+
+                  if (!isManual) return null;
+
+                  return (
+                    <div key={testId} style={{ fontSize: '12px', color: '#bbb', marginBottom: '2px' }}>
+                      <StatusIcon status={status} />
+                      <strong>{testId}:</strong> {status || 'untested'}
+                      {result?.timestamp && ` (on ${timestamp})`}
+                    </div>
+                  );
+                })}
+              </div>
             )}
             {item.references && item.references.length > 0 && (
               <p style={{ marginTop: '0.25rem', marginBottom: 0 }}>
@@ -98,9 +131,24 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
       >
         <div className="modal-header">
           <h2>User Manual</h2>
-          <button className="glass-button" onClick={onClose}>&times;</button>
+          <div>
+            <button className="glass-button" onClick={() => setShowIndex(s => !s)} style={{ marginRight: '8px' }}>Index</button>
+            <button className="glass-button" onClick={onClose}>&times;</button>
+          </div>
         </div>
-        <div className="doc-content" style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1.5rem 1rem' }}>
+        <div ref={contentRef} className="doc-content" style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1.5rem 1rem' }}>
+          {showIndex && (
+            <div className="doc-index" style={{ border: '1px solid #444', padding: '1rem', borderRadius: '4px', margin: '1rem 0' }}>
+              <h4 style={{marginTop: 0}}>Index</h4>
+              <ul style={{ listStyle: 'none', padding: 0, columns: 2 }}>
+                {headings.map(h => (
+                  <li key={h.id} style={{ marginBottom: '0.5rem' }}>
+                    <a href={`#${h.id}`} onClick={(e) => {e.preventDefault(); handleIndexClick(h.id);}} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{h.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {currentItems.map(renderItem)}
 
           {deprecatedHeader && (

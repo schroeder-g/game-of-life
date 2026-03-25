@@ -19,6 +19,11 @@ export interface ManualTest {
 
 export type ManualTestStatus = 'checked' | 'failed' | undefined;
 
+export interface ManualTestResult {
+  status: ManualTestStatus;
+  timestamp?: number;
+}
+
 export type VitestStatus = 'pass' | 'fail' | 'skipped';
 
 export interface VitestError {
