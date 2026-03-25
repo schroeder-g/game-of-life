@@ -9,6 +9,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
+import { getNextOrientation } from "../components/Grid"; // Import the new helper
 
 export function useAppShortcuts() {
   const {
@@ -17,6 +18,7 @@ export function useAppShortcuts() {
       rotationMode,
       cameraOrientation,
       autoSquare,
+      isAnimating, // ADD THIS
       hasInitialState,
       hasPastHistory,
       invertYaw,
@@ -34,6 +36,7 @@ export function useAppShortcuts() {
       fitDisplay,
       recenter,
       squareUp,
+      animateToOrientation, // ADD THIS
       setCell,
     },
     meta: { movement, eventBus, cameraActionsRef },
@@ -73,6 +76,8 @@ export function useAppShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isAnimating) return; // ADD THIS to block all input during animations
+
       const target = e.target as HTMLElement;
       const isTextBox =
         (target.tagName === "INPUT" &&
@@ -139,7 +144,10 @@ export function useAppShortcuts() {
             }
           } else {
             // Otherwise, trigger a smooth snap-rotation animation.
-            cameraActionsRef.current?.startSnapAnimation(rotKey);
+            const nextOrientation = getNextOrientation({face, rotation} as CameraOrientation, rotKey);
+            if (nextOrientation) {
+              animateToOrientation(nextOrientation);
+            }
           }
         } else {
           // If autoSquare is OFF, always do continuous rotation.
@@ -305,7 +313,7 @@ export function useAppShortcuts() {
     autoSquare,
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
     invertPitch, invertRoll, setRotationMode, playStop, step, stepBackward, reset,
-    setAutoSquare, fitDisplay, recenter, squareUp, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode,
+    setAutoSquare, fitDisplay, recenter, squareUp, animateToOrientation, movement, eventBus, changeSize, clearShape,
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode, isAnimating,
   ]);
 }

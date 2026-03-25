@@ -619,6 +619,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [cameraActionsRef],
   );
 
+  const animateToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
+    cameraActionsRef.current?.animateToOrientation(orientation);
+  }, []);
+
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
@@ -654,6 +658,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       rollSpeed,
       autoSquare,
       isAnimatingInit,
+      isAnimating, // ADD THIS
       userName,
       buildInfo,
     },
@@ -696,6 +701,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCells,
       deleteCells,
       applyCells,
+      animateToOrientation, // ADD THIS
       fitDisplay,
       recenter,
       squareUp,
