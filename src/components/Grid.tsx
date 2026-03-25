@@ -636,67 +636,11 @@ export function Scene() {
     return distance * 2;
   }, [gridSize, camera]);
 
-  const snapRotate = useCallback((direction: 'up' | 'down' | 'left' | 'right' | 'rollLeft' | 'rollRight') => {
-    if (snapRotation.current.active || !cubeRef.current || !cameraRef.current) return;
-
-    const camera = cameraRef.current;
-    let angle = Math.PI / 2;
-    let axis = new THREE.Vector3();
-
-    switch (direction) {
-      case 'up':
-        axis.setFromMatrixColumn(camera.matrix, 0); // camera's right vector
-        angle = Math.PI / 2;
-        break;
-      case 'down':
-        axis.setFromMatrixColumn(camera.matrix, 0);
-        angle = -Math.PI / 2;
-        break;
-      case 'left':
-        axis.setFromMatrixColumn(camera.matrix, 1); // camera's up vector
-        angle = Math.PI / 2;
-        break;
-      case 'right':
-        axis.setFromMatrixColumn(camera.matrix, 1);
-        angle = -Math.PI / 2;
-        break;
-      case 'rollLeft':
-        axis.setFromMatrixColumn(camera.matrix, 2).negate(); // camera's forward vector
-        angle = Math.PI / 2;
-        break;
-      case 'rollRight':
-        axis.setFromMatrixColumn(camera.matrix, 2).negate();
-        angle = -Math.PI / 2;
-        break;
-    }
-
-    snapRotation.current.active = true;
-    snapRotation.current.axis.copy(axis);
-    snapRotation.current.totalAngle = angle;
-    snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
-    snapRotation.current.startTime = 0;
-    snapRotation.current.lastAngle = 0;
-    snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
-  }, [cameraActionsRef]);
-
   useEffect(() => {
-    if (!autoSquare && autoSquaringAnimation.current.active) {
-      autoSquaringAnimation.current.active = false;
+    if (!autoSquare) {
+      squareUpAnimation.current.active = false;
     }
   }, [autoSquare]);
-
-  const snapRotateWithAxis = useCallback((axis: THREE.Vector3, angle: number) => {
-    if (snapRotation.current.active || !cubeRef.current) return;
-
-    snapRotation.current.active = true;
-    snapRotation.current.axis.copy(axis);
-    snapRotation.current.totalAngle = angle;
-    snapRotation.current.startQuaternion.copy(cubeRef.current.quaternion);
-    snapRotation.current.startTime = 0;
-    snapRotation.current.lastAngle = 0;
-    // After snapping, always perform a full square up
-    snapRotation.current.onComplete = () => cameraActionsRef.current?.squareUp();
-  }, [cameraActionsRef]);
 
   useEffect(() => {
     cameraActionsRef.current = {
@@ -997,59 +941,92 @@ export function Scene() {
     setCustomBrush,
   ]);
   useFrame((state, delta) => {
-    if (snapRotation.current.active && cubeRef.current) {
-      if (snapRotation.current.startTime === 0) {
-        snapRotation.current.startTime = state.clock.getElapsedTime();
-      }
-      const elapsedTime = state.clock.getElapsedTime() - snapRotation.current.startTime;
-      let progress = elapsedTime / snapRotation.current.duration;
-
-      if (progress >= 1) {
-        const finalRotation = new THREE.Quaternion().setFromAxisAngle(
-          snapRotation.current.axis,
-          snapRotation.current.totalAngle,
-        );
-        cubeRef.current.quaternion.copy(snapRotation.current.startQuaternion).premultiply(finalRotation);
-
-        snapRotation.current.active = false;
-        if (snapRotation.current.onComplete) {
-          snapRotation.current.onComplete();
-          snapRotation.current.onComplete = undefined;
+    // ADD new snap animation logic
+    if (snapAnimation.current.active && cubeRef.current && cameraRef.current && controlsRef.current) {
+      if (!snapAnimation.current.startOrientation) {
+        // First frame: activate the movement
+        snapAnimation.current.startOrientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+        const key = snapAnimation.current.key;
+        switch (key) {
+          case "o": movement.current.rotateO = true; break;
+          case "period": movement.current.rotatePeriod = true; break;
+          case "k": movement.current.rotateK = true; break;
+          case "semicolon": movement.current.rotateSemicolon = true; break;
+          case "i": movement.current.rotateI = true; break;
+          case "p": movement.current.rotateP = true; break;
         }
       } else {
-        progress = progress * progress * progress; // ease-in-cubic
-        const currentAngle = snapRotation.current.totalAngle * progress;
-        const angleThisFrame = currentAngle - snapRotation.current.lastAngle;
+        // Subsequent frames: check for orientation change
+        const currentOrientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+        const start = snapAnimation.current.startOrientation;
 
-        cubeRef.current.rotateOnWorldAxis(snapRotation.current.axis, angleThisFrame);
+        if (currentOrientation.face !== start.face || currentOrientation.rotation !== start.rotation) {
+          // Orientation changed, stop the animation
+          const key = snapAnimation.current.key;
+          switch (key) {
+            case "o": movement.current.rotateO = false; break;
+            case "period": movement.current.rotatePeriod = false; break;
+            case "k": movement.current.rotateK = false; break;
+            case "semicolon": movement.current.rotateSemicolon = false; break;
+            case "i": movement.current.rotateI = false; break;
+            case "p": movement.current.rotateP = false; break;
+          }
+          snapAnimation.current.active = false;
+          snapAnimation.current.key = null;
+          snapAnimation.current.startOrientation = null;
 
-
-        snapRotation.current.lastAngle = currentAngle;
+          // Trigger final alignment
+          cameraActionsRef.current?.squareUp();
+        }
       }
     }
 
-    if (autoSquaringAnimation.current.active && cubeRef.current) {
-      if (autoSquaringAnimation.current.startTime === 0) {
-        autoSquaringAnimation.current.startTime = state.clock.getElapsedTime();
+    // ADD new squareUp animation logic
+    if (squareUpAnimation.current.active && cameraRef.current) {
+      const cam = cameraRef.current;
+      const alignmentThreshold = 0.999;
+
+      // Reset all movement flags at the start of each frame
+      movement.current.rotateO = movement.current.rotatePeriod = false;
+      movement.current.rotateK = movement.current.rotateSemicolon = false;
+      movement.current.rotateI = movement.current.rotateP = false;
+
+      if (squareUpAnimation.current.phase === 1) { // Phase 1: Align Look Vector
+        const camForward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2).negate();
+        const dot = camForward.dot(squareUpAnimation.current.targetLook);
+
+        if (dot < alignmentThreshold) {
+          const camUp = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1);
+          const camRight = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0);
+
+          const cross = new THREE.Vector3().crossVectors(camForward, squareUpAnimation.current.targetLook);
+
+          const pitchDot = cross.dot(camRight);
+          if (pitchDot > 0.01) movement.current.rotateO = true;
+          else if (pitchDot < -0.01) movement.current.rotatePeriod = true;
+
+          const yawDot = cross.dot(camUp);
+          if (yawDot > 0.01) movement.current.rotateSemicolon = true;
+          else if (yawDot < -0.01) movement.current.rotateK = true;
+        } else {
+          squareUpAnimation.current.phase = 2; // Transition to Roll correction
+        }
       }
-      const elapsedTime = state.clock.getElapsedTime() - autoSquaringAnimation.current.startTime;
-      let progress = elapsedTime / autoSquaringAnimation.current.duration;
 
-      if (progress >= 1) {
-        cubeRef.current.quaternion.copy(autoSquaringAnimation.current.target);
-        autoSquaringAnimation.current.active = false;
-      } else {
-        // ease in-out cubic
-        progress = progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      if (squareUpAnimation.current.phase === 2) { // Phase 2: Align Up Vector
+        const camUp = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1);
+        const dot = camUp.dot(squareUpAnimation.current.targetUp);
 
-        THREE.Quaternion.slerp(
-          autoSquaringAnimation.current.start,
-          autoSquaringAnimation.current.target,
-          cubeRef.current.quaternion,
-          progress
-        );
+        if (dot < alignmentThreshold) {
+          const cross = new THREE.Vector3().crossVectors(camUp, squareUpAnimation.current.targetUp);
+          const camForward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2).negate();
+          const rollDot = cross.dot(camForward);
+
+          if (rollDot > 0.01) movement.current.rotateP = true;
+          else if (rollDot < -0.01) movement.current.rotateI = true;
+        } else {
+          squareUpAnimation.current.active = false; // All aligned, stop.
+        }
       }
     }
      

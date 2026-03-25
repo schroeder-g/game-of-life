@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, getSnapRotationAxis } from "../core/faceOrientationKeyMapping";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 
