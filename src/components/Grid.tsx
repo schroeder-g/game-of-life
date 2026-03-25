@@ -1014,8 +1014,12 @@ export function Scene() {
 
         // Apply Rotations
         const rotMultiplier = 2.5; // Make keyboard rotation feel responsive
-        if (Math.abs(totalYaw) > 1e-6) controls.rotateLeft(-totalYaw * rotMultiplier);
-        if (Math.abs(totalPitch) > 1e-6) controls.rotateUp(totalPitch * rotMultiplier);
+        if (Math.abs(totalYaw) > 1e-6) {
+          controls.setAzimuthalAngle(controls.getAzimuthalAngle() + totalYaw * rotMultiplier);
+        }
+        if (Math.abs(totalPitch) > 1e-6) {
+          controls.setPolarAngle(controls.getPolarAngle() - totalPitch * rotMultiplier);
+        }
         if (Math.abs(totalRoll) > 1e-6) {
           const lookDir = new THREE.Vector3().subVectors(controls.target, cam.position).normalize();
           cam.up.applyAxisAngle(lookDir, totalRoll);
