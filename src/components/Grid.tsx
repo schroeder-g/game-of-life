@@ -948,18 +948,13 @@ export function Scene() {
         setIsAnimating(false);
       } else {
         const easedT = 1 - Math.pow(1 - slerpAnimation.current.t, 3); // easeOutCubic
-        THREE.Quaternion.slerp(
-          slerpAnimation.current.startQ,
-          slerpAnimation.current.endQ,
-          cubeRef.current.quaternion,
-          easedT,
-        );
+        cubeRef.current.quaternion.copy(slerpAnimation.current.startQ).slerp(slerpAnimation.current.endQ, easedT);
       }
       return; // Skip all other physics updates
     }
     
     // --- Physics Update (only runs when not slerping) ---
-    if (rotationMode) {
+    if (rotationMode || !autoSquare) {
       const { lerp } = THREE.MathUtils;
       const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
       const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
