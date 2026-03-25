@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, getSnapRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 
@@ -118,7 +118,6 @@ export function useAppShortcuts() {
               else if (rotKey === 'p') rotKey = 'i';
             }
 
-            const axis = getExplicitRotationAxis(f, r, rotKey);
             let angle = Math.PI / 2;
 
             // In Edit mode, if painting, rotate brush. Otherwise snap-rotate camera.
@@ -127,8 +126,10 @@ export function useAppShortcuts() {
               if (["i", "p"].includes(rotKey)) {
                 angle = -angle;
               }
+              const axis = getExplicitRotationAxis(f, r, rotKey); // Brush rotation uses explicit (screen-relative) axis
               cameraActionsRef.current?.rotateBrush(axis, angle);
             } else {
+              const axis = getSnapRotationAxis(f, rotKey); // Camera snapping uses snap (cube-relative) axis
               cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
             }
           }
