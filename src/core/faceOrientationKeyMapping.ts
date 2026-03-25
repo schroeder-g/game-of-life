@@ -152,3 +152,10 @@ export function getExplicitRotationAxis(face: CameraFace, rotation: CameraRotati
   if (!axisArray) return new THREE.Vector3(0, 0, 0);
   return new THREE.Vector3().fromArray(axisArray);
 }
+
+export function getSnapRotationAxis(face: CameraFace, rotation: CameraRotation, key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p'): THREE.Vector3 {
+  const mapping = (SnapRotationLookup as any)[face][rotation];
+  const axisArray = (mapping as any)[key];
+  if (!axisArray) return new THREE.Vector3(0, 0, 0);
+  return new THREE.Vector3().fromArray(axisArray);
+}
