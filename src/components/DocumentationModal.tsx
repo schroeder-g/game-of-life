@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
 
@@ -51,6 +51,27 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
               <p style={{ marginTop: '0.25rem', marginBottom: 0 }}>
                 <small style={{ color: '#aaa', fontStyle: 'italic' }}>
                   Verified by test(s): <span className="claim-tag" style={{ backgroundColor: 'rgba(0,100,200,0.3)', padding: '2px 6px', borderRadius: '4px', fontStyle: 'normal', color: '#a5d6ff' }}>[{item.testIds.join("], [")}]</span>
+                </small>
+              </p>
+            )}
+            {item.references && item.references.length > 0 && (
+              <p style={{ marginTop: '0.25rem', marginBottom: 0 }}>
+                <small style={{ color: '#aaa', fontStyle: 'italic' }}>
+                  References:{' '}
+                  {item.references.map((ref, index) => (
+                    <Fragment key={index}>
+                      <code
+                        style={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          padding: '2px 5px',
+                          borderRadius: '3px',
+                          fontStyle: 'normal',
+                          color: '#ccc',
+                        }}
+                      >{ref}</code>
+                      {index < item.references.length - 1 ? ', ' : ''}
+                    </Fragment>
+                  ))}
                 </small>
               </p>
             )}
