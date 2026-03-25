@@ -111,7 +111,7 @@ export function AutomatedTestsPanel({
       .map(parsedTest => {
         const manualTest = manualTests.find((mt) => mt.id === parsedTest.name);
         const title = manualTest ? manualTest.title : `(Untracked) ${parsedTest.name}`;
-        
+
         const narrative =
           parsedTest.status === "fail"
             ? parsedTest.errors?.[0]?.message || "No error message provided."
@@ -161,10 +161,10 @@ export function AutomatedTestsPanel({
               <details key={test.id} className={`test-item-details ${test.status}`}>
                 <summary>
                   <span className={`status-indicator ${test.status}`}>
-                        {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
+                    {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
                   </span>
-                  <span className="test-title">{test.title}</span>
                   <span className="test-id">({test.id})</span>
+                  <span className="test-title">{test.title}</span>
                 </summary>
                 <div className="test-narrative">
                   <pre>
