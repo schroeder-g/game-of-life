@@ -26,6 +26,7 @@ if (typeof window !== "undefined") {
 
   window.__BUILD_INFO__ = {
     version: pkg.version,
+    buildTime: new Date().toISOString(),
     distribution: buildDistribution,
   };
 }
