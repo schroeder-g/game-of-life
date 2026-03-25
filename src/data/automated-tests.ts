@@ -5,6 +5,10 @@
  * The TestsPanel uses this set to determine which test titles to bold.
  */
 export const AUTOMATED_TEST_IDS = new Set([
+  // CORE tests for Grid3D data model
+  'CORE-1', 'CORE-2', 'CORE-3', 'CORE-4',
+  'CORE-5', 'CORE-6', 'CORE-7', 'CORE-8',
+
   'UX-1', // should reverse brush rotation for i and p keys when paint tool is active
   'UX-3', // should use continuous rotation in edit mode when Auto-Square is Off
   'UX-4', // Verify User Name Persistence
