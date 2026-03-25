@@ -1477,6 +1477,10 @@ kbd {
   letter-spacing: 1px;
 }
 
+.test-item-details {
+  margin: 15px;
+}
+
 .test-item {
   display: flex;
   align-items: center;
@@ -1485,8 +1489,13 @@ kbd {
   font-size: 0.85em;
 }
 
+div.automated-tests-panel.glass-panel>div>div.tests-list>details>summary>span.test-title {
+  margin-left: 6px;
+}
+
 .test-id {
   color: #ffa657;
   font-weight: bold;
   min-width: 60px;
+
 }

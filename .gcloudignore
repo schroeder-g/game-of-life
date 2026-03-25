@@ -4,6 +4,4 @@ node_modules/
 aider-env/
 dist/
 build/
-.aider*
-src/core/faceOrientationKeyMapping.ts
-src/index.css
+.aider* 

@@ -165,13 +165,15 @@ export function AutomatedTestsPanel({
                   <span className={`status-indicator ${test.status}`}>
                     {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
                   </span>
-                  <span className="test-title">{test.title}</span>
                   <span className="test-id">({test.id})</span>
                   {test.claimIds.length > 0 && (
                     <span className="claim-id-tags">
                       {test.claimIds.map(id => `[${id}]`).join(' ')}
                     </span>
                   )}
+                  <div className="test-title">{test.title}</div>
+
+
                 </summary>
                 <div className="test-narrative">
                   <pre>

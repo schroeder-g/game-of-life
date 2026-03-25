@@ -1,32 +1,43 @@
+export { }; // Add this line at the very top to avoid annoying squigglwe on await
+
+// 1. Read package.json metadata (Requires the COPY in your Dockerfile)
 const packageJson = await Bun.file("package.json").json();
 
+// 2. Define the port as a number
+const portNumber = Number(process.env.PORT || 8080);
+
 const server = Bun.serve({
-  port: process.env.PORT || 8080, // Use PORT from environment or default to 8080 for Cloud Run
+  port: portNumber,    // Fixed: The key is 'port', the value is our variable
+  hostname: "0.0.0.0", // Essential for Cloud Run to route traffic to the container
   async fetch(req) {
     const url = new URL(req.url);
     const path = url.pathname;
 
-    // Serve index.html for the root path or client-side routes
-    if (path === "/" || !path.split("/").pop()?.includes(".")) {
+    // Logic to distinguish between a route (like /settings) and a file (like /style.css)
+    const isFile = path.includes(".");
+
+    // 1. Serve index.html for the root or any SPA route
+    if (path === "/" || !isFile) {
       const indexFile = Bun.file("./dist/index.html");
       if (await indexFile.exists()) {
         let html = await indexFile.text();
 
-        // Inject build info
+        // Inject build info into the global window object
         const buildInfo = {
           version: packageJson.version,
           distribution: process.env.DISTRIBUTION || "prod"
         };
-        const buildInfoScript = `window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};`;
+        const buildInfoScript = `<script>window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};</script>`;
+
+        // This replaces your placeholder string in the HTML
         html = html.replace("__BUILD_INFO_PLACEHOLDER__", buildInfoScript);
-        
+
         return new Response(html, { headers: { "Content-Type": "text/html" } });
       }
     }
 
-    // Serve other static files
-    const filePath = `./dist${path}`;
-    const file = Bun.file(filePath);
+    // 2. Serve static files from the dist folder
+    const file = Bun.file(`./dist${path}`);
     if (await file.exists()) {
       return new Response(file);
     }
@@ -35,4 +46,4 @@ const server = Bun.serve({
   },
 });
 
-console.log(`Production server running on port ${server.port}`);
+console.log(`🚀 Production server running on port ${server.port}`);
