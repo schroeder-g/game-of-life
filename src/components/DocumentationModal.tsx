@@ -10,7 +10,7 @@ interface DocumentationModalProps {
 }
 
 export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps) {
-  const [showIndex, setShowIndex] = useState(false);
+  const [showIndex, setShowIndex] = useState(true);
   const [deprecatedCollapsed, setDeprecatedCollapsed] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
   const { testStatuses } = useManualTests();
