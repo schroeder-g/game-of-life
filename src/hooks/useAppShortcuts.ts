@@ -18,7 +18,7 @@ export function useAppShortcuts() {
       rotationMode,
       cameraOrientation,
       autoSquare,
-      isAnimating, // ADD THIS
+      isAnimating,
       hasInitialState,
       hasPastHistory,
       invertYaw,
@@ -36,7 +36,7 @@ export function useAppShortcuts() {
       fitDisplay,
       recenter,
       squareUp,
-      animateToOrientation, // ADD THIS
+      animateToOrientation,
       setCell,
     },
     meta: { movement, eventBus, cameraActionsRef },
@@ -206,10 +206,7 @@ export function useAppShortcuts() {
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
             case "s": recenter(); break;
-            case "l":
-              if (!autoSquare) squareUp(); // one-shot when activating
-              setAutoSquare(prev => !prev);
-              break;
+            case "l": setAutoSquare(prev => !prev); break; // squareUp is now called by autoSquare useEffect
             case "r": if (hasInitialState) reset(); break;
             case " ":
               setPaintMode(prev => (prev === 1 ? 0 : 1));
@@ -228,10 +225,7 @@ export function useAppShortcuts() {
           case "v": setRotationMode(true); break;
           case "f": fitDisplay(); break;
           case "s": recenter(); break;
-          case "l":
-            if (!autoSquare) squareUp(); // one-shot when activating
-            setAutoSquare(prev => !prev);
-            break;
+          case "l": setAutoSquare(prev => !prev); break; // squareUp is now called by autoSquare useEffect
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
           case "arrowup":
@@ -267,7 +261,7 @@ export function useAppShortcuts() {
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
 
       // Key up matters for continuous movement in View mode OR Edit mode (if auto-square is off)
-      const isContinuousAllowed = rotationMode || (!autoSquare && isRotationCode);
+      const isContinuousAllowed = rotationMode || (!autoSquare && isRotationCode && !isAnimating);
       if (!isContinuousAllowed) return;
 
       let handled = true;

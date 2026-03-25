@@ -68,6 +68,7 @@ export interface SimulationState {
   snapMessage: string;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
+  isAnimating: boolean; // ADD THIS
   autoSquare: boolean;
   userName?: string;
   buildInfo: {
@@ -127,6 +128,7 @@ export interface SimulationActions {
   fitDisplay: () => void;
   recenter: () => void;
   squareUp: () => void;
+  animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void; // ADD THIS
 }
 
 export type AppEvents = {
@@ -141,7 +143,7 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    startSnapAnimation: (key: string) => void;
+    animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void; // ADD THIS
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
@@ -218,6 +220,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [snapMessage, setSnapMessage] = useState("");
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false); // ADD THIS
   const [autoSquare, setAutoSquare] = useState(false);
   const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
 
@@ -602,22 +605,18 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         if (next === false) {
           setRunning(false);
           // Snap, center, and fit the cube before entering edit mode.
-          // Use a short delay chain so each camera action can settle.
-          setTimeout(() => {
-            cameraActionsRef.current?.squareUp();
-            setTimeout(() => {
-              cameraActionsRef.current?.recenter();
-              setTimeout(() => {
-                cameraActionsRef.current?.fitDisplay();
-              }, 200);
-            }, 200);
-          }, 0);
+          // Trigger squareUp, which will then animate to the closest orientation.
+          cameraActionsRef.current?.squareUp();
         }
         return next;
       });
     },
     [cameraActionsRef],
   );
+
+  const animateToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
+    cameraActionsRef.current?.animateToOrientation(orientation);
+  }, []);
 
   const animateToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
     cameraActionsRef.current?.animateToOrientation(orientation);

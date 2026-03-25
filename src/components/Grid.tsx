@@ -7,7 +7,90 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { Cells } from "./Cell";
 import { type CameraOrientation } from "../core/cameraUtils";
-import { type CameraFace, type CameraRotation, KEY_MAP, rotationLookup } from "../core/faceOrientationKeyMapping";
+import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
+
+// --- NEW SOURCE OF TRUTH AND HELPERS ---
+
+const ORIENTATION_TARGETS: Record<string, Record<string, THREE.Quaternion>> = {};
+
+function generateOrientationTargets() {
+  const faces: CameraFace[] = ['front', 'back', 'top', 'bottom', 'left', 'right'];
+  const rotations: CameraRotation[] = [0, 90, 180, 270];
+
+  const faceConfigs: Record<CameraFace, { lookAt: THREE.Vector3, up: THREE.Vector3 }> = {
+    front:  { lookAt: new THREE.Vector3(0, 0, 1),  up: new THREE.Vector3(0, 1, 0) },
+    back:   { lookAt: new THREE.Vector3(0, 0, -1), up: new THREE.Vector3(0, 1, 0) },
+    top:    { lookAt: new THREE.Vector3(0, 1, 0),  up: new THREE.Vector3(0, 0, -1) },
+    bottom: { lookAt: new THREE.Vector3(0, -1, 0), up: new THREE.Vector3(0, 0, 1) },
+    left:   { lookAt: new THREE.Vector3(-1, 0, 0), up: new THREE.Vector3(0, 1, 0) },
+    right:  { lookAt: new THREE.Vector3(1, 0, 0),  up: new THREE.Vector3(0, 1, 0) },
+  };
+
+  const matrix = new THREE.Matrix4();
+  const cameraPosition = new THREE.Vector3(0, 0, 5); // Arbitrary camera pos
+
+  for (const face of faces) {
+    ORIENTATION_TARGETS[face] = {};
+    for (const rotation of rotations) {
+      const { lookAt, up } = faceConfigs[face];
+      const rolledUp = up.clone().applyAxisAngle(lookAt, THREE.MathUtils.degToRad(rotation));
+      
+      matrix.lookAt(cameraPosition, lookAt, rolledUp);
+      // We want the cube's orientation relative to a fixed camera at (0,0,5) looking at origin.
+      // So we calculate the camera's orientation and invert it for the cube.
+      const cameraQuaternion = new THREE.Quaternion().setFromRotationMatrix(matrix);
+      ORIENTATION_TARGETS[face][rotation] = cameraQuaternion.invert();
+    }
+  }
+}
+generateOrientationTargets();
+
+export function getNextOrientation(
+  current: CameraOrientation,
+  key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p'
+): { face: CameraFace, rotation: CameraRotation } | null {
+  if (current.face === 'unknown' || current.rotation === 'unknown') return null;
+
+  const { face, rotation } = current;
+
+  // This defines the transitions between faces and rotations.
+  // E.g., from 'front, 0', pressing 'o' (pitch up) moves to 'top, 0'.
+  // Pressing 'i' (roll left) moves to 'front, 90'.
+  const transitions: Record<string, Partial<Record<typeof key, { face: CameraFace, rotation: CameraRotation }>>> = {
+    'front,0':    { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'front', rotation: 90}, p: {face: 'front', rotation: 270} },
+    'front,90':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'front', rotation: 180}, p: {face: 'front', rotation: 0} },
+    'front,180':  { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'front', rotation: 270}, p: {face: 'front', rotation: 90} },
+    'front,270':  { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'front', rotation: 0}, p: {face: 'front', rotation: 180} },
+    
+    'back,0':     { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'right', rotation: 0}, semicolon: {face: 'left', rotation: 0}, i: {face: 'back', rotation: 90}, p: {face: 'back', rotation: 270} },
+    'back,90':    { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'right', rotation: 90}, semicolon: {face: 'left', rotation: 90}, i: {face: 'back', rotation: 180}, p: {face: 'back', rotation: 0} },
+    'back,180':   { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'right', rotation: 180}, semicolon: {face: 'left', rotation: 180}, i: {face: 'back', rotation: 270}, p: {face: 'back', rotation: 90} },
+    'back,270':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'right', rotation: 270}, semicolon: {face: 'left', rotation: 270}, i: {face: 'back', rotation: 0}, p: {face: 'back', rotation: 180} },
+    
+    'top,0':      { o: {face: 'back', rotation: 180}, period: {face: 'front', rotation: 0}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'top', rotation: 90}, p: {face: 'top', rotation: 270} },
+    'top,90':     { o: {face: 'back', rotation: 270}, period: {face: 'front', rotation: 90}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'top', rotation: 180}, p: {face: 'top', rotation: 0} },
+    'top,180':    { o: {face: 'back', rotation: 0}, period: {face: 'front', rotation: 180}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'top', rotation: 270}, p: {face: 'top', rotation: 90} },
+    'top,270':    { o: {face: 'back', rotation: 90}, period: {face: 'front', rotation: 270}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'top', rotation: 0}, p: {face: 'top', rotation: 180} },
+    
+    'bottom,0':   { o: {face: 'front', rotation: 0}, period: {face: 'back', rotation: 180}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'bottom', rotation: 90}, p: {face: 'bottom', rotation: 270} },
+    'bottom,90':  { o: {face: 'front', rotation: 90}, period: {face: 'back', rotation: 270}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'bottom', rotation: 180}, p: {face: 'bottom', rotation: 0} },
+    'bottom,180': { o: {face: 'front', rotation: 180}, period: {face: 'back', rotation: 0}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'bottom', rotation: 270}, p: {face: 'bottom', rotation: 90} },
+    'bottom,270': { o: {face: 'front', rotation: 270}, period: {face: 'back', rotation: 90}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'bottom', rotation: 0}, p: {face: 'bottom', rotation: 180} },
+    
+    'left,0':     { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'back', rotation: 0}, semicolon: {face: 'front', rotation: 0}, i: {face: 'left', rotation: 90}, p: {face: 'left', rotation: 270} },
+    'left,90':    { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'back', rotation: 90}, semicolon: {face: 'front', rotation: 90}, i: {face: 'left', rotation: 180}, p: {face: 'left', rotation: 0} },
+    'left,180':   { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'back', rotation: 180}, semicolon: {face: 'front', rotation: 180}, i: {face: 'left', rotation: 270}, p: {face: 'left', rotation: 90} },
+    'left,270':   { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'back', rotation: 270}, semicolon: {face: 'front', rotation: 270}, i: {face: 'left', rotation: 0}, p: {face: 'left', rotation: 180} },
+    
+    'right,0':    { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'front', rotation: 0}, semicolon: {face: 'back', rotation: 0}, i: {face: 'right', rotation: 90}, p: {face: 'right', rotation: 270} },
+    'right,90':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'front', rotation: 90}, semicolon: {face: 'back', rotation: 90}, i: {face: 'right', rotation: 180}, p: {face: 'right', rotation: 0} },
+    'right,180':  { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'front', rotation: 180}, semicolon: {face: 'back', rotation: 180}, i: {face: 'right', rotation: 270}, p: {face: 'right', rotation: 90} },
+    'right,270':  { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'front', rotation: 270}, semicolon: {face: 'back', rotation: 270}, i: {face: 'right', rotation: 0}, p: {face: 'right', rotation: 180} },
+  };
+
+  const currentKey = `${face},${rotation}`;
+  return transitions[currentKey]?.[key] || null;
+}
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -561,6 +644,7 @@ export function Scene() {
     setCommunity,
     setSnapMessage,
     setCameraOrientation,
+    setIsAnimating, // ADD THIS
   } = actions;
   const {
     speed,
@@ -578,6 +662,7 @@ export function Scene() {
     easeIn,
     autoSquare,
     easeOut,
+    isAnimating, // ADD THIS
     cameraOrientation,
   } = state;
   const {
@@ -596,8 +681,15 @@ export function Scene() {
   const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
-  const snapAnimation = useRef({ active: false, key: null as string | null, startOrientation: null as CameraOrientation | null });
-  const squareUpAnimation = useRef({ active: false, targetLook: new THREE.Vector3(), targetUp: new THREE.Vector3(), initialLookErrorAngle: 0, initialUpErrorAngle: 0 });
+  // ADD new slerp animation ref
+  const slerpAnimation = useRef({
+    active: false,
+    startQ: new THREE.Quaternion(),
+    endQ: new THREE.Quaternion(),
+    t: 0,
+    duration: 0.25, // seconds
+  });
+
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
   const coastingAnimation = useRef({
@@ -683,43 +775,43 @@ export function Scene() {
         controlsRef.current.update();
       },
       squareUp: () => {
-        if (!controlsRef.current || !cubeRef.current || !cameraRef.current) return;
-        if (squareUpAnimation.current.active) return; // Prevent re-triggering
+        if (!controlsRef.current || !cubeRef.current) return;
+        if (slerpAnimation.current.active) return;
 
-        const cam = cameraRef.current;
+        const cube = cubeRef.current;
+        let closestDist = Infinity;
+        let closestTarget: { face: CameraFace, rotation: CameraRotation } | null = null;
+        
+        Object.keys(ORIENTATION_TARGETS).forEach(face => {
+          Object.keys(ORIENTATION_TARGETS[face]).forEach(rotStr => {
+            const rotation = parseInt(rotStr, 10) as CameraRotation;
+            const targetQ = ORIENTATION_TARGETS[face][rotation];
+            const dist = cube.quaternion.angleTo(targetQ);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestTarget = { face: face as CameraFace, rotation };
+            }
+          });
+        });
 
-        // 1. Determine Target Look Vector
-        const camForward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2).negate();
-        const worldAxes = [
-          { axis: new THREE.Vector3(1, 0, 0), name: "right" }, { axis: new THREE.Vector3(-1, 0, 0), name: "left" },
-          { axis: new THREE.Vector3(0, 1, 0), name: "top" }, { axis: new THREE.Vector3(0, -1, 0), name: "bottom" },
-          { axis: new THREE.Vector3(0, 0, 1), name: "front" }, { axis: new THREE.Vector3(0, 0, -1), name: "back" },
-        ];
-        worldAxes.sort((a, b) => b.axis.dot(camForward) - a.axis.dot(camForward));
-        const targetLook = worldAxes[0].axis.clone();
-
-        // 2. Determine Target Up Vector
-        const camUp = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1);
-        const validUpAxes = worldAxes.filter(a => Math.abs(a.axis.dot(targetLook)) < 0.1);
-        validUpAxes.sort((a, b) => b.axis.dot(camUp) - a.axis.dot(camUp));
-        const targetUp = validUpAxes[0].axis.clone();
-
-        // 3. Initiate Animation if not already aligned
-        const lookDot = camForward.dot(targetLook);
-        const upDot = camUp.dot(targetUp);
-        if (lookDot < 0.9999 || upDot < 0.9999) {
-          squareUpAnimation.current.targetLook.copy(targetLook);
-          squareUpAnimation.current.targetUp.copy(targetUp);
-          squareUpAnimation.current.initialLookErrorAngle = camForward.angleTo(targetLook);
-          squareUpAnimation.current.initialUpErrorAngle = camUp.angleTo(targetUp);
-          squareUpAnimation.current.active = true;
+        if (closestTarget) {
+          cameraActionsRef.current?.animateToOrientation(closestTarget);
         }
       },
-      startSnapAnimation: (key: string) => {
-        if (snapAnimation.current.active) return;
-        snapAnimation.current.key = key;
-        snapAnimation.current.active = true;
-        snapAnimation.current.startOrientation = null;
+      animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
+        if (!cubeRef.current) return;
+        if (slerpAnimation.current.active) return;
+
+        const targetQ = ORIENTATION_TARGETS[orientation.face]?.[orientation.rotation];
+        if (!targetQ) return;
+        
+        if (cubeRef.current.quaternion.angleTo(targetQ) < 0.001) return;
+
+        slerpAnimation.current.startQ.copy(cubeRef.current.quaternion);
+        slerpAnimation.current.endQ.copy(targetQ);
+        slerpAnimation.current.t = 0;
+        slerpAnimation.current.active = true;
+        setIsAnimating(true);
       },
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
@@ -850,151 +942,68 @@ export function Scene() {
     setCommunity,
     setSelectorPos,
     setCustomBrush,
+    setIsAnimating, // ADD THIS
   ]);
   useFrame((state, delta) => {
-    // Correctly use variables already in scope from the top-level useSimulation() hook.
-    // DO NOT call useSimulation.getState() here.
+    // Slerp animation is the highest priority. When it's active, do nothing else.
+    if (slerpAnimation.current.active) {
+      if (!cubeRef.current) return;
 
-    const hasMoved =
-      Object.values(movement.current).some(Boolean) ||
-      Object.values(velocity.current).some(v => Math.abs(v) > 0.001);
-
-    if (hasMoved) {
-      lastSelectorMoveTime.current = state.clock.getElapsedTime();
-    }
-    
-    // --- Animation Logic ---
-    
-    const easeInVal = 1 - Math.exp(-2 * delta * (easeIn || 0.2));
-    let currentEaseOut = 1 - Math.exp(-2 * delta * (easeOut || 0.5));
-    
-    if (snapAnimation.current.active && cubeRef.current && cameraRef.current && controlsRef.current) {
-      if (!snapAnimation.current.startOrientation) {
-        // First frame: activate the movement
-        snapAnimation.current.startOrientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
-        const key = snapAnimation.current.key;
-        switch (key) {
-          case "o": movement.current.rotateO = true; break;
-          case "period": movement.current.rotatePeriod = true; break;
-          case "k": movement.current.rotateK = true; break;
-          case "semicolon": movement.current.rotateSemicolon = true; break;
-          case "i": movement.current.rotateI = true; break;
-          case "p": movement.current.rotateP = true; break;
-        }
-      } else {
-        // Subsequent frames: check for orientation change
-        const currentOrientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
-        const start = snapAnimation.current.startOrientation;
-
-        if (currentOrientation.face !== start.face || currentOrientation.rotation !== start.rotation) {
-          // Orientation changed, stop all movement and velocity.
-          Object.keys(movement.current).forEach(k => { if (k.startsWith('rotate')) (movement.current as any)[k] = false; });
-          Object.keys(velocity.current).forEach(k => { if (k.startsWith('rotate')) (velocity.current as any)[k] = 0; });
-
-          snapAnimation.current.active = false;
-          snapAnimation.current.key = null;
-          snapAnimation.current.startOrientation = null;
-
-          // Trigger final alignment
-          cameraActionsRef.current?.squareUp();
-        }
-      }
-    }
-    
-    if (squareUpAnimation.current.active && cameraRef.current) {
-      const { targetLook, targetUp, initialLookErrorAngle, initialUpErrorAngle } = squareUpAnimation.current;
-      const cam = cameraRef.current;
+      slerpAnimation.current.t += delta / slerpAnimation.current.duration;
       
-      // Reset movement flags from previous frame
-      Object.keys(movement.current).forEach(k => { if (k.startsWith('rotate')) (movement.current as any)[k] = false; });
-
-      const camForward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2).negate();
-      const camUp = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1);
-      
-      const currentLookErrorAngle = camForward.angleTo(targetLook);
-      const currentUpErrorAngle = camUp.angleTo(targetUp);
-
-      // Check for completion
-      if (currentLookErrorAngle < 0.005 && currentUpErrorAngle < 0.005) {
-        squareUpAnimation.current.active = false;
-        Object.keys(velocity.current).forEach(k => { if(k.startsWith('rotate')) (velocity.current as any)[k] = 0; });
+      if (slerpAnimation.current.t >= 1) {
+        cubeRef.current.quaternion.copy(slerpAnimation.current.endQ);
+        slerpAnimation.current.active = false;
+        setIsAnimating(false);
       } else {
-        // Dynamic EaseOut calculation
-        const lookFactor = Math.min(1, currentLookErrorAngle / (initialLookErrorAngle || 1));
-        const upFactor = Math.min(1, currentUpErrorAngle / (initialUpErrorAngle || 1));
-        const maxFactor = Math.max(lookFactor, upFactor);
-        const easeOutVal = easeOut || 0.5;
-        currentEaseOut = 1 - Math.exp(-2 * delta * easeOutVal * (1 / (maxFactor + 1e-6) - 1)); // High decel near target
-
-        // Determine movement direction simultaneously for all axes
-        const camRight = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0);
-        
-        // Yaw/Pitch correction
-        const lookCross = new THREE.Vector3().crossVectors(camForward, targetLook);
-        const pitchDot = lookCross.dot(camRight);
-        if (pitchDot > 0.001) movement.current.rotateO = true;
-        else if (pitchDot < -0.001) movement.current.rotatePeriod = true;
-
-        const yawDot = lookCross.dot(camUp);
-        if (yawDot > 0.001) movement.current.rotateSemicolon = true;
-        else if (yawDot < -0.001) movement.current.rotateK = true;
-        
-        // Roll correction
-        const upCross = new THREE.Vector3().crossVectors(camUp, targetUp);
-        const rollDot = upCross.dot(camForward);
-        if (rollDot > 0.001) movement.current.rotateP = true;
-        else if (rollDot < -0.001) movement.current.rotateI = true;
+        const easedT = 1 - Math.pow(1 - slerpAnimation.current.t, 3); // easeOutCubic
+        THREE.Quaternion.slerp(
+          slerpAnimation.current.startQ,
+          slerpAnimation.current.endQ,
+          cubeRef.current.quaternion,
+          easedT,
+        );
       }
+      return; // Skip all other physics updates
     }
-     
-    // --- Physics Update ---
     
+    // --- Physics Update (only runs when not slerping) ---
     if (rotationMode) {
-      const rotSpeed = rotationSpeed * 0.0004; // scaled for lerp
+      const { lerp } = THREE.MathUtils;
+      const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
+      const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
+      
+      const rotSpeed = rotationSpeed * 0.0004;
       const rSpeed = rollSpeed * 0.0004;
 
-      // Pitch
       const pitchSpeed = rotSpeed * (invertPitch ? -1 : 1);
-      if (movement.current.rotateO) velocity.current.rotateO = THREE.MathUtils.lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
-      else velocity.current.rotateO *= currentEaseOut;
-      if (movement.current.rotatePeriod) velocity.current.rotatePeriod = THREE.MathUtils.lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
-      else velocity.current.rotatePeriod *= currentEaseOut;
+      if (movement.current.rotateO) velocity.current.rotateO = lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
+      else velocity.current.rotateO *= easeOutVal;
+      if (movement.current.rotatePeriod) velocity.current.rotatePeriod = lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
+      else velocity.current.rotatePeriod *= easeOutVal;
 
-      // Yaw
       const yawSpeed = rotSpeed * (invertYaw ? -1 : 1);
-      if (movement.current.rotateK) velocity.current.rotateK = THREE.MathUtils.lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
-      else velocity.current.rotateK *= currentEaseOut;
-      if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = THREE.MathUtils.lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
-      else velocity.current.rotateSemicolon *= currentEaseOut;
-
-      // Roll
+      if (movement.current.rotateK) velocity.current.rotateK = lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
+      else velocity.current.rotateK *= easeOutVal;
+      if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
+      else velocity.current.rotateSemicolon *= easeOutVal;
+      
       const rollSpeedVal = rSpeed * (invertRoll ? -1 : 1);
-      if (movement.current.rotateI) velocity.current.rotateI = THREE.MathUtils.lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
-      else velocity.current.rotateI *= currentEaseOut;
-      if (movement.current.rotateP) velocity.current.rotateP = THREE.MathUtils.lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
-      else velocity.current.rotateP *= currentEaseOut;
+      if (movement.current.rotateI) velocity.current.rotateI = lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
+      else velocity.current.rotateI *= easeOutVal;
+      if (movement.current.rotateP) velocity.current.rotateP = lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
+      else velocity.current.rotateP *= easeOutVal;
       
       const totalPitch = velocity.current.rotateO + velocity.current.rotatePeriod;
       const totalYaw = velocity.current.rotateK + velocity.current.rotateSemicolon;
       const totalRoll = velocity.current.rotateI + velocity.current.rotateP;
 
-      // Apply rotations
-      if (cameraRef.current && cubeRef.current && controlsRef.current) {
-        const camera = cameraRef.current;
+      if (cameraRef.current && cubeRef.current) {
+        const cam = cameraRef.current;
         const cube = cubeRef.current;
-        
-        if (Math.abs(totalPitch) > 1e-6) {
-          const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
-          cube.rotateOnWorldAxis(camRight, totalPitch);
-        }
-        if (Math.abs(totalYaw) > 1e-6) {
-          const camUp = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
-          cube.rotateOnWorldAxis(camUp, totalYaw);
-        }
-        if(Math.abs(totalRoll) > 1e-6) {
-          const camForward = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 2);
-          cube.rotateOnWorldAxis(camForward, totalRoll);
-        }
+        if (Math.abs(totalPitch) > 1e-6) cube.rotateOnWorldAxis(cam.right, totalPitch);
+        if (Math.abs(totalYaw) > 1e-6) cube.rotateOnWorldAxis(cam.up, totalYaw);
+        if(Math.abs(totalRoll) > 1e-6) cube.rotateOnWorldAxis(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2), totalRoll);
       }
     }
   });
@@ -1073,7 +1082,7 @@ export function Scene() {
         makeDefault
         enableDamping={!autoSquare}
         dampingFactor={0.05}
-        enabled={true} // always allow dragging/zooming even in edit mode
+        enabled={!isAnimating} // UPDATE THIS
         maxDistance={maxDistance}
         onStart={() => {
           if (controlsRef.current) {
