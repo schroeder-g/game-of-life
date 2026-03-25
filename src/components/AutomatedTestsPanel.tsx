@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ManualTest, VitestReport, VitestTest } from "../types/testing";
+import { DocItem, ManualTest, VitestReport, VitestTest } from "../types/testing";
 
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
   automatedTestIds: Set<string>;
+  documentation: DocItem[];
 }
 
 interface AutomatedTestResult {
@@ -13,7 +14,11 @@ interface AutomatedTestResult {
   narrative: string;
 }
 
-export function AutomatedTestsPanel({ manualTests, automatedTestIds }: AutomatedTestsPanelProps) {
+export function AutomatedTestsPanel({
+  manualTests,
+  automatedTestIds,
+  documentation,
+}: AutomatedTestsPanelProps) {
   const [report, setReport] = useState<VitestReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
 
           allParsedTests.push({
             name: testId,
+            fullTitle: assertion.title,
             status: assertion.status === "passed" ? "pass" : assertion.status,
             duration: assertion.duration,
             errors: assertion.failureMessages?.map((msg: string) => ({ message: msg })) || [],
@@ -71,27 +77,33 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       }
     });
 
-    const trackedResults: AutomatedTestResult[] = Array.from(automatedTestIds).map((testId) => {
-      const manualTest = manualTests.find((mt) => mt.id === testId);
-      const vitestTest = allParsedTests.find((vt) => vt.name === testId);
-      const title = manualTest ? manualTest.title : "Unknown Test";
+    const trackedResults = Array.from(automatedTestIds)
+      .map((testId): AutomatedTestResult | null => {
+        const manualTest = manualTests.find((mt) => mt.id === testId);
+        const vitestTest = allParsedTests.find((vt) => vt.name === testId);
+        let title: string | null = null;
 
-      if (!vitestTest) {
-        return {
-          id: testId,
-          title,
-          status: "skipped",
-          narrative: "Test not found in report. It may have been skipped or is misconfigured.",
-        };
-      }
+        if (manualTest) {
+          title = manualTest.title;
+        } else if (vitestTest?.fullTitle) {
+          title = vitestTest.fullTitle.replace(/\[.*?\]\s*/, "");
+        } else {
+          console.warn(`Orphaned automated test ID found: "${testId}". This ID has no corresponding manual test and was not found in the test report. Please remove it from src/data/automated-tests.ts.`);
+          return null;
+        }
 
-      const narrative =
-        vitestTest.status === "fail"
-          ? vitestTest.errors?.[0]?.message || "No error message provided."
-          : `${vitestTest.status} in ${(vitestTest.duration ?? 0).toFixed(2)}ms`;
+        if (!vitestTest) {
+          return { id: testId, title, status: "skipped", narrative: "Test not found in report. It may be pending implementation or misconfigured." };
+        }
 
-      return { id: testId, title, status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
-    });
+        const narrative =
+          vitestTest.status === "fail"
+            ? vitestTest.errors?.[0]?.message || "No error message provided."
+            : `${vitestTest.status} in ${(vitestTest.duration ?? 0).toFixed(2)}ms`;
+
+        return { id: testId, title, status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
+      })
+      .filter((result): result is AutomatedTestResult => result !== null);
 
     // Find tests that were in the report but not in the automatedTestIds list
     const untrackedResults: AutomatedTestResult[] = allParsedTests
@@ -123,7 +135,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
       summary: { total: combinedResults.length, passed, failed, skipped },
       testDate: new Date(report.startTime).toLocaleString(),
     };
-  }, [report, manualTests, automatedTestIds]);
+  }, [report, manualTests, automatedTestIds, documentation]);
 
   if (isLoading) {
     return <div className="automated-tests-panel-status">Loading automated test report...</div>;

@@ -1631,6 +1631,7 @@ export function MainMenu() {
           <AutomatedTestsPanel
             manualTests={MANUAL_TESTS}
             automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
           />
         </>
       )}
