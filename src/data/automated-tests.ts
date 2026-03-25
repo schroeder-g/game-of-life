@@ -10,6 +10,7 @@ export const AUTOMATED_TEST_IDS = new Set([
   'CORE-5', 'CORE-6', 'CORE-7', 'CORE-8',
 
   'UX-1', // should reverse brush rotation for i and p keys when paint tool is active
+  'UX-2', // should stop auto-squaring animation when autoSquare becomes false
   'UX-3', // should use continuous rotation in edit mode when Auto-Square is Off
   'UX-4', // Verify User Name Persistence
   'UX-5', // Verify Development Build Info in Header

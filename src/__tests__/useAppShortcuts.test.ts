@@ -56,11 +56,20 @@ describe('useAppShortcuts - UX Claims', () => {
   });
 
   it('[UX-3] should use continuous rotation in edit mode when Auto-Square is Off', () => {
-    const movement = { current: {} };
+    const movementRef = { current: {} };
     (useSimulation as any).mockReturnValue({
-      state: { rotationMode: false, autoSquare: false },
+      state: {
+        rotationMode: false, // Edit mode
+        autoSquare: false,   // Continuous rotation enabled
+        cameraOrientation: { face: 'front', rotation: 0 },
+        invertYaw: false, invertPitch: false, invertRoll: false
+      },
       actions: {},
-      meta: { movement, cameraActionsRef: { current: {} } }
+      meta: {
+        movement: movementRef,
+        eventBus: { emit: vi.fn() },
+        cameraActionsRef: { current: { rotateBrush: mockRotateBrush, snapRotateWithAxis: mockSnapRotateWithAxis } }
+      }
     });
 
     renderHook(() => useAppShortcuts());
@@ -69,6 +78,6 @@ describe('useAppShortcuts - UX Claims', () => {
     window.dispatchEvent(event);
 
     // Verify movement flag was set to true
-    expect((movement.current as any).rotateO).toBe(true);
+    expect((movementRef.current as any).rotateO).toBe(true);
   });
 });
