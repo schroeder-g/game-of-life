@@ -27,7 +27,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const response = await fetch("/data/automated-test-results.json");
+        const response = await fetch("/automated-test-results.json");
         if (!response.ok) {
           throw new Error(`Test report not found or failed to load (status: ${response.status})`);
         }
@@ -106,7 +106,7 @@ export function AutomatedTestsPanel({ manualTests, automatedTestIds }: Automated
             : `${parsedTest.status} in ${(parsedTest.duration ?? 0).toFixed(2)}ms`;
 
         return {
-          id: `untracked-${parsedTest.name}`,
+          id: parsedTest.name,
           title: title,
           status: parsedTest.status as "pass" | "fail" | "skipped",
           narrative,
