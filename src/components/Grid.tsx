@@ -692,10 +692,6 @@ export function Scene() {
 
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
-  const coastingAnimation = useRef({
-    active: false,
-    startOrientation: null as CameraOrientation | null,
-  });
   const wasPressingRotationKeyRef = useRef(false);
   const dragStartRef = useRef({
     active: false,
@@ -728,11 +724,6 @@ export function Scene() {
     return distance * 2;
   }, [gridSize, camera]);
 
-  useEffect(() => {
-    if (!autoSquare) {
-      squareUpAnimation.current.active = false;
-    }
-  }, [autoSquare]);
 
   useEffect(() => {
     cameraActionsRef.current = {
@@ -1093,33 +1084,8 @@ export function Scene() {
           }
         }}
         onEnd={() => {
-          if (autoSquare && dragStartRef.current.active && controlsRef.current && cameraRef.current) {
-            dragStartRef.current.active = false;
-    
-            const endDistance = cameraRef.current.position.distanceTo(controlsRef.current.target);
-            if (Math.abs(endDistance - dragStartRef.current.distance) > 0.1) {
-              // It was a zoom, not a drag. Square up.
-              cameraActionsRef.current?.squareUp();
-              return;
-            }
-    
-            const endAzimuth = controlsRef.current.getAzimuthalAngle();
-            const endPolar = controlsRef.current.getPolarAngle();
-            const deltaAzimuth = endAzimuth - dragStartRef.current.azimuth;
-            const deltaPolar = endPolar - dragStartRef.current.polar;
-            const threshold = 0.05; // radians
-    
-            if (Math.abs(deltaAzimuth) < threshold && Math.abs(deltaPolar) < threshold) {
-              cameraActionsRef.current?.squareUp(); // small drag, treat as click/adjust
-            } else {
-              // It was a swipe, start coasting
-              const swipeSpeed = 1.5;
-              velocity.current.rotateY = -deltaAzimuth * swipeSpeed;
-              velocity.current.rotateX = -deltaPolar * swipeSpeed;
-    
-              coastingAnimation.current.active = true;
-              coastingAnimation.current.startOrientation = { ...cameraOrientation };
-            }
+          if (autoSquare) {
+            cameraActionsRef.current?.squareUp();
           }
         }}
       />

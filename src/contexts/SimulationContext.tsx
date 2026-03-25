@@ -618,10 +618,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     cameraActionsRef.current?.animateToOrientation(orientation);
   }, []);
 
-  const animateToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
-    cameraActionsRef.current?.animateToOrientation(orientation);
-  }, []);
-
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
