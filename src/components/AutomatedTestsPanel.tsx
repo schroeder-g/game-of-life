@@ -10,6 +10,7 @@ interface AutomatedTestsPanelProps {
 interface AutomatedTestResult {
   id: string;
   title: string;
+  claimIds: string[];
   status: "pass" | "fail" | "skipped";
   narrative: string;
 }
@@ -101,7 +102,7 @@ export function AutomatedTestsPanel({
             ? vitestTest.errors?.[0]?.message || "No error message provided."
             : `${vitestTest.status} in ${(vitestTest.duration ?? 0).toFixed(2)}ms`;
 
-        return { id: testId, title, status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
+        return { id: testId, title, claimIds: manualTest?.claimIds || [], status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
       })
       .filter((result): result is AutomatedTestResult => result !== null);
 
@@ -120,6 +121,7 @@ export function AutomatedTestsPanel({
         return {
           id: parsedTest.name,
           title: title,
+          claimIds: manualTest?.claimIds || [],
           status: parsedTest.status as "pass" | "fail" | "skipped",
           narrative,
         };
@@ -163,8 +165,13 @@ export function AutomatedTestsPanel({
                   <span className={`status-indicator ${test.status}`}>
                     {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
                   </span>
-                  <span className="test-id">({test.id})</span>
                   <span className="test-title">{test.title}</span>
+                  <span className="test-id">({test.id})</span>
+                  {test.claimIds.length > 0 && (
+                    <span className="claim-id-tags">
+                      {test.claimIds.map(id => `[${id}]`).join(' ')}
+                    </span>
+                  )}
                 </summary>
                 <div className="test-narrative">
                   <pre>
