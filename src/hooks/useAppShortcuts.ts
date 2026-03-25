@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis, getSnapRotationAxis } from "../core/faceOrientationKeyMapping";
+import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 
@@ -129,8 +129,15 @@ export function useAppShortcuts() {
               const axis = getExplicitRotationAxis(f, r, rotKey); // Brush rotation uses explicit (screen-relative) axis
               cameraActionsRef.current?.rotateBrush(axis, angle);
             } else {
-              const axis = getSnapRotationAxis(f, rotKey); // Camera snapping uses snap (cube-relative) axis
-              cameraActionsRef.current?.snapRotateWithAxis(axis, angle);
+              // For camera snapping, use the same screen-relative axes as brush rotation.
+              const axis = getExplicitRotationAxis(f, r, rotKey);
+              let snapAngle = angle;
+              // The `rotationLookup` has inverted i/p axes, so we apply the same fix
+              // as brush rotation to ensure consistent roll direction.
+              if (["i", "p"].includes(rotKey)) {
+                snapAngle = -angle;
+              }
+              cameraActionsRef.current?.snapRotateWithAxis(axis, snapAngle);
             }
           }
         } else {
