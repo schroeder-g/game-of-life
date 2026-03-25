@@ -105,6 +105,7 @@ export interface SimulationActions {
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setAutoSquare: (val: boolean | ((prev: boolean) => boolean)) => void;
   setUserName: (name: string) => void;
+  setIsAnimating: (val: boolean | ((prev: boolean) => boolean)) => void;
 
   playStop: () => void;
   step: () => void;
@@ -681,6 +682,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRollSpeed,
       setAutoSquare,
       setUserName,
+      setIsAnimating,
       playStop,
       step,
       stepBackward,
