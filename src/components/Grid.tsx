@@ -690,6 +690,14 @@ export function Scene() {
     duration: 0.25, // seconds
   });
 
+  const levelAnimation = useRef({
+    active: false,
+    startUp: new THREE.Vector3(),
+    endUp: new THREE.Vector3(),
+    t: 0,
+    duration: 0.25, // seconds
+  });
+
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
   const wasPressingRotationKeyRef = useRef(false);
@@ -803,6 +811,35 @@ export function Scene() {
         slerpAnimation.current.t = 0;
         slerpAnimation.current.active = true;
         setIsAnimating(true);
+      },
+      levelCamera: () => {
+        if (!cameraRef.current || !controlsRef.current) return;
+        if (levelAnimation.current.active || slerpAnimation.current.active) return;
+
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+
+        const lookDir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
+
+        // Don't level if looking straight up or down (at the poles)
+        if (Math.abs(lookDir.y) > 0.999) {
+          return;
+        }
+
+        // The target 'up' vector is perpendicular to the look direction and lies in the Y-plane.
+        const right = new THREE.Vector3(0, 1, 0).cross(lookDir).normalize();
+        const endUp = lookDir.cross(right).normalize();
+
+        if (camera.up.distanceTo(endUp) < 0.001) {
+          return; // Already level
+        }
+
+        levelAnimation.current.active = true;
+        levelAnimation.current.t = 0;
+        levelAnimation.current.startUp.copy(camera.up);
+        levelAnimation.current.endUp.copy(endUp);
+
+        setIsAnimating(true); // Disables OrbitControls during animation
       },
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
@@ -951,6 +988,27 @@ export function Scene() {
         cubeRef.current.quaternion.copy(slerpAnimation.current.startQ).slerp(slerpAnimation.current.endQ, easedT);
       }
       return; // Skip all other physics updates
+    }
+
+    if (levelAnimation.current.active) {
+      if (!cameraRef.current || !controlsRef.current) return;
+
+      levelAnimation.current.t += delta / levelAnimation.current.duration;
+      const camera = cameraRef.current;
+      const controls = controlsRef.current;
+
+      if (levelAnimation.current.t >= 1) {
+        camera.up.copy(levelAnimation.current.endUp);
+        levelAnimation.current.active = false;
+        setIsAnimating(false);
+      } else {
+        const easedT = 1 - Math.pow(1 - levelAnimation.current.t, 3); // easeOutCubic
+        camera.up.lerpVectors(levelAnimation.current.startUp, levelAnimation.current.endUp, easedT).normalize();
+      }
+
+      camera.lookAt(controls.target);
+      controls.update();
+      return;
     }
     
     // --- Physics Update (only runs when not slerping) ---
@@ -1145,7 +1203,7 @@ export function Scene() {
         }}
         onEnd={() => {
           if (autoSquare) {
-            cameraActionsRef.current?.squareUp();
+            cameraActionsRef.current?.levelCamera();
           }
         }}
       />

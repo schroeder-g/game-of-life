@@ -129,7 +129,8 @@ export interface SimulationActions {
   fitDisplay: () => void;
   recenter: () => void;
   squareUp: () => void;
-  animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void; // ADD THIS
+  levelCamera: () => void;
+  animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
 }
 
 export type AppEvents = {
@@ -144,7 +145,8 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void; // ADD THIS
+    levelCamera: () => void;
+    animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
@@ -622,6 +624,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
+  const levelCamera = useCallback(() => cameraActionsRef.current?.levelCamera(), []);
 
   const value: SimulationContextValue = {
     state: {
@@ -698,10 +701,11 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCells,
       deleteCells,
       applyCells,
-      animateToOrientation, // ADD THIS
+      animateToOrientation,
       fitDisplay,
       recenter,
       squareUp,
+      levelCamera,
     },
     meta: {
       gridRef,
