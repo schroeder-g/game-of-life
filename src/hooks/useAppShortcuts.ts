@@ -206,7 +206,7 @@ export function useAppShortcuts() {
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
             case "s": recenter(); break;
-            case "l": setAutoSquare(prev => !prev); break; // squareUp is now called by autoSquare useEffect
+            case "l": setAutoSquare(prev => !prev); break; // Camera leveling is triggered by an effect when this is enabled
             case "r": if (hasInitialState) reset(); break;
             case " ":
               setPaintMode(prev => (prev === 1 ? 0 : 1));

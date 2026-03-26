@@ -626,6 +626,15 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
   const levelCamera = useCallback(() => cameraActionsRef.current?.levelCamera(), []);
 
+  useEffect(() => {
+    // When auto-square is enabled, immediately level the camera.
+    if (autoSquare) {
+      // Use a small timeout to ensure the action runs after other state changes
+      // have settled, particularly if toggled quickly with other actions.
+      setTimeout(() => levelCamera(), 50);
+    }
+  }, [autoSquare, levelCamera]);
+
   const value: SimulationContextValue = {
     state: {
       cameraOrientation,
