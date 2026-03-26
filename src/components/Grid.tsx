@@ -13,18 +13,18 @@ import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrien
 
 const ORIENTATION_TARGETS: Record<string, Record<string, THREE.Quaternion>> = {};
 
+const faceConfigs: Record<CameraFace, { lookAt: THREE.Vector3, up: THREE.Vector3 }> = {
+  front:  { lookAt: new THREE.Vector3(0, 0, 1),  up: new THREE.Vector3(0, 1, 0) },
+  back:   { lookAt: new THREE.Vector3(0, 0, -1), up: new THREE.Vector3(0, 1, 0) },
+  top:    { lookAt: new THREE.Vector3(0, 1, 0),  up: new THREE.Vector3(0, 0, -1) },
+  bottom: { lookAt: new THREE.Vector3(0, -1, 0), up: new THREE.Vector3(0, 0, 1) },
+  left:   { lookAt: new THREE.Vector3(-1, 0, 0), up: new THREE.Vector3(0, 1, 0) },
+  right:  { lookAt: new THREE.Vector3(1, 0, 0),  up: new THREE.Vector3(0, 1, 0) },
+};
+
 function generateOrientationTargets() {
   const faces: CameraFace[] = ['front', 'back', 'top', 'bottom', 'left', 'right'];
   const rotations: CameraRotation[] = [0, 90, 180, 270];
-
-  const faceConfigs: Record<CameraFace, { lookAt: THREE.Vector3, up: THREE.Vector3 }> = {
-    front:  { lookAt: new THREE.Vector3(0, 0, 1),  up: new THREE.Vector3(0, 1, 0) },
-    back:   { lookAt: new THREE.Vector3(0, 0, -1), up: new THREE.Vector3(0, 1, 0) },
-    top:    { lookAt: new THREE.Vector3(0, 1, 0),  up: new THREE.Vector3(0, 0, -1) },
-    bottom: { lookAt: new THREE.Vector3(0, -1, 0), up: new THREE.Vector3(0, 0, 1) },
-    left:   { lookAt: new THREE.Vector3(-1, 0, 0), up: new THREE.Vector3(0, 1, 0) },
-    right:  { lookAt: new THREE.Vector3(1, 0, 0),  up: new THREE.Vector3(0, 1, 0) },
-  };
 
   const matrix = new THREE.Matrix4();
   const cameraPosition = new THREE.Vector3(0, 0, 5); // Arbitrary camera pos
@@ -698,6 +698,16 @@ export function Scene() {
     duration: 0.25, // seconds
   });
 
+  const cameraAnimation = useRef({
+    active: false,
+    startPos: new THREE.Vector3(),
+    endPos: new THREE.Vector3(),
+    startUp: new THREE.Vector3(),
+    endUp: new THREE.Vector3(),
+    t: 0,
+    duration: 0.25, // seconds
+  });
+
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
   const wasPressingRotationKeyRef = useRef(false);
@@ -794,10 +804,10 @@ export function Scene() {
         });
 
         if (closestTarget) {
-          cameraActionsRef.current?.animateToOrientation(closestTarget);
+          cameraActionsRef.current?.animateCubeToOrientation(closestTarget);
         }
       },
-      animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
+      animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
         if (!cubeRef.current) return;
         if (slerpAnimation.current.active) return;
 
@@ -811,6 +821,31 @@ export function Scene() {
         slerpAnimation.current.t = 0;
         slerpAnimation.current.active = true;
         setIsAnimating(true);
+      },
+      animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
+        if (!cameraRef.current || !controlsRef.current) return;
+        if (slerpAnimation.current.active || levelAnimation.current.active || cameraAnimation.current.active) return;
+
+        const { face, rotation } = orientation;
+        const config = faceConfigs[face];
+        if (!config) return;
+
+        const distance = cameraRef.current.position.distanceTo(controlsRef.current.target);
+        const endPos = config.lookAt.clone().multiplyScalar(distance);
+        const endUp = config.up.clone().applyAxisAngle(config.lookAt, THREE.MathUtils.degToRad(rotation));
+
+        if (cameraRef.current.position.distanceTo(endPos) < 0.01 && cameraRef.current.up.distanceTo(endUp) < 0.01) {
+          return; // Already there
+        }
+
+        cameraAnimation.current.active = true;
+        cameraAnimation.current.t = 0;
+        cameraAnimation.current.startPos.copy(cameraRef.current.position);
+        cameraAnimation.current.endPos.copy(endPos);
+        cameraAnimation.current.startUp.copy(cameraRef.current.up);
+        cameraAnimation.current.endUp.copy(endUp);
+
+        setIsAnimating(true); // Disable OrbitControls during animation
       },
       levelCamera: () => {
         if (!cameraRef.current || !controlsRef.current) return;
@@ -1011,6 +1046,29 @@ export function Scene() {
       return;
     }
     
+    if (cameraAnimation.current.active) {
+      if (!cameraRef.current || !controlsRef.current) return;
+
+      cameraAnimation.current.t += delta / cameraAnimation.current.duration;
+      const camera = cameraRef.current;
+      const controls = controlsRef.current;
+
+      if (cameraAnimation.current.t >= 1) {
+        camera.position.copy(cameraAnimation.current.endPos);
+        camera.up.copy(cameraAnimation.current.endUp);
+        cameraAnimation.current.active = false;
+        setIsAnimating(false);
+      } else {
+        const t = 1 - Math.pow(1 - cameraAnimation.current.t, 3); // easeOutCubic
+        camera.position.lerpVectors(cameraAnimation.current.startPos, cameraAnimation.current.endPos, t);
+        camera.up.lerpVectors(cameraAnimation.current.startUp, cameraAnimation.current.endUp, t).normalize();
+      }
+
+      camera.lookAt(controls.target);
+      controls.update();
+      return;
+    }
+
     // --- Physics Update (only runs when not slerping) ---
     const { lerp } = THREE.MathUtils;
     const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
@@ -1204,6 +1262,7 @@ export function Scene() {
         onEnd={() => {
           if (autoSquare) {
             cameraActionsRef.current?.levelCamera();
+            cameraActionsRef.current?.squareUp();
           }
         }}
       />

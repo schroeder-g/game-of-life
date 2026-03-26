@@ -36,7 +36,8 @@ export function useAppShortcuts() {
       fitDisplay,
       recenter,
       squareUp,
-      animateToOrientation,
+      animateCubeToOrientation,
+      animateCameraToOrientation,
       setCell,
     },
     meta: { movement, eventBus, cameraActionsRef },
@@ -146,7 +147,11 @@ export function useAppShortcuts() {
             // Otherwise, trigger a smooth snap-rotation animation.
             const nextOrientation = getNextOrientation({face, rotation} as CameraOrientation, rotKey);
             if (nextOrientation) {
-              animateToOrientation(nextOrientation);
+              if (rotationMode) {
+                animateCameraToOrientation(nextOrientation);
+              } else {
+                animateCubeToOrientation(nextOrientation);
+              }
             }
           }
         } else {
@@ -307,7 +312,7 @@ export function useAppShortcuts() {
     autoSquare,
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
     invertPitch, invertRoll, setRotationMode, playStop, step, stepBackward, reset,
-    setAutoSquare, fitDisplay, recenter, squareUp, animateToOrientation, movement, eventBus, changeSize, clearShape,
+    setAutoSquare, fitDisplay, recenter, squareUp, animateCubeToOrientation, animateCameraToOrientation, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode, isAnimating,
   ]);
 }

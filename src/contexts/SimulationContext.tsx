@@ -130,7 +130,8 @@ export interface SimulationActions {
   recenter: () => void;
   squareUp: () => void;
   levelCamera: () => void;
-  animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
+  animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
+  animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
 }
 
 export type AppEvents = {
@@ -146,7 +147,8 @@ export interface SimulationMeta {
     recenter: () => void;
     squareUp: () => void;
     levelCamera: () => void;
-    animateToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
+    animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
+    animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
@@ -617,8 +619,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [cameraActionsRef],
   );
 
-  const animateToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
-    cameraActionsRef.current?.animateToOrientation(orientation);
+  const animateCubeToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
+    cameraActionsRef.current?.animateCubeToOrientation(orientation);
+  }, []);
+
+  const animateCameraToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
+    cameraActionsRef.current?.animateCameraToOrientation(orientation);
   }, []);
 
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
@@ -631,9 +637,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     if (autoSquare) {
       // Use a small timeout to ensure the action runs after other state changes
       // have settled, particularly if toggled quickly with other actions.
-      setTimeout(() => levelCamera(), 50);
+      setTimeout(() => {
+        levelCamera();
+        squareUp();
+      }, 50);
     }
-  }, [autoSquare, levelCamera]);
+  }, [autoSquare, levelCamera, squareUp]);
 
   const value: SimulationContextValue = {
     state: {
@@ -710,7 +719,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCells,
       deleteCells,
       applyCells,
-      animateToOrientation,
+      animateCubeToOrientation,
+      animateCameraToOrientation,
       fitDisplay,
       recenter,
       squareUp,
