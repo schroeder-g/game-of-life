@@ -98,8 +98,8 @@ const server = Bun.serve({
       distribution: "dev",
       buildTime: buildTime,
     };
-    const buildInfoScript = `window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};`;
-    html = html.replace("__BUILD_INFO_PLACEHOLDER__", buildInfoScript);
+    const buildInfoScript = `<script id="build-info-data">window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};</script>`;
+    html = html.replace("<!-- __BUILD_INFO_PLACEHOLDER__ -->", buildInfoScript);
 
     // Manually inject the hot reload listener script.
     const hotReloadScript = `
