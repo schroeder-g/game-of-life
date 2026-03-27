@@ -42,7 +42,7 @@ export function useAppShortcuts() {
     state: brushState,
     actions: { changeSize, clearShape, setSelectorPos, setPaintMode },
   } = useBrush();
-  const { selectorPos, selectedShape, paintMode } = brushState;
+  const { selectorPos, selectedShape, paintMode, shapeSize } = brushState;
 
   const prevPaintModeRef = useRef<1 | 0 | -1>();
 
@@ -94,6 +94,25 @@ export function useAppShortcuts() {
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
       if (isRotationCode) {
+        if (!rotationMode && shapeSize > 1 && !(e.ctrlKey && e.shiftKey)) {
+          // Rotate the brush instead of the camera/cube!
+          let axis = new THREE.Vector3();
+          let angle = Math.PI / 2;
+          
+          if (key === 'o') { axis.set(1, 0, 0); angle = -Math.PI / 2; }
+          if (key === '.') { axis.set(1, 0, 0); angle = Math.PI / 2; }
+          if (key === 'k') { axis.set(0, 1, 0); angle = -Math.PI / 2; }
+          if (key === ';') { axis.set(0, 1, 0); angle = Math.PI / 2; }
+          if (key === 'i') { axis.set(0, 0, 1); angle = -Math.PI / 2; }
+          if (key === 'p') { axis.set(0, 0, 1); angle = Math.PI / 2; }
+          
+          // Execute 90-degree step rotation
+          cameraActionsRef.current?.rotateBrush(axis, angle);
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
         // Ctrl+Shift is a hard override for continuous rotation.
         if (e.ctrlKey && e.shiftKey) {
           switch (key) {

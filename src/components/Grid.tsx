@@ -465,10 +465,14 @@ function KeyboardSelector({
 
         v.applyQuaternion(brushQuaternion.current);
 
+        const rx = Math.round(v.x * 2) / 2;
+        const ry = Math.round(v.y * 2) / 2;
+        const rz = Math.round(v.z * 2) / 2;
+
         const cell = [
-          selectorPos[0] + Math.round(v.x),
-          selectorPos[1] + Math.round(v.y),
-          selectorPos[2] + Math.round(v.z),
+          selectorPos[0] + (Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) + rx,
+          selectorPos[1] + (Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) + ry,
+          selectorPos[2] + (Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) + rz,
         ] as [number, number, number];
 
         return { originalOffset, cell };
@@ -588,6 +592,38 @@ export function Scene() {
   useEffect(() => {
     brushStateRef.current = brushState;
   }, [brushState]);
+
+  // Align 2D shapes to face camera when selected
+  const prevShapeRef = useRef(brushState.selectedShape);
+  useEffect(() => {
+    if (brushState.selectedShape !== prevShapeRef.current) {
+      if (rotationMode && ["Square", "Circle", "Triangle"].includes(brushState.selectedShape)) {
+        if (cameraRef.current) {
+          const cam = cameraRef.current;
+          const target = cameraTargetRef.current;
+          
+          const pos = cam.position.clone().sub(target);
+          const dist = pos.length();
+          const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
+          
+          let lookDir = new THREE.Vector3();
+          if (az >= ax && az >= ay) {
+            lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
+          } else if (ax >= ay && ax >= az) {
+            lookDir.set(pos.x > 0 ? -1 : 1, 0, 0);
+          } else {
+            lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
+          }
+
+          // We want the brush's +Y (normal) to face -lookDir.
+          const brushNormal = lookDir.clone().multiplyScalar(-1);
+          const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), brushNormal);
+          brushQuaternion.current.copy(quat);
+        }
+      }
+    }
+    prevShapeRef.current = brushState.selectedShape;
+  }, [brushState.selectedShape, rotationMode, brushQuaternion]);
 
   const fitAnimRef = useRef<{
     startTime: number;
@@ -779,7 +815,14 @@ export function Scene() {
           const newRotatedOffsets = offsets.map(off => {
             const v = new THREE.Vector3(...off);
             v.applyQuaternion(nextQ);
-            return [Math.round(v.x), Math.round(v.y), Math.round(v.z)] as [number, number, number];
+            const rx = Math.round(v.x * 2) / 2;
+            const ry = Math.round(v.y * 2) / 2;
+            const rz = Math.round(v.z * 2) / 2;
+            return [
+              (Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) + rx,
+              (Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) + ry,
+              (Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) + rz,
+            ] as [number, number, number];
           });
 
           // Check that at least one cell would be inside the grid
@@ -810,10 +853,13 @@ export function Scene() {
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
             v.applyQuaternion(brushQuaternion.current);
+            const rx = Math.round(v.x * 2) / 2;
+            const ry = Math.round(v.y * 2) / 2;
+            const rz = Math.round(v.z * 2) / 2;
             return [
-              Math.round(v.x) + selectorPos[0],
-              Math.round(v.y) + selectorPos[1],
-              Math.round(v.z) + selectorPos[2],
+              selectorPos[0] + (Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) + rx,
+              selectorPos[1] + (Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) + ry,
+              selectorPos[2] + (Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) + rz,
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
@@ -832,10 +878,13 @@ export function Scene() {
           .map(([dx, dy, dz]) => {
             const v = new THREE.Vector3(dx, dy, dz);
             v.applyQuaternion(brushQuaternion.current);
+            const rx = Math.round(v.x * 2) / 2;
+            const ry = Math.round(v.y * 2) / 2;
+            const rz = Math.round(v.z * 2) / 2;
             return [
-              Math.round(v.x) + selectorPos[0],
-              Math.round(v.y) + selectorPos[1],
-              Math.round(v.z) + selectorPos[2],
+              selectorPos[0] + (Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) + rx,
+              selectorPos[1] + (Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) + ry,
+              selectorPos[2] + (Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) + rz,
             ] as [number, number, number];
           })
           .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);

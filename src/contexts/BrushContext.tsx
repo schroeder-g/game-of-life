@@ -74,7 +74,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       paintMode,
     },
     actions: {
-      setSelectedShape,
+      setSelectedShape: (shape: ShapeType) => {
+        setSelectedShape(shape);
+        setShapeSize((prev) => {
+          if (shape !== "Cube" && shape !== "None" && shape !== "Selected Community" && prev === 1) {
+            return 5;
+          }
+          return prev;
+        });
+      },
       setShapeSize,
       setIsHollow,
       setShowProjectionGuides,

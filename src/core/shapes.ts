@@ -13,7 +13,7 @@ export type Offset = [number, number, number];
 function symmetricRange(size: number): [number, number] {
   const half = Math.floor(size / 2);
   if (size % 2 === 0) {
-    return [-half, half - 1]; // even: e.g. size=6 → [-3, 2] → 6 cells
+    return [-half + 0.5, half - 0.5]; // even, e.g. size=6 -> [-2.5, 2.5]
   } else {
     return [-half, half];     // odd:  e.g. size=5 → [-2, 2] → 5 cells
   }
@@ -69,9 +69,7 @@ function generateCircle(size: number): Offset[] {
   for (let x = lo; x <= hi; x++) {
     for (let z = lo; z <= hi; z++) {
       // Distance from center (0 for odd, 0.5 offset for even)
-      const cx = size % 2 === 0 ? x + 0.5 : x;
-      const cz = size % 2 === 0 ? z + 0.5 : z;
-      if (cx * cx + cz * cz <= radiusSq) {
+      if (x * x + z * z <= radiusSq) {
         offsets.push([x, 0, z]);
       }
     }
@@ -92,10 +90,7 @@ function generateSphere(size: number, hollow: boolean): Offset[] {
   for (let x = lo; x <= hi; x++) {
     for (let y = lo; y <= hi; y++) {
       for (let z = lo; z <= hi; z++) {
-        const cx = size % 2 === 0 ? x + 0.5 : x;
-        const cy = size % 2 === 0 ? y + 0.5 : y;
-        const cz = size % 2 === 0 ? z + 0.5 : z;
-        const distSq = cx * cx + cy * cy + cz * cz;
+        const distSq = x * x + y * y + z * z;
         if (distSq <= radiusSq) {
           if (hollow) {
             if (distSq > innerRadiusSq) {
@@ -115,12 +110,23 @@ function generateSphere(size: number, hollow: boolean): Offset[] {
 // Generate triangle offsets (2D on XZ plane)
 function generateTriangle(size: number): Offset[] {
   const offsets: Offset[] = [];
-  const halfZ = Math.floor((size - 1) / 2);
+  const baseSize = Math.max(size, 3); // minimum size of a triangle is three
+  
+  const layers: number[] = [];
+  let w = baseSize;
+  while (w >= 1) {
+    layers.push(w);
+    w -= 2;
+    if (baseSize % 2 === 0 && w < 2) break;
+  }
 
-  for (let row = 0; row < size; row++) {
-    const width = row + 1;
-    const [xLo, xHi] = symmetricRange(width);
-    const z = row - halfZ;
+  const numLayers = layers.length;
+  const halfZ = Math.floor((numLayers - 1) / 2);
+
+  for (let layerIdx = 0; layerIdx < numLayers; layerIdx++) {
+    const layerWidth = layers[layerIdx];
+    const [xLo, xHi] = symmetricRange(layerWidth);
+    const z = halfZ - layerIdx; // Point goes towards -Z (UP)
     for (let x = xLo; x <= xHi; x++) {
       offsets.push([x, 0, z]);
     }
