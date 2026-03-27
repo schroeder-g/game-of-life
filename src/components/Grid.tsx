@@ -558,6 +558,7 @@ export function Scene() {
     tick,
     setCommunity,
     setCameraOrientation,
+    setIsSquaredUp,
   } = actions;
   const {
     speed,
@@ -575,6 +576,7 @@ export function Scene() {
     easeIn,
     easeOut,
     squareUp,
+    isSquaredUp,
     cameraOrientation,
   } = state;
   const {
@@ -845,7 +847,7 @@ export function Scene() {
     setSelectorPos,
     setCustomBrush,
   ]);
-  useFrame((state, delta) => {
+  useFrame((threeState, delta) => {
     // --- Physics Update (only runs when not slerping) ---
     const { lerp } = THREE.MathUtils;
     const easeInVal = easeIn > 0.001 ? (1 - Math.exp(-3 * delta / easeIn)) : 1;
@@ -1064,11 +1066,24 @@ export function Scene() {
               }
             }
 
-            cam.position.lerp(idealPos.add(target), slerpFactor);
+            const targetPos = idealPos.add(target);
             const lookAtMat = new THREE.Matrix4().lookAt(cam.position, target, idealUp);
             const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMat);
-            cam.quaternion.slerp(targetQuat, slerpFactor);
-            cam.up.lerp(idealUp, slerpFactor);
+
+            // Check if we've reached the target
+            const distToTarget = cam.position.distanceTo(targetPos);
+            const angleToTarget = cam.quaternion.angleTo(targetQuat);
+            const isTargetReached = distToTarget < 0.01 && angleToTarget < 0.01 && target.length() < 0.01;
+            
+            if (isTargetReached !== isSquaredUp) {
+              setIsSquaredUp(isTargetReached);
+            }
+
+            if (!isTargetReached) {
+              cam.position.lerp(targetPos, slerpFactor);
+              cam.quaternion.slerp(targetQuat, slerpFactor);
+              cam.up.lerp(idealUp, slerpFactor);
+            }
           }
         } else {
           // EDIT MODE: Snap Cube to nearest axis-aligned orientation
@@ -1098,16 +1113,27 @@ export function Scene() {
             const targetMat = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
             const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetMat);
             
-            cube.quaternion.slerp(targetQuat, slerpFactor);
+            const angleToTarget = cube.quaternion.angleTo(targetQuat);
+            const isTargetReached = angleToTarget < 0.01;
+
+            if (isTargetReached !== isSquaredUp) {
+              setIsSquaredUp(isTargetReached);
+            }
+
+            if (!isTargetReached) {
+              cube.quaternion.slerp(targetQuat, slerpFactor);
+            }
           }
         }
+      } else {
+        if (isSquaredUp) setIsSquaredUp(false);
       }
     }
   });
 
-  useFrame((state) => {
+  useFrame((threeState) => {
     if (running) {
-      const elapsed = state.clock.getElapsedTime();
+      const elapsed = threeState.clock.getElapsedTime();
       if (elapsed - lastTick.current > 1 / speed) {
         lastTick.current = elapsed;
         tick();

@@ -1320,7 +1320,7 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp },
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell, setSquareUp },
     meta: { cameraActionsRef },
   } = useSimulation();
@@ -1469,9 +1469,9 @@ export function AppHeaderPanel() {
         </button>
 
         <button
-          className={`glass-button square-up-toggle ${squareUp ? 'active primary' : ''}`}
+          className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
           onClick={() => setSquareUp(!squareUp)}
-          title={`Square Up View (${squareUp ? 'ON' : 'OFF'})`}
+          title={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
         >
           {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
         </button>

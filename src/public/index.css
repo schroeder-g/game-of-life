@@ -543,6 +543,16 @@ input[type="range"] {
   background: rgba(138, 180, 248, 0.25);
 }
 
+.glass-button.success {
+  background: rgba(72, 187, 120, 0.15);
+  border-color: rgba(72, 187, 120, 0.3);
+  color: #48bb78;
+}
+
+.glass-button.success:hover:not(:disabled) {
+  background: rgba(72, 187, 120, 0.25);
+}
+
 .glass-button.danger {
   background: rgba(242, 139, 130, 0.15);
   border-color: rgba(242, 139, 130, 0.3);

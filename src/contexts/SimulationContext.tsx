@@ -68,6 +68,7 @@ export interface SimulationState {
   easeIn: number;
   easeOut: number;
   squareUp: boolean;
+  isSquaredUp: boolean;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
   userName?: string;
@@ -102,6 +103,7 @@ export interface SimulationActions {
   setEaseIn: (val: number) => void;
   setEaseOut: (val: number) => void;
   setSquareUp: (val: boolean | ((prev: boolean) => boolean)) => void;
+  setIsSquaredUp: (val: boolean) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setUserName: (name: string) => void;
 
@@ -248,7 +250,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [easeIn, setEaseIn] = useState(storedSettings.easeIn);
   const [easeOut, setEaseOut] = useState(storedSettings.easeOut);
-  const [squareUp, setSquareUp] = useState(Boolean(storedSettings.squareUp));
+  const [squareUp, setSquareUpState] = useState(Boolean(storedSettings.squareUp));
+  const [isSquaredUp, setIsSquaredUp] = useState(false);
   const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
   const [invertRoll, setInvertRoll] = useState(
     Boolean(storedSettings.invertRoll),
@@ -586,6 +589,19 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [gridSize, neighborFaces, neighborEdges, neighborCorners, runInitAnimation],
   );
 
+  const setSquareUp = useCallback(
+    (mode: boolean | ((prev: boolean) => boolean)) => {
+      setSquareUpState((prev) => {
+        const next = typeof mode === "function" ? mode(prev) : mode;
+        if (next !== prev) {
+          setIsSquaredUp(false);
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
   const handleSetRotationMode = useCallback(
     (mode: boolean | ((prev: boolean) => boolean)) => {
       setRotationMode((prev) => {
@@ -596,7 +612,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         return next;
       });
     },
-    [cameraActionsRef],
+    [],
   );
 
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
@@ -632,6 +648,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       easeIn,
       easeOut,
       squareUp,
+      isSquaredUp,
       rollSpeed,
       isAnimatingInit,
       userName,
@@ -658,6 +675,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setEaseIn,
       setEaseOut,
       setSquareUp,
+      setIsSquaredUp,
       setRollSpeed,
       setUserName,
       playStop,
