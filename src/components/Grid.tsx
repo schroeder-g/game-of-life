@@ -593,6 +593,51 @@ export function Scene() {
 
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
+  const isDragging = useRef(false);
+  const lastMouse = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      isDragging.current = true;
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+      wasRotating.current = false;
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDragging.current) return;
+      
+      const dx = e.clientX - lastMouse.current.x;
+      const dy = e.clientY - lastMouse.current.y;
+      
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        wasRotating.current = true;
+        
+        // Apply impulses to rotation velocity
+        const sens = rotationSpeed * 0.002;
+        const invY = invertYaw ? -1 : 1;
+        const invP = invertPitch ? -1 : 1;
+        
+        velocity.current.rotateYaw += dx * sens * invY;
+        velocity.current.rotatePitch += dy * sens * invP;
+      }
+      
+      lastMouse.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerUp = () => {
+      isDragging.current = false;
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [rotationSpeed, invertYaw, invertPitch, velocity]);
 
   const {
     meta: { cameraActionsRef },
@@ -813,15 +858,15 @@ export function Scene() {
 
     if (movement.current.rotateO) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, rSpeed, easeInVal);
     else if (movement.current.rotatePeriod) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, -rSpeed, easeInVal);
-    else velocity.current.rotatePitch *= easeOutVal;
+    else if (!isDragging.current) velocity.current.rotatePitch *= easeOutVal;
 
     if (movement.current.rotateK) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, rSpeed, easeInVal);
     else if (movement.current.rotateSemicolon) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, -rSpeed, easeInVal);
-    else velocity.current.rotateYaw *= easeOutVal;
+    else if (!isDragging.current) velocity.current.rotateYaw *= easeOutVal;
 
     if (movement.current.rotateI) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, rlSpeed, easeInVal);
     else if (movement.current.rotateP) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
-    else velocity.current.rotateRoll *= easeOutVal;
+    else if (!isDragging.current) velocity.current.rotateRoll *= easeOutVal;
     
     const totalPanX = velocity.current.panX;
     const totalPanY = velocity.current.panY;
@@ -944,7 +989,7 @@ export function Scene() {
           selectorPos={rotationMode ? null : selectorPos}
           rotationMode={rotationMode}
           onClick={(e) => {
-            if (running || rotationMode) return;
+            if (running || rotationMode || wasRotating.current) return;
             e.stopPropagation();
             const { instanceId } = e;
             if (instanceId !== undefined) {
