@@ -86,6 +86,53 @@ export const rotationLookup = {
 };
 
 
+
+// 3 ROTATION SNAP ORIENTATION LOOKUP  
+export const snapRotationLookup = {
+  "front": {
+    0: { o: ["top", 0], period: ["bottom", 0], k: ["left", 0], semicolon: ["right", 0], i: ["front", 90], p: ["front", 270] },
+    270: { o: ["right", 270], period: ["left", 270], k: ["top", 270], semicolon: ["bottom", 270], i: ["front", 0], p: ["front", 180] },
+    180: { o: ["bottom", 180], period: ["top", 180], k: ["right", 180], semicolon: ["left", 180], i: ["front", 270], p: ["front", 90] },
+    90: { o: ["left", 90], period: ["right", 90], k: ["top", 90], semicolon: ["top", 90], i: ["front", 180], p: ["front", 0] },
+  },
+  "back": {
+    0: { o: ["top", 180], period: ["bottom", 180], k: ["right", 0], semicolon: ["left", 0], i: ["back", 90], p: ["back", 270] },
+    270: { o: ["left", 270], period: ["right", 270], k: ["top", 90], semicolon: ["bottom", 90], i: ["back", 0], p: ["back", 180] },
+    180: { o: ["bottom", 180], period: ["top", 180], k: ["left", 0], semicolon: ["right", 0], i: ["back", 270], p: ["back", 90] },
+    90: { o: ["right", 270], period: ["left", 270], k: ["bottom", 90], semicolon: ["top", 90], i: ["back", 180], p: ["back", 0] }
+
+
+  },
+  "right": {
+    0: { o: ["top", 90], period: ["bottom", 270], k: ["front", 0], semicolon: ["back", 0], i: ["right", 90], p: ["right", 270] },
+    270: { o: ["back", 270], period: ["front", 270], k: ["top", 0], semicolon: ["bottom", 180], i: ["right", 0], p: ["right", 180] },
+    180: { o: ["bottom", 90], period: ["top", 270], k: ["back", 180], semicolon: ["front", 180], i: ["right", 270], p: ["right", 90] },
+    90: { o: ["back", 90], period: ["front", 270], k: ["bottom", 180], semicolon: ["top", 0], i: ["right", 180], p: ["right", 0] }
+  },
+
+
+  "left": {
+    0: { o: ["top", 270], period: ["bottom", 90], k: ["back", 0], semicolon: ["front", 0], i: ["left", 90], p: ["left", 270] },
+    270: { o: ["front", 270], period: ["back", 270], k: ["top", 180], semicolon: ["bottom", 0], i: ["left", 0], p: ["left", 180] },
+    180: { o: ["bottom", 270], period: ["top", 90], k: ["front", 180], semicolon: ["back", 180], i: ["left", 270], p: ["left", 90] },
+    90: { o: ["back", 90], period: ["front", 270], k: ["bottom", 180], semicolon: ["top", 0], i: ["left", 180], p: ["left", 0] }
+  },
+
+  "top": {
+    0: { o: ["back", 180], period: ["front", 0], k: ["left", 90], semicolon: ["right", 270], i: ["top", 90], p: ["top", 270] },
+    270: { o: ["right", 180], period: ["left", 0], k: ["back", 90], semicolon: ["front", 270], i: ["top", 0], p: ["top", 180] },
+    180: { o: ["front", 180], period: ["back", 0], k: ["right", 90], semicolon: ["left", 270], i: ["top", 270], p: ["top", 90] },
+    90: { o: ["left", 180], period: ["right", 0], k: ["front", 90], semicolon: ["back", 270], i: ["top", 180], p: ["top", 0] }
+  },
+  "bottom": {
+    0: { o: ["front", 270], period: ["back", 180], k: ["left", 270], semicolon: ["right", 90], i: ["bottom", 90], p: ["bottom", 270] },
+    270: { o: ["right", 270], period: ["left", 180], k: ["front", 270], semicolon: ["back", 90], i: ["bottom", 0], p: ["bottom", 180] },
+    180: { o: ["back", 270], period: ["front", 180], k: ["right", 90], semicolon: ["left", 270], i: ["bottom", 270], p: ["bottom", 90] },
+    90: { o: ["left", 270], period: ["right", 180], k: ["front", 90], semicolon: ["back", 270], i: ["bottom", 180], p: ["bottom", 0] }
+  }
+};
+
+
 export type CameraFace = keyof typeof KEY_MAP;
 export type CameraRotation = 0 | 90 | 180 | 270;
 

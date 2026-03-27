@@ -68,7 +68,6 @@ export interface SimulationState {
   easeOut: number;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
-  autoSquare: boolean;
   userName?: string;
   buildInfo: {
     version: string;
@@ -101,7 +100,6 @@ export interface SimulationActions {
   setEaseIn: (val: number) => void;
   setEaseOut: (val: number) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
-  setAutoSquare: (val: boolean | ((prev: boolean) => boolean)) => void;
   setUserName: (name: string) => void;
 
   playStop: () => void;
@@ -170,12 +168,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     right: false,
     up: false,
     down: false,
-    rotateLeft: false,
-    rotateRight: false,
-    rotateUp: false,
-    rotateDown: false,
-    rollLeft: false,
-    rollRight: false,
+    rotateO: false,
+    rotatePeriod: false,
+    rotateK: false,
+    rotateSemicolon: false,
+    rotateI: false,
+    rotateP: false,
     space: false,
     delete: false,
   });
@@ -183,9 +181,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     panX: 0,
     panY: 0,
     dolly: 0,
-    rotateX: 0,
-    rotateY: 0,
-    roll: 0,
+    rotatePitch: 0,
+    rotateYaw: 0,
+    rotateRoll: 0,
   });
   const isFirstLoadRef = useRef(true);
   const [hasInitialState, setHasInitialState] = useState(false);
@@ -207,7 +205,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
-  const [autoSquare, setAutoSquare] = useState(false);
   const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
 
   const [buildInfo, setBuildInfo] = useState<SimulationState['buildInfo']>({
@@ -600,15 +597,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
 
-  useEffect(() => {
-    // When auto-square is enabled, immediately level the camera.
-    if (autoSquare) {
-      // Use a small timeout to ensure the action runs after other state changes
-      // have settled, particularly if toggled quickly with other actions.
-      setTimeout(() => {
-      }, 50);
-    }
-  }, [autoSquare]);
+  // Removed autoSquare leveling effect
 
   const value: SimulationContextValue = {
     state: {
@@ -638,9 +627,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       easeIn,
       easeOut,
       rollSpeed,
-      autoSquare,
       isAnimatingInit,
-      isAnimating: false, // ADD THIS
       userName,
       buildInfo,
     },
@@ -665,9 +652,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setEaseIn,
       setEaseOut,
       setRollSpeed,
-      setAutoSquare,
       setUserName,
-      setIsAnimating: () => {},
       playStop,
       step,
       stepBackward,

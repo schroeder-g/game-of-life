@@ -45,8 +45,8 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, running, snapMessage },
-    actions: { setRotationMode, recenter, squareUp, fitDisplay, setSnapMessage },
+    state: { rotationMode, running },
+    actions: { setRotationMode, recenter, fitDisplay },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -58,20 +58,11 @@ export default function App() {
   useEffect(() => {
     if (rotationMode === false) {
       recenter();
-      squareUp();
       fitDisplay();
     }
-  }, [rotationMode, recenter, squareUp, fitDisplay]);
+  }, [rotationMode, recenter, fitDisplay]);
 
 
-  useEffect(() => {
-    if (snapMessage) {
-      const timer = setTimeout(() => {
-        setSnapMessage("");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [snapMessage, setSnapMessage]);
 
   return (
     <div className="app">
@@ -91,7 +82,6 @@ export default function App() {
             by placing cells in the grid and watching them evolve.
           </p>
           <SimulationStats />
-          {snapMessage && <div className="snap-message">{snapMessage}</div>}
           {!rotationMode && selectorPos && (
             <div className="selector-pos">
               Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})

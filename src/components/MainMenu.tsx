@@ -35,13 +35,7 @@ const RecenterIcon = () => (
   </svg>
 );
 
-const SquareUpIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="6" y="9" width="10" height="10" />
-    <path d="M6 9 l4 -4 h10 l-4 4" />
-    <path d="M16 9 v10 l4 -4 v-10" />
-  </svg>
-);
+// Removed SquareUpIcon
 
 const PencilIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1313,8 +1307,8 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, autoSquare, userName, buildInfo },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setAutoSquare, setCell },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
@@ -1460,16 +1454,7 @@ export function AppHeaderPanel() {
         >
           <RecenterIcon />
         </button>
-        <button
-          className={`glass-button ${autoSquare ? "primary active" : ""}`}
-          onClick={() => {
-            setAutoSquare((prev) => !prev);
-          }}
-          aria-label="Square Up"
-          data-tooltip-bottom={`Auto Square Up: ${autoSquare ? "On" : "Off"} (L)`}
-        >
-          <SquareUpIcon />
-        </button>
+        {/* Removed Auto-Square button */}
 
         <button
           className="glass-button"

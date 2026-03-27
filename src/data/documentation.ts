@@ -69,8 +69,7 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: "header-camera",
     type: 'p',
-    text: "<b>Camera Actions (Fit/Recenter/Square Up):</b> Use 'Fit' (F) to zoom and frame all live cells. 'Recenter' (S) moves the camera to the origin. 'Auto Square Up' (L) toggles a mode where the camera snaps to the nearest face-on view. When Auto Square is off, the camera rotates freely.",
-    testIds: ["UX-2", "UX-3"],
+    text: "<b>Camera Actions (Fit/Recenter):</b> Use 'Fit' (F) to zoom and frame all live cells. 'Recenter' (S) moves the camera to the origin.",
     references: ["src/contexts/SimulationContext.tsx"],
   },
   {
@@ -97,29 +96,24 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: 'heading-camera-rotation',
     type: 'h3',
-    text: 'Camera Controls & Rotation'
+    text: 'Camera Controls & Rotation',
   },
   {
     id: 'rotation-free-form',
     type: 'p',
-    text: "<b>Free-Form Rotation (Square Up: OFF):</b> This is the default mode. Use the rotation keys (<b>O/Period</b> for Pitch, <b>K/Semicolon</b> for Yaw, <b>I/P</b> for Roll) for smooth, continuous 'flight-sim' style rotation. This mode is ideal for cinematic views.",
-  },
-  {
-    id: 'rotation-snap',
-    type: 'p',
-    text: "<b>Snap Rotation (Square Up: ON):</b> In this mode, the camera is locked to 90-degree-increment views of the cube's faces. A single press of a rotation key will smoothly animate the camera 90 degrees in the corresponding direction and then lock it into a perfectly square alignment.",
-    testIds: ["UX-4"],
+    text: "<b>Camera Rotation:</b> Use the rotation keys (<b>O/Period</b> for Pitch, <b>K/Semicolon</b> for Yaw, <b>I/P</b> for Roll) for smooth, continuous 'flight-sim' style rotation. This is the only rotation mode, optimized for intuitive navigation.",
+    testIds: ["UC-11"],
   },
   {
     id: 'rotation-edit-mode',
     type: 'p',
-    text: "<b>Special Rules in Edit Mode:</b> When a brush shape is active (e.g., 'Cube', 'Sphere'), the rotation keys will rotate the brush instead of the camera. To rotate the camera while a brush is active, you must use the <b>Ctrl+Shift</b> override.",
-    testIds: ["UX-6"],
+    text: "<b>Special Rules in Edit Mode:</b> When a brush shape is active (e.g., 'Cube', 'Sphere'), the rotation keys will rotate the brush instead of the camera. To rotate the camera while a brush is active, you must use the <b>Ctrl/Shift</b> override.",
+    testIds: ["UX-1"],
   },
   {
     id: 'rotation-override',
     type: 'p',
-    text: "<b>Ctrl+Shift Override:</b> At any time, holding <b>Ctrl+Shift</b> while pressing a rotation key will temporarily perform smooth, continuous rotation, even if 'Auto Square Up' is ON.",
+    text: "<b>Ctrl/Shift Override:</b> At any time, holding <b>Ctrl</b> or <b>Shift</b> (or both) while pressing a rotation key will temporarily perform smooth, continuous camera rotation, even if a brush is active.",
     testIds: ["UX-5"],
   },
 

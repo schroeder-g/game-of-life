@@ -9,7 +9,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
-import { getNextOrientation } from "../components/Grid"; // Import the new helper
+// import { getNextOrientation } from "../components/Grid"; // Removed broken helper
 
 export function useAppShortcuts() {
   const {
@@ -17,8 +17,7 @@ export function useAppShortcuts() {
       running,
       rotationMode,
       cameraOrientation,
-      autoSquare,
-      isAnimating,
+      isAnimatingInit,
       hasInitialState,
       hasPastHistory,
       invertYaw,
@@ -32,12 +31,8 @@ export function useAppShortcuts() {
       step,
       stepBackward,
       reset,
-      setAutoSquare,
       fitDisplay,
       recenter,
-      squareUp,
-      animateCubeToOrientation,
-      animateCameraToOrientation,
       setCell,
     },
     meta: { movement, eventBus, cameraActionsRef },
@@ -77,8 +72,6 @@ export function useAppShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isAnimating) return; // ADD THIS to block all input during animations
-
       const target = e.target as HTMLElement;
       const isTextBox =
         (target.tagName === "INPUT" &&
@@ -131,39 +124,14 @@ export function useAppShortcuts() {
           if (rotKey === 'i') rotKey = 'p'; else if (rotKey === 'p') rotKey = 'i';
         }
 
-        if (autoSquare) {
-          // In Edit Mode with an active brush, rotate the brush.
-          if (!rotationMode && selectedShape !== "None" && paintMode !== 0) {
-            if (hasValidOrientation) {
-              const f = face as CameraFace;
-              const r = rotation as CameraRotation;
-              const axis = getExplicitRotationAxis(f, r, rotKey);
-              let angle = Math.PI / 2;
-              // Reverse direction for roll (i/p) to match user expectations
-              if (["i", "p"].includes(rotKey)) { angle = -angle; }
-              cameraActionsRef.current?.rotateBrush(axis, angle);
-            }
-          } else {
-            // Otherwise, trigger a smooth snap-rotation animation.
-            const nextOrientation = getNextOrientation({face, rotation} as CameraOrientation, rotKey);
-            if (nextOrientation) {
-              if (rotationMode) {
-                animateCameraToOrientation(nextOrientation);
-              } else {
-                animateCubeToOrientation(nextOrientation);
-              }
-            }
-          }
-        } else {
-          // If autoSquare is OFF, always do continuous rotation.
-          switch (rotKey) {
-            case "semicolon": movement.current.rotateSemicolon = true; break;
-            case "k": movement.current.rotateK = true; break;
-            case "o": movement.current.rotateO = true; break;
-            case "period": movement.current.rotatePeriod = true; break;
-            case "i": movement.current.rotateI = true; break;
-            case "p": movement.current.rotateP = true; break;
-          }
+        // Trigger continuous rotation.
+        switch (rotKey) {
+          case "semicolon": movement.current.rotateSemicolon = true; break;
+          case "k": movement.current.rotateK = true; break;
+          case "o": movement.current.rotateO = true; break;
+          case "period": movement.current.rotatePeriod = true; break;
+          case "i": movement.current.rotateI = true; break;
+          case "p": movement.current.rotateP = true; break;
         }
 
         e.preventDefault();
@@ -211,7 +179,6 @@ export function useAppShortcuts() {
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
             case "s": recenter(); break;
-            case "l": setAutoSquare(prev => !prev); break; // Camera leveling is triggered by an effect when this is enabled
             case "r": if (hasInitialState) reset(); break;
             case " ":
               setPaintMode(prev => (prev === 1 ? 0 : 1));
@@ -230,7 +197,6 @@ export function useAppShortcuts() {
           case "v": setRotationMode(true); break;
           case "f": fitDisplay(); break;
           case "s": recenter(); break;
-          case "l": setAutoSquare(prev => !prev); break; // squareUp is now called by autoSquare useEffect
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
           case "arrowup":
@@ -266,7 +232,7 @@ export function useAppShortcuts() {
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
 
       // Key up matters for continuous movement in View mode OR Edit mode (if auto-square is off)
-      const isContinuousAllowed = rotationMode || (!autoSquare && isRotationCode && !isAnimating);
+      const isContinuousAllowed = rotationMode || (isRotationCode && !isAnimatingInit);
       if (!isContinuousAllowed) return;
 
       let handled = true;
@@ -309,10 +275,9 @@ export function useAppShortcuts() {
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [
-    autoSquare,
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
     invertPitch, invertRoll, setRotationMode, playStop, step, stepBackward, reset,
-    setAutoSquare, fitDisplay, recenter, squareUp, animateCubeToOrientation, animateCameraToOrientation, movement, eventBus, changeSize, clearShape,
-    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode, isAnimating,
+    fitDisplay, recenter, movement, eventBus, changeSize, clearShape,
+    gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode, isAnimatingInit,
   ]);
 }

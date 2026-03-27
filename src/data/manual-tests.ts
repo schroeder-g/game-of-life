@@ -13,26 +13,7 @@ export const MANUAL_TESTS: ManualTest[] = [
     ],
     claimIds: ["config-shape-brush"],
   },
-  {
-    id: "UX-2",
-    title: "Verify 'Auto Square Up' Toggle Action",
-    steps: [
-      "Click the 'Auto Square Up' button or press 'L' to toggle the mode.",
-      "While rotating the camera, observe its behavior in both modes.",
-      "<b>Expected</b>: When enabled, camera stops should snap to the nearest grid face. When disabled, it should stop smoothly.",
-    ],
-    claimIds: ["header-camera"],
-  },
-  {
-    id: "UX-3",
-    title: "Verify Continuous Camera Rotation",
-    steps: [
-      "Ensure 'Auto Square Up' is disabled (press 'L' if the icon is highlighted).",
-      "Click and drag to rotate the camera.",
-      "<b>Expected</b>: The camera should rotate freely and smoothly without snapping to a face.",
-    ],
-    claimIds: ["header-camera"],
-  },
+  // Removed UX-2 and UX-3
   {
     id: "UX-4",
     title: "Verify User Name Persistence",

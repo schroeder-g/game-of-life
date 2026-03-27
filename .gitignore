@@ -4,5 +4,6 @@ dist/
 .aider*
 .env
 aider-env/
+aider.venv/
 .bashrc
 .zshrc

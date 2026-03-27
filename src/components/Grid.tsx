@@ -7,7 +7,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { Cells } from "./Cell";
 import { type CameraOrientation } from "../core/cameraUtils";
-import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
+import { type CameraFace, type CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -573,7 +573,6 @@ export function Scene() {
     invertPitch,
     invertRoll,
     easeIn,
-    autoSquare,
     easeOut,
     cameraOrientation,
   } = state;
@@ -807,10 +806,29 @@ export function Scene() {
     if (movement.current.up) velocity.current.dolly = lerp(velocity.current.dolly, dSpeed, easeInVal);
     else if (movement.current.down) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
     else velocity.current.dolly *= easeOutVal;
+
+    // Rotation velocities
+    const rSpeed = rotationSpeed * 0.05;
+    const rlSpeed = rollSpeed * 0.05;
+
+    if (movement.current.rotateO) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, rSpeed, easeInVal);
+    else if (movement.current.rotatePeriod) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, -rSpeed, easeInVal);
+    else velocity.current.rotatePitch *= easeOutVal;
+
+    if (movement.current.rotateK) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, rSpeed, easeInVal);
+    else if (movement.current.rotateSemicolon) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, -rSpeed, easeInVal);
+    else velocity.current.rotateYaw *= easeOutVal;
+
+    if (movement.current.rotateI) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, rlSpeed, easeInVal);
+    else if (movement.current.rotateP) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
+    else velocity.current.rotateRoll *= easeOutVal;
     
     const totalPanX = velocity.current.panX;
     const totalPanY = velocity.current.panY;
     const totalDolly = velocity.current.dolly;
+    const totalRotatePitch = velocity.current.rotatePitch;
+    const totalRotateYaw = velocity.current.rotateYaw;
+    const totalRotateRoll = velocity.current.rotateRoll;
 
     // --- Apply Velocities ---
     if (rotationMode) {
@@ -825,7 +843,6 @@ export function Scene() {
 
         if (hasPan) {
           const dist = cam.position.distanceTo(target);
-          // Panning right (positive panX) should move camera right (positive camera.right vector)
           const panXVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0).multiplyScalar(totalPanX * delta * dist);
           const panYVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1).multiplyScalar(totalPanY * delta * dist);
           const pan = panXVec.add(panYVec);
@@ -835,16 +852,55 @@ export function Scene() {
         if (hasDolly) {
           const toTarget = new THREE.Vector3().subVectors(cam.position, target);
           const currentDist = toTarget.length();
-          if (currentDist > 0.1) { // Prevent getting too close
+          if (currentDist > 0.1) {
             const newDist = currentDist * (1 - totalDolly * delta);
             toTarget.setLength(newDist);
             cam.position.copy(target).add(toTarget);
           }
         }
         
-        const needsUpdate = hasPan || hasDolly;
+        // Apply Rotations
+        const hasRot = Math.abs(totalRotatePitch) > 1e-7 || Math.abs(totalRotateYaw) > 1e-7 || Math.abs(totalRotateRoll) > 1e-7;
+        if (hasRot) {
+          const pitchSpeed = totalRotatePitch * delta;
+          const yawSpeed = totalRotateYaw * delta;
+          const rollSpeedVal = totalRotateRoll * delta;
+
+          const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0), pitchSpeed);
+          const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1), yawSpeed);
+          const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2), rollSpeedVal);
+
+          const q = qPitch.multiply(qYaw).multiply(qRoll);
+          
+          const toCam = new THREE.Vector3().subVectors(cam.position, target);
+          toCam.applyQuaternion(q);
+          cam.position.copy(target).add(toCam);
+          cam.up.applyQuaternion(q);
+        }
+
+        const needsUpdate = hasPan || hasDolly || hasRot;
         if (needsUpdate) {
           cam.lookAt(target);
+        }
+      }
+    } else {
+      // EDIT MODE: Manipulate the cube
+      if (cubeRef.current) {
+        const cube = cubeRef.current;
+        const hasRot = Math.abs(totalRotatePitch) > 1e-7 || Math.abs(totalRotateYaw) > 1e-7 || Math.abs(totalRotateRoll) > 1e-7;
+        if (hasRot) {
+          const { face, rotation } = cameraOrientation;
+          if (face !== 'unknown' && rotation !== 'unknown') {
+            const pitchAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'o');
+            const yawAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'k');
+            const rollAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'i');
+
+            const qPitch = new THREE.Quaternion().setFromAxisAngle(pitchAxis, totalRotatePitch * delta);
+            const qYaw = new THREE.Quaternion().setFromAxisAngle(yawAxis, totalRotateYaw * delta);
+            const qRoll = new THREE.Quaternion().setFromAxisAngle(rollAxis, totalRotateRoll * delta);
+
+            cube.quaternion.multiply(qPitch).multiply(qYaw).multiply(qRoll);
+          }
         }
       }
     }

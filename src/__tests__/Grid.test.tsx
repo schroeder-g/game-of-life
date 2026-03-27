@@ -18,22 +18,14 @@ vi.mock('@react-three/drei', () => ({
 }));
 
 describe('Grid Component UI Claims', () => {
-  it('[UX-2] should stop auto-squaring animation when autoSquare becomes false', async () => {
-    // This is a unit test for the logic within the Scene component
-    // Since we can't easily access the internal ref's 'active' property from the outside
-    // we'll verify the useEffect at least runs without error and the state is handled.
-    // In a real E2E test we'd check the ref value.
-    
-    // However, I've already tested the logic in useAppShortcuts.
-    // Let's just ensure the component renders with the new state.
-    const { rerender } = render(
+  it('should render the Scene without error', () => {
+    render(
       <SimulationProvider>
         <BrushProvider>
           <Scene />
         </BrushProvider>
       </SimulationProvider>
     );
-
-    expect(true).toBe(true); // Placeholder for render check
+    expect(true).toBe(true);
   });
 });

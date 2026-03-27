@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
-import { render } from './test-utils.tsx';
-import { AppHeaderPanel, MainMenu } from '../components/MainMenu.tsx';
-import { WelcomeModal } from '../components/WelcomeModal.tsx';
-import { useManualTests } from '../hooks/useManualTests.ts';
-import { TestsPanel } from '../components/TestsPanel.tsx';
+import { render } from './test-utils';
+import { AppHeaderPanel, MainMenu } from '../components/MainMenu';
+import { WelcomeModal } from '../components/WelcomeModal';
+import { useManualTests } from '../hooks/useManualTests';
+import { ManualTestsPanel } from '../components/ManualTestsPanel';
+import { MANUAL_TESTS } from '../data/manual-tests';
+import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
+import { DOCUMENTATION_CONTENT } from '../data/documentation';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -112,19 +115,23 @@ describe('Automated UI & Feature Tests', () => {
 
   describe('[UX-6] Test Panel Persistence', () => {
     it('saves and loads test statuses from localStorage', () => {
-      render(<TestsPanel />);
+      render(<ManualTestsPanel manualTests={MANUAL_TESTS} automatedTestIds={AUTOMATED_TEST_IDS} documentation={DOCUMENTATION_CONTENT} />);
       
       // Open the panel
       const header = screen.getByRole('heading', { name: /Manual Tests/i });
       fireEvent.click(header);
 
       // Cycle a test to 'checked'
-      const testCheckbox = screen.getAllByRole('checkbox', { hidden: true })[0]; // Not a real checkbox
-      fireEvent.click(testCheckbox.parentElement!); // Click our custom checkbox div
+      // The status icon is a CheckCircle/XCircle/Circle component from lucide-react.
+      // We click the div containing it.
+      const firstTestItem = screen.getByText(MANUAL_TESTS[0].title);
+      const statusIconContainer = firstTestItem.parentElement?.previousElementSibling;
+      if (statusIconContainer) {
+        fireEvent.click(statusIconContainer);
+      }
       
-      // Check that it's checked
-      expect(testCheckbox.parentElement?.textContent).toContain('✓');
-      expect(JSON.parse(localStorage.getItem('manual-tests-statuses') || '{}')['UX-1']).toBe('checked');
+      // Check that it's checked in localStorage
+      expect(JSON.parse(localStorage.getItem('manual-tests-statuses') || '{}')[MANUAL_TESTS[0].id]).toBe('checked');
     });
   });
 });

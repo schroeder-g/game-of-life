@@ -30,7 +30,6 @@ describe('MainMenu and AppHeaderPanel', () => {
                 rotationMode: false,
                 hasInitialState: true,
                 hasPastHistory: false,
-                autoSquare: true,
                 speed: 10,
                 gridSize: 20,
                 density: 0.1,
@@ -45,8 +44,6 @@ describe('MainMenu and AppHeaderPanel', () => {
                 playStop: mockPlayStop,
                 fitDisplay: vi.fn(),
                 recenter: vi.fn(),
-                squareUp: vi.fn(),
-                setAutoSquare: vi.fn(),
                 applyCells: vi.fn(),
             },
             meta: {
