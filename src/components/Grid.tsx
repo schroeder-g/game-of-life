@@ -940,9 +940,15 @@ export function Scene() {
 
           const q = qPitch.multiply(qYaw).multiply(qRoll);
           
-          const toCam = new THREE.Vector3().subVectors(cam.position, target);
+          const pivot = new THREE.Vector3(0, 0, 0);
+          const toCam = new THREE.Vector3().subVectors(cam.position, pivot);
+          const toTarget = new THREE.Vector3().subVectors(target, pivot);
+          
           toCam.applyQuaternion(q);
-          cam.position.copy(target).add(toCam);
+          toTarget.applyQuaternion(q);
+          
+          cam.position.copy(pivot).add(toCam);
+          target.copy(pivot).add(toTarget);
           cam.up.applyQuaternion(q);
         }
 
