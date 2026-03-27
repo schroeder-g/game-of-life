@@ -1,6 +1,6 @@
 {
   "name": "game-of-life",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "scripts": {
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/public/index.tsx --outdir dist --define \"process.env.BUILD_DISTRIBUTION='\\\"'$(printenv BUILD_DISTRIBUTION)'\\\"'\"",
