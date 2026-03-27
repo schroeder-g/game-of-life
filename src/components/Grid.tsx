@@ -799,13 +799,13 @@ export function Scene() {
     else if (movement.current.left) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
     else velocity.current.panX *= easeOutVal;
     
-    if (movement.current.up) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
-    else if (movement.current.down) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
+    if (movement.current.forward) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
+    else if (movement.current.backward) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
     else velocity.current.panY *= easeOutVal;
 
     const dSpeed = panSpeed * 0.05;
-    if (movement.current.forward) velocity.current.dolly = lerp(velocity.current.dolly, dSpeed, easeInVal);
-    else if (movement.current.backward) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
+    if (movement.current.up) velocity.current.dolly = lerp(velocity.current.dolly, dSpeed, easeInVal);
+    else if (movement.current.down) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
     else velocity.current.dolly *= easeOutVal;
     
     const totalPanX = velocity.current.panX;
@@ -825,7 +825,8 @@ export function Scene() {
 
         if (hasPan) {
           const dist = cam.position.distanceTo(target);
-          const panXVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0).multiplyScalar(-totalPanX * delta * dist);
+          // Panning right (positive panX) should move camera right (positive camera.right vector)
+          const panXVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0).multiplyScalar(totalPanX * delta * dist);
           const panYVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1).multiplyScalar(totalPanY * delta * dist);
           const pan = panXVec.add(panYVec);
           cam.position.add(pan);

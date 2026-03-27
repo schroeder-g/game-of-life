@@ -118,7 +118,7 @@ export function useKeyboardSelector(
         .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
       setCells(cells);
     }
-  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, setCells, setCell, controlsRef]);
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, setCells, setCell, camera, cameraTargetRef]);
 
   // Handle continuous deleting with delete key held
   useEffect(() => {
@@ -138,7 +138,7 @@ export function useKeyboardSelector(
     } else {
       deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
     }
-  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, deleteCells, controlsRef]);
+  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, deleteCells, camera, cameraTargetRef]);
 
   return { rotateOffsets };
 }
