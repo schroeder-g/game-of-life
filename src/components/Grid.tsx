@@ -9,89 +9,6 @@ import { Cells } from "./Cell";
 import { type CameraOrientation } from "../core/cameraUtils";
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
 
-// --- NEW SOURCE OF TRUTH AND HELPERS ---
-
-const ORIENTATION_TARGETS: Record<string, Record<string, THREE.Quaternion>> = {};
-
-const faceConfigs: Record<CameraFace, { lookAt: THREE.Vector3, up: THREE.Vector3 }> = {
-  front:  { lookAt: new THREE.Vector3(0, 0, 1),  up: new THREE.Vector3(0, 1, 0) },
-  back:   { lookAt: new THREE.Vector3(0, 0, -1), up: new THREE.Vector3(0, 1, 0) },
-  top:    { lookAt: new THREE.Vector3(0, 1, 0),  up: new THREE.Vector3(0, 0, -1) },
-  bottom: { lookAt: new THREE.Vector3(0, -1, 0), up: new THREE.Vector3(0, 0, 1) },
-  left:   { lookAt: new THREE.Vector3(-1, 0, 0), up: new THREE.Vector3(0, 1, 0) },
-  right:  { lookAt: new THREE.Vector3(1, 0, 0),  up: new THREE.Vector3(0, 1, 0) },
-};
-
-function generateOrientationTargets() {
-  const faces: CameraFace[] = ['front', 'back', 'top', 'bottom', 'left', 'right'];
-  const rotations: CameraRotation[] = [0, 90, 180, 270];
-
-  const matrix = new THREE.Matrix4();
-  const cameraPosition = new THREE.Vector3(0, 0, 5); // Arbitrary camera pos
-
-  for (const face of faces) {
-    ORIENTATION_TARGETS[face] = {};
-    for (const rotation of rotations) {
-      const { lookAt, up } = faceConfigs[face];
-      const rolledUp = up.clone().applyAxisAngle(lookAt, THREE.MathUtils.degToRad(rotation));
-      
-      matrix.lookAt(cameraPosition, lookAt, rolledUp);
-      // We want the cube's orientation relative to a fixed camera at (0,0,5) looking at origin.
-      // So we calculate the camera's orientation and invert it for the cube.
-      const cameraQuaternion = new THREE.Quaternion().setFromRotationMatrix(matrix);
-      ORIENTATION_TARGETS[face][rotation] = cameraQuaternion.invert();
-    }
-  }
-}
-generateOrientationTargets();
-
-export function getNextOrientation(
-  current: CameraOrientation,
-  key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p'
-): { face: CameraFace, rotation: CameraRotation } | null {
-  if (current.face === 'unknown' || current.rotation === 'unknown') return null;
-
-  const { face, rotation } = current;
-
-  // This defines the transitions between faces and rotations.
-  // E.g., from 'front, 0', pressing 'o' (pitch up) moves to 'top, 0'.
-  // Pressing 'i' (roll left) moves to 'front, 90'.
-  const transitions: Record<string, Partial<Record<typeof key, { face: CameraFace, rotation: CameraRotation }>>> = {
-    'front,0':    { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'front', rotation: 90}, p: {face: 'front', rotation: 270} },
-    'front,90':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'front', rotation: 180}, p: {face: 'front', rotation: 0} },
-    'front,180':  { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'front', rotation: 270}, p: {face: 'front', rotation: 90} },
-    'front,270':  { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'front', rotation: 0}, p: {face: 'front', rotation: 180} },
-    
-    'back,0':     { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'right', rotation: 0}, semicolon: {face: 'left', rotation: 0}, i: {face: 'back', rotation: 90}, p: {face: 'back', rotation: 270} },
-    'back,90':    { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'right', rotation: 90}, semicolon: {face: 'left', rotation: 90}, i: {face: 'back', rotation: 180}, p: {face: 'back', rotation: 0} },
-    'back,180':   { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'right', rotation: 180}, semicolon: {face: 'left', rotation: 180}, i: {face: 'back', rotation: 270}, p: {face: 'back', rotation: 90} },
-    'back,270':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'right', rotation: 270}, semicolon: {face: 'left', rotation: 270}, i: {face: 'back', rotation: 0}, p: {face: 'back', rotation: 180} },
-    
-    'top,0':      { o: {face: 'back', rotation: 180}, period: {face: 'front', rotation: 0}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'top', rotation: 90}, p: {face: 'top', rotation: 270} },
-    'top,90':     { o: {face: 'back', rotation: 270}, period: {face: 'front', rotation: 90}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'top', rotation: 180}, p: {face: 'top', rotation: 0} },
-    'top,180':    { o: {face: 'back', rotation: 0}, period: {face: 'front', rotation: 180}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'top', rotation: 270}, p: {face: 'top', rotation: 90} },
-    'top,270':    { o: {face: 'back', rotation: 90}, period: {face: 'front', rotation: 270}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'top', rotation: 0}, p: {face: 'top', rotation: 180} },
-    
-    'bottom,0':   { o: {face: 'front', rotation: 0}, period: {face: 'back', rotation: 180}, k: {face: 'left', rotation: 0}, semicolon: {face: 'right', rotation: 0}, i: {face: 'bottom', rotation: 90}, p: {face: 'bottom', rotation: 270} },
-    'bottom,90':  { o: {face: 'front', rotation: 90}, period: {face: 'back', rotation: 270}, k: {face: 'left', rotation: 90}, semicolon: {face: 'right', rotation: 90}, i: {face: 'bottom', rotation: 180}, p: {face: 'bottom', rotation: 0} },
-    'bottom,180': { o: {face: 'front', rotation: 180}, period: {face: 'back', rotation: 0}, k: {face: 'left', rotation: 180}, semicolon: {face: 'right', rotation: 180}, i: {face: 'bottom', rotation: 270}, p: {face: 'bottom', rotation: 90} },
-    'bottom,270': { o: {face: 'front', rotation: 270}, period: {face: 'back', rotation: 90}, k: {face: 'left', rotation: 270}, semicolon: {face: 'right', rotation: 270}, i: {face: 'bottom', rotation: 0}, p: {face: 'bottom', rotation: 180} },
-    
-    'left,0':     { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'back', rotation: 0}, semicolon: {face: 'front', rotation: 0}, i: {face: 'left', rotation: 90}, p: {face: 'left', rotation: 270} },
-    'left,90':    { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'back', rotation: 90}, semicolon: {face: 'front', rotation: 90}, i: {face: 'left', rotation: 180}, p: {face: 'left', rotation: 0} },
-    'left,180':   { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'back', rotation: 180}, semicolon: {face: 'front', rotation: 180}, i: {face: 'left', rotation: 270}, p: {face: 'left', rotation: 90} },
-    'left,270':   { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'back', rotation: 270}, semicolon: {face: 'front', rotation: 270}, i: {face: 'left', rotation: 0}, p: {face: 'left', rotation: 180} },
-    
-    'right,0':    { o: {face: 'top', rotation: 0}, period: {face: 'bottom', rotation: 0}, k: {face: 'front', rotation: 0}, semicolon: {face: 'back', rotation: 0}, i: {face: 'right', rotation: 90}, p: {face: 'right', rotation: 270} },
-    'right,90':   { o: {face: 'top', rotation: 90}, period: {face: 'bottom', rotation: 90}, k: {face: 'front', rotation: 90}, semicolon: {face: 'back', rotation: 90}, i: {face: 'right', rotation: 180}, p: {face: 'right', rotation: 0} },
-    'right,180':  { o: {face: 'top', rotation: 180}, period: {face: 'bottom', rotation: 180}, k: {face: 'front', rotation: 180}, semicolon: {face: 'back', rotation: 180}, i: {face: 'right', rotation: 270}, p: {face: 'right', rotation: 90} },
-    'right,270':  { o: {face: 'top', rotation: 270}, period: {face: 'bottom', rotation: 270}, k: {face: 'front', rotation: 270}, semicolon: {face: 'back', rotation: 270}, i: {face: 'right', rotation: 0}, p: {face: 'right', rotation: 180} },
-  };
-
-  const currentKey = `${face},${rotation}`;
-  return transitions[currentKey]?.[key] || null;
-}
-
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
 const _localUp = new THREE.Vector3();
@@ -642,9 +559,7 @@ export function Scene() {
   const {
     tick,
     setCommunity,
-    setSnapMessage,
     setCameraOrientation,
-    setIsAnimating, // ADD THIS
   } = actions;
   const {
     speed,
@@ -662,7 +577,6 @@ export function Scene() {
     easeIn,
     autoSquare,
     easeOut,
-    isAnimating, // ADD THIS
     cameraOrientation,
   } = state;
   const {
@@ -681,36 +595,8 @@ export function Scene() {
   const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
-  // ADD new slerp animation ref
-  const slerpAnimation = useRef({
-    active: false,
-    startQ: new THREE.Quaternion(),
-    endQ: new THREE.Quaternion(),
-    t: 0,
-    duration: 0.25, // seconds
-  });
-
-  const levelAnimation = useRef({
-    active: false,
-    startUp: new THREE.Vector3(),
-    endUp: new THREE.Vector3(),
-    t: 0,
-    duration: 0.25, // seconds
-  });
-
-  const cameraAnimation = useRef({
-    active: false,
-    startPos: new THREE.Vector3(),
-    endPos: new THREE.Vector3(),
-    startUp: new THREE.Vector3(),
-    endUp: new THREE.Vector3(),
-    t: 0,
-    duration: 0.25, // seconds
-  });
-
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
-  const wasPressingRotationKeyRef = useRef(false);
   const dragStartRef = useRef({
     active: false,
     azimuth: 0,
@@ -783,99 +669,7 @@ export function Scene() {
         controlsRef.current.target.set(0, 0, 0);
         controlsRef.current.update();
       },
-      squareUp: () => {
-        if (!controlsRef.current || !cubeRef.current) return;
-        if (slerpAnimation.current.active) return;
-
-        const cube = cubeRef.current;
-        let closestDist = Infinity;
-        let closestTarget: { face: CameraFace, rotation: CameraRotation } | null = null;
-        
-        Object.keys(ORIENTATION_TARGETS).forEach(face => {
-          Object.keys(ORIENTATION_TARGETS[face]).forEach(rotStr => {
-            const rotation = parseInt(rotStr, 10) as CameraRotation;
-            const targetQ = ORIENTATION_TARGETS[face][rotation];
-            const dist = cube.quaternion.angleTo(targetQ);
-            if (dist < closestDist) {
-              closestDist = dist;
-              closestTarget = { face: face as CameraFace, rotation };
-            }
-          });
-        });
-
-        if (closestTarget) {
-          cameraActionsRef.current?.animateCubeToOrientation(closestTarget);
-        }
-      },
-      animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
-        if (!cubeRef.current) return;
-        if (slerpAnimation.current.active) return;
-
-        const targetQ = ORIENTATION_TARGETS[orientation.face]?.[orientation.rotation];
-        if (!targetQ) return;
-        
-        if (cubeRef.current.quaternion.angleTo(targetQ) < 0.001) return;
-
-        slerpAnimation.current.startQ.copy(cubeRef.current.quaternion);
-        slerpAnimation.current.endQ.copy(targetQ);
-        slerpAnimation.current.t = 0;
-        slerpAnimation.current.active = true;
-        setIsAnimating(true);
-      },
-      animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => {
-        if (!cameraRef.current || !controlsRef.current) return;
-        if (slerpAnimation.current.active || levelAnimation.current.active || cameraAnimation.current.active) return;
-
-        const { face, rotation } = orientation;
-        const config = faceConfigs[face];
-        if (!config) return;
-
-        const distance = cameraRef.current.position.distanceTo(controlsRef.current.target);
-        const endPos = config.lookAt.clone().multiplyScalar(distance);
-        const endUp = config.up.clone().applyAxisAngle(config.lookAt, THREE.MathUtils.degToRad(rotation));
-
-        if (cameraRef.current.position.distanceTo(endPos) < 0.01 && cameraRef.current.up.distanceTo(endUp) < 0.01) {
-          return; // Already there
-        }
-
-        cameraAnimation.current.active = true;
-        cameraAnimation.current.t = 0;
-        cameraAnimation.current.startPos.copy(cameraRef.current.position);
-        cameraAnimation.current.endPos.copy(endPos);
-        cameraAnimation.current.startUp.copy(cameraRef.current.up);
-        cameraAnimation.current.endUp.copy(endUp);
-
-        setIsAnimating(true); // Disable OrbitControls during animation
-      },
-      levelCamera: () => {
-        if (!cameraRef.current || !controlsRef.current) return;
-        if (levelAnimation.current.active || slerpAnimation.current.active) return;
-
-        const camera = cameraRef.current;
-        const controls = controlsRef.current;
-
-        const lookDir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
-
-        // Don't level if looking straight up or down (at the poles)
-        if (Math.abs(lookDir.y) > 0.999) {
-          return;
-        }
-
-        // The target 'up' vector is perpendicular to the look direction and lies in the Y-plane.
-        const right = new THREE.Vector3(0, 1, 0).cross(lookDir).normalize();
-        const endUp = lookDir.cross(right).normalize();
-
-        if (camera.up.distanceTo(endUp) < 0.001) {
-          return; // Already level
-        }
-
-        levelAnimation.current.active = true;
-        levelAnimation.current.t = 0;
-        levelAnimation.current.startUp.copy(camera.up);
-        levelAnimation.current.endUp.copy(endUp);
-
-        setIsAnimating(true); // Disables OrbitControls during animation
-      },
+      squareUp: () => {},
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
@@ -997,7 +791,6 @@ export function Scene() {
     cameraActionsRef,
     gridRef,
     cubeRef,
-    setSnapMessage,
     cameraRef,
     controlsRef,
     gridSize,
@@ -1005,70 +798,8 @@ export function Scene() {
     setCommunity,
     setSelectorPos,
     setCustomBrush,
-    setIsAnimating, // ADD THIS
   ]);
   useFrame((state, delta) => {
-    // Slerp animation is the highest priority. When it's active, do nothing else.
-    if (slerpAnimation.current.active) {
-      if (!cubeRef.current) return;
-
-      slerpAnimation.current.t += delta / slerpAnimation.current.duration;
-      
-      if (slerpAnimation.current.t >= 1) {
-        cubeRef.current.quaternion.copy(slerpAnimation.current.endQ);
-        slerpAnimation.current.active = false;
-        setIsAnimating(false);
-      } else {
-        const easedT = 1 - Math.pow(1 - slerpAnimation.current.t, 3); // easeOutCubic
-        cubeRef.current.quaternion.copy(slerpAnimation.current.startQ).slerp(slerpAnimation.current.endQ, easedT);
-      }
-      return; // Skip all other physics updates
-    }
-
-    if (levelAnimation.current.active) {
-      if (!cameraRef.current || !controlsRef.current) return;
-
-      levelAnimation.current.t += delta / levelAnimation.current.duration;
-      const camera = cameraRef.current;
-      const controls = controlsRef.current;
-
-      if (levelAnimation.current.t >= 1) {
-        camera.up.copy(levelAnimation.current.endUp);
-        levelAnimation.current.active = false;
-        setIsAnimating(false);
-      } else {
-        const easedT = 1 - Math.pow(1 - levelAnimation.current.t, 3); // easeOutCubic
-        camera.up.lerpVectors(levelAnimation.current.startUp, levelAnimation.current.endUp, easedT).normalize();
-      }
-
-      camera.lookAt(controls.target);
-      controls.update();
-      return;
-    }
-    
-    if (cameraAnimation.current.active) {
-      if (!cameraRef.current || !controlsRef.current) return;
-
-      cameraAnimation.current.t += delta / cameraAnimation.current.duration;
-      const camera = cameraRef.current;
-      const controls = controlsRef.current;
-
-      if (cameraAnimation.current.t >= 1) {
-        camera.position.copy(cameraAnimation.current.endPos);
-        camera.up.copy(cameraAnimation.current.endUp);
-        cameraAnimation.current.active = false;
-        setIsAnimating(false);
-      } else {
-        const t = 1 - Math.pow(1 - cameraAnimation.current.t, 3); // easeOutCubic
-        camera.position.lerpVectors(cameraAnimation.current.startPos, cameraAnimation.current.endPos, t);
-        camera.up.lerpVectors(cameraAnimation.current.startUp, cameraAnimation.current.endUp, t).normalize();
-      }
-
-      camera.lookAt(controls.target);
-      controls.update();
-      return;
-    }
-
     // --- Physics Update (only runs when not slerping) ---
     const { lerp } = THREE.MathUtils;
     const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
@@ -1076,28 +807,6 @@ export function Scene() {
     
     // --- Calculate All Velocities ---
     
-    // Rotation velocities
-    const rotSpeed = rotationSpeed * 0.0004;
-    const rSpeed = rollSpeed * 0.0004;
-    
-    const pitchSpeed = rotSpeed * (invertPitch ? -1 : 1);
-    if (movement.current.rotateO) velocity.current.rotateO = lerp(velocity.current.rotateO, pitchSpeed, easeInVal);
-    else velocity.current.rotateO *= easeOutVal;
-    if (movement.current.rotatePeriod) velocity.current.rotatePeriod = lerp(velocity.current.rotatePeriod, -pitchSpeed, easeInVal);
-    else velocity.current.rotatePeriod *= easeOutVal;
-
-    const yawSpeed = rotSpeed * (invertYaw ? -1 : 1);
-    if (movement.current.rotateK) velocity.current.rotateK = lerp(velocity.current.rotateK, -yawSpeed, easeInVal);
-    else velocity.current.rotateK *= easeOutVal;
-    if (movement.current.rotateSemicolon) velocity.current.rotateSemicolon = lerp(velocity.current.rotateSemicolon, yawSpeed, easeInVal);
-    else velocity.current.rotateSemicolon *= easeOutVal;
-    
-    const rollSpeedVal = rSpeed * (invertRoll ? -1 : 1);
-    if (movement.current.rotateI) velocity.current.rotateI = lerp(velocity.current.rotateI, -rollSpeedVal, easeInVal);
-    else velocity.current.rotateI *= easeOutVal;
-    if (movement.current.rotateP) velocity.current.rotateP = lerp(velocity.current.rotateP, rollSpeedVal, easeInVal);
-    else velocity.current.rotateP *= easeOutVal;
-
     // Pan/Dolly velocities for View Mode
     const pSpeed = panSpeed * 0.05;
     if (movement.current.right) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
@@ -1113,10 +822,6 @@ export function Scene() {
     else if (movement.current.backward) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
     else velocity.current.dolly *= easeOutVal;
     
-    const totalPitch = velocity.current.rotateO + velocity.current.rotatePeriod;
-    const totalYaw = velocity.current.rotateK + velocity.current.rotateSemicolon;
-    const totalRoll = velocity.current.rotateI + velocity.current.rotateP;
-    
     const totalPanX = velocity.current.panX;
     const totalPanY = velocity.current.panY;
     const totalDolly = velocity.current.dolly;
@@ -1127,19 +832,6 @@ export function Scene() {
       if (controlsRef.current && cameraRef.current) {
         const controls = controlsRef.current;
         const cam = cameraRef.current;
-
-        // Apply Rotations
-        const rotMultiplier = 2.5; // Make keyboard rotation feel responsive
-        if (Math.abs(totalYaw) > 1e-6) {
-          controls.setAzimuthalAngle(controls.getAzimuthalAngle() + totalYaw * rotMultiplier);
-        }
-        if (Math.abs(totalPitch) > 1e-6) {
-          controls.setPolarAngle(controls.getPolarAngle() - totalPitch * rotMultiplier);
-        }
-        if (Math.abs(totalRoll) > 1e-6) {
-          const lookDir = new THREE.Vector3().subVectors(controls.target, cam.position).normalize();
-          cam.up.applyAxisAngle(lookDir, totalRoll);
-        }
 
         // Apply Pans & Dolly
         const hasPan = Math.abs(totalPanX) > 1e-7 || Math.abs(totalPanY) > 1e-7;
@@ -1154,22 +846,9 @@ export function Scene() {
           controls.dollyTo(controls.getDistance() * (1 - totalDolly * delta));
         }
         
-        const needsUpdate = Math.abs(totalYaw) > 1e-6 || Math.abs(totalPitch) > 1e-6 || Math.abs(totalRoll) > 1e-6 || hasPan || hasDolly;
+        const needsUpdate = hasPan || hasDolly;
         if (needsUpdate) {
           controls.update();
-        }
-      }
-    } else if (!autoSquare) {
-      // EDIT MODE: Continuous cube rotation
-      if (cameraRef.current && cubeRef.current) {
-        const cam = cameraRef.current;
-        const cube = cubeRef.current;
-        if (Math.abs(totalPitch) > 1e-6) cube.rotateOnWorldAxis(cam.right, totalPitch);
-        if (Math.abs(totalYaw) > 1e-6) cube.rotateOnWorldAxis(cam.up, totalYaw);
-        if (Math.abs(totalRoll) > 1e-6) {
-          // Use the camera's forward vector for roll
-          const forward = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2);
-          cube.rotateOnWorldAxis(forward, totalRoll);
         }
       }
     }
@@ -1249,7 +928,7 @@ export function Scene() {
         makeDefault
         enableDamping={!autoSquare}
         dampingFactor={0.05}
-        enabled={!isAnimating} // UPDATE THIS
+        enabled={true}
         maxDistance={maxDistance}
         onStart={() => {
           if (controlsRef.current) {
@@ -1261,7 +940,6 @@ export function Scene() {
         }}
         onEnd={() => {
           if (autoSquare) {
-            cameraActionsRef.current?.levelCamera();
             cameraActionsRef.current?.squareUp();
           }
         }}

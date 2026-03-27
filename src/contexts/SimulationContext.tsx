@@ -65,10 +65,8 @@ export interface SimulationState {
   invertRoll: boolean;
   easeIn: number;
   easeOut: number;
-  snapMessage: string;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
-  isAnimating: boolean; // ADD THIS
   autoSquare: boolean;
   userName?: string;
   buildInfo: {
@@ -101,11 +99,9 @@ export interface SimulationActions {
   setInvertRoll: (val: boolean) => void;
   setEaseIn: (val: number) => void;
   setEaseOut: (val: number) => void;
-  setSnapMessage: (message: string) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setAutoSquare: (val: boolean | ((prev: boolean) => boolean)) => void;
   setUserName: (name: string) => void;
-  setIsAnimating: (val: boolean | ((prev: boolean) => boolean)) => void;
 
   playStop: () => void;
   step: () => void;
@@ -129,9 +125,6 @@ export interface SimulationActions {
   fitDisplay: () => void;
   recenter: () => void;
   squareUp: () => void;
-  levelCamera: () => void;
-  animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
-  animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
 }
 
 export type AppEvents = {
@@ -146,9 +139,6 @@ export interface SimulationMeta {
     fitDisplay: () => void;
     recenter: () => void;
     squareUp: () => void;
-    levelCamera: () => void;
-    animateCubeToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
-    animateCameraToOrientation: (orientation: { face: CameraFace, rotation: CameraRotation }) => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
@@ -185,8 +175,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     rotateDown: false,
     rollLeft: false,
     rollRight: false,
-    rotateI: false,
-    rotateP: false,
     space: false,
     delete: false,
   });
@@ -196,12 +184,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     dolly: 0,
     rotateX: 0,
     rotateY: 0,
-    rotateO: 0,
-    rotatePeriod: 0,
-    rotateK: 0,
-    rotateSemicolon: 0,
-    rotateI: 0,
-    rotateP: 0,
     roll: 0,
   });
   const isFirstLoadRef = useRef(true);
@@ -222,10 +204,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
     [],
   );
-  const [snapMessage, setSnapMessage] = useState("");
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false); // ADD THIS
   const [autoSquare, setAutoSquare] = useState(false);
   const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
 
@@ -647,7 +627,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const value: SimulationContextValue = {
     state: {
       cameraOrientation,
-      snapMessage,
       speed,
       density,
       cellMargin,
@@ -675,7 +654,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       rollSpeed,
       autoSquare,
       isAnimatingInit,
-      isAnimating, // ADD THIS
+      isAnimating: false, // ADD THIS
       userName,
       buildInfo,
     },
@@ -691,7 +670,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setBirthMargin,
       setCommunity,
       setRotationMode: handleSetRotationMode,
-      setSnapMessage,
       setCameraOrientation,
       setPanSpeed,
       setRotationSpeed,
@@ -703,7 +681,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setRollSpeed,
       setAutoSquare,
       setUserName,
-      setIsAnimating,
+      setIsAnimating: () => {},
       playStop,
       step,
       stepBackward,
@@ -719,12 +697,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setCells,
       deleteCells,
       applyCells,
-      animateCubeToOrientation,
-      animateCameraToOrientation,
       fitDisplay,
       recenter,
       squareUp,
-      levelCamera,
     },
     meta: {
       gridRef,
