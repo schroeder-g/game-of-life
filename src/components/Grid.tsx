@@ -589,7 +589,7 @@ export function Scene() {
   const lastTick = useRef(0);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
 
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
@@ -623,16 +623,17 @@ export function Scene() {
       isDragging.current = false;
     };
 
-    window.addEventListener('pointerdown', handlePointerDown);
+    const canvas = gl.domElement;
+    canvas.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
     
     return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
+      canvas.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [rotationSpeed, invertYaw, invertPitch, velocity]);
+  }, [gl, rotationSpeed, invertYaw, invertPitch, velocity]);
 
   const {
     meta: { cameraActionsRef },
@@ -959,22 +960,26 @@ export function Scene() {
       }
     } else {
       // EDIT MODE: Manipulate the cube
-      if (cubeRef.current) {
+      if (cubeRef.current && cameraRef.current) {
         const cube = cubeRef.current;
+        const cam = cameraRef.current;
         const hasRot = Math.abs(totalRotatePitch) > 1e-7 || Math.abs(totalRotateYaw) > 1e-7 || Math.abs(totalRotateRoll) > 1e-7;
         if (hasRot) {
-          const { face, rotation } = cameraOrientation;
-          if (face !== 'unknown' && rotation !== 'unknown') {
-            const pitchAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'o');
-            const yawAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'k');
-            const rollAxis = getExplicitRotationAxis(face as CameraFace, rotation as CameraRotation, 'i');
+          const pitchSpeed = totalRotatePitch * delta;
+          const yawSpeed = totalRotateYaw * delta;
+          const rollSpeedVal = totalRotateRoll * delta;
 
-            const qPitch = new THREE.Quaternion().setFromAxisAngle(pitchAxis, totalRotatePitch * delta);
-            const qYaw = new THREE.Quaternion().setFromAxisAngle(yawAxis, totalRotateYaw * delta);
-            const qRoll = new THREE.Quaternion().setFromAxisAngle(rollAxis, totalRotateRoll * delta);
+          // Use the EXACT same screen-aligned axes as View Mode
+          const axisPitch = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0);
+          const axisYaw = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1);
+          const axisRoll = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2);
 
-            cube.quaternion.multiply(qPitch).multiply(qYaw).multiply(qRoll);
-          }
+          // Rotate the cube around these world axes by inverted speeds to match camera orbit feel
+          const qPitch = new THREE.Quaternion().setFromAxisAngle(axisPitch, -pitchSpeed);
+          const qYaw = new THREE.Quaternion().setFromAxisAngle(axisYaw, -yawSpeed);
+          const qRoll = new THREE.Quaternion().setFromAxisAngle(axisRoll, -rollSpeedVal);
+
+          cube.quaternion.premultiply(qPitch).premultiply(qYaw).premultiply(qRoll);
         }
       }
     }
