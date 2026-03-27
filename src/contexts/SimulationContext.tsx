@@ -599,18 +599,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [cameraActionsRef],
   );
 
-  const animateCubeToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
-    cameraActionsRef.current?.animateCubeToOrientation(orientation);
-  }, []);
-
-  const animateCameraToOrientation = useCallback((orientation: { face: CameraFace, rotation: CameraRotation }) => {
-    cameraActionsRef.current?.animateCameraToOrientation(orientation);
-  }, []);
-
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
   const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
-  const levelCamera = useCallback(() => cameraActionsRef.current?.levelCamera(), []);
 
   useEffect(() => {
     // When auto-square is enabled, immediately level the camera.
@@ -618,11 +609,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       // Use a small timeout to ensure the action runs after other state changes
       // have settled, particularly if toggled quickly with other actions.
       setTimeout(() => {
-        levelCamera();
         squareUp();
       }, 50);
     }
-  }, [autoSquare, levelCamera, squareUp]);
+  }, [autoSquare, squareUp]);
 
   const value: SimulationContextValue = {
     state: {
