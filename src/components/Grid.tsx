@@ -595,6 +595,7 @@ export function Scene() {
   const wasRotating = useRef(false);
   const isDragging = useRef(false);
   const lastMouse = useRef({ x: 0, y: 0 });
+  const mouseMovement = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
@@ -609,16 +610,10 @@ export function Scene() {
       const dx = e.clientX - lastMouse.current.x;
       const dy = e.clientY - lastMouse.current.y;
       
-      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
         wasRotating.current = true;
-        
-        // Apply impulses to rotation velocity
-        const sens = rotationSpeed * 0.002;
-        const invY = invertYaw ? -1 : 1;
-        const invP = invertPitch ? -1 : 1;
-        
-        velocity.current.rotateYaw += dx * sens * invY;
-        velocity.current.rotatePitch += dy * sens * invP;
+        mouseMovement.current.x += dx;
+        mouseMovement.current.y += dy;
       }
       
       lastMouse.current = { x: e.clientX, y: e.clientY };
@@ -836,7 +831,14 @@ export function Scene() {
     const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
     
     // --- Calculate All Velocities ---
-    
+    const mDX = mouseMovement.current.x;
+    const mDY = mouseMovement.current.y;
+    mouseMovement.current.x = 0;
+    mouseMovement.current.y = 0;
+
+    const invY = invertYaw ? -1 : 1;
+    const invP = invertPitch ? -1 : 1;
+
     // Pan/Dolly velocities for View Mode
     const pSpeed = panSpeed * 0.05;
     if (movement.current.right) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
@@ -856,17 +858,38 @@ export function Scene() {
     const rSpeed = rotationSpeed * 0.05;
     const rlSpeed = rollSpeed * 0.05;
 
-    if (movement.current.rotateO) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, rSpeed, easeInVal);
-    else if (movement.current.rotatePeriod) velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, -rSpeed, easeInVal);
-    else if (!isDragging.current) velocity.current.rotatePitch *= easeOutVal;
+    // Pitch
+    if (movement.current.rotateO) {
+      velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, rSpeed, easeInVal);
+    } else if (movement.current.rotatePeriod) {
+      velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, -rSpeed, easeInVal);
+    } else if (isDragging.current) {
+      const mouseTargetPitch = (mDY / delta) * rotationSpeed * 0.0001;
+      velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, mouseTargetPitch * invP, easeInVal);
+    } else {
+      velocity.current.rotatePitch *= easeOutVal;
+    }
 
-    if (movement.current.rotateK) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, rSpeed, easeInVal);
-    else if (movement.current.rotateSemicolon) velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, -rSpeed, easeInVal);
-    else if (!isDragging.current) velocity.current.rotateYaw *= easeOutVal;
+    // Yaw
+    if (movement.current.rotateK) {
+      velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, rSpeed, easeInVal);
+    } else if (movement.current.rotateSemicolon) {
+      velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, -rSpeed, easeInVal);
+    } else if (isDragging.current) {
+      const mouseTargetYaw = (mDX / delta) * rotationSpeed * 0.0001;
+      velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, mouseTargetYaw * invY, easeInVal);
+    } else {
+      velocity.current.rotateYaw *= easeOutVal;
+    }
 
-    if (movement.current.rotateI) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, rlSpeed, easeInVal);
-    else if (movement.current.rotateP) velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
-    else if (!isDragging.current) velocity.current.rotateRoll *= easeOutVal;
+    // Roll
+    if (movement.current.rotateI) {
+      velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, rlSpeed, easeInVal);
+    } else if (movement.current.rotateP) {
+      velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
+    } else if (!isDragging.current) {
+      velocity.current.rotateRoll *= easeOutVal;
+    }
     
     const totalPanX = velocity.current.panX;
     const totalPanY = velocity.current.panY;

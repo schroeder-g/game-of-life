@@ -231,12 +231,26 @@ export function useAppShortcuts() {
       const code = e.code;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
 
-      // Key up matters for continuous movement in View mode OR Edit mode (if auto-square is off)
-      const isContinuousAllowed = rotationMode || (isRotationCode && !isAnimatingInit);
-      if (!isContinuousAllowed) return;
+      let rotKey: string = key;
+      if (isRotationCode) {
+        rotKey = code === "Period" ? "period"
+          : code === "Semicolon" ? "semicolon"
+          : code.replace("Key", "").toLowerCase();
+
+        // Handle inversion exactly as in handleKeyDown
+        if (invertPitch) {
+          if (rotKey === 'o') rotKey = 'period'; else if (rotKey === 'period') rotKey = 'o';
+        }
+        if (invertYaw) {
+          if (rotKey === 'k') rotKey = 'semicolon'; else if (rotKey === 'semicolon') rotKey = 'k';
+        }
+        if (invertRoll) {
+          if (rotKey === 'i') rotKey = 'p'; else if (rotKey === 'p') rotKey = 'i';
+        }
+      }
 
       let handled = true;
-      switch (key) {
+      switch (rotKey) {
         case "w": movement.current.forward = false; break;
         case "x": movement.current.backward = false; break;
         case "a": movement.current.left = false; break;
@@ -257,10 +271,10 @@ export function useAppShortcuts() {
         case "arrowright":
           movement.current.right = false;
           break;
-        case ";": movement.current.rotateSemicolon = false; break;
+        case "semicolon": movement.current.rotateSemicolon = false; break;
         case "k": movement.current.rotateK = false; break;
         case "o": movement.current.rotateO = false; break;
-        case ".": movement.current.rotatePeriod = false; break;
+        case "period": movement.current.rotatePeriod = false; break;
         case "i": movement.current.rotateI = false; break;
         case "p": movement.current.rotateP = false; break;
         default: handled = false;
@@ -268,11 +282,20 @@ export function useAppShortcuts() {
       if (handled) e.preventDefault();
     };
 
+    const handleBlur = () => {
+      // Reset all movement flags to prevent sticking
+      Object.keys(movement.current).forEach(k => {
+        movement.current[k] = false;
+      });
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [
     running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
