@@ -9,6 +9,7 @@ export interface BrushState {
   showProjectionGuides: boolean;
   selectorPos: [number, number, number] | null;
   brushRotationVersion: number;
+  shapeSelectionVersion: number;
   brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
   customOffsets: [number, number, number][];
   paintMode: 1 | 0 | -1; // 1: Activate, 0: Idle, -1: Clear
@@ -50,6 +51,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
     [number, number, number] | null
   >(null);
   const [brushRotationVersion, setBrushRotationVersion] = useState<number>(0);
+  const [shapeSelectionVersion, setShapeSelectionVersion] = useState<number>(0);
   const [customOffsets, setCustomOffsets] = useState<[number, number, number][]>([]);
   const [paintMode, setPaintMode] = useState<1 | 0 | -1>(0); // 1: Toggle, 0: Idle, -1: Clear
   const brushQuaternion = useRef(new THREE.Quaternion());
@@ -69,12 +71,14 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       showProjectionGuides,
       selectorPos,
       brushRotationVersion,
+      shapeSelectionVersion,
       brushQuaternion,
       customOffsets,
       paintMode,
     },
     actions: {
       setSelectedShape: (shape: ShapeType) => {
+        setShapeSelectionVersion(v => v + 1);
         setSelectedShape(shape);
         setShapeSize((prev) => {
           if (shape !== "Cube" && shape !== "None" && shape !== "Selected Community" && prev === 1) {

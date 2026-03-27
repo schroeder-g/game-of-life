@@ -593,37 +593,63 @@ export function Scene() {
     brushStateRef.current = brushState;
   }, [brushState]);
 
-  // Align 2D shapes to face camera when selected
-  const prevShapeRef = useRef(brushState.selectedShape);
+  // Align 2D shapes to face camera when selected or re-selected
+  const prevSelectionVersionRef = useRef(brushState.shapeSelectionVersion);
   useEffect(() => {
-    if (brushState.selectedShape !== prevShapeRef.current) {
-      if (rotationMode && ["Square", "Circle", "Triangle"].includes(brushState.selectedShape)) {
-        if (cameraRef.current) {
+    if (brushState.shapeSelectionVersion !== prevSelectionVersionRef.current) {
+      if (["Square", "Circle", "Triangle"].includes(brushState.selectedShape)) {
+        if (cameraRef.current && cubeRef.current) {
           const cam = cameraRef.current;
           const target = cameraTargetRef.current;
           
-          const pos = cam.position.clone().sub(target);
-          const dist = pos.length();
-          const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
+          const posWorld = cam.position.clone().sub(target);
+          const cubeInvQuat = cubeRef.current.quaternion.clone().invert();
+          const posLocal = posWorld.clone().applyQuaternion(cubeInvQuat);
           
-          let lookDir = new THREE.Vector3();
+          const ax = Math.abs(posLocal.x), ay = Math.abs(posLocal.y), az = Math.abs(posLocal.z);
+          
+          let lookDirLocal = new THREE.Vector3();
           if (az >= ax && az >= ay) {
-            lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
+            lookDirLocal.set(0, 0, posLocal.z > 0 ? -1 : 1);
           } else if (ax >= ay && ax >= az) {
-            lookDir.set(pos.x > 0 ? -1 : 1, 0, 0);
+            lookDirLocal.set(posLocal.x > 0 ? -1 : 1, 0, 0);
           } else {
-            lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
+            lookDirLocal.set(0, posLocal.y > 0 ? -1 : 1, 0);
           }
 
-          // We want the brush's +Y (normal) to face -lookDir.
-          const brushNormal = lookDir.clone().multiplyScalar(-1);
-          const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), brushNormal);
-          brushQuaternion.current.copy(quat);
+          const currentUpWorld = cam.up.clone();
+          const currentUpLocal = currentUpWorld.applyQuaternion(cubeInvQuat);
+
+          let idealUpLocal = new THREE.Vector3(0, 1, 0);
+          const candidates: THREE.Vector3[] = [];
+          if (lookDirLocal.x !== 0) {
+            candidates.push(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+          } else if (lookDirLocal.y !== 0) {
+            candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+          } else {
+            candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0));
+          }
+          let maxDot = -Infinity;
+          for (const cand of candidates) {
+            const d = currentUpLocal.dot(cand);
+            if (d > maxDot) { maxDot = d; idealUpLocal.copy(cand); }
+          }
+
+          const rightLocal = lookDirLocal.clone().cross(idealUpLocal).normalize();
+          const localX = rightLocal;
+          const localY = lookDirLocal.clone().multiplyScalar(-1);
+          const localZ = idealUpLocal.clone().multiplyScalar(-1);
+          
+          const mat = new THREE.Matrix4().makeBasis(localX, localY, localZ);
+          brushQuaternion.current.setFromRotationMatrix(mat);
+
+          const { incrementBrushRotationVersion } = (window as any).brushActions || {};
+          if (incrementBrushRotationVersion) incrementBrushRotationVersion();
         }
       }
     }
-    prevShapeRef.current = brushState.selectedShape;
-  }, [brushState.selectedShape, rotationMode, brushQuaternion]);
+    prevSelectionVersionRef.current = brushState.shapeSelectionVersion;
+  }, [brushState.selectedShape, brushState.shapeSelectionVersion, brushQuaternion]);
 
   const fitAnimRef = useRef<{
     startTime: number;
