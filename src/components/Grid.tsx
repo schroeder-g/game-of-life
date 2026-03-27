@@ -656,7 +656,6 @@ export function Scene() {
         cameraTargetRef.current.set(0, 0, 0);
         cameraRef.current.lookAt(cameraTargetRef.current);
       },
-      squareUp: () => {},
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
         const { selectorPos, selectedShape, shapeSize, isHollow, customOffsets, brushQuaternion } = brushStateRef.current;
         const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);

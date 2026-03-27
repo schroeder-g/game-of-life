@@ -125,7 +125,6 @@ export interface SimulationActions {
   // Camera Actions
   fitDisplay: () => void;
   recenter: () => void;
-  squareUp: () => void;
 }
 
 export type AppEvents = {
@@ -140,7 +139,6 @@ export interface SimulationMeta {
   cameraActionsRef: React.MutableRefObject<{
     fitDisplay: () => void;
     recenter: () => void;
-    squareUp: () => void;
     rotateBrush: (axis: THREE.Vector3, angle: number) => void;
     birthBrushCells: () => void;
     clearBrushCells: () => void;
@@ -592,9 +590,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         const next = typeof mode === "function" ? mode(prev) : mode;
         if (next === false) {
           setRunning(false);
-          // Snap, center, and fit the cube before entering edit mode.
-          // Trigger squareUp, which will then animate to the closest orientation.
-          cameraActionsRef.current?.squareUp();
         }
         return next;
       });
@@ -604,7 +599,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   const fitDisplay = useCallback(() => cameraActionsRef.current?.fitDisplay(), []);
   const recenter = useCallback(() => cameraActionsRef.current?.recenter(), []);
-  const squareUp = useCallback(() => cameraActionsRef.current?.squareUp(), []);
 
   useEffect(() => {
     // When auto-square is enabled, immediately level the camera.
@@ -612,10 +606,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       // Use a small timeout to ensure the action runs after other state changes
       // have settled, particularly if toggled quickly with other actions.
       setTimeout(() => {
-        squareUp();
       }, 50);
     }
-  }, [autoSquare, squareUp]);
+  }, [autoSquare]);
 
   const value: SimulationContextValue = {
     state: {
@@ -692,7 +685,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       applyCells,
       fitDisplay,
       recenter,
-      squareUp,
     },
     meta: {
       gridRef,

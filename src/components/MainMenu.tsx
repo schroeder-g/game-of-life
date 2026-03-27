@@ -1314,7 +1314,7 @@ function BrushSelectorDropdown() {
 export function AppHeaderPanel() {
   const {
     state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, autoSquare, userName, buildInfo },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, squareUp, setAutoSquare, setCell },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setAutoSquare, setCell },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
@@ -1463,9 +1463,6 @@ export function AppHeaderPanel() {
         <button
           className={`glass-button ${autoSquare ? "primary active" : ""}`}
           onClick={() => {
-            if (!autoSquare) {
-              squareUp();
-            }
             setAutoSquare((prev) => !prev);
           }}
           aria-label="Square Up"
