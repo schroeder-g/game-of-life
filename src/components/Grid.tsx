@@ -589,6 +589,25 @@ export function Scene() {
     brushStateRef.current = brushState;
   }, [brushState]);
 
+  const fitAnimRef = useRef<{
+    startTime: number;
+    startPos: THREE.Vector3;
+    startTarget: THREE.Vector3;
+    targetDist: number;
+    duration: number;
+  } | null>(null);
+  const squareUpAnimRef = useRef<{
+    mode: 'view' | 'edit';
+    startTime: number;
+    startPos?: THREE.Vector3;
+    startQuat: THREE.Quaternion;
+    startUp?: THREE.Vector3;
+    startTarget?: THREE.Vector3;
+    startDist?: number;
+    targetPos?: THREE.Vector3;
+    targetQuat: THREE.Quaternion;
+    targetUp?: THREE.Vector3;
+  } | null>(null);
   const lastTick = useRef(0);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
@@ -667,6 +686,8 @@ export function Scene() {
     cameraActionsRef.current = {
       fitDisplay: () => {
         if (!cameraRef.current) return;
+        const cam = cameraRef.current;
+        const target = cameraTargetRef.current;
 
         // Stop all movement
         velocity.current.panX = 0;
@@ -676,31 +697,24 @@ export function Scene() {
         velocity.current.rotateYaw = 0;
         velocity.current.rotateRoll = 0;
 
-        // Center the target
-        cameraTargetRef.current.set(0, 0, 0);
-        const target = cameraTargetRef.current;
         const size = gridRef.current.size;
-        const padding = 1.1; // 10% margin
-
-        // Sphere that encompasses the entire cube
+        const padding = 1.1; 
         const radius = (size / 2) * Math.sqrt(3);
-
-        const fov = cameraRef.current.fov;
-        const aspect = cameraRef.current.aspect;
-
+        const fov = cam.fov;
+        const aspect = cam.aspect;
         const tanFOV = Math.tan((Math.PI * fov) / 360);
         let distance = (radius * padding) / tanFOV;
-
         const hFov = 2 * Math.atan(tanFOV * aspect);
         const distanceH = (radius * padding) / Math.tan(hFov / 2);
-
         distance = Math.max(distance, distanceH);
 
-        const direction = new THREE.Vector3()
-          .subVectors(cameraRef.current.position, target)
-          .normalize();
-        cameraRef.current.position.copy(target).add(direction.multiplyScalar(distance));
-        cameraRef.current.lookAt(target);
+        fitAnimRef.current = {
+          startTime: performance.now() / 1000,
+          startPos: cam.position.clone(),
+          startTarget: target.clone(),
+          targetDist: distance,
+          duration: 1.0, 
+        };
       },
       recenter: () => {
         if (!cameraRef.current) return;
@@ -848,7 +862,39 @@ export function Scene() {
     setCustomBrush,
   ]);
   useFrame((threeState, delta) => {
-    // --- Physics Update (only runs when not slerping) ---
+    // --- 0. Smooth Fit Transition ---
+    if (fitAnimRef.current) {
+      const { startTime, startPos, startTarget, targetDist, duration } = fitAnimRef.current;
+      const elapsed = (performance.now() / 1000) - startTime;
+      const t = Math.min(elapsed / duration, 1.0);
+      
+      // "Ease-in only" transition (t*t)
+      const easeT = t * t;
+      
+      const cam = cameraRef.current || camera;
+      const target = cameraTargetRef.current;
+      
+      // Lerp target to (0,0,0)
+      target.lerpVectors(startTarget, new THREE.Vector3(0, 0, 0), easeT);
+      
+      // Calculate start direction and distance from original start
+      const startDir = new THREE.Vector3().subVectors(startPos, startTarget).normalize();
+      const startD = new THREE.Vector3().subVectors(startPos, startTarget).length();
+      
+      // Current distance is lerped between start distance and target fit distance
+      const currentD = THREE.MathUtils.lerp(startD, targetDist, easeT);
+      
+      // Set camera position along the same direction relative to current target
+      cam.position.copy(target).add(startDir.clone().multiplyScalar(currentD));
+      cam.lookAt(target);
+
+      if (t >= 1) {
+        fitAnimRef.current = null;
+      }
+      return; 
+    }
+
+    // --- Physics Update ---
     const { lerp } = THREE.MathUtils;
     const easeInVal = easeIn > 0.001 ? (1 - Math.exp(-3 * delta / easeIn)) : 1;
     const dampingVal = easeOut > 0.001 ? Math.exp(-3 * delta / easeOut) : 0;
@@ -1008,125 +1054,162 @@ export function Scene() {
 
     // --- Square-Up Smoothing ---
     if (squareUp) {
-      const hasInput = Object.values(movement.current).some(v => v === true) || isDragging.current;
-      if (!hasInput) {
-        const slerpFactor = 1 - Math.exp(-5 * delta);
-        if (rotationMode) {
-          // VIEW MODE: Center, Level, and Snap to Dominant Face
-          const cam = cameraRef.current;
-          const target = cameraTargetRef.current;
-          if (cam && target) {
-            // 1. Center the view (Slide camera and target so target is at 0,0,0)
-            if (target.length() > 0.01) {
-              const centerLerp = 1 - Math.exp(-3 * delta);
-              const offset = target.clone().multiplyScalar(-centerLerp);
-              cam.position.add(offset);
-              target.add(offset);
-            }
+      if (!fitAnimRef.current) {
+        const hasInput = Object.values(movement.current).some(v => v === true) || isDragging.current;
+        if (hasInput) {
+          squareUpAnimRef.current = null;
+          if (isSquaredUp) setIsSquaredUp(false);
+        } else {
+          if (rotationMode) {
+            // VIEW MODE: Center, Level, and Snap to Dominant Face
+            const cam = cameraRef.current || camera;
+            const target = cameraTargetRef.current;
+            if (cam && target) {
+              if (!isSquaredUp && !squareUpAnimRef.current) {
+                const pos = cam.position.clone().sub(target);
+                const dist = pos.length();
+                const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
+                
+                const idealPos = new THREE.Vector3();
+                let lookDir = new THREE.Vector3();
+                
+                if (az >= ax && az >= ay) {
+                  idealPos.set(0, 0, pos.z > 0 ? dist : -dist);
+                  lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
+                } else if (ax >= ay && ax >= az) {
+                  idealPos.set(pos.x > 0 ? dist : -dist, 0, 0);
+                  lookDir.set(pos.x > 0 ? -1 : 1, 0, 0);
+                } else {
+                  idealPos.set(0, pos.y > 0 ? dist : -dist, 0);
+                  lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
+                }
+                
+                // 3. Snap Up to nearest 90-deg increment (orthogonal to lookDir)
+                let idealUp = new THREE.Vector3(0, 1, 0);
+                const currentUp = cam.up.clone();
+                const candidates: THREE.Vector3[] = [];
+                if (lookDir.x !== 0) {
+                  candidates.push(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+                } else if (lookDir.y !== 0) {
+                  candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+                } else {
+                  candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0));
+                }
+                
+                let maxDot = -Infinity;
+                for (const cand of candidates) {
+                  const d = currentUp.dot(cand);
+                  if (d > maxDot) { maxDot = d; idealUp.copy(cand); }
+                }
 
-            // 2. Snap to Dominant Face
-            const pos = cam.position.clone().sub(target);
-            const dist = pos.length();
-            const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
-            
-            const idealPos = new THREE.Vector3();
-            let lookDir = new THREE.Vector3();
-            
-            if (az >= ax && az >= ay) {
-              idealPos.set(0, 0, pos.z > 0 ? dist : -dist);
-              lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
-            } else if (ax >= ay && ax >= az) {
-              idealPos.set(pos.x > 0 ? dist : -dist, 0, 0);
-              lookDir.set(pos.x > 0 ? -1 : 1, 0, 0);
-            } else {
-              idealPos.set(0, pos.y > 0 ? dist : -dist, 0);
-              lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
-            }
-            
-            // 3. Snap Up to nearest 90-deg increment (orthogonal to lookDir)
-            let idealUp = new THREE.Vector3(0, 1, 0);
-            const currentUp = cam.up.clone();
-            
-            // Candidate world axes for "Up"
-            const candidates: THREE.Vector3[] = [];
-            if (lookDir.x !== 0) {
-              candidates.push(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
-            } else if (lookDir.y !== 0) {
-              candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
-            } else {
-              candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0));
-            }
-            
-            let maxDot = -Infinity;
-            for (const cand of candidates) {
-              const d = currentUp.dot(cand);
-              if (d > maxDot) {
-                maxDot = d;
-                idealUp.copy(cand);
+                const targetPos = idealPos.clone(); // Relative to 0,0,0
+                const lookAtMat = new THREE.Matrix4().lookAt(targetPos, new THREE.Vector3(0, 0, 0), idealUp);
+                const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMat);
+
+                const distToTarget = cam.position.distanceTo(targetPos.clone().add(target));
+                const angleToTarget = cam.quaternion.angleTo(targetQuat);
+                
+                if (distToTarget < 0.01 && angleToTarget < 0.01 && target.length() < 0.01) {
+                  setIsSquaredUp(true);
+                } else {
+                  squareUpAnimRef.current = {
+                    mode: 'view',
+                    startTime: performance.now() / 1000,
+                    startPos: cam.position.clone(),
+                    startQuat: cam.quaternion.clone(),
+                    startUp: cam.up.clone(),
+                    startTarget: target.clone(),
+                    startDist: dist,
+                    targetPos,
+                    targetQuat,
+                    targetUp: idealUp,
+                  };
+                  setIsSquaredUp(false);
+                }
+              }
+
+              if (squareUpAnimRef.current && squareUpAnimRef.current.mode === 'view') {
+                const anim = squareUpAnimRef.current;
+                const elapsed = (performance.now() / 1000) - anim.startTime;
+                const duration = 1.0;
+                const t = Math.min(elapsed / duration, 1.0);
+                const easeT = t * t; // ease-in
+
+                target.lerpVectors(anim.startTarget!, new THREE.Vector3(0, 0, 0), easeT);
+                cam.position.lerpVectors(anim.startPos!, anim.targetPos!, easeT);
+                cam.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, easeT);
+                cam.up.lerpVectors(anim.startUp!, anim.targetUp!, easeT);
+                
+                // Preserve start distance exactly, avoiding chord cutting
+                const currentD = anim.startDist!;
+                const dir = cam.position.clone().sub(target).normalize();
+                cam.position.copy(target).add(dir.multiplyScalar(currentD));
+                
+                if (t >= 1) {
+                  setIsSquaredUp(true);
+                  squareUpAnimRef.current = null;
+                }
               }
             }
+          } else {
+            // EDIT MODE: Snap Cube to nearest axis-aligned orientation
+            const cube = cubeRef.current;
+            if (cube) {
+              if (!isSquaredUp && !squareUpAnimRef.current) {
+                const currentQ = cube.quaternion.clone();
+                const snapVec = (v: THREE.Vector3) => {
+                  const ax = Math.abs(v.x), ay = Math.abs(v.y), az = Math.abs(v.z);
+                  if (ax >= ay && ax >= az) return new THREE.Vector3(v.x > 0 ? 1 : -1, 0, 0);
+                  if (ay >= ax && ay >= az) return new THREE.Vector3(0, v.y > 0 ? 1 : -1, 0);
+                  return new THREE.Vector3(0, 0, v.z > 0 ? 1 : -1);
+                };
+                const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(currentQ);
+                const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(currentQ);
+                const targetX = snapVec(localX);
+                let targetY = snapVec(localY);
+                if (Math.abs(targetY.dot(targetX)) > 0.9) {
+                  const alternateY = new THREE.Vector3(0, 1, 0);
+                  if (Math.abs(alternateY.dot(targetX)) > 0.9) alternateY.set(0, 0, 1);
+                  targetY = alternateY;
+                }
+                const targetZ = new THREE.Vector3().crossVectors(targetX, targetY);
+                const targetMat = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
+                const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetMat);
+                const angleToTarget = cube.quaternion.angleTo(targetQuat);
+                
+                if (angleToTarget < 0.01) {
+                  setIsSquaredUp(true);
+                } else {
+                  squareUpAnimRef.current = {
+                    mode: 'edit',
+                    startTime: performance.now() / 1000,
+                    startQuat: cube.quaternion.clone(),
+                    targetQuat,
+                  };
+                  setIsSquaredUp(false);
+                }
+              }
 
-            const targetPos = idealPos.add(target);
-            const lookAtMat = new THREE.Matrix4().lookAt(cam.position, target, idealUp);
-            const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMat);
+              if (squareUpAnimRef.current && squareUpAnimRef.current.mode === 'edit') {
+                const anim = squareUpAnimRef.current;
+                const elapsed = (performance.now() / 1000) - anim.startTime;
+                const duration = 1.0;
+                const t = Math.min(elapsed / duration, 1.0);
+                const easeT = t * t; // ease-in
 
-            // Check if we've reached the target
-            const distToTarget = cam.position.distanceTo(targetPos);
-            const angleToTarget = cam.quaternion.angleTo(targetQuat);
-            const isTargetReached = distToTarget < 0.01 && angleToTarget < 0.01 && target.length() < 0.01;
-            
-            if (isTargetReached !== isSquaredUp) {
-              setIsSquaredUp(isTargetReached);
-            }
-
-            if (!isTargetReached) {
-              cam.position.lerp(targetPos, slerpFactor);
-              cam.quaternion.slerp(targetQuat, slerpFactor);
-              cam.up.lerp(idealUp, slerpFactor);
-            }
-          }
-        } else {
-          // EDIT MODE: Snap Cube to nearest axis-aligned orientation
-          const cube = cubeRef.current;
-          const cam = cameraRef.current;
-          if (cube && cam) {
-            const currentQ = cube.quaternion.clone();
-            const snapVec = (v: THREE.Vector3) => {
-              const ax = Math.abs(v.x), ay = Math.abs(v.y), az = Math.abs(v.z);
-              if (ax >= ay && ax >= az) return new THREE.Vector3(v.x > 0 ? 1 : -1, 0, 0);
-              if (ay >= ax && ay >= az) return new THREE.Vector3(0, v.y > 0 ? 1 : -1, 0);
-              return new THREE.Vector3(0, 0, v.z > 0 ? 1 : -1);
-            };
-
-            const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(currentQ);
-            const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(currentQ);
-            
-            const targetX = snapVec(localX);
-            let targetY = snapVec(localY);
-            if (Math.abs(targetY.dot(targetX)) > 0.9) {
-              // Should not happen for a valid rotation matrix, but just in case
-              const alternateY = new THREE.Vector3(0, 1, 0);
-              if (Math.abs(alternateY.dot(targetX)) > 0.9) alternateY.set(0, 0, 1);
-              targetY = alternateY;
-            }
-            const targetZ = new THREE.Vector3().crossVectors(targetX, targetY);
-            const targetMat = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
-            const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetMat);
-            
-            const angleToTarget = cube.quaternion.angleTo(targetQuat);
-            const isTargetReached = angleToTarget < 0.01;
-
-            if (isTargetReached !== isSquaredUp) {
-              setIsSquaredUp(isTargetReached);
-            }
-
-            if (!isTargetReached) {
-              cube.quaternion.slerp(targetQuat, slerpFactor);
+                cube.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, easeT);
+                
+                if (t >= 1) {
+                  setIsSquaredUp(true);
+                  squareUpAnimRef.current = null;
+                }
+              }
             }
           }
         }
       } else {
         if (isSquaredUp) setIsSquaredUp(false);
+        squareUpAnimRef.current = null;
       }
     }
   });
