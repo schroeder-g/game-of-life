@@ -45,8 +45,8 @@ function SimulationStats() {
 
 export default function App() {
   const {
-    state: { rotationMode, running },
-    actions: { setRotationMode, recenter, fitDisplay },
+    state: { rotationMode, running, squareUp },
+    actions: { setRotationMode, recenter, fitDisplay, setSquareUp },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -100,6 +100,7 @@ export default function App() {
           >
             ⌘ Shortcuts
           </button>
+
 
           <MainMenu />
         </aside>

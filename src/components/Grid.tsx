@@ -574,6 +574,7 @@ export function Scene() {
     invertRoll,
     easeIn,
     easeOut,
+    squareUp,
     cameraOrientation,
   } = state;
   const {
@@ -665,6 +666,16 @@ export function Scene() {
       fitDisplay: () => {
         if (!cameraRef.current) return;
 
+        // Stop all movement
+        velocity.current.panX = 0;
+        velocity.current.panY = 0;
+        velocity.current.dolly = 0;
+        velocity.current.rotatePitch = 0;
+        velocity.current.rotateYaw = 0;
+        velocity.current.rotateRoll = 0;
+
+        // Center the target
+        cameraTargetRef.current.set(0, 0, 0);
         const target = cameraTargetRef.current;
         const size = gridRef.current.size;
         const padding = 1.1; // 10% margin
@@ -691,6 +702,15 @@ export function Scene() {
       },
       recenter: () => {
         if (!cameraRef.current) return;
+
+        // Stop all movement
+        velocity.current.panX = 0;
+        velocity.current.panY = 0;
+        velocity.current.dolly = 0;
+        velocity.current.rotatePitch = 0;
+        velocity.current.rotateYaw = 0;
+        velocity.current.rotateRoll = 0;
+
         const offset = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), cameraTargetRef.current);
         cameraRef.current.position.add(offset);
         cameraTargetRef.current.set(0, 0, 0);
@@ -828,8 +848,8 @@ export function Scene() {
   useFrame((state, delta) => {
     // --- Physics Update (only runs when not slerping) ---
     const { lerp } = THREE.MathUtils;
-    const easeInVal = 1 - Math.exp(-2 * delta * (easeIn ?? 0.2));
-    const easeOutVal = 1 - Math.exp(-2 * delta * (easeOut ?? 0.5));
+    const easeInVal = easeIn > 0.001 ? (1 - Math.exp(-3 * delta / easeIn)) : 1;
+    const dampingVal = easeOut > 0.001 ? Math.exp(-3 * delta / easeOut) : 0;
     
     // --- Calculate All Velocities ---
     const mDX = mouseMovement.current.x;
@@ -844,16 +864,16 @@ export function Scene() {
     const pSpeed = panSpeed * 0.05;
     if (movement.current.right) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
     else if (movement.current.left) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
-    else velocity.current.panX *= easeOutVal;
+    else velocity.current.panX *= dampingVal;
     
     if (movement.current.forward) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
     else if (movement.current.backward) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
-    else velocity.current.panY *= easeOutVal;
+    else velocity.current.panY *= dampingVal;
 
     const dSpeed = panSpeed * 0.05;
     if (movement.current.up) velocity.current.dolly = lerp(velocity.current.dolly, dSpeed, easeInVal);
     else if (movement.current.down) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
-    else velocity.current.dolly *= easeOutVal;
+    else velocity.current.dolly *= dampingVal;
 
     // Rotation velocities
     const rSpeed = rotationSpeed * 0.05;
@@ -868,7 +888,7 @@ export function Scene() {
       const mouseTargetPitch = (mDY / delta) * rotationSpeed * 0.0001;
       velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, mouseTargetPitch * invP, easeInVal);
     } else {
-      velocity.current.rotatePitch *= easeOutVal;
+      velocity.current.rotatePitch *= dampingVal;
     }
 
     // Yaw
@@ -880,7 +900,7 @@ export function Scene() {
       const mouseTargetYaw = (mDX / delta) * rotationSpeed * 0.0001;
       velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, mouseTargetYaw * invY, easeInVal);
     } else {
-      velocity.current.rotateYaw *= easeOutVal;
+      velocity.current.rotateYaw *= dampingVal;
     }
 
     // Roll
@@ -889,7 +909,7 @@ export function Scene() {
     } else if (movement.current.rotateP) {
       velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
     } else if (!isDragging.current) {
-      velocity.current.rotateRoll *= easeOutVal;
+      velocity.current.rotateRoll *= dampingVal;
     }
     
     const totalPanX = velocity.current.panX;
@@ -980,6 +1000,106 @@ export function Scene() {
           const qRoll = new THREE.Quaternion().setFromAxisAngle(axisRoll, -rollSpeedVal);
 
           cube.quaternion.premultiply(qPitch).premultiply(qYaw).premultiply(qRoll);
+        }
+      }
+    }
+
+    // --- Square-Up Smoothing ---
+    if (squareUp) {
+      const hasInput = Object.values(movement.current).some(v => v === true) || isDragging.current;
+      if (!hasInput) {
+        const slerpFactor = 1 - Math.exp(-5 * delta);
+        if (rotationMode) {
+          // VIEW MODE: Center, Level, and Snap to Dominant Face
+          const cam = cameraRef.current;
+          const target = cameraTargetRef.current;
+          if (cam && target) {
+            // 1. Center the view (Slide camera and target so target is at 0,0,0)
+            if (target.length() > 0.01) {
+              const centerLerp = 1 - Math.exp(-3 * delta);
+              const offset = target.clone().multiplyScalar(-centerLerp);
+              cam.position.add(offset);
+              target.add(offset);
+            }
+
+            // 2. Snap to Dominant Face
+            const pos = cam.position.clone().sub(target);
+            const dist = pos.length();
+            const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
+            
+            const idealPos = new THREE.Vector3();
+            let lookDir = new THREE.Vector3();
+            
+            if (az >= ax && az >= ay) {
+              idealPos.set(0, 0, pos.z > 0 ? dist : -dist);
+              lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
+            } else if (ax >= ay && ax >= az) {
+              idealPos.set(pos.x > 0 ? dist : -dist, 0, 0);
+              lookDir.set(pos.x > 0 ? -1 : 1, 0, 0);
+            } else {
+              idealPos.set(0, pos.y > 0 ? dist : -dist, 0);
+              lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
+            }
+            
+            // 3. Snap Up to nearest 90-deg increment (orthogonal to lookDir)
+            let idealUp = new THREE.Vector3(0, 1, 0);
+            const currentUp = cam.up.clone();
+            
+            // Candidate world axes for "Up"
+            const candidates: THREE.Vector3[] = [];
+            if (lookDir.x !== 0) {
+              candidates.push(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+            } else if (lookDir.y !== 0) {
+              candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1));
+            } else {
+              candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0));
+            }
+            
+            let maxDot = -Infinity;
+            for (const cand of candidates) {
+              const d = currentUp.dot(cand);
+              if (d > maxDot) {
+                maxDot = d;
+                idealUp.copy(cand);
+              }
+            }
+
+            cam.position.lerp(idealPos.add(target), slerpFactor);
+            const lookAtMat = new THREE.Matrix4().lookAt(cam.position, target, idealUp);
+            const targetQuat = new THREE.Quaternion().setFromRotationMatrix(lookAtMat);
+            cam.quaternion.slerp(targetQuat, slerpFactor);
+            cam.up.lerp(idealUp, slerpFactor);
+          }
+        } else {
+          // EDIT MODE: Snap Cube to nearest axis-aligned orientation
+          const cube = cubeRef.current;
+          const cam = cameraRef.current;
+          if (cube && cam) {
+            const currentQ = cube.quaternion.clone();
+            const snapVec = (v: THREE.Vector3) => {
+              const ax = Math.abs(v.x), ay = Math.abs(v.y), az = Math.abs(v.z);
+              if (ax >= ay && ax >= az) return new THREE.Vector3(v.x > 0 ? 1 : -1, 0, 0);
+              if (ay >= ax && ay >= az) return new THREE.Vector3(0, v.y > 0 ? 1 : -1, 0);
+              return new THREE.Vector3(0, 0, v.z > 0 ? 1 : -1);
+            };
+
+            const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(currentQ);
+            const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(currentQ);
+            
+            const targetX = snapVec(localX);
+            let targetY = snapVec(localY);
+            if (Math.abs(targetY.dot(targetX)) > 0.9) {
+              // Should not happen for a valid rotation matrix, but just in case
+              const alternateY = new THREE.Vector3(0, 1, 0);
+              if (Math.abs(alternateY.dot(targetX)) > 0.9) alternateY.set(0, 0, 1);
+              targetY = alternateY;
+            }
+            const targetZ = new THREE.Vector3().crossVectors(targetX, targetY);
+            const targetMat = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
+            const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetMat);
+            
+            cube.quaternion.slerp(targetQuat, slerpFactor);
+          }
         }
       }
     }

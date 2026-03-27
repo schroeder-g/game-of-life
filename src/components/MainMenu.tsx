@@ -35,7 +35,20 @@ const RecenterIcon = () => (
   </svg>
 );
 
-// Removed SquareUpIcon
+const SquareUpOffIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l7 4v8l-7 4-7-4V6l7-4z" />
+    <path d="M12 12l7-4M12 12v10M12 12l-7-4" />
+  </svg>
+);
+
+const SquareUpOnIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="5" width="14" height="14" />
+    <rect x="8" y="8" width="8" height="8" strokeOpacity="0.4" />
+    <path d="M5 5l3 3m8 0l3-3m0 14l-3-3m-8 0l-3 3" />
+  </svg>
+);
 
 const PencilIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1307,8 +1320,8 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell, setSquareUp },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
@@ -1453,6 +1466,14 @@ export function AppHeaderPanel() {
           data-tooltip-bottom="Recenter (S)"
         >
           <RecenterIcon />
+        </button>
+
+        <button
+          className={`glass-button square-up-toggle ${squareUp ? 'active primary' : ''}`}
+          onClick={() => setSquareUp(!squareUp)}
+          title={`Square Up View (${squareUp ? 'ON' : 'OFF'})`}
+        >
+          {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
         </button>
         {/* Removed Auto-Square button */}
 

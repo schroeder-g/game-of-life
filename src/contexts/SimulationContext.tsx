@@ -36,6 +36,7 @@ const defaults = {
   invertRoll: 0,
   easeIn: 0.2,
   easeOut: 0.5,
+  squareUp: 0,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -66,6 +67,7 @@ export interface SimulationState {
   invertRoll: boolean;
   easeIn: number;
   easeOut: number;
+  squareUp: boolean;
   cameraOrientation: CameraOrientation;
   isAnimatingInit: boolean;
   userName?: string;
@@ -99,6 +101,7 @@ export interface SimulationActions {
   setInvertRoll: (val: boolean) => void;
   setEaseIn: (val: number) => void;
   setEaseOut: (val: number) => void;
+  setSquareUp: (val: boolean | ((prev: boolean) => boolean)) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setUserName: (name: string) => void;
 
@@ -245,6 +248,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [easeIn, setEaseIn] = useState(storedSettings.easeIn);
   const [easeOut, setEaseOut] = useState(storedSettings.easeOut);
+  const [squareUp, setSquareUp] = useState(Boolean(storedSettings.squareUp));
   const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
   const [invertRoll, setInvertRoll] = useState(
     Boolean(storedSettings.invertRoll),
@@ -417,6 +421,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       invertRoll: invertRoll ? 1 : 0,
       easeIn,
       easeOut,
+      squareUp: squareUp ? 1 : 0,
       rollSpeed,
     };
     saveSettings(settings);
@@ -626,6 +631,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       invertRoll,
       easeIn,
       easeOut,
+      squareUp,
       rollSpeed,
       isAnimatingInit,
       userName,
@@ -651,6 +657,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setInvertRoll,
       setEaseIn,
       setEaseOut,
+      setSquareUp,
       setRollSpeed,
       setUserName,
       playStop,
