@@ -1,4 +1,4 @@
-import { Html, OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { Html, PerspectiveCamera } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -434,12 +434,10 @@ function FaceLabels({ size }: { size: number }) {
 }
 
 function KeyboardSelector({
-  controlsRef,
   cubeRef,
   brushQuaternion,
   cameraActionsRef,
 }: {
-  controlsRef: React.RefObject<any>;
   cubeRef: React.RefObject<THREE.Group>;
   brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
   cameraActionsRef: React.RefObject<any>;
@@ -554,7 +552,7 @@ export function Scene() {
   const {
     state,
     actions,
-    meta: { gridRef, movement, velocity, eventBus },
+    meta: { gridRef, movement, velocity, eventBus, cameraTargetRef },
   } = useSimulation();
   const {
     tick,
@@ -590,19 +588,12 @@ export function Scene() {
   }, [brushState]);
 
   const lastTick = useRef(0);
-  const controlsRef = useRef<any>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
-  const dragStartRef = useRef({
-    active: false,
-    azimuth: 0,
-    polar: 0,
-    distance: 0,
-  });
 
   const {
     meta: { cameraActionsRef },
@@ -632,12 +623,9 @@ export function Scene() {
   useEffect(() => {
     cameraActionsRef.current = {
       fitDisplay: () => {
-        if (!controlsRef.current || !cameraRef.current) return;
+        if (!cameraRef.current) return;
 
-        // Recenter on the origin without changing camera orientation
-        cameraRef.current.position.sub(controlsRef.current.target);
-        controlsRef.current.target.set(0, 0, 0);
-
+        const target = cameraTargetRef.current;
         const size = gridRef.current.size;
         const padding = 1.1; // 10% margin
 
@@ -656,18 +644,17 @@ export function Scene() {
         distance = Math.max(distance, distanceH);
 
         const direction = new THREE.Vector3()
-          .subVectors(cameraRef.current.position, controlsRef.current.target)
+          .subVectors(cameraRef.current.position, target)
           .normalize();
-        cameraRef.current.position.copy(direction.multiplyScalar(distance));
-
-        controlsRef.current.update();
+        cameraRef.current.position.copy(target).add(direction.multiplyScalar(distance));
+        cameraRef.current.lookAt(target);
       },
       recenter: () => {
-        if (!controlsRef.current) return;
-        const offset = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), controlsRef.current.target);
-        cameraRef.current?.position.add(offset);
-        controlsRef.current.target.set(0, 0, 0);
-        controlsRef.current.update();
+        if (!cameraRef.current) return;
+        const offset = new THREE.Vector3().subVectors(new THREE.Vector3(0, 0, 0), cameraTargetRef.current);
+        cameraRef.current.position.add(offset);
+        cameraTargetRef.current.set(0, 0, 0);
+        cameraRef.current.lookAt(cameraTargetRef.current);
       },
       squareUp: () => {},
       rotateBrush: (axis: THREE.Vector3, angle: number) => {
@@ -792,7 +779,7 @@ export function Scene() {
     gridRef,
     cubeRef,
     cameraRef,
-    controlsRef,
+    cameraTargetRef,
     gridSize,
     actions,
     setCommunity,
@@ -829,26 +816,35 @@ export function Scene() {
     // --- Apply Velocities ---
     if (rotationMode) {
       // VIEW MODE: Manipulate the camera
-      if (controlsRef.current && cameraRef.current) {
-        const controls = controlsRef.current;
+      if (cameraRef.current) {
         const cam = cameraRef.current;
+        const target = cameraTargetRef.current;
 
         // Apply Pans & Dolly
         const hasPan = Math.abs(totalPanX) > 1e-7 || Math.abs(totalPanY) > 1e-7;
         const hasDolly = Math.abs(totalDolly) > 1e-7;
 
         if (hasPan) {
-          const dist = cam.position.distanceTo(controls.target);
-          controls.panLeft(-totalPanX * delta * dist, cam.matrix);
-          controls.panUp(totalPanY * delta * dist, cam.matrix);
+          const dist = cam.position.distanceTo(target);
+          const panXVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0).multiplyScalar(-totalPanX * delta * dist);
+          const panYVec = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1).multiplyScalar(totalPanY * delta * dist);
+          const pan = panXVec.add(panYVec);
+          cam.position.add(pan);
+          target.add(pan);
         }
         if (hasDolly) {
-          controls.dollyTo(controls.getDistance() * (1 - totalDolly * delta));
+          const toTarget = new THREE.Vector3().subVectors(cam.position, target);
+          const currentDist = toTarget.length();
+          if (currentDist > 0.1) { // Prevent getting too close
+            const newDist = currentDist * (1 - totalDolly * delta);
+            toTarget.setLength(newDist);
+            cam.position.copy(target).add(toTarget);
+          }
         }
         
         const needsUpdate = hasPan || hasDolly;
         if (needsUpdate) {
-          controls.update();
+          cam.lookAt(target);
         }
       }
     }
@@ -870,8 +866,8 @@ export function Scene() {
   // Continuously check orientation every frame — covers mouse drag, damping, keyboard snap,
   // flight-sim rotation, and cube rotation. Only fires setCameraOrientation on actual changes.
   useFrame(() => {
-    if (cameraRef.current && controlsRef.current && cubeRef.current) {
-      const orientation = getOrientation(cameraRef.current, controlsRef.current.target, cubeRef.current);
+    if (cameraRef.current && cameraTargetRef.current && cubeRef.current) {
+      const orientation = getOrientation(cameraRef.current, cameraTargetRef.current, cubeRef.current);
       const prev = lastOrientationRef.current;
       if (orientation.face !== prev.face || orientation.rotation !== prev.rotation) {
         lastOrientationRef.current = { face: orientation.face, rotation: orientation.rotation };
@@ -915,7 +911,6 @@ export function Scene() {
           <>
             <FaceLabels size={gridRef.current.size} />
             <KeyboardSelector
-              controlsRef={controlsRef}
               cubeRef={cubeRef}
               brushQuaternion={brushQuaternion}
               cameraActionsRef={cameraActionsRef}
@@ -923,27 +918,6 @@ export function Scene() {
           </>
         )}
       </group>
-      <OrbitControls
-        ref={controlsRef}
-        makeDefault
-        enableDamping={!autoSquare}
-        dampingFactor={0.05}
-        enabled={true}
-        maxDistance={maxDistance}
-        onStart={() => {
-          if (controlsRef.current) {
-            dragStartRef.current.active = true;
-            dragStartRef.current.azimuth = controlsRef.current.getAzimuthalAngle();
-            dragStartRef.current.polar = controlsRef.current.getPolarAngle();
-            dragStartRef.current.distance = cameraRef.current!.position.distanceTo(controlsRef.current.target);
-          }
-        }}
-        onEnd={() => {
-          if (autoSquare) {
-            cameraActionsRef.current?.squareUp();
-          }
-        }}
-      />
       <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 0, 40]} />
     </>
   );

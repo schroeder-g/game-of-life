@@ -1,5 +1,6 @@
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { useThree } from "@react-three/fiber";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
@@ -49,14 +50,14 @@ export function rotateOffsets(
 }
 
 export function useKeyboardSelector(
-  controlsRef: MutableRefObject<any>,
   cubeRef: MutableRefObject<THREE.Group | null>,
 ) {
   const {
     state: { gridSize, cameraOrientation },
     actions: { toggleCell, setCell, setCells, deleteCells, setCommunity },
-    meta: { gridRef, eventBus, movement },
+    meta: { gridRef, eventBus, movement, cameraTargetRef },
   } = useSimulation();
+  const { camera } = useThree();
 
   const {
     state: { selectedShape, shapeSize, isHollow, selectorPos },
@@ -106,8 +107,10 @@ export function useKeyboardSelector(
     } else {
       // Shape painting logic (Space is already handled in handleKeyDown for single click)
       // but let's allow it to repainting during movement if held
-      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-      const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+      const pos = new THREE.Vector3().subVectors(camera.position, cameraTargetRef.current);
+      const radius = pos.length();
+      const polar = radius === 0 ? 0 : Math.acos(pos.y / radius);
+      const azimuth = radius === 0 ? 0 : Math.atan2(pos.x, pos.z);
       const offsets = generateShape(selectedShape, shapeSize, isHollow);
       const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
       const cells = rotatedOffsets
@@ -122,8 +125,10 @@ export function useKeyboardSelector(
     if (!selectorPos || !movement.current.delete) return;
 
     if (selectedShape !== "None") {
-      const azimuth = controlsRef.current?.getAzimuthalAngle() ?? 0;
-      const polar = controlsRef.current?.getPolarAngle() ?? Math.PI / 4;
+      const pos = new THREE.Vector3().subVectors(camera.position, cameraTargetRef.current);
+      const radius = pos.length();
+      const polar = radius === 0 ? 0 : Math.acos(pos.y / radius);
+      const azimuth = radius === 0 ? 0 : Math.atan2(pos.x, pos.z);
       const offsets = generateShape(selectedShape, shapeSize, isHollow);
       const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
       const cells = rotatedOffsets

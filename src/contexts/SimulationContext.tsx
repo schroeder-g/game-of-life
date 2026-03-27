@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import * as THREE from "three";
 import { Emitter } from "../core/events";
 import { Grid3D } from "../core/Grid3D";
 import { loadSettings, saveSettings } from "../hooks/useSettings";
@@ -135,6 +136,7 @@ export type AppEvents = {
 export interface SimulationMeta {
   gridRef: React.MutableRefObject<Grid3D>;
   initialStateRef: React.MutableRefObject<Array<[number, number, number]>>;
+  cameraTargetRef: React.MutableRefObject<THREE.Vector3>;
   cameraActionsRef: React.MutableRefObject<{
     fitDisplay: () => void;
     recenter: () => void;
@@ -159,6 +161,7 @@ const SimulationContext = createContext<SimulationContextValue | null>(null);
 export function SimulationProvider({ children }: { children: ReactNode }) {
   const [gridSize, setGridSize] = useState(storedSettings.gridSize);
   const gridRef = useRef(new Grid3D(storedSettings.gridSize));
+  const cameraTargetRef = useRef(new THREE.Vector3(0, 0, 0));
   const initialStateRef = useRef<Array<[number, number, number]>>([]);
   const cameraActionsRef = useRef<any>(null);
   const eventBusRef = useRef(new Emitter<AppEvents>());
@@ -694,6 +697,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     meta: {
       gridRef,
       initialStateRef,
+      cameraTargetRef,
       cameraActionsRef,
       eventBus: eventBusRef.current,
       movement,
