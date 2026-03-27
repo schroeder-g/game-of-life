@@ -43,7 +43,7 @@ export interface BrushContextValue {
 const BrushContext = createContext<BrushContextValue | null>(null);
 
 export function BrushProvider({ children }: { children: ReactNode }) {
-  const [selectedShape, setSelectedShape] = useState<ShapeType>("Cube");
+  const [selectedShape, setSelectedShape] = useState<ShapeType>("Single Cell");
   const [shapeSize, setShapeSize] = useState<number>(1);
   const [isHollow, setIsHollow] = useState<boolean>(false);
   const [showProjectionGuides, setShowProjectionGuides] = useState<boolean>(true);
@@ -81,8 +81,12 @@ export function BrushProvider({ children }: { children: ReactNode }) {
         setShapeSelectionVersion(v => v + 1);
         setSelectedShape(shape);
         setShapeSize((prev) => {
-          if (shape !== "Cube" && shape !== "None" && shape !== "Selected Community" && prev === 1) {
-            return 5;
+          if (shape === "Single Cell" || shape === "None") {
+            return 1;
+          }
+          const minRequired = (shape === "Cube" || shape === "Square") ? 2 : 3;
+          if (shape !== "Selected Community" && prev < minRequired) {
+            return minRequired;
           }
           return prev;
         });
@@ -92,11 +96,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
       setShowProjectionGuides,
       setSelectorPos,
       clearShape: () => {
-        setSelectedShape("Cube");
+        setShapeSelectionVersion(v => v + 1);
+        setSelectedShape("Single Cell");
         setShapeSize(1);
+        setPaintMode(0);
       },
       changeSize: (delta: number, maxGridSize: number) => {
-        setShapeSize((prev) => Math.max(1, Math.min(maxGridSize, prev + delta)));
+        if (selectedShape === "Single Cell" || selectedShape === "None" || selectedShape === "Selected Community") return;
+        const minRequired = (selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3;
+        setShapeSize((prev) => Math.max(minRequired, Math.min(maxGridSize, prev + delta)));
       },
       incrementBrushRotationVersion: () => setBrushRotationVersion((v) => v + 1),
       setCustomBrush: (cells: Array<[number, number, number]>) => {

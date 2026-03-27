@@ -8,18 +8,25 @@ set -e
 ENV=$1
 
 if [ "$ENV" == "help" ] || [ "$ENV" == "--help" ]; then
-  echo "Usage: ./deploy.sh [prod|test]"
+  echo "Usage: ./deploy.sh [prod|test|dev]"
   echo "Deploys the application to the specified environment on Google Cloud Run."
   echo ""
   echo "Environments:"
   echo "  prod    Deploys to the production service (game-of-life)."
   echo "  test    Deploys to the test service (goncalves-3d-game-of-life-test)."
+  echo "  dev     Deploys to the dev service (goncalves-3d-game-of-life-dev)."
   exit 0
 fi
 
 if [ -z "$ENV" ]; then
   echo "Error: No environment specified."
-  echo "Usage: ./deploy.sh [prod|test]"
+  echo "Usage: ./deploy.sh [prod|test|dev]"
+  exit 1
+fi
+
+if [ "$ENV" != "prod" ] && [ "$ENV" != "test" ] && [ "$ENV" != "dev" ]; then
+  echo "Error: Invalid environment '$ENV'. Must be one of: prod, test, dev."
+  echo "Usage: ./deploy.sh [prod|test|dev]"
   exit 1
 fi
 
@@ -32,9 +39,8 @@ if [ "$ENV" == "test" ]; then
   SERVICE_NAME="goncalves-3d-game-of-life-test"
 elif [ "$ENV" == "prod" ]; then
   SERVICE_NAME="game-of-life"
-else
-  echo "Invalid environment: $ENV. Use 'prod' or 'test'."
-  exit 1
+elif [ "$ENV" == "dev" ]; then
+  SERVICE_NAME="goncalves-3d-game-of-life-dev"
 fi
 # --- End of Configuration ---
 
@@ -75,6 +81,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform="managed" \
   --allow-unauthenticated \
   --port=8080 \
+  --set-env-vars="DISTRIBUTION=$ENV" \
   --project="$PROJECT_ID"
 
 echo

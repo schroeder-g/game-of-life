@@ -23,14 +23,20 @@ const server = Bun.serve({
         let html = await indexFile.text();
 
         // Inject build info into the global window object
+        const rawDist = process.env.DISTRIBUTION;
+        if (!rawDist || !["dev", "test", "prod"].includes(rawDist)) {
+          throw new Error(
+            `DISTRIBUTION environment variable must be set to 'dev', 'test', or 'prod'. Got: ${JSON.stringify(rawDist)}`
+          );
+        }
         const buildInfo = {
           version: packageJson.version,
-          distribution: process.env.DISTRIBUTION || "prod"
+          distribution: rawDist as "dev" | "test" | "prod",
         };
         const buildInfoScript = `<script>window.__BUILD_INFO__ = ${JSON.stringify(buildInfo)};</script>`;
 
         // This replaces your placeholder string in the HTML
-        html = html.replace("__BUILD_INFO_PLACEHOLDER__", buildInfoScript);
+        html = html.replace("<!-- __BUILD_INFO_PLACEHOLDER__ -->", buildInfoScript);
 
         return new Response(html, { headers: { "Content-Type": "text/html" } });
       }

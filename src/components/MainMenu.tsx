@@ -721,13 +721,13 @@ function ShapeBrushSection() {
               ))}
             </select>
           </label>
-          {selectedShape !== "Selected Community" && (
+          {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
             <>
               <label className="control-label">
                 <span>Size: {shapeSize}</span>
                 <input
                   type="range"
-                  min={1}
+                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
                   max={gridSize}
                   step={1}
                   value={shapeSize}
@@ -1481,6 +1481,7 @@ export function AppHeaderPanel() {
           className="glass-button"
           onClick={() => setShowDocumentation(true)}
           title="Documentation (?)"
+          aria-label="Documentation (?)"
         >
           <strong>?</strong>
         </button>
@@ -1591,6 +1592,12 @@ export function MainMenu() {
     }
   }, [rotationMode]);
 
+  // Collapse Configuration panel when a community is selected
+  useEffect(() => {
+    if (community.length > 0) {
+      setCollapsed(true);
+    }
+  }, [community]);
 
   return (
     <>

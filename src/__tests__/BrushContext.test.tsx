@@ -11,17 +11,22 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('BrushContext', () => {
   it('should initialize with default values', () => {
     const { result } = renderHook(() => useBrush(), { wrapper });
-    expect(result.current.state.selectedShape).toBe('Cube');
+    expect(result.current.state.selectedShape).toBe('Single Cell');
     expect(result.current.state.shapeSize).toBe(1);
     expect(result.current.state.paintMode).toBe(0);
   });
 
   it('should change shape size correctly', () => {
     const { result } = renderHook(() => useBrush(), { wrapper });
+    // First switch to Cube so changeSize is not blocked
     act(() => {
-      result.current.actions.changeSize(1, 0);
+      result.current.actions.setSelectedShape('Cube');
     });
-    expect(result.current.state.shapeSize).toBe(2);
+    act(() => {
+      result.current.actions.changeSize(1, 100);
+    });
+    // Should be at min 2 for Cube + 1 = 3
+    expect(result.current.state.shapeSize).toBe(3);
   });
 
   it('should toggle paint modes correctly', () => {

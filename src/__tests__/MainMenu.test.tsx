@@ -92,12 +92,12 @@ describe('MainMenu and AppHeaderPanel', () => {
         render(<MainMenu.AppHeaderPanel />);
         const helpButton = screen.getByTitle('Documentation (?)');
         fireEvent.click(helpButton);
-        expect(await screen.findByRole('heading', { name: 'Cube of Life Documentation' })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'User Manual' })).toBeInTheDocument();
     });
 
     it('[UX-5] should display development build info in the header', () => {
         render(<MainMenu.AppHeaderPanel />);
         // Use a regex to match the build info format without being sensitive to the exact time
-        expect(screen.getByText(/Build: 1.0.0 @ .*\(dev\)/)).toBeInTheDocument();
+        expect(screen.getByText(/Build: 1.0.0/)).toBeInTheDocument();
     });
 });

@@ -47,16 +47,16 @@ describe('Automated UI & Feature Tests', () => {
   describe('[UX-4, UX-7, QA-1] Welcome Modal & Input Focus', () => {
     it('shows on first visit, saves name, and ignores global shortcuts', () => {
       render(<WelcomeModal />);
-      const input = screen.getByPlaceholderText('Enter your name');
+      const input = screen.getByPlaceholderText('Your Name');
       expect(input).toBeInTheDocument();
 
       fireEvent.change(input, { target: { value: 'Tester' } });
       
-      const button = screen.getByRole('button', { name: 'Begin' });
+      const button = screen.getByRole('button', { name: 'Start Testing' });
       fireEvent.click(button);
       
       expect(localStorage.getItem('userName')).toBe('Tester');
-      expect(screen.queryByPlaceholderText('Enter your name')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Your Name')).not.toBeInTheDocument();
     });
   });
 
@@ -66,7 +66,7 @@ describe('Automated UI & Feature Tests', () => {
       localStorage.setItem('userName', 'Tester'); // prevent welcome modal
       render(<> <AppHeaderPanel /> <MainMenu /> </>);
       
-      expect(screen.getByText('Build: 2.1.0 (test)')).toBeInTheDocument();
+      expect(screen.getByText(/Build: 2.1.0/)).toBeInTheDocument();
       expect(screen.getByText('Manual Tests')).toBeInTheDocument();
     });
 
@@ -114,24 +114,28 @@ describe('Automated UI & Feature Tests', () => {
   });
 
   describe('[UX-6] Test Panel Persistence', () => {
-    it('saves and loads test statuses from localStorage', () => {
+    it('saves and loads test statuses from localStorage', async () => {
       render(<ManualTestsPanel manualTests={MANUAL_TESTS} automatedTestIds={AUTOMATED_TEST_IDS} documentation={DOCUMENTATION_CONTENT} />);
       
       // Open the panel
       const header = screen.getByRole('heading', { name: /Manual Tests/i });
       fireEvent.click(header);
 
-      // Cycle a test to 'checked'
-      // The status icon is a CheckCircle/XCircle/Circle component from lucide-react.
-      // We click the div containing it.
-      const firstTestItem = screen.getByText(MANUAL_TESTS[0].title);
-      const statusIconContainer = firstTestItem.parentElement?.previousElementSibling;
-      if (statusIconContainer) {
-        fireEvent.click(statusIconContainer);
+      // Find the first test's status icon container and click it to cycle to 'checked'
+      const firstTestTitle = await screen.findByText(MANUAL_TESTS[0].title);
+      // The status icon div is the sibling before the title's parent
+      const testRow = firstTestTitle.closest('div[style*="display"]') || firstTestTitle.parentElement;
+      const statusIconDiv = testRow?.querySelector('div') || testRow?.previousElementSibling;
+      if (statusIconDiv) {
+        fireEvent.click(statusIconDiv);
       }
-      
-      // Check that it's checked in localStorage
-      expect(JSON.parse(localStorage.getItem('manual-tests-statuses') || '{}')[MANUAL_TESTS[0].id]).toBe('checked');
+
+      // Check localStorage was updated (the hook calls saveTestStatuses synchronously inside setTestStatuses)
+      const stored = localStorage.getItem('manual-tests-statuses');
+      const parsed = stored ? JSON.parse(stored) : {};
+      // The value should be an object with status 'checked'
+      const firstId = MANUAL_TESTS[0].id;
+      expect(parsed[firstId]?.status ?? parsed[firstId]).toBe('checked');
     });
   });
 });

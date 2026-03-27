@@ -16,7 +16,7 @@ const DEPRECATED_CONTENT: DocItem[] = [
     id: "deprecated-camera-control",
     type: 'p',
     text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'header-camera'] You can toggle the 'Auto Square Up' mode using the 'L' key. When this mode is disabled, the camera can be rotated freely for cinematic views. When enabled, camera movement will snap to the nearest face of the cube, which is ideal for editing the grid.",
-    testIds: ["UX-2", "UX-3"],
+    testIds: ["UC-11", "UC-2"],
   },
   {
     id: "deprecated-brush-control",
@@ -70,6 +70,7 @@ const CURRENT_MANUAL: DocItem[] = [
     id: "header-camera",
     type: 'p',
     text: "<b>Camera Actions (Fit/Recenter):</b> Use 'Fit' (F) to zoom and frame all live cells. 'Recenter' (S) moves the camera to the origin.",
+    testIds: ["UC-11"],
     references: ["src/contexts/SimulationContext.tsx"],
   },
   {

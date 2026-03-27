@@ -1,6 +1,6 @@
 // Shape generation utilities for Cube of Life bulk editor
 
-export type ShapeType = "None" | "Cube" | "Square" | "Circle" | "Sphere" | "Triangle" | "Pyramid" | "Selected Community";
+export type ShapeType = "None" | "Single Cell" | "Cube" | "Square" | "Circle" | "Sphere" | "Triangle" | "Pyramid" | "Selected Community";
 
 export type Offset = [number, number, number];
 
@@ -62,7 +62,7 @@ function generateSquare(size: number): Offset[] {
 // Generate circle offsets (2D on XZ plane)
 function generateCircle(size: number): Offset[] {
   const offsets: Offset[] = [];
-  const radius = size / 2;
+  const radius = size / 2 - 0.1; // -0.1 significantly improves rasterization symmetry (e.g. Size 3 becomes a true cross)
   const radiusSq = radius * radius;
   const [lo, hi] = symmetricRange(size);
 
@@ -81,9 +81,9 @@ function generateCircle(size: number): Offset[] {
 // Generate sphere offsets (3D)
 function generateSphere(size: number, hollow: boolean): Offset[] {
   const offsets: Offset[] = [];
-  const radius = size / 2;
+  const radius = size / 2 - 0.1;
   const radiusSq = radius * radius;
-  const innerRadius = radius - 1;
+  const innerRadius = Math.max(0, radius - 1);
   const innerRadiusSq = innerRadius * innerRadius;
   const [lo, hi] = symmetricRange(size);
 
@@ -182,6 +182,8 @@ function generatePyramid(size: number, hollow: boolean): Offset[] {
 export function generateShape(shape: ShapeType, size: number, hollow: boolean, customOffsets?: Offset[]): Offset[] {
   switch (shape) {
     case "None":
+      return [];
+    case "Single Cell":
       return [[0, 0, 0]];
     case "Cube":
       return generateCube(size, hollow);
@@ -208,4 +210,4 @@ export function supportsHollow(shape: ShapeType): boolean {
 }
 
 // All available shapes for dropdown
-export const SHAPES: ShapeType[] = ["Selected Community", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];
+export const SHAPES: ShapeType[] = ["Selected Community", "Single Cell", "Cube", "Square", "Circle", "Sphere", "Triangle", "Pyramid"];
