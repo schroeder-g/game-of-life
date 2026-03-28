@@ -5,37 +5,37 @@ import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyM
 // Icon components for directional controls
 const ArrowUpIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 19V5M5 12l7-7 7 7"/>
+    <path d="M12 19V5M5 12l7-7 7 7" />
   </svg>
 );
 
 const ArrowDownIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14M19 12l-7 7-7-7"/>
+    <path d="M12 5v14M19 12l-7 7-7-7" />
   </svg>
 );
 
 const ArrowLeftIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 12H5M12 19l-7-7 7-7"/>
+    <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 );
 
 const ArrowRightIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M12 5l7 7-7 7"/>
+    <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
 
 const ArrowFurtherIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 19V5M5 12l7-7 7 7"/>
+    <path d="M12 19V5M5 12l7-7 7 7" />
   </svg>
 );
 
 const ArrowCloserIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14M19 12l-7 7-7-7"/>
+    <path d="M12 5v14M19 12l-7 7-7-7" />
   </svg>
 );
 
@@ -124,7 +124,7 @@ export function FooterControls({ isSmallScreen }: FooterControlsProps) {
           <button className="glass-button" onClick={() => handleMove('d')} style={{ width: '50px', height: '30px' }}><ArrowRightIcon /></button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('s')} style={{ width: '50px', height: '30px' }}><ArrowDownIcon /></button>
+          <button className="glass-button" onClick={() => handleMove('x')} style={{ width: '50px', height: '30px' }}><ArrowDownIcon /></button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
           <button className="glass-button" onClick={() => handleMove('z')} style={{ width: '50px', height: '30px' }}><ArrowCloserIcon /></button>
