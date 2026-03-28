@@ -127,9 +127,11 @@ function getCubeVisibility(
     return result;
   }
 
+  const visibilityThreshold = 0.15; // 15% visible means 85% off-screen
+
   const overlapX = Math.max(0, Math.min(maxX, 1) - Math.max(minX, -1));
   const spanX = maxX - minX;
-  if (spanX > 1e-6 && overlapX / spanX < 0.05) {
+  if (spanX > 1e-6 && overlapX / spanX < visibilityThreshold) {
     result.isOffScreen = true;
     const centerX = (minX + maxX) / 2;
     if (centerX > 0) {
@@ -141,7 +143,7 @@ function getCubeVisibility(
 
   const overlapY = Math.max(0, Math.min(maxY, 1) - Math.max(minY, -1));
   const spanY = maxY - minY;
-  if (spanY > 1e-6 && overlapY / spanY < 0.05) {
+  if (spanY > 1e-6 && overlapY / spanY < visibilityThreshold) {
     result.isOffScreen = true;
     const centerY = (minY + maxY) / 2;
     if (centerY > 0) {
@@ -1037,6 +1039,30 @@ export function Scene() {
       velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
     } else if (!isDragging.current) {
       velocity.current.rotateRoll *= dampingVal;
+    }
+
+    // --- Soft Boundary Enforcement ---
+    if (rotationMode && cubeRef.current && cameraRef.current) {
+      const visibility = getCubeVisibility(cubeRef.current, cameraRef.current, gridSize);
+      const restoringForce = 0.2; // Strength of the push-back
+
+      if (visibility.isOffScreenLeft && velocity.current.panX < 0) {
+        velocity.current.panX = lerp(velocity.current.panX, pSpeed * restoringForce, easeInVal);
+      }
+      if (visibility.isOffScreenRight && velocity.current.panX > 0) {
+        velocity.current.panX = lerp(velocity.current.panX, -pSpeed * restoringForce, easeInVal);
+      }
+      if (visibility.isOffScreenBottom && velocity.current.panY < 0) {
+        velocity.current.panY = lerp(velocity.current.panY, pSpeed * restoringForce, easeInVal);
+      }
+      if (visibility.isOffScreenTop && velocity.current.panY > 0) {
+        velocity.current.panY = lerp(velocity.current.panY, -pSpeed * restoringForce, easeInVal);
+      }
+      
+      // Prevent dollying out too far
+      if (visibility.isOffScreen && velocity.current.dolly > 0) {
+         velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed * restoringForce, easeInVal);
+      }
     }
     
     const totalPanX = velocity.current.panX;
