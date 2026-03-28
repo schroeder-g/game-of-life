@@ -61,6 +61,8 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const footerRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null); // Ref for the canvas container
+  const [canvasSize, setCanvasSize] = useState(0); // State for the square canvas size
 
   useAppShortcuts();
 
@@ -70,6 +72,21 @@ export default function App() {
       fitDisplay();
     }
   }, [rotationMode, recenter, fitDisplay]);
+
+  // Effect to set and update canvas size to be square
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (canvasContainerRef.current) {
+        const { offsetWidth, offsetHeight } = canvasContainerRef.current;
+        setCanvasSize(Math.min(offsetWidth, offsetHeight));
+      }
+    };
+
+    updateCanvasSize(); // Set initial size
+    window.addEventListener('resize', updateCanvasSize); // Update on resize
+
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
 
   // Effect to check screen size for small screens
   useEffect(() => {
@@ -180,10 +197,23 @@ export default function App() {
           <MainMenu isSmallScreen={isSmallScreen} />
         </aside>
 
-        <main className="canvas-container">
-          <Canvas>
-            <Scene />
-          </Canvas>
+        <main
+          ref={canvasContainerRef}
+          className="canvas-container"
+          style={{
+            width: canvasSize > 0 ? canvasSize : '100%', // Apply calculated square size
+            height: canvasSize > 0 ? canvasSize : '100%', // Apply calculated square size
+            aspectRatio: '1 / 1', // Enforce a square aspect ratio
+            display: 'flex', // Ensure Canvas fills the container
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {canvasSize > 0 && ( // Only render Canvas once size is determined
+            <Canvas style={{ width: '100%', height: '100%' }}>
+              <Scene />
+            </Canvas>
+          )}
           {!rotationMode && (
             <div
               ref={footerRef}
