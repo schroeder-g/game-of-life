@@ -311,7 +311,8 @@ export function BrushControls() {
         flexDirection: 'column', // Changed to column to stack header and controls
         cursor: isDragging ? 'grabbing' : 'grab', // Add grab cursor
         touchAction: 'none', // Prevent default touch actions like scrolling
-        border: '2px solid orange', // Orange outline
+        border: '2px solid #FFA50080', // Subtler orange outline (50% opacity)
+        borderRadius: '8px', // Small corner radius
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -322,7 +323,7 @@ export function BrushControls() {
           textAlign: 'center',
           paddingBottom: '5px',
           fontWeight: 'bold',
-          color: 'orange',
+          color: '#FFA500', // Subtler orange color for text
           cursor: 'inherit', // Inherit cursor from parent for dragging
         }}
       >
@@ -333,7 +334,7 @@ export function BrushControls() {
         gridTemplateColumns: 'repeat(12, 1fr)',
         gridTemplateRows: 'auto auto auto auto auto auto',
         gap: '5px',
-        maxWidth: '200px', // Limit width for better mobile display
+        maxWidth: '300px', // 50% wider (200px * 1.5 = 300px)
         justifyContent: 'center',
         alignItems: 'center',
       }}>
