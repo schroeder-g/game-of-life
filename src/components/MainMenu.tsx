@@ -1190,7 +1190,6 @@ export function MainMenu() {
           />
         </>
       )}
-      {isSmallScreen && <FooterControls isSmallScreen={isSmallScreen} />}
     </>
   );
 }

@@ -107,6 +107,8 @@ export default function App() {
         </aside>
 
         <main className="canvas-container">
+
+          {isSmallScreen && <FooterControls isSmallScreen={isSmallScreen} />}
           <Canvas>
             <Scene />
           </Canvas>
