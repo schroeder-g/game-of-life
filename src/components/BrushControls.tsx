@@ -229,6 +229,7 @@ export function BrushControls() {
 
   return (
     <div
+      id="brush-controls"
       ref={panelRef}
       style={{
         position: 'absolute', // Changed from fixed
