@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import * as THREE from "three"; // Added
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
+import { useBrush } from "../contexts/BrushContext"; // Added
 import { CommunitySidebar } from "./Controls";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
 import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
@@ -9,6 +11,9 @@ import { MANUAL_TESTS } from "../data/manual-tests";
 import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
 import { AppHeaderPanel } from "./AppHeaderPanel"; // Import the new component
+import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
+import { SHAPES, ShapeType, supportsHollow } from "../core/shapes"; // Added
+import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
 
 function ActionsSection() {
   const {

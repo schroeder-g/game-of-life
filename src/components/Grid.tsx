@@ -707,15 +707,19 @@ export function Scene() {
       isDragging.current = false;
     };
 
-    const canvas = gl.domElement;
-    canvas.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
+    const canvas = gl?.domElement; // Add nullish coalescing operator
+    if (canvas) { // Add a check for canvas existence
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('pointerup', handlePointerUp);
+    }
     
     return () => {
-      canvas.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
+      if (canvas) { // Add a check for canvas existence
+        canvas.removeEventListener('pointerdown', handlePointerDown);
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+      }
     };
   }, [gl, rotationSpeed, invertYaw, invertPitch, velocity]);
 

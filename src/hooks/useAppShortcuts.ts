@@ -68,7 +68,9 @@ export function useAppShortcuts() {
     // When entering edit mode, if cursor is not set, center it.
     if (!rotationMode && !selectorPos) {
       const center = Math.floor(gridSize / 2);
-      setSelectorPos([center, center, center]);
+      if (setSelectorPos) { // Defensive check
+        setSelectorPos([center, center, center]);
+      }
     }
   }, [rotationMode, selectorPos, setSelectorPos, gridSize]);
 
