@@ -24,6 +24,7 @@ export function useAppShortcuts() {
       invertPitch,
       invertRoll,
       gridSize,
+      squareUp, // Added squareUp to state destructuring
     },
     actions: {
       setRotationMode,
@@ -34,6 +35,7 @@ export function useAppShortcuts() {
       fitDisplay,
       recenter,
       setCell,
+      setSquareUp, // Added setSquareUp to actions destructuring
     },
     meta: { movement, eventBus, cameraActionsRef },
   } = useSimulation();
@@ -197,7 +199,7 @@ export function useAppShortcuts() {
             case "e": setRotationMode(false); break;
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
-            case "l": fitDisplay(); break; // Added 'l' for "Square Up"
+            case "l": setSquareUp(prev => !prev); break; // Changed 'l' to toggle squareUp
             case "s": recenter(); break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
@@ -216,7 +218,7 @@ export function useAppShortcuts() {
           case "e": setRotationMode(false); break;
           case "v": setRotationMode(true); break;
           case "f": fitDisplay(); break;
-          case "l": fitDisplay(); break; // Added 'l' for "Square Up"
+          case "l": setSquareUp(prev => !prev); break; // Changed 'l' to toggle squareUp
           case "s": recenter(); break;
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
