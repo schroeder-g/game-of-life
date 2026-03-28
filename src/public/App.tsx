@@ -184,7 +184,7 @@ export default function App() {
           <Canvas>
             <Scene />
           </Canvas>
-          {isSmallScreen && (
+          {!rotationMode && (
             <div
               ref={footerRef}
               style={{
@@ -211,7 +211,7 @@ export default function App() {
                 onMouseDown={onMouseDown}
                 onTouchStart={(e) => onMouseDown(e as any)} // For touch devices
               />
-              <BrushControls isSmallScreen={isSmallScreen} />
+              <BrushControls />
             </div>
           )}
         </main>
