@@ -7,8 +7,6 @@ import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrien
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
 import { useClickOutside } from "../hooks/useClickOutside";
-import { PAINTBRUSH_VARIATIONS, PaintBrushPart, PaintBrushVariation } from "./PaintBrushVariations"; // NEW IMPORT
-// The rest of the file remains the same until PaintBrushIcon definition
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -86,36 +84,15 @@ const XSquareIcon = () => (
   </svg>
 );
 
-interface PaintBrushIconProps {
-  variationIndex?: number;
-}
-
-const PaintBrushIcon: React.FC<PaintBrushIconProps> = ({ variationIndex = 0 }) => {
-  const variation = PAINTBRUSH_VARIATIONS[variationIndex];
-  if (!variation) return null;
-
-  return (
-    <svg width="100%" height="100%" viewBox="0 0 220 220" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-      {variation.handle.type === 'path' ? (
-        <path d={variation.handle.d} fill={variation.handle.fill || "currentColor"} />
-      ) : (
-        <line x1={variation.handle.x1} y1={variation.handle.y1} x2={variation.handle.x2} y2={variation.handle.y2} fill={variation.handle.fill || "none"} strokeWidth={variation.handle.strokeWidth || 4} />
-      )}
-      {variation.ferrule.type === 'path' ? (
-        <path d={variation.ferrule.d} fill={variation.ferrule.fill || "none"} />
-      ) : (
-        <line x1={variation.ferrule.x1} y1={variation.ferrule.y1} x2={variation.ferrule.x2} y2={variation.ferrule.y2} fill={variation.ferrule.fill || "none"} strokeWidth={variation.ferrule.strokeWidth || 4} />
-      )}
-      {variation.bristles.map((bristle, index) =>
-        bristle.type === 'path' ? (
-          <path key={index} d={bristle.d} fill={bristle.fill || "none"} strokeWidth={bristle.strokeWidth || 4} />
-        ) : (
-          <line key={index} x1={bristle.x1} y1={bristle.y1} x2={bristle.x2} y2={bristle.y2} fill={bristle.fill || "none"} strokeWidth={bristle.strokeWidth || 4} />
-        )
-      )}
-    </svg>
-  );
-};
+const PaintBrushIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 220 220" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="70" y="0" width="80" height="56" fill="currentColor" stroke="none" />
+    <rect x="66" y="56" width="88" height="48" fill="none" stroke="currentColor" />
+    <line x1="66" y1="56" x2="154" y2="104" stroke="currentColor" />
+    <line x1="154" y1="56" x2="66" y2="104" stroke="currentColor" />
+    <path d="M66,104 C66,115 86,130 86,150 C86,190 94,220 110,220 C126,220 134,190 134,150 C134,130 154,115 154,104 Z" fill="none" stroke="currentColor" />
+  </svg>
+);
 
 const PlusIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -225,7 +202,7 @@ function SceneSelectorDropdown() {
   );
 }
 
-function BrushSelectorDropdown({ selectedPaintBrushVariationIndex }: { selectedPaintBrushVariationIndex: number }) {
+function BrushSelectorDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [hoveredName, setHoveredName] = useState<string | null>(null);
@@ -282,7 +259,7 @@ function BrushSelectorDropdown({ selectedPaintBrushVariationIndex }: { selectedP
         onClick={handleButtonClick}
         data-tooltip-bottom="Select Brush Shape"
       >
-        <PaintBrushIcon variationIndex={selectedPaintBrushVariationIndex} />
+        <PaintBrushIcon />
       </button>
       {isOpen && (
         <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
@@ -311,46 +288,6 @@ function BrushSelectorDropdown({ selectedPaintBrushVariationIndex }: { selectedP
   );
 }
 
-function CyclePaintBrushVariationButton({
-  currentVariationIndex,
-  onCycleVariation,
-}: {
-  currentVariationIndex: number;
-  onCycleVariation: () => void;
-}) {
-  const currentVariation = PAINTBRUSH_VARIATIONS[currentVariationIndex];
-
-  return (
-    <button
-      className="glass-button"
-      onClick={onCycleVariation}
-      data-tooltip-bottom={`Brush Variation ${currentVariationIndex + 1}/${PAINTBRUSH_VARIATIONS.length}: ${currentVariation.name}`}
-    >
-      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <PaintBrushIcon variationIndex={currentVariationIndex} />
-        <div style={{
-          position: 'absolute',
-          bottom: '0px', /* Changed from top to bottom to position relative to the button's bottom */
-          right: '0px',
-          width: '10px',
-          height: '10px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--color-primary)',
-          color: 'white',
-          fontSize: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 'bold',
-          lineHeight: '1',
-        }}>
-          {currentVariationIndex + 1}
-        </div>
-      </div>
-    </button>
-  );
-}
-
 export function AppHeaderPanel() {
   const {
     state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp },
@@ -364,11 +301,6 @@ export function AppHeaderPanel() {
   const { selectedShape, selectorPos, paintMode } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [selectedPaintBrushVariationIndex, setSelectedPaintBrushVariationIndex] = useState(0);
-
-  const handleCyclePaintBrushVariation = () => {
-    setSelectedPaintBrushVariationIndex((prevIndex) => (prevIndex + 1) % PAINTBRUSH_VARIATIONS.length);
-  };
 
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
@@ -428,11 +360,7 @@ export function AppHeaderPanel() {
             >
               <MinusIcon />
             </button>
-            <BrushSelectorDropdown selectedPaintBrushVariationIndex={selectedPaintBrushVariationIndex} />
-            <CyclePaintBrushVariationButton
-              currentVariationIndex={selectedPaintBrushVariationIndex}
-              onCycleVariation={handleCyclePaintBrushVariation}
-            />
+            <BrushSelectorDropdown />
           </>
         )}
         <button
