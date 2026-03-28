@@ -22,7 +22,7 @@ export function WelcomeModal() {
     <div className="modal-overlay welcome-modal">
       <div className="glass-panel modal-content">
         <h2>Welcome to Game of Life 3D</h2>
-        <p>Distribution: __VERSION__</p>
+        <p>Distribution: {buildInfo.distribution}</p>
         <p>Build: {buildInfo.version}</p>
 
         <form onSubmit={handleSubmit} className="name-form">
