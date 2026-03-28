@@ -178,27 +178,31 @@ export function BrushControls() {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
 
-    const panelRect = panelRef.current!.getBoundingClientRect();
+    const panelRect = panelRef.current!.getBoundingClientRect(); // Get current panel dimensions for clamping
 
-    // Calculate desired viewport position for the panel's top-left corner
-    const targetPanelLeft_viewport = e.clientX - dragOffset.current.x;
-    const targetPanelTop_viewport = e.clientY - dragOffset.current.y;
+    // Calculate the new top-left corner of the panel in viewport coordinates
+    const newPanelLeft_viewport = e.clientX - dragOffset.current.x;
+    const newPanelTop_viewport = e.clientY - dragOffset.current.y;
 
-    // Define viewport clamping boundaries
+    // Convert viewport coordinates to parent-relative coordinates
+    const targetPanelLeft_parent = newPanelLeft_viewport - parentRect.left;
+    const targetPanelTop_parent = newPanelTop_viewport - parentRect.top;
+
+    // Define parent clamping boundaries
     const minX = 10;
     const minY = 10;
-    const maxX = window.innerWidth - panelRect.width - 10;
-    const maxY = window.innerHeight - panelRect.height - 10;
+    const maxX = parentRect.width - panelRect.width - 10;
+    const maxY = parentRect.height - panelRect.height - 10;
 
-    // Clamp the viewport position
-    const clampedX = Math.max(minX, Math.min(targetPanelLeft_viewport, maxX));
-    const clampedY = Math.max(minY, Math.min(targetPanelTop_viewport, maxY));
+    // Clamp the position relative to the parent
+    const clampedX = Math.max(minX, Math.min(targetPanelLeft_parent, maxX));
+    const clampedY = Math.max(minY, Math.min(targetPanelTop_parent, maxY));
 
     setPosition({
       x: clampedX,
       y: clampedY,
     });
-  }, [isDragging]);
+  }, [isDragging]); // isDragging is a dependency, but its value is checked at the start.
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
