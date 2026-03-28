@@ -395,48 +395,50 @@ export function AppHeaderPanel() {
             />
           </div>
         )}
-        <button
-          className="glass-button"
-          onClick={() => {
-            if (running) {
-              playStop();
+        <div style={{ display: 'flex', gap: '10px' }}> {/* New container div */}
+          <button
+            className="glass-button"
+            onClick={() => {
+              if (running) {
+                playStop();
+              }
+              stepBackward();
+            }}
+            disabled={running || !hasPastHistory}
+            data-tooltip-bottom={
+              running
+                ? "Pause simulation to step"
+                : !hasPastHistory
+                  ? "No history to step back to"
+                  : "Step Backward (←)"
             }
-            stepBackward();
-          }}
-          disabled={running || !hasPastHistory}
-          data-tooltip-bottom={
-            running
-              ? "Pause simulation to step"
-              : !hasPastHistory
-                ? "No history to step back to"
-                : "Step Backward (←)"
-          }
-        >
-          ⏮
-        </button>
-        <button
-          className="glass-button"
-          onClick={() => {
-            if (running) {
-              playStop();
+          >
+            ⏮
+          </button>
+          <button
+            className="glass-button"
+            onClick={() => {
+              if (running) {
+                playStop();
+              }
+              step();
+            }}
+            disabled={running}
+            data-tooltip-bottom={
+              running ? "Pause simulation to step" : "Step Forward (→)"
             }
-            step();
-          }}
-          disabled={running}
-          data-tooltip-bottom={
-            running ? "Pause simulation to step" : "Step Forward (→)"
-          }
-        >
-          ⏭
-        </button>
-        <button
-          className="glass-button"
-          onClick={reset}
-          disabled={!hasInitialState}
-          data-tooltip-bottom={!hasInitialState ? "No initial state to reset to" : "Reset (R)"}
-        >
-          ↺
-        </button>
+          >
+            ⏭
+          </button>
+          <button
+            className="glass-button"
+            onClick={reset}
+            disabled={!hasInitialState}
+            data-tooltip-bottom={!hasInitialState ? "No initial state to reset to" : "Reset (R)"}
+          >
+            ↺
+          </button>
+        </div> {/* End of new container div */}
         <button
           className="glass-button"
           onClick={fitDisplay}
