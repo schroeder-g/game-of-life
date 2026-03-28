@@ -69,29 +69,19 @@ const ImageIcon = () => (
   </svg>
 );
 
-const BabyIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="11" cy="7" r="4" />
-  </svg>
-);
-
-const XSquareIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    <line x1="9" y1="9" x2="15" y2="15" />
-    <line x1="15" y1="9" x2="9" y2="15" />
-  </svg>
-);
 
 const PaintBrushIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 220 220" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="70" y="0" width="80" height="56" fill="currentColor" stroke="none" />
-    <rect x="66" y="56" width="88" height="48" fill="none" stroke="currentColor" />
-    <line x1="66" y1="56" x2="154" y2="104" stroke="currentColor" />
-    <line x1="154" y1="56" x2="66" y2="104" stroke="currentColor" />
-    <path d="M66,104 C66,115 86,130 86,150 C86,190 94,220 110,220 C126,220 134,190 134,150 C134,130 154,115 154,104 Z" fill="none" stroke="currentColor" />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+    <rect x="5" y="0" width="15" height="8" />
+
+    <rect x="5" y="9" width="15" height="5" />
+    <line x1="10" y1="14" x2="10" y2="24" />
+    <line x1="16" y1="14" x2="16" y2="24" />
+    <line x1="16" y1="24" x2="10" y2="24" />
+    <path d="M66,104 C66,115 86,130 86,150 C86,190 94,220 110,220 C126,220 134,190 134,150 C134,130 154,115 154,104 Z" />
   </svg>
+
 );
 
 const PlusIcon = () => (

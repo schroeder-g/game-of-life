@@ -14,21 +14,28 @@ declare global {
   }
 }
 
-// Inject build-time variables.
-// process.env.BUILD_DISTRIBUTION is defined by the bun build command.
-// We fall back to 'dev' for the local development server.
 if (typeof window !== "undefined") {
-  // In the dev server (`bun --hot`), `process` is not defined in the browser,
-  // so we safely check for its existence and default to 'dev'.
-  const buildDistribution = (
-    (typeof process !== "undefined" && process.env.BUILD_DISTRIBUTION) || "dev"
-  ) as "dev" | "test" | "prod";
+  // The server (server.ts or server.prod.ts) injects window.__BUILD_INFO__ into the HTML.
+  // We only provide a fallback here in case the script is run without the server (e.g., tests).
+  if (!window.__BUILD_INFO__) {
+    let dist: "dev" | "test" | "prod" = "dev";
+    try {
+      // @ts-ignore
+      if (typeof process !== "undefined" && process.env.BUILD_DISTRIBUTION) {
+        // @ts-ignore
+        dist = process.env.BUILD_DISTRIBUTION as "dev" | "test" | "prod";
+      }
+    } catch (e) {
+      // fallback to dev
+    }
 
-  window.__BUILD_INFO__ = {
-    version: pkg.version,
-    buildTime: new Date().toISOString(),
-    distribution: buildDistribution,
-  };
+    window.__BUILD_INFO__ = {
+      version: pkg.version,
+      // @ts-ignore
+      buildTime: new Date().toISOString(),
+      distribution: dist,
+    };
+  }
 }
 
 const root = createRoot(document.getElementById("root")!);

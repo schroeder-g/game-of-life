@@ -6,3 +6,7 @@ aider.venv/
 dist/
 build/
 .aider* 
+.env
+deploy.sh
+.gcloudignore
+bun.lock
