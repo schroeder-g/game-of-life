@@ -1069,7 +1069,8 @@ export function MainMenu() {
 
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
-  const configOptions = Object.keys(savedConfigs);
+  // Ensure savedConfigs is an object before calling Object.keys
+  const configOptions = savedConfigs ? Object.keys(savedConfigs) : [];
 
   const handleSelectConfig = useCallback((name: string) => {
     setSelectedConfigName(name);
