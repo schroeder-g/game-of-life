@@ -9,3 +9,4 @@ aider.venv/
 .vscode/
 .DS_Store
 *.md
+Google Cloud Run Deployment Synopsis.pdf
