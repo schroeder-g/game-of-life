@@ -1044,6 +1044,54 @@ function SceneManagementSection() {
   );
 }
 
+function DebugSection() {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [debugData, setDebugData] = useState<any>(null);
+
+  useEffect(() => {
+    const updateDebugData = () => {
+      if ((window as any).debugInfo) {
+        setDebugData({ ...(window as any).debugInfo });
+      }
+      requestAnimationFrame(updateDebugData);
+    };
+    const handle = requestAnimationFrame(updateDebugData);
+    return () => cancelAnimationFrame(handle);
+  }, []);
+
+  const formatCoord = (coord: { x: number, y: number }) => {
+    if (!coord) return 'N/A';
+    return `x: ${coord.x.toFixed(2)}, y: ${coord.y.toFixed(2)}`;
+  };
+
+  const formatRect = (rect: { top: number, left: number, width: number, height: number }) => {
+    if (!rect) return 'N/A';
+    return `t: ${rect.top.toFixed(2)}, l: ${rect.left.toFixed(2)}, w: ${rect.width.toFixed(2)}, h: ${rect.height.toFixed(2)}`;
+  }
+
+  return (
+    <section className="menu-section">
+      <h3
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      >
+        Debug
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+      </h3>
+      {!isCollapsed && debugData && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 8px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+          <strong>Pointer Absolute:</strong><span>{formatCoord(debugData.pointerAbsolute)}</span>
+          <strong>BrushControls Absolute:</strong><span>{formatCoord(debugData.brushControlsAbsolute)}</span>
+          <strong>BrushControls Canvas:</strong><span>{formatCoord(debugData.brushControlsCanvas)}</span>
+          <strong>Mouse Canvas:</strong><span>{formatCoord(debugData.mouseCanvas)}</span>
+          <strong>Drag Offset:</strong><span>{formatCoord(debugData.dragOffset)}</span>
+          <strong>Canvas Rect:</strong><span>{formatRect(debugData.offsetParentRect)}</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function MainMenu() {
   const {
     state: { running, rotationMode, community, buildInfo },
@@ -1170,6 +1218,7 @@ export function MainMenu() {
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
           {!rotationMode && <SelectorPositionSection />}
+          <DebugSection />
         </div>
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}

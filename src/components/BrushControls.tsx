@@ -176,6 +176,25 @@ export function BrushControls() {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (panelRef.current) {
+      const panelElement = panelRef.current;
+      const offsetParent = panelElement.offsetParent as HTMLElement;
+      if (offsetParent) {
+        const offsetParentRect = offsetParent.getBoundingClientRect();
+        const panelRect = panelElement.getBoundingClientRect();
+        const debugInfo = {
+          pointerAbsolute: { x: e.clientX, y: e.clientY },
+          brushControlsAbsolute: { x: panelRect.left, y: panelRect.top },
+          brushControlsCanvas: { x: panelElement.offsetLeft, y: panelElement.offsetTop },
+          mouseCanvas: { x: e.clientX - offsetParentRect.left, y: e.clientY - offsetParentRect.top },
+          dragOffset: {
+            x: e.clientX - panelRect.left,
+            y: e.clientY - panelRect.top,
+          },
+          offsetParentRect: { top: offsetParentRect.top, left: offsetParentRect.left, width: offsetParentRect.width, height: offsetParentRect.height },
+        };
+        (window as any).debugInfo = debugInfo;
+      }
+
       setIsDragging(true);
       dragOffset.current = {
         x: e.clientX - panelRef.current.getBoundingClientRect().left,
@@ -219,6 +238,16 @@ export function BrushControls() {
       x: clampedX,
       y: clampedY,
     });
+
+    const debugInfo = {
+      pointerAbsolute: { x: e.clientX, y: e.clientY },
+      brushControlsAbsolute: { x: newPanelLeft_viewport, y: newPanelTop_viewport },
+      brushControlsCanvas: { x: clampedX, y: clampedY },
+      mouseCanvas: { x: e.clientX - offsetParentRect.left, y: e.clientY - offsetParentRect.top },
+      dragOffset: dragOffset.current,
+      offsetParentRect: { top: offsetParentRect.top, left: offsetParentRect.left, width: offsetParentRect.width, height: offsetParentRect.height },
+    };
+    (window as any).debugInfo = debugInfo;
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
