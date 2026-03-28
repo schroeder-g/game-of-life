@@ -293,8 +293,8 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell, setSquareUp },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell, setSquareUp, setSpeed },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
