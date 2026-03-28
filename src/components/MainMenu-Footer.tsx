@@ -75,22 +75,22 @@ export function FooterControls({ isSmallScreen }: FooterControlsProps) {
         maxWidth: '200px', // Limit width for better mobile display
       }}>
         <div style={{ gridColumn: '2 / 3', gridRow: '1 / 2', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('q')} style={{ width: '50px', height: '30px' }}>F</button>
+          <button className="glass-button" onClick={() => handleMove('q')} style={{ width: '50px', height: '30px' }}>q</button>
         </div>
         <div style={{ gridColumn: '1 / 2', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('a')} style={{ width: '50px', height: '30px' }}>L</button>
+          <button className="glass-button" onClick={() => handleMove('a')} style={{ width: '50px', height: '30px' }}>a</button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('w')} style={{ width: '50px', height: '30px' }}>U</button>
+          <button className="glass-button" onClick={() => handleMove('w')} style={{ width: '50px', height: '30px' }}>w</button>
         </div>
         <div style={{ gridColumn: '3 / 4', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('d')} style={{ width: '50px', height: '30px' }}>R</button>
+          <button className="glass-button" onClick={() => handleMove('d')} style={{ width: '50px', height: '30px' }}> d</button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('s')} style={{ width: '50px', height: '30px' }}>D</button>
+          <button className="glass-button" onClick={() => handleMove('x')} style={{ width: '50px', height: '30px' }}>x</button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('z')} style={{ width: '50px', height: '30px' }}>C</button>
+          <button className="glass-button" onClick={() => handleMove('z')} style={{ width: '50px', height: '30px' }}>z</button>
         </div>
       </div>
     </div>
