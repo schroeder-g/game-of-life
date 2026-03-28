@@ -127,7 +127,7 @@ function getCubeVisibility(
     return result;
   }
 
-  const visibilityThreshold = 0.15; // 15% visible means 85% off-screen
+  const visibilityThreshold = 0.5; // 50% visible means 50% off-screen
 
   const overlapX = Math.max(0, Math.min(maxX, 1) - Math.max(minX, -1));
   const spanX = maxX - minX;
@@ -1059,9 +1059,9 @@ export function Scene() {
         velocity.current.panY = lerp(velocity.current.panY, -pSpeed * restoringForce, easeInVal);
       }
       
-      // Prevent dollying out too far
-      if (visibility.isOffScreen && velocity.current.dolly > 0) {
-         velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed * restoringForce, easeInVal);
+      // If the cube is significantly off-screen, prevent further dollying in or out.
+      if (visibility.isOffScreen) {
+        velocity.current.dolly = 0;
       }
     }
     
