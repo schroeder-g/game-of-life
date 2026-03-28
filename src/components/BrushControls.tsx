@@ -308,24 +308,38 @@ export function BrushControls() {
         left: position.x,
         // Removed bottom: 0 and width: '100%'
         backgroundColor: 'rgba(13, 17, 23, 0.8)', // Using a specific color with transparency
-        padding: '10px',
+        padding: '5px', // Reduced padding to make space for the header
         boxShadow: '0 -2px 10px rgba(0,0,0,0.2)',
         zIndex: 1000,
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        flexDirection: 'column', // Changed to column to stack header and controls
         cursor: isDragging ? 'grabbing' : 'grab', // Add grab cursor
         touchAction: 'none', // Prevent default touch actions like scrolling
+        border: '2px solid orange', // Orange outline
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
     >
+      <div
+        style={{
+          width: '100%',
+          textAlign: 'center',
+          paddingBottom: '5px',
+          fontWeight: 'bold',
+          color: 'orange',
+          cursor: 'inherit', // Inherit cursor from parent for dragging
+        }}
+      >
+        Brush Controls
+      </div>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(12, 1fr)',
         gridTemplateRows: 'auto auto auto auto auto auto',
         gap: '5px',
         maxWidth: '200px', // Limit width for better mobile display
+        justifyContent: 'center',
+        alignItems: 'center',
       }}>
 
 
