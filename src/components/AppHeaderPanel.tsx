@@ -86,9 +86,9 @@ const XSquareIcon = () => (
 
 const PaintBrushIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22V10"/>
-    <path d="M6 10h12V8H6z"/>
-    <path d="M6 8V-4h12V8z"/>
+    <path d="M12 18V12"/>
+    <path d="M6 12h12V10H6z"/>
+    <path d="M6 10V-4h12V10z"/>
   </svg>
 );
 
