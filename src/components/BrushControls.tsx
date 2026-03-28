@@ -230,20 +230,69 @@ export function BrushControls() {
     }
   }, []);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (panelRef.current) {
+      e.preventDefault(); // Prevent scrolling or zooming
+      const panelElement = panelRef.current;
+      const panelRect = panelElement.getBoundingClientRect();
+      dragOffset.current = {
+        x: e.touches[0].clientX - panelRect.left,
+        y: e.touches[0].clientY - panelRect.top,
+      };
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault(); // Prevent scrolling during drag
+
+    const panelElement = panelRef.current;
+    if (!panelElement) return;
+
+    const panelRect = panelElement.getBoundingClientRect();
+
+    const newPanelLeft_viewport = e.touches[0].clientX - dragOffset.current.x;
+    const newPanelTop_viewport = e.touches[0].clientY - dragOffset.current.y;
+
+    const minX = 10;
+    const minY = 10;
+    const maxX = window.innerWidth - panelRect.width - 10;
+    const maxY = window.innerHeight - panelRect.height - 10;
+
+    const clampedX = Math.max(minX, Math.min(newPanelLeft_viewport, maxX));
+    const clampedY = Math.max(minY, Math.min(newPanelTop_viewport, maxY));
+
+    setPosition({
+      x: clampedX,
+      y: clampedY,
+    });
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
     } else {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   if (rotationMode) {
     return null;
@@ -269,7 +318,7 @@ export function BrushControls() {
         touchAction: 'none', // Prevent default touch actions like scrolling
       }}
       onMouseDown={handleMouseDown}
-    // onTouchStart={handleTouchStart} // Add touch handlers if needed
+      onTouchStart={handleTouchStart}
     >
       <div style={{
         display: 'grid',
