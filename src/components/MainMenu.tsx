@@ -1044,7 +1044,14 @@ function SceneManagementSection() {
   );
 }
 
-function DebugSection() {
+interface DebugSectionProps {
+  manualTests: ManualTest[];
+  automatedTestIds: Set<string>;
+  documentation: DocItem[];
+  buildDistribution: 'dev' | 'test' | 'prod';
+}
+
+function DebugSection({ manualTests, automatedTestIds, documentation, buildDistribution }: DebugSectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [debugData, setDebugData] = useState<any>(null);
 
@@ -1087,6 +1094,20 @@ function DebugSection() {
           <strong>Drag Offset:</strong><span>{formatCoord(debugData.dragOffset)}</span>
           <strong>Container Rect:</strong><span>{formatRect(debugData.offsetParentRect)}</span>
         </div>
+      )}
+      {!isCollapsed && buildDistribution !== "prod" && (
+        <>
+          <ManualTestsPanel
+            manualTests={manualTests}
+            automatedTestIds={automatedTestIds}
+            documentation={documentation}
+          />
+          <AutomatedTestsPanel
+            manualTests={manualTests}
+            automatedTestIds={automatedTestIds}
+            documentation={documentation}
+          />
+        </>
       )}
     </section>
   );
@@ -1218,25 +1239,15 @@ export function MainMenu() {
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
           {!rotationMode && <SelectorPositionSection />}
-          <DebugSection />
+          <DebugSection
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
+            buildDistribution={buildInfo.distribution}
+          />
         </div>
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
-
-      {buildInfo.distribution !== "prod" && (
-        <>
-          <ManualTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-          <AutomatedTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-        </>
-      )}
     </>
   );
 }
