@@ -846,7 +846,14 @@ kbd {
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
+<<<<<<< Updated upstream
   z-index: 1000;
+=======
+  z-index: 9999;
+  /* Ensure header is on top of most things */
+  overflow: visible;
+  /* Allow tooltips to escape bounds */
+>>>>>>> Stashed changes
 }
 
 
@@ -859,6 +866,30 @@ kbd {
   gap: 10px;
 }
 
+<<<<<<< Updated upstream
+=======
+.app-header-panel .speed-control {
+  width: 100px;
+  /* Set the desired width for the speed control */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #ccc;
+}
+
+.app-header-panel .speed-control span {
+  white-space: nowrap;
+}
+
+.app-header-panel .speed-control input[type="range"] {
+  width: 100%;
+  margin: 0;
+}
+
+>>>>>>> Stashed changes
 
 
 .orientation-status {
@@ -896,6 +927,7 @@ kbd {
 /* Custom Tooltip */
 [data-tooltip-bottom] {
   position: relative;
+  z-index: 9999999;
 }
 
 [data-tooltip-bottom]::before {
@@ -919,7 +951,12 @@ kbd {
   transition: all 0.15s ease;
   transition-delay: 0.05s;
   border: 1px solid rgba(255, 255, 255, 0.1);
+<<<<<<< Updated upstream
   z-index: 1500;
+=======
+  z-index: 99900000;
+  /* Increased z-index to ensure tooltips are always on top */
+>>>>>>> Stashed changes
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 

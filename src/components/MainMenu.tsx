@@ -14,6 +14,8 @@ import { AppHeaderPanel } from "./AppHeaderPanel"; // Import the new component
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes"; // Added
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
+import { CheckCircle, XCircle, Circle, ChevronDown, ChevronRight } from 'lucide-react';
+
 
 interface MainMenuProps {
   isSmallScreen: boolean;
@@ -1149,19 +1151,15 @@ export function MainMenu() {
       <aside
         className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${community.length > 0 && !rotationMode ? "has-sidebar" : ""}`}
       >
-        <div className="menu-sticky-container">
+        <div className="tests-panel">
           <header
             className="menu-header"
             onClick={() => setCollapsed(!collapsed)}
           >
-            <h2>Configuration</h2>
-            <button
-              className="collapse-toggle"
-              tabIndex={-1}
-              aria-label="Toggle menu"
-            >
-              {collapsed ? "▼" : "▲"}
-            </button>
+            <h3 onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              Configuration
+              {collapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+            </h3>
           </header>
           {!collapsed && <ActionsSection />}
         </div>

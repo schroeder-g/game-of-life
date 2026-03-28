@@ -9,7 +9,7 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
 import { useAppShortcuts } from "../hooks/useAppShortcuts";
-import { FooterControls } from "../components/MainMenu-Footer"; // NEW IMPORT
+import { BrushControls } from "../components/BrushControls"; // NEW IMPORT
 
 function SimulationStats() {
   const {
@@ -211,7 +211,7 @@ export default function App() {
                 onMouseDown={onMouseDown}
                 onTouchStart={(e) => onMouseDown(e as any)} // For touch devices
               />
-              <FooterControls isSmallScreen={isSmallScreen} />
+              <BrushControls isSmallScreen={isSmallScreen} />
             </div>
           )}
         </main>
