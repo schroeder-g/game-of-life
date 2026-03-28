@@ -135,7 +135,7 @@ export function BrushControls() {
 
   // Effect to handle window resize and re-clamp position
   useEffect(() => {
-    const clampPosition = () => {
+    const handleResize = () => {
       if (panelRef.current && panelRef.current.parentElement) {
         const parentRect = panelRef.current.parentElement.getBoundingClientRect();
         const panelRect = panelRef.current.getBoundingClientRect();
@@ -145,23 +145,27 @@ export function BrushControls() {
         const maxX = parentRect.width - panelRect.width - 10;
         const maxY = parentRect.height - panelRect.height - 10;
 
-        const currentX = position.x;
-        const currentY = position.y;
+        // Use functional update to get the latest position state
+        setPosition(prevPosition => {
+          const currentX = prevPosition.x;
+          const currentY = prevPosition.y;
 
-        const clampedX = Math.max(minX, Math.min(currentX, maxX));
-        const clampedY = Math.max(minY, Math.min(currentY, maxY));
+          const clampedX = Math.max(minX, Math.min(currentX, maxX));
+          const clampedY = Math.max(minY, Math.min(currentY, maxY));
 
-        if (clampedX !== currentX || clampedY !== currentY) {
-          setPosition({ x: clampedX, y: clampedY });
-        }
+          if (clampedX !== currentX || clampedY !== currentY) {
+            return { x: clampedX, y: clampedY };
+          }
+          return prevPosition; // No change needed
+        });
       }
     };
 
-    window.addEventListener('resize', clampPosition);
+    window.addEventListener('resize', handleResize);
     return () => {
-      window.removeEventListener('resize', clampPosition);
+      window.removeEventListener('resize', handleResize);
     };
-  }, [position.x, position.y]); // Re-run if position changes, to update clamp logic
+  }, []); // Empty dependency array: listener is set up once and uses functional update for state
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (panelRef.current) {
