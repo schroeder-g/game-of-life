@@ -184,25 +184,21 @@ export function BrushControls() {
     const newPanelLeft_viewport = e.clientX - dragOffset.current.x;
     const newPanelTop_viewport = e.clientY - dragOffset.current.y;
 
-    // Convert viewport coordinates to parent-relative coordinates
-    const targetPanelLeft_parent = newPanelLeft_viewport - parentRect.left;
-    const targetPanelTop_parent = newPanelTop_viewport - parentRect.top;
-
-    // Define parent clamping boundaries
+    // Define clamping boundaries relative to the window
     const minX = 10;
     const minY = 10;
-    const maxX = parentRect.width - panelRect.width - 10;
-    const maxY = parentRect.height - panelRect.height - 10;
+    const maxX = window.innerWidth - panelRect.width - 10;
+    const maxY = window.innerHeight - panelRect.height - 10;
 
-    // Clamp the position relative to the parent
-    const clampedX = Math.max(minX, Math.min(targetPanelLeft_parent, maxX));
-    const clampedY = Math.max(minY, Math.min(targetPanelTop_parent, maxY));
+    // Clamp the position relative to the window
+    const clampedX = Math.max(minX, Math.min(newPanelLeft_viewport, maxX));
+    const clampedY = Math.max(minY, Math.min(newPanelTop_viewport, maxY));
 
     setPosition({
       x: clampedX,
       y: clampedY,
     });
-  }, [isDragging]); // isDragging is a dependency, but its value is checked at the start.
+  }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
