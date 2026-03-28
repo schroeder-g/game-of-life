@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useRef, useState, useCallback } from "react"; // Added useCallback
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Scene } from "../components/Grid";
 import { MainMenu } from "../components/MainMenu";
 import { AppHeaderPanel } from "../components/AppHeaderPanel";
@@ -9,7 +9,8 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
 import { useAppShortcuts } from "../hooks/useAppShortcuts";
-import { BrushControls } from "../components/BrushControls"; // NEW IMPORT
+import { BrushControls } from "../components/BrushControls";
+import { brushControlsDocumentation } from "../data/brushControlsDocumentation"; // NEW IMPORT
 
 function SimulationStats() {
   const {

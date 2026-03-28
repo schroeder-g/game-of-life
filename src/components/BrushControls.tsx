@@ -4,49 +4,49 @@ import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyM
 
 // Icon components for directional controls
 const ArrowUpIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowUpIcon">
     <path d="M12 14V0M5 7l7-7 7 7" />
   </svg>
 );
 
 const ArrowDownIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowDownIcon">
     <path d="M12 0v14M19 7l-7 7-7-7" />
   </svg>
 );
 
 const ArrowLeftIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowLeftIcon">
     <path d="M19 7H5M12 14l-7-7 7-7" />
   </svg>
 );
 
 const ArrowRightIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowRightIcon">
     <path d="M5 7h14M12 0l7 7-7 7" />
   </svg>
 );
 
 const ArrowFurtherIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowFurtherIcon">
     <path d="M12 14V0M5 7l7-7 7 7" />
   </svg>
 );
 
 const ArrowCloserIcon = () => (
-  <svg width="20" height="20" viewBox="5 0 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowCloserIcon">
     <path d="M12 0v14M19 7l-7 7-7-7" />
   </svg>
 );
 
 const AwayIcon = () => (
-  <svg width="10" height="10" viewBox="5 0 7 7" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="10" height="10" viewBox="5 -1 7 7" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-label="AwayIcon">
     <path d="M5 7 L5 0 L12 7 Z" />
   </svg>
 );
 
 const CloserIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="20" height="20" viewBox="0 -2 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="CloserIcon">
     <path d="M0 0 L0 20 L20 20 Z" />
   </svg>
 );
@@ -316,6 +316,7 @@ export function BrushControls() {
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      aria-label="Brush Controls Panel" // Added for accessibility in tests
     >
       <div
         style={{
@@ -329,17 +330,18 @@ export function BrushControls() {
       >
         Brush Controls
       </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(12, 1fr)',
-        gridTemplateRows: 'auto auto auto auto auto auto',
-        gap: '5px',
-        maxWidth: '300px', // 50% wider (200px * 1.5 = 300px)
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
-
-
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, 1fr)',
+          gridTemplateRows: 'auto auto auto auto auto auto',
+          gap: '5px',
+          maxWidth: '300px', // 50% wider (200px * 1.5 = 300px)
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        aria-label="Brush Controls Grid" // Added for accessibility in tests
+      >
         <div style={{ gridColumn: '2 / 3', gridRow: '1 / 3', display: 'flex', justifyContent: 'center' }}>
           <button
             id="upBtn"
@@ -405,8 +407,6 @@ export function BrushControls() {
             style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
           ><CloserIcon />&nbsp;&nbsp; Closer </button>
         </div>
-
-
       </div>
     </div >
   );
