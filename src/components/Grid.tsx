@@ -653,6 +653,13 @@ export function Scene() {
     prevSelectionVersionRef.current = brushState.shapeSelectionVersion;
   }, [brushState.selectedShape, brushState.shapeSelectionVersion, brushQuaternion]);
 
+  // Initialize lastPanSpeedCheckPositionRef when camera is ready or gridSize changes
+  useEffect(() => {
+    if (cameraRef.current) {
+      lastPanSpeedCheckPositionRef.current = cameraRef.current.position.clone();
+    }
+  }, [cameraRef.current, gridSize]);
+
   const fitAnimRef = useRef<{
     startTime: number;
     startPos: THREE.Vector3;
@@ -676,6 +683,9 @@ export function Scene() {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
   const { camera, gl } = useThree();
+
+  // Ref to store the camera position when panSpeed was last checked/set to 1
+  const lastPanSpeedCheckPositionRef = useRef<THREE.Vector3 | null>(null);
 
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
@@ -1129,6 +1139,30 @@ export function Scene() {
         const needsUpdate = hasPan || hasDolly || hasRot;
         if (needsUpdate) {
           cam.lookAt(target);
+        }
+
+        // Capture the camera's position *after* all movements for this frame
+        const currentCameraPosition = cam.position.clone();
+
+        // Check for pan/dolly speed reduction if camera has moved significantly
+        if (state.panSpeed > 1) {
+          if (lastPanSpeedCheckPositionRef.current) {
+            const distanceMoved = currentCameraPosition.distanceTo(lastPanSpeedCheckPositionRef.current);
+            const threshold = gridSize * 0.1; // 10% of cube width
+
+            if (distanceMoved > threshold) {
+              actions.setPanSpeed(1);
+              // Reset the reference point after setting speed to 1
+              lastPanSpeedCheckPositionRef.current = currentCameraPosition.clone();
+            }
+          } else {
+            // If ref is null, initialize it with current position
+            lastPanSpeedCheckPositionRef.current = currentCameraPosition.clone();
+          }
+        } else if (state.panSpeed === 1) {
+          // If speed is already 1, continuously update the reference point
+          // This ensures that if the user increases speed later, measurement starts from current pos
+          lastPanSpeedCheckPositionRef.current = currentCameraPosition.clone();
         }
       }
     } else {
