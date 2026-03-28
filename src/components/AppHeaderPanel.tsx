@@ -439,30 +439,32 @@ export function AppHeaderPanel() {
             ↺
           </button>
         </div> {/* End of new container div */}
-        <button
-          className="glass-button"
-          onClick={fitDisplay}
-          aria-label="Fit"
-          data-tooltip-bottom="Fit (F)"
-        >
-          <FitIcon />
-        </button>
-        <button
-          className="glass-button"
-          onClick={recenter}
-          aria-label="Recenter"
-          data-tooltip-bottom="Recenter (S)"
-        >
-          <RecenterIcon />
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}> {/* New container div for Fit, Recenter, Square Up */}
+          <button
+            className="glass-button"
+            onClick={fitDisplay}
+            aria-label="Fit"
+            data-tooltip-bottom="Fit (F)"
+          >
+            <FitIcon />
+          </button>
+          <button
+            className="glass-button"
+            onClick={recenter}
+            aria-label="Recenter"
+            data-tooltip-bottom="Recenter (S)"
+          >
+            <RecenterIcon />
+          </button>
 
-        <button
-          className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
-          onClick={() => setSquareUp(!squareUp)}
-          title={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
-        >
-          {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
-        </button>
+          <button
+            className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
+            onClick={() => setSquareUp(!squareUp)}
+            title={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
+          >
+            {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
+          </button>
+        </div> {/* End of new container div */}
         {/* Removed Auto-Square button */}
 
         <button
