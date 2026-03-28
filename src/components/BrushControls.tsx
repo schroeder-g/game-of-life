@@ -282,7 +282,7 @@ export function BrushControls() {
           <button
             id="upBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('w'); setActiveKey('w'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('w'); setActiveKey('w'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '50px', height: '30px' }}
@@ -293,7 +293,7 @@ export function BrushControls() {
           <button
             id="downBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('x'); setActiveKey('x'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('x'); setActiveKey('x'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '50px', height: '30px' }}
@@ -304,7 +304,7 @@ export function BrushControls() {
           <button
             id="leftBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('a'); setActiveKey('a'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('a'); setActiveKey('a'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '50px', height: '30px' }}
@@ -315,7 +315,7 @@ export function BrushControls() {
           <button
             id="rightBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('d'); setActiveKey('d'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('d'); setActiveKey('d'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '50px', height: '30px' }}
@@ -326,7 +326,7 @@ export function BrushControls() {
           <button
             id="furtherBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('q'); setActiveKey('q'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('q'); setActiveKey('q'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
@@ -337,7 +337,7 @@ export function BrushControls() {
           <button
             id="closerBtn"
             className="glass-button"
-            onMouseDown={() => { handleMove('z'); setActiveKey('z'); }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMove('z'); setActiveKey('z'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
