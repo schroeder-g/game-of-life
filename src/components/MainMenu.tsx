@@ -590,7 +590,7 @@ function ShapeBrushSection() {
         onClick={() => setIsCollapsed(!isCollapsed)}
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
-        Shape Brush
+        <span role="img" aria-label="paintbrush">🖌️</span> Shape Brush
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
