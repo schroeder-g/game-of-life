@@ -1085,7 +1085,7 @@ function DebugSection() {
           <strong>BrushControls Canvas:</strong><span>{formatCoord(debugData.brushControlsCanvas)}</span>
           <strong>Mouse Canvas:</strong><span>{formatCoord(debugData.mouseCanvas)}</span>
           <strong>Drag Offset:</strong><span>{formatCoord(debugData.dragOffset)}</span>
-          <strong>Canvas Rect:</strong><span>{formatRect(debugData.offsetParentRect)}</span>
+          <strong>Container Rect:</strong><span>{formatRect(debugData.offsetParentRect)}</span>
         </div>
       )}
     </section>

@@ -123,13 +123,13 @@ export function BrushControls() {
   useEffect(() => {
     if (panelRef.current) {
       const panelRect = panelRef.current.getBoundingClientRect();
-      const offsetParent = panelRef.current.offsetParent as HTMLElement;
-      if (!offsetParent) return;
+      const container = document.querySelector('canvas')?.parentElement as HTMLElement;
+      if (!container) return;
 
-      const offsetParentRect = offsetParent.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
 
       // Calculate top-right position with a 10px margin relative to offsetParent
-      const initialX = offsetParentRect.width - panelRect.width - 10;
+      const initialX = containerRect.width - panelRect.width - 10;
       const initialY = 10; // Always 10px from the top of the parent
 
       // Ensure initial position is not negative and respects the 10px margin
@@ -142,15 +142,15 @@ export function BrushControls() {
     const handleResize = () => {
       if (panelRef.current) {
         const panelRect = panelRef.current.getBoundingClientRect();
-        const offsetParent = panelRef.current.offsetParent as HTMLElement;
-        if (!offsetParent) return;
+        const container = document.querySelector('canvas')?.parentElement as HTMLElement;
+        if (!container) return;
 
-        const offsetParentRect = offsetParent.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
         const minX = 10;
         const minY = 10;
-        const maxX = offsetParentRect.width - panelRect.width - 10;
-        const maxY = offsetParentRect.height - panelRect.height - 10;
+        const maxX = containerRect.width - panelRect.width - 10;
+        const maxY = containerRect.height - panelRect.height - 10;
 
         // Use functional update to get the latest position state
         setPosition(prevPosition => {
@@ -177,20 +177,20 @@ export function BrushControls() {
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (panelRef.current) {
       const panelElement = panelRef.current;
-      const offsetParent = panelElement.offsetParent as HTMLElement;
-      if (offsetParent) {
-        const offsetParentRect = offsetParent.getBoundingClientRect();
+      const container = document.querySelector('canvas')?.parentElement as HTMLElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
         const panelRect = panelElement.getBoundingClientRect();
         const debugInfo = {
           pointerAbsolute: { x: e.clientX, y: e.clientY },
           brushControlsAbsolute: { x: panelRect.left, y: panelRect.top },
           brushControlsCanvas: { x: panelElement.offsetLeft, y: panelElement.offsetTop },
-          mouseCanvas: { x: e.clientX - offsetParentRect.left, y: e.clientY - offsetParentRect.top },
+          mouseCanvas: { x: e.clientX - containerRect.left, y: e.clientY - containerRect.top },
           dragOffset: {
             x: e.clientX - panelRect.left,
             y: e.clientY - panelRect.top,
           },
-          offsetParentRect: { top: offsetParentRect.top, left: offsetParentRect.left, width: offsetParentRect.width, height: offsetParentRect.height },
+          offsetParentRect: { top: containerRect.top, left: containerRect.left, width: containerRect.width, height: containerRect.height },
         };
         (window as any).debugInfo = debugInfo;
       }
@@ -211,24 +211,24 @@ export function BrushControls() {
     if (!panelElement) return;
 
     const panelRect = panelElement.getBoundingClientRect();
-    const offsetParent = panelElement.offsetParent as HTMLElement; // Get the nearest positioned ancestor
-    if (!offsetParent) return; // Should not happen if mounted and positioned
+    const container = document.querySelector('canvas')?.parentElement as HTMLElement; // Get the nearest positioned ancestor
+    if (!container) return; // Should not happen if mounted and positioned
 
-    const offsetParentRect = offsetParent.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
 
     // Calculate the new top-left corner of the panel in viewport coordinates
     const newPanelLeft_viewport = e.clientX - dragOffset.current.x;
     const newPanelTop_viewport = e.clientY - dragOffset.current.y;
 
     // Convert viewport coordinates to offsetParent-relative coordinates
-    const targetPanelLeft_parent = newPanelLeft_viewport - offsetParentRect.left;
-    const targetPanelTop_parent = newPanelTop_viewport - offsetParentRect.top;
+    const targetPanelLeft_parent = newPanelLeft_viewport - containerRect.left;
+    const targetPanelTop_parent = newPanelTop_viewport - containerRect.top;
 
     // Define clamping boundaries relative to the offsetParent
     const minX = 10;
     const minY = 10;
-    const maxX = offsetParentRect.width - panelRect.width - 10;
-    const maxY = offsetParentRect.height - panelRect.height - 10;
+    const maxX = containerRect.width - panelRect.width - 10;
+    const maxY = containerRect.height - panelRect.height - 10;
 
     // Clamp the position relative to the offsetParent
     const clampedX = Math.max(minX, Math.min(targetPanelLeft_parent, maxX));
@@ -243,9 +243,9 @@ export function BrushControls() {
       pointerAbsolute: { x: e.clientX, y: e.clientY },
       brushControlsAbsolute: { x: newPanelLeft_viewport, y: newPanelTop_viewport },
       brushControlsCanvas: { x: clampedX, y: clampedY },
-      mouseCanvas: { x: e.clientX - offsetParentRect.left, y: e.clientY - offsetParentRect.top },
+      mouseCanvas: { x: e.clientX - containerRect.left, y: e.clientY - containerRect.top },
       dragOffset: dragOffset.current,
-      offsetParentRect: { top: offsetParentRect.top, left: offsetParentRect.left, width: offsetParentRect.width, height: offsetParentRect.height },
+      offsetParentRect: { top: containerRect.top, left: containerRect.left, width: containerRect.width, height: containerRect.height },
     };
     (window as any).debugInfo = debugInfo;
   }, [isDragging]);
