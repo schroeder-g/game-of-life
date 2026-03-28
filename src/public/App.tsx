@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react"; // Added useCallback
 import { Scene } from "../components/Grid";
 import { MainMenu } from "../components/MainMenu";
 import { AppHeaderPanel } from "../components/AppHeaderPanel";
@@ -9,6 +9,7 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
 import { useAppShortcuts } from "../hooks/useAppShortcuts";
+import { FooterControls } from "../components/MainMenu-Footer"; // NEW IMPORT
 
 function SimulationStats() {
   const {
@@ -53,6 +54,13 @@ export default function App() {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
   } = useBrush();
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from MainMenu
+
+  // State for draggable footer position
+  const [footerPosition, setFooterPosition] = useState({ x: 10, y: 10 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const footerRef = useRef<HTMLDivElement>(null);
 
   useAppShortcuts();
 
@@ -63,6 +71,71 @@ export default function App() {
     }
   }, [rotationMode, recenter, fitDisplay]);
 
+  // Effect to check screen size for small screens
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth <= 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // Dragging logic
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if (footerRef.current) {
+      const rect = footerRef.current.getBoundingClientRect();
+      dragOffset.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      setIsDragging(true);
+    }
+  }, []);
+
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      const newX = e.clientX - dragOffset.current.x;
+      const newY = e.clientY - dragOffset.current.y;
+
+      // Keep within canvas bounds
+      const canvas = document.querySelector('.canvas-container');
+      if (canvas) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const footerRect = footerRef.current?.getBoundingClientRect();
+
+        const maxX = canvasRect.width - (footerRect?.width || 0);
+        const maxY = canvasRect.height - (footerRect?.height || 0);
+
+        setFooterPosition({
+          x: Math.max(0, Math.min(newX - canvasRect.left, maxX)),
+          y: Math.max(0, Math.min(newY - canvasRect.top, maxY)),
+        });
+      }
+    }
+  }, [isDragging]);
+
+  const onMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    } else {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDragging, onMouseMove, onMouseUp]);
 
 
   return (
@@ -91,7 +164,8 @@ export default function App() {
           {!rotationMode && selectedShape !== "None" && (
             <div className="shape-info">
               Shape: {selectedShape} ({shapeSize}x{shapeSize}
-              {supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
+              {supportsHollow(selectedShape) && `x${shapeSize}`}
+              )
               {isHollow && supportsHollow(selectedShape) && " (hollow)"}
             </div>
           )}
@@ -103,15 +177,43 @@ export default function App() {
           </button>
 
 
-          <MainMenu />
+          <MainMenu isSmallScreen={isSmallScreen} />
         </aside>
 
         <main className="canvas-container">
-
-          {isSmallScreen && <FooterControls isSmallScreen={isSmallScreen} />}
           <Canvas>
             <Scene />
           </Canvas>
+          {isSmallScreen && (
+            <div
+              ref={footerRef}
+              style={{
+                position: 'absolute',
+                left: footerPosition.x,
+                top: footerPosition.y,
+                zIndex: 999, // Ensure it's above other canvas elements
+                cursor: isDragging ? 'grabbing' : 'grab',
+                touchAction: 'none', // Disable touch scrolling for dragging
+              }}
+            >
+              <div
+                style={{
+                  // Grab bar styling
+                  width: '100%',
+                  height: '10px', // Height of the grab bar
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  cursor: 'grab',
+                  position: 'absolute',
+                  top: '-10px', // Position above the controls
+                  left: 0,
+                  borderRadius: '5px 5px 0 0',
+                }}
+                onMouseDown={onMouseDown}
+                onTouchStart={(e) => onMouseDown(e as any)} // For touch devices
+              />
+              <FooterControls isSmallScreen={isSmallScreen} />
+            </div>
+          )}
         </main>
       </div>
 
