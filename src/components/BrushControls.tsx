@@ -294,10 +294,6 @@ export function BrushControls() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
-  if (rotationMode) {
-    return null;
-  }
-
   return (
     <div
       id="brush-controls"
