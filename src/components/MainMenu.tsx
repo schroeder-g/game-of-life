@@ -74,22 +74,6 @@ function ActionsSection() {
 
   return (
     <section className="menu-section actions-section">
-      <label className="control-label">
-        <span>Load Scene</span>
-        <select
-          className="glass-select"
-          value={selectedConfigName}
-          onChange={(e) => handleSelectConfig(e.target.value)}
-          disabled={running}
-        >
-          <option value="">Select a scene...</option>
-          {configOptions.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-      </label>
     </section>
   );
 }
