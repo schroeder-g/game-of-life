@@ -197,6 +197,7 @@ export function useAppShortcuts() {
             case "e": setRotationMode(false); break;
             case "v": setRotationMode(true); break;
             case "f": fitDisplay(); break;
+            case "l": fitDisplay(); break; // Added 'l' for "Square Up"
             case "s": recenter(); break;
             case "r": if (hasInitialState) reset(); break;
             case " ":
@@ -215,6 +216,7 @@ export function useAppShortcuts() {
           case "e": setRotationMode(false); break;
           case "v": setRotationMode(true); break;
           case "f": fitDisplay(); break;
+          case "l": fitDisplay(); break; // Added 'l' for "Square Up"
           case "s": recenter(); break;
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
