@@ -616,6 +616,7 @@ export function Scene() {
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
   const lastPanSpeedCheckPositionRef = useRef<THREE.Vector3 | null>(null);
+  const originalPanSpeedRef = useRef<number | null>(null); // New ref to store original pan speed
   const lastSelectorMoveTime = useRef(0);
   const wasRotating = useRef(false);
   const isDragging = useRef(false);
@@ -1152,6 +1153,9 @@ export function Scene() {
             const threshold = gridSize * 0.1; // 10% of cube width
 
             if (distanceMoved > threshold) {
+              if (originalPanSpeedRef.current === null) {
+                originalPanSpeedRef.current = state.panSpeed; // Store original speed
+              }
               actions.setPanSpeed(1);
               // Reset the reference point after setting speed to 1
               lastPanSpeedCheckPositionRef.current = currentCameraPosition.clone();
@@ -1190,6 +1194,20 @@ export function Scene() {
           cube.quaternion.premultiply(qPitch).premultiply(qYaw).premultiply(qRoll);
         }
       }
+    }
+
+    // Check if all movement has stopped to restore panSpeed
+    const movementStopped =
+      Math.abs(velocity.current.panX) < 1e-7 &&
+      Math.abs(velocity.current.panY) < 1e-7 &&
+      Math.abs(velocity.current.dolly) < 1e-7 &&
+      Math.abs(velocity.current.rotatePitch) < 1e-7 &&
+      Math.abs(velocity.current.rotateYaw) < 1e-7 &&
+      Math.abs(velocity.current.rotateRoll) < 1e-7;
+
+    if (movementStopped && originalPanSpeedRef.current !== null) {
+      actions.setPanSpeed(originalPanSpeedRef.current);
+      originalPanSpeedRef.current = null;
     }
 
     // --- Square-Up Smoothing ---
