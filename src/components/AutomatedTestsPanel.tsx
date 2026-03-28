@@ -61,15 +61,18 @@ export function AutomatedTestsPanel({
     (report as any).testResults.forEach((fileResult: any) => {
       if (fileResult.assertionResults) {
         fileResult.assertionResults.forEach((assertion: any) => {
-          // Look for an ID in both ancestor titles and the test title itself.
           const fullTitle = [...(assertion.ancestorTitles || []), assertion.title].join(' ');
-          const match = fullTitle.match(/\[(.*?)\]/);
-          // Use the matched ID, or the plain title as a fallback key
-          const testId = match ? match[1] : assertion.title;
+          const extractedClaimIds: string[] = [];
+          const regex = /\[(.*?)\]/g;
+          let match;
+          while ((match = regex.exec(fullTitle)) !== null) {
+            extractedClaimIds.push(match[1]);
+          }
 
           allParsedTests.push({
-            name: testId,
-            fullTitle: assertion.title,
+            name: fullTitle, // Use fullTitle as the unique identifier for the test instance
+            fullTitle: assertion.title, // The display title
+            claimIds: extractedClaimIds, // Store all extracted claim IDs
             status: assertion.status === "passed" ? "pass" : assertion.status,
             duration: assertion.duration,
             errors: assertion.failureMessages?.map((msg: string) => ({ message: msg })) || [],
@@ -78,59 +81,63 @@ export function AutomatedTestsPanel({
       }
     });
 
-    const trackedResults = Array.from(automatedTestIds)
-      .map((testId): AutomatedTestResult | null => {
-        const manualTest = manualTests.find((mt) => mt.id === testId);
-        const vitestTest = allParsedTests.find((vt) => vt.name === testId);
-        let title: string | null = null;
+    const finalTestResultsMap = new Map<string, AutomatedTestResult>();
 
-        if (manualTest) {
-          title = manualTest.title;
-        } else if (vitestTest?.fullTitle) {
-          title = vitestTest.fullTitle.replace(/\[.*?\]\s*/, "");
-        } else {
-          console.warn(`Orphaned automated test ID found: "${testId}". This ID has no corresponding manual test and was not found in the test report. Please remove it from src/data/automated-tests.ts.`);
-          return null;
-        }
+    // 1. Add tests from automatedTestIds (expected claims)
+    automatedTestIds.forEach(expectedClaimId => {
+      const matchingTests = allParsedTests.filter(pt => pt.claimIds?.includes(expectedClaimId));
 
-        if (!vitestTest) {
-          return { id: testId, title, claimIds: manualTest?.claimIds || [], status: "skipped", narrative: "Test not found in report. It may be pending implementation or misconfigured." };
-        }
+      if (matchingTests.length > 0) {
+        matchingTests.forEach(parsedTest => {
+          const manualTest = manualTests.find(mt => mt.id === expectedClaimId);
+          const title = manualTest ? manualTest.title : parsedTest.fullTitle.replace(/\[.*?\]\s*/g, "").trim();
 
-        const narrative =
-          vitestTest.status === "fail"
-            ? vitestTest.errors?.[0]?.message || "No error message provided."
-            : `${vitestTest.status} in ${(vitestTest.duration ?? 0).toFixed(2)}ms`;
+          finalTestResultsMap.set(parsedTest.name, {
+            id: parsedTest.name, // Unique fullTitle
+            title: title,
+            claimIds: parsedTest.claimIds || [],
+            status: parsedTest.status as "pass" | "fail" | "skipped",
+            narrative: parsedTest.status === "fail"
+              ? parsedTest.errors?.[0]?.message || "No error message provided."
+              : `${parsedTest.status} in ${(parsedTest.duration ?? 0).toFixed(2)}ms`,
+          });
+        });
+      } else {
+        // If an expected claim ID has no matching test in the report, mark it as skipped
+        const manualTest = manualTests.find(mt => mt.id === expectedClaimId);
+        const title = manualTest ? manualTest.title : `(Orphaned) ${expectedClaimId}`;
+        finalTestResultsMap.set(`skipped-${expectedClaimId}`, { // Ensure unique key for skipped items
+          id: `skipped-${expectedClaimId}`,
+          title: title,
+          claimIds: [expectedClaimId],
+          status: "skipped",
+          narrative: `Test for claim ID "${expectedClaimId}" not found in report.`,
+        });
+      }
+    });
 
-        return { id: testId, title, claimIds: manualTest?.claimIds || [], status: vitestTest.status as "pass" | "fail" | "skipped", narrative };
-      })
-      .filter((result): result is AutomatedTestResult => result !== null);
+    // 2. Add tests from the report that are not associated with any automatedTestIds (untracked)
+    allParsedTests.forEach(parsedTest => {
+      const isTracked = parsedTest.claimIds?.some(claimId => automatedTestIds.has(claimId));
+      if (!isTracked && !finalTestResultsMap.has(parsedTest.name)) {
+        const title = `(Untracked) ${parsedTest.fullTitle.replace(/\[.*?\]\s*/g, "").trim()}`;
 
-    // Find tests that were in the report but not in the automatedTestIds list
-    const untrackedResults: AutomatedTestResult[] = allParsedTests
-      .filter(parsedTest => !automatedTestIds.has(parsedTest.name))
-      .map(parsedTest => {
-        const manualTest = manualTests.find((mt) => mt.id === parsedTest.name);
-        const title = manualTest ? manualTest.title : `(Untracked) ${parsedTest.name}`;
-
-        const narrative =
-          parsedTest.status === "fail"
-            ? parsedTest.errors?.[0]?.message || "No error message provided."
-            : `${parsedTest.status} in ${(parsedTest.duration ?? 0).toFixed(2)}ms`;
-
-        return {
+        finalTestResultsMap.set(parsedTest.name, {
           id: parsedTest.name,
           title: title,
-          claimIds: manualTest?.claimIds || [],
+          claimIds: parsedTest.claimIds || [],
           status: parsedTest.status as "pass" | "fail" | "skipped",
-          narrative,
-        };
-      });
+          narrative: parsedTest.status === "fail"
+            ? parsedTest.errors?.[0]?.message || "No error message provided."
+            : `${parsedTest.status} in ${(parsedTest.duration ?? 0).toFixed(2)}ms`,
+        });
+      }
+    });
 
-    const combinedResults = [...trackedResults, ...untrackedResults].sort((a, b) => a.title.localeCompare(b.title));
+    const combinedResults = Array.from(finalTestResultsMap.values()).sort((a, b) => a.title.localeCompare(b.title));
     const passed = combinedResults.filter((r) => r.status === "pass").length;
     const failed = combinedResults.filter((r) => r.status === "fail").length;
-    const skipped = combinedResults.length - passed - failed;
+    const skipped = combinedResults.filter((r) => r.status === "skipped").length;
 
     return {
       testResults: combinedResults,
