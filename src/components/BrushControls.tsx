@@ -120,13 +120,11 @@ export function BrushControls() {
   }, [activeKey, handleMove]);
 
   // Effect to set initial position to top-right
-  // Effect to set initial position to top-right
   useEffect(() => {
-    if (panelRef.current && panelRef.current.parentElement) {
-      const parentRect = panelRef.current.parentElement.getBoundingClientRect();
+    if (panelRef.current) {
       const panelRect = panelRef.current.getBoundingClientRect();
-      // Calculate top-right position with a 10px margin
-      const initialX = parentRect.width - panelRect.width - 10;
+      // Calculate top-right position with a 10px margin relative to viewport
+      const initialX = window.innerWidth - panelRect.width - 10;
       const initialY = 10;
       // Ensure initial position is not negative and respects the 10px margin
       setPosition({ x: Math.max(10, initialX), y: Math.max(10, initialY) });
@@ -136,14 +134,13 @@ export function BrushControls() {
   // Effect to handle window resize and re-clamp position
   useEffect(() => {
     const handleResize = () => {
-      if (panelRef.current && panelRef.current.parentElement) {
-        const parentRect = panelRef.current.parentElement.getBoundingClientRect();
+      if (panelRef.current) {
         const panelRect = panelRef.current.getBoundingClientRect();
 
         const minX = 10;
         const minY = 10;
-        const maxX = parentRect.width - panelRect.width - 10;
-        const maxY = parentRect.height - panelRect.height - 10;
+        const maxX = window.innerWidth - panelRect.width - 10;
+        const maxY = window.innerHeight - panelRect.height - 10;
 
         // Use functional update to get the latest position state
         setPosition(prevPosition => {
@@ -181,28 +178,26 @@ export function BrushControls() {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
 
-    const newX = e.clientX - dragOffset.current.x;
-    const newY = e.clientY - dragOffset.current.y;
+    const panelRect = panelRef.current!.getBoundingClientRect();
 
-    // Constrain to parent (canvas-container) boundaries
-    const parent = panelRef.current?.parentElement;
-    if (parent) {
-      const parentRect = parent.getBoundingClientRect();
-      const panelRect = panelRef.current!.getBoundingClientRect();
+    // Calculate desired viewport position for the panel's top-left corner
+    const targetPanelLeft_viewport = e.clientX - dragOffset.current.x;
+    const targetPanelTop_viewport = e.clientY - dragOffset.current.y;
 
-      const minX = 10;
-      const minY = 10;
-      const maxX = parentRect.width - panelRect.width - 10;
-      const maxY = parentRect.height - panelRect.height - 10;
+    // Define viewport clamping boundaries
+    const minX = 10;
+    const minY = 10;
+    const maxX = window.innerWidth - panelRect.width - 10;
+    const maxY = window.innerHeight - panelRect.height - 10;
 
-      setPosition({
-        x: Math.max(minX, Math.min(newX - parentRect.left, maxX)),
-        y: Math.max(minY, Math.min(newY - parentRect.top, maxY)),
-      });
-    } else {
-      // Fallback if parent not found or not positioned
-      setPosition({ x: newX, y: newY });
-    }
+    // Clamp the viewport position
+    const clampedX = Math.max(minX, Math.min(targetPanelLeft_viewport, maxX));
+    const clampedY = Math.max(minY, Math.min(targetPanelTop_viewport, maxY));
+
+    setPosition({
+      x: clampedX,
+      y: clampedY,
+    });
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
