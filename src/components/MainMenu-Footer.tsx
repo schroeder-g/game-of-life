@@ -124,7 +124,7 @@ export function FooterControls({ isSmallScreen }: FooterControlsProps) {
           <button className="glass-button" onClick={() => handleMove('d')} style={{ width: '50px', height: '30px' }}><ArrowRightIcon /></button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
-          <button className="glass-button" onClick={() => handleMove('x')} style={{ width: '50px', height: '30px' }}><ArrowDownIcon /></button>
+          <button className="glass-button" onClick={() => handleMove('s')} style={{ width: '50px', height: '30px' }}><ArrowDownIcon /></button>
         </div>
         <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
           <button className="glass-button" onClick={() => handleMove('z')} style={{ width: '50px', height: '30px' }}><ArrowCloserIcon /></button>
