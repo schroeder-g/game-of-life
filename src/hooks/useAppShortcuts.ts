@@ -85,13 +85,14 @@ export function useAppShortcuts() {
         target.tagName === "TEXTAREA" ||
         target.isContentEditable;
 
+      // If a text input is focused, prevent any shortcut handling.
+      if (isTextBox) return;
+
       const key = e.key.toLowerCase();
       const code = e.code;
 
       // Rotation keys: i, p, o, k, ., ;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
-      // Allow rotation keys through even in text boxes, but nothing else
-      if (isTextBox && !isRotationCode) return;
 
       const face = cameraOrientation.face;
       const rotation = cameraOrientation.rotation;
