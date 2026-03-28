@@ -802,8 +802,8 @@ function CameraControlSection() {
             <span>Yaw (Swivel) Speed: {rotationSpeed}</span>
             <input
               type="range"
-              min={1}
-              max={100}
+              min={50}
+              max={200}
               step={1}
               value={rotationSpeed}
               onChange={(e) => setRotationSpeed(Number(e.target.value))}
@@ -813,9 +813,9 @@ function CameraControlSection() {
             <span>Roll Speed: {rollSpeed}</span>
             <input
               type="range"
-              min={100}
-              max={500}
-              step={10}
+              min={25}
+              max={100}
+              step={1}
               value={rollSpeed}
               onChange={(e) => setRollSpeed(Number(e.target.value))}
             />
