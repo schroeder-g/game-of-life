@@ -382,6 +382,19 @@ export function AppHeaderPanel() {
         >
           {running ? "⏸" : "▶"}
         </button>
+        {rotationMode && (
+          <div className="speed-control">
+            <span>Speed: {speed}</span>
+            <input
+              type="range"
+              min={1}
+              max={30}
+              step={1}
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+            />
+          </div>
+        )}
         <button
           className="glass-button"
           onClick={() => {

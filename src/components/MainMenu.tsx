@@ -90,19 +90,6 @@ function ActionsSection() {
           ))}
         </select>
       </label>
-      {rotationMode && (
-        <label className="control-label">
-          <span>Speed (fps): {speed}</span>
-          <input
-            type="range"
-            min={1}
-            max={30}
-            step={1}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-          />
-        </label>
-      )}
     </section>
   );
 }
