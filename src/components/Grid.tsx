@@ -590,13 +590,47 @@ export function Scene() {
     actions: { setSelectorPos, setCustomBrush },
   } = useBrush();
   const { selectorPos, brushQuaternion } = brushState;
+  // All useRef declarations first
   const brushStateRef = useRef(brushState);
+  const prevSelectionVersionRef = useRef(brushState.shapeSelectionVersion);
+  const fitAnimRef = useRef<{
+    startTime: number;
+    startPos: THREE.Vector3;
+    startTarget: THREE.Vector3;
+    targetDist: number;
+    duration: number;
+  } | null>(null);
+  const squareUpAnimRef = useRef<{
+    mode: 'view' | 'edit';
+    startTime: number;
+    startPos?: THREE.Vector3;
+    startQuat: THREE.Quaternion;
+    startUp?: THREE.Vector3;
+    startTarget?: THREE.Vector3;
+    startDist?: number;
+    targetPos?: THREE.Vector3;
+    targetQuat: THREE.Quaternion;
+    targetUp?: THREE.Vector3;
+  } | null>(null);
+  const lastTick = useRef(0);
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  const cubeRef = useRef<THREE.Group>(null);
+  const lastPanSpeedCheckPositionRef = useRef<THREE.Vector3 | null>(null);
+  const lastSelectorMoveTime = useRef(0);
+  const wasRotating = useRef(false);
+  const isDragging = useRef(false);
+  const lastMouse = useRef({ x: 0, y: 0 });
+  const mouseMovement = useRef({ x: 0, y: 0 });
+
+  // useThree() call
+  const { camera, gl } = useThree();
+
+  // Now all useEffects and useMemos
   useEffect(() => {
     brushStateRef.current = brushState;
   }, [brushState]);
 
   // Align 2D shapes to face camera when selected or re-selected
-  const prevSelectionVersionRef = useRef(brushState.shapeSelectionVersion);
   useEffect(() => {
     if (brushState.shapeSelectionVersion !== prevSelectionVersionRef.current) {
       if (["Square", "Circle", "Triangle"].includes(brushState.selectedShape)) {
@@ -651,7 +685,7 @@ export function Scene() {
       }
     }
     prevSelectionVersionRef.current = brushState.shapeSelectionVersion;
-  }, [brushState.selectedShape, brushState.shapeSelectionVersion, brushQuaternion]);
+  }, [brushState.selectedShape, brushState.shapeSelectionVersion, brushQuaternion, cameraTargetRef, cubeRef]);
 
   // Initialize lastPanSpeedCheckPositionRef when camera is ready or gridSize changes
   useEffect(() => {
@@ -659,39 +693,6 @@ export function Scene() {
       lastPanSpeedCheckPositionRef.current = cameraRef.current.position.clone();
     }
   }, [cameraRef.current, gridSize]);
-
-  const fitAnimRef = useRef<{
-    startTime: number;
-    startPos: THREE.Vector3;
-    startTarget: THREE.Vector3;
-    targetDist: number;
-    duration: number;
-  } | null>(null);
-  const squareUpAnimRef = useRef<{
-    mode: 'view' | 'edit';
-    startTime: number;
-    startPos?: THREE.Vector3;
-    startQuat: THREE.Quaternion;
-    startUp?: THREE.Vector3;
-    startTarget?: THREE.Vector3;
-    startDist?: number;
-    targetPos?: THREE.Vector3;
-    targetQuat: THREE.Quaternion;
-    targetUp?: THREE.Vector3;
-  } | null>(null);
-  const lastTick = useRef(0);
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-  const cubeRef = useRef<THREE.Group>(null);
-  const { camera, gl } = useThree();
-
-  // Ref to store the camera position when panSpeed was last checked/set to 1
-  const lastPanSpeedCheckPositionRef = useRef<THREE.Vector3 | null>(null);
-
-  const lastSelectorMoveTime = useRef(0);
-  const wasRotating = useRef(false);
-  const isDragging = useRef(false);
-  const lastMouse = useRef({ x: 0, y: 0 });
-  const mouseMovement = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
