@@ -14,7 +14,10 @@ import { AppHeaderPanel } from "./AppHeaderPanel"; // Import the new component
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes"; // Added
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
-import { FooterControls } from "./MainMenu-Footer"; // NEW IMPORT
+
+interface MainMenuProps {
+  isSmallScreen: boolean;
+}
 
 function ActionsSection() {
   const {
