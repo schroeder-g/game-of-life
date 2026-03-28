@@ -1190,4 +1190,3 @@ MainMenu.RulesSection = RulesSection;
 MainMenu.ShapeBrushSection = ShapeBrushSection;
 MainMenu.SceneManagementSection = SceneManagementSection;
 MainMenu.CameraControlSection = CameraControlSection;
-MainMenu.AppHeaderPanel = AppHeaderPanel;

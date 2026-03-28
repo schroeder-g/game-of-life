@@ -1,7 +1,8 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
 import { Scene } from "../components/Grid";
-import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
+import { MainMenu } from "../components/MainMenu";
+import { AppHeaderPanel } from "../components/AppHeaderPanel";
 import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
