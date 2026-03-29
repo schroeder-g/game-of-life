@@ -556,98 +556,6 @@ function SelectorPositionSection() {
   );
 }
 
-function ShapeBrushSection() {
-  const {
-    state: { gridSize, community, cameraOrientation },
-  } = useSimulation();
-  const {
-    state: { selectedShape, shapeSize, isHollow, brushQuaternion, showProjectionGuides },
-    actions: { setSelectedShape, setShapeSize, setIsHollow, setCustomBrush, incrementBrushRotationVersion, setShowProjectionGuides },
-  } = useBrush();
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  // Compute the initial brush quaternion so the brush appears "square"
-  // with the dominant face/angle, using KEY_MAP directions.
-  const initBrushOrientation = () => {
-    const face = cameraOrientation.face;
-    const rotation = cameraOrientation.rotation;
-    if (face === 'unknown' || rotation === 'unknown') {
-      brushQuaternion.current.identity();
-      return;
-    }
-    const mapping = KEY_MAP[face as CameraFace][rotation as CameraRotation] as any;
-    // d = screen-right in grid-local, w = screen-up, q = screen-depth
-    const right = mapping.d as number[];
-    const up = mapping.w as number[];
-    const depth = mapping.q as number[];
-    // Build a rotation matrix: columns = right, up, depth
-    const m = new THREE.Matrix4().set(
-      right[0], up[0], depth[0], 0,
-      right[1], up[1], depth[1], 0,
-      right[2], up[2], depth[2], 0,
-      0, 0, 0, 1,
-    );
-    brushQuaternion.current.setFromRotationMatrix(m);
-    incrementBrushRotationVersion();
-  };
-
-  return (
-    <section className="menu-section">
-      <h3
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        Shape Brush
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
-      </h3>
-      {!isCollapsed && (
-        <>
-          <label className="control-label">
-            <span>Shape</span>
-            <select
-              className="glass-select"
-              value={selectedShape}
-              onChange={(e) => {
-                const shape = e.target.value as ShapeType;
-                if (shape === "Selected Community") {
-                  setCustomBrush(community);
-                } else {
-                  setSelectedShape(shape);
-                  // Initialize brush orientation to match current face/angle
-                  initBrushOrientation();
-                }
-              }}
-            >
-              {SHAPES.map((shape) => (
-                <option
-                  key={shape}
-                  value={shape}
-                  disabled={shape === "Selected Community" && community.length === 0}
-                >
-                  {shape}
-                </option>
-              ))}
-            </select>
-          </label>
-          {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
-            <>
-              <label className="control-label row">
-                <span>Show Guides</span>
-                <input
-                  type="checkbox"
-                  className="glass-checkbox"
-                  checked={showProjectionGuides}
-                  onChange={(e) => setShowProjectionGuides(e.target.checked)}
-                />
-              </label>
-            </>
-          )}
-        </>
-      )}
-    </section>
-  );
-}
 
 function CameraControlSection() {
   const {
@@ -1148,7 +1056,6 @@ export function MainMenu() {
         <div className="menu-scrollable-content">
           {rotationMode && !isSmallScreen && <CameraControlSection />}
           {!rotationMode && <SceneManagementSection />}
-          {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
           <TestsSection />
@@ -1172,6 +1079,5 @@ MainMenu.ActionsSection = ActionsSection;
 MainMenu.EnvironmentSection = EnvironmentSection;
 MainMenu.TestsSection = TestsSection;
 MainMenu.RulesSection = RulesSection;
-MainMenu.ShapeBrushSection = ShapeBrushSection;
 MainMenu.SceneManagementSection = SceneManagementSection;
 MainMenu.CameraControlSection = CameraControlSection;
