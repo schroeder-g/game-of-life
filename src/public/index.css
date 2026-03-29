@@ -918,8 +918,15 @@ kbd {
 /* Custom Tooltip */
 [data-tooltip-bottom] {
   position: relative;
-  z-index: 9999999;
+  z-index: 300;
 }
+
+
+[data-tooltip-bottom]:hover {
+  position: relative;
+  z-index: 301;
+}
+
 
 [data-tooltip-bottom]::before {
   content: attr(data-tooltip-bottom);
@@ -987,7 +994,7 @@ kbd {
   }
 
   .brush-controls {
-    z-index: 999999;
+    z-index: 200;
   }
 
   .canvas-container {
@@ -1007,6 +1014,10 @@ kbd {
     align-items: center;
     gap: 12px;
     padding: 15px;
+  }
+
+  .app-header-panel:hover {
+    z-index: 1001;
   }
 
   .app-header-panel .button-group {
