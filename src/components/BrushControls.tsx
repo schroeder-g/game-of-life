@@ -321,7 +321,7 @@ export function BrushControls() {
       <div
         style={{
           width: '100%',
-          textAlign: 'center',
+          textAlign: 'right',
           paddingBottom: '5px',
           fontWeight: 'bold',
           color: '#FFA500', // Subtler orange color for text
