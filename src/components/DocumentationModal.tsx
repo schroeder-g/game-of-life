@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { DOCUMENTATION_CONTENT } from "../data/documentation";
 import { useManualTests } from "../hooks/useManualTests";
 import { CheckCircle, XCircle, Circle } from 'lucide-react';
+import { useAutomatedTestResults } from "../hooks/useAutomatedTestResults"; // Import the new hook
 
 interface DocumentationModalProps {
   isOpen: boolean;
@@ -13,7 +14,8 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
   const [showIndex, setShowIndex] = useState(true);
   const [deprecatedCollapsed, setDeprecatedCollapsed] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
-  const { testStatuses } = useManualTests();
+  const { testStatuses: manualTestStatuses } = useManualTests(); // Rename to avoid conflict
+  const { claimStatuses: automatedClaimStatuses, isLoading: isLoadingAutomatedTests, error: automatedTestsError, testDate: automatedReportDate } = useAutomatedTestResults(); // Use the new hook
 
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -30,9 +32,6 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [isOpen, onClose]);
-
-  // This effect is no longer needed as we are not hiding the root element
-  // useEffect(() => { ... });
 
   if (!isOpen) {
     return null;
@@ -51,10 +50,11 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
     el?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const StatusIcon = ({ status }: { status: 'checked' | 'failed' | undefined }) => {
+  const StatusIcon = ({ status }: { status: 'checked' | 'failed' | 'pass' | 'fail' | 'skipped' | undefined }) => {
     const iconProps = { size: 14, style: { verticalAlign: 'middle', marginRight: '4px' } };
-    if (status === 'checked') return <CheckCircle color="#4ade80" {...iconProps} />;
-    if (status === 'failed') return <XCircle color="#f87171" {...iconProps} />;
+    if (status === 'checked' || status === 'pass') return <CheckCircle color="#4caf50" {...iconProps} />;
+    if (status === 'failed' || status === 'fail') return <XCircle color="#f44336" {...iconProps} />;
+    if (status === 'skipped') return <Circle color="#888" {...iconProps} />;
     return <Circle color="#9ca3af" {...iconProps} />;
   };
 
@@ -69,19 +69,34 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
             {item.testIds && item.testIds.length > 0 && (
               <div style={{ marginTop: '0.5rem' }}>
                 {item.testIds.map((testId: string) => {
-                  const result = testStatuses.get(testId);
-                  const status = result?.status;
-                  const timestamp = result?.timestamp ? new Date(result.timestamp).toLocaleDateString() : 'N/A';
-                  // NOTE: Automated test results are not yet available here.
-                  const isManual = testId.match(/^(UC|UX|QA|UI|CORE|DS)-/);
+                  const manualResult = manualTestStatuses.get(testId);
+                  const automatedStatus = automatedClaimStatuses.get(testId);
 
-                  if (!isManual) return null;
+                  let status: 'checked' | 'failed' | 'pass' | 'fail' | 'skipped' | undefined;
+                  let timestamp: string | undefined;
+                  let testType: 'Manual' | 'Automated' | 'Untested' = 'Untested';
+
+                  if (manualResult) {
+                    status = manualResult.status;
+                    timestamp = manualResult.timestamp ? new Date(manualResult.timestamp).toLocaleDateString() : 'N/A';
+                    testType = 'Manual';
+                  } else if (automatedStatus) {
+                    status = automatedStatus;
+                    timestamp = automatedReportDate; // Use the report's date
+                    testType = 'Automated';
+                  }
+
+                  // If no status, default to 'skipped' and 'Untested'
+                  if (!status) {
+                    status = 'skipped';
+                    testType = 'Untested';
+                  }
 
                   return (
                     <div key={testId} style={{ fontSize: '12px', color: '#bbb', marginBottom: '2px' }}>
                       <StatusIcon status={status} />
-                      <strong>{testId}:</strong> {status || 'untested'}
-                      {result?.timestamp && ` (on ${timestamp})`}
+                      <strong>{testId}:</strong> {status} ({testType})
+                      {timestamp && ` (on ${timestamp})`}
                     </div>
                   );
                 })}
