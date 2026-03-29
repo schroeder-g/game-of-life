@@ -24,27 +24,41 @@ export interface ManualTestResult {
   timestamp?: number;
 }
 
-export type VitestStatus = 'pass' | 'fail' | 'skipped';
+export type VitestStatus = 'passed' | 'failed' | 'skipped'; // Status from Vitest report
 
-export interface VitestError {
-  message: string;
-  messageStack?: string;
-}
-
-export interface VitestTest {
-  name: string;
-  fullTitle?: string;
-  claimIds?: string[];
+export interface VitestAssertionResult {
+  ancestorTitles: string[];
+  fullName: string;
   status: VitestStatus;
+  title: string;
   duration?: number;
-  errors?: VitestError[];
+  failureMessages?: string[]; // Array of strings for failure messages
+  meta?: Record<string, any>;
+  tags?: string[];
 }
 
-export interface VitestSuite { name: string; suites: VitestSuite[]; tests: VitestTest[]; }
-export interface VitestFileResult { suites: VitestSuite[]; }
+export interface VitestFileResult {
+  assertionResults: VitestAssertionResult[];
+  startTime: number;
+  endTime: number;
+  status: 'passed' | 'failed'; // Status of the test file itself
+  message?: string;
+  name: string; // File path
+}
+
 export interface VitestReport {
   testResults: VitestFileResult[];
   startTime: number;
+  numTotalTestSuites: number;
+  numPassedTestSuites: number;
+  numFailedTestSuites: number;
+  numPendingTestSuites: number;
+  numTotalTests: number;
+  numPassedTests: number;
+  numFailedTests: number;
+  numPendingTests: number;
+  numTodoTests: number;
+  success: boolean;
 }
 
 export interface AutomatedTestResult {

@@ -51,39 +51,48 @@ export function useAutomatedTestResults(): ProcessedAutomatedTestResults {
     const claimIdToStatusMap = new Map<string, 'pass' | 'fail' | 'skipped'>();
 
     report.testResults.forEach((fileResult) => {
-      const processSuite = (currentSuite: any, ancestorTitles: string[] = []) => {
-        const newAncestorTitles = [...ancestorTitles, currentSuite.name];
-        currentSuite.tests.forEach((test: any) => {
-          const fullTitle = [...newAncestorTitles, test.name].join(' ');
-          const extractedClaimIds: string[] = [];
-          const regex = /\[(.*?)\]/g;
-          let match;
-          while ((match = regex.exec(fullTitle)) !== null) {
-            extractedClaimIds.push(match[1]);
+      fileResult.assertionResults.forEach((assertionResult) => {
+        const fullTitle = assertionResult.fullName;
+        const extractedClaimIds: string[] = [];
+        const regex = /\[(.*?)\]/g;
+        let match;
+        while ((match = regex.exec(fullTitle)) !== null) {
+          extractedClaimIds.push(match[1]);
+        }
+
+        // Normalize status from Vitest's 'passed'/'failed' to internal 'pass'/'fail'
+        let normalizedStatus: 'pass' | 'fail' | 'skipped';
+        if (assertionResult.status === 'passed') {
+          normalizedStatus = 'pass';
+        } else if (assertionResult.status === 'failed') {
+          normalizedStatus = 'fail';
+        } else {
+          normalizedStatus = 'skipped';
+        }
+
+        const automatedTest: AutomatedTestResult = {
+          id: fullTitle, // Unique identifier for the test instance
+          title: assertionResult.title, // The display title
+          claimIds: extractedClaimIds,
+          status: normalizedStatus,
+          narrative: normalizedStatus === "fail"
+            ? assertionResult.failureMessages?.[0] || "No error message provided."
+            : `${normalizedStatus} in ${(assertionResult.duration ?? 0).toFixed(2)}ms`,
+        };
+        allParsedTests.push(automatedTest);
+
+        // Aggregate status for each claim ID
+        extractedClaimIds.forEach(claimId => {
+          const currentClaimStatus = claimIdToStatusMap.get(claimId);
+          // If currentClaimStatus is 'fail', it remains 'fail'.
+          // If currentClaimStatus is 'pass' and new is 'fail', it becomes 'fail'.
+          // If currentClaimStatus is 'skipped' and new is 'pass', it becomes 'pass'.
+          // If currentClaimStatus is 'skipped' and new is 'fail', it becomes 'fail'.
+          if (!currentClaimStatus || normalizedStatus === 'fail' || (normalizedStatus === 'pass' && currentClaimStatus === 'skipped')) {
+            claimIdToStatusMap.set(claimId, normalizedStatus);
           }
-
-          const automatedTest: AutomatedTestResult = {
-            id: fullTitle, // Unique identifier for the test instance
-            title: test.name, // The display title
-            claimIds: extractedClaimIds,
-            status: test.status as "pass" | "fail" | "skipped",
-            narrative: test.status === "fail"
-              ? test.errors?.[0]?.message || "No error message provided."
-              : `${test.status} in ${(test.duration ?? 0).toFixed(2)}ms`,
-          };
-          allParsedTests.push(automatedTest);
-
-          // Aggregate status for each claim ID
-          extractedClaimIds.forEach(claimId => {
-            const currentClaimStatus = claimIdToStatusMap.get(claimId);
-            if (!currentClaimStatus || automatedTest.status === 'fail' || (automatedTest.status === 'skipped' && currentClaimStatus === 'pass')) {
-              claimIdToStatusMap.set(claimId, automatedTest.status);
-            }
-          });
         });
-        currentSuite.suites.forEach((nestedSuite: any) => processSuite(nestedSuite, newAncestorTitles));
-      };
-      fileResult.suites.forEach(suite => processSuite(suite));
+      });
     });
 
     // Calculate summary based on allParsedTests

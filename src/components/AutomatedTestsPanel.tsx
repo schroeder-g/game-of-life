@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, Fragment } from "react";
+import React, { useState, Fragment } from "react";
 import { usePersistentState } from "../hooks/usePersistentState";
-import { DocItem, ManualTest, AutomatedTestResult } from "../types/testing";
+import { DocItem, ManualTest } from "../types/testing"; // Removed AutomatedTestResult
 import { ClaimHint } from "./ClaimHint";
 import { useAutomatedTestResults } from "../hooks/useAutomatedTestResults"; // Import the new hook
 
