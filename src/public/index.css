@@ -135,6 +135,8 @@ h6 {
   flex: 1;
   /* Fills remaining space in Container A */
   min-height: 0;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
 }
 
 .ui-overlay {
