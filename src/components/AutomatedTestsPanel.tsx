@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Fragment } from "react";
 import { DocItem, ManualTest, VitestReport, VitestTest } from "../types/testing";
+import { ClaimHint } from "./ClaimHint";
 
 interface AutomatedTestsPanelProps {
   manualTests: ManualTest[];
@@ -169,19 +170,16 @@ export function AutomatedTestsPanel({
             <div className="tests-list">
               {testResults.map((test) => (
                 <details key={test.id} className={`test-item-details ${test.status}`}>
-                  <summary>
-                    <span className={`status-indicator ${test.status}`}>
+                  <summary style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className={`status-indicator ${test.status}`} style={{ flexShrink: 0 }}>
                       {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
                     </span>
-                    <span className="test-id">({test.id})</span>
+                    <div className="test-title" style={{ flexGrow: 1 }}>{test.title}</div>
                     {test.claimIds.length > 0 && (
-                      <span className="claim-id-tags">
-                        {test.claimIds.map(id => `[${id}]`).join(' ')}
+                      <span className="claim-id-tags" style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                        {test.claimIds.map(id => <Fragment key={id}><ClaimHint claimId={id} /></Fragment>)}
                       </span>
                     )}
-                    <div className="test-title">{test.title}</div>
-
-
                   </summary>
                   <div className="test-narrative">
                     <pre>

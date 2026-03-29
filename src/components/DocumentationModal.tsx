@@ -61,7 +61,7 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
   const renderItem = (item: any) => {
     switch (item.type) {
       case 'h3':
-        return <h3 id={item.id} key={item.id} style={{ marginTop: '1.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.25rem' }}>{item.text}</h3>;
+        return <h3 id={item.id} key={item.id} style={{ marginTop: '1.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: '0.25rem' }} dangerouslySetInnerHTML={{ __html: item.text }} />;
       case 'p':
         return (
           <div key={item.id} className="claim-item" style={{ marginBottom: '1rem', paddingLeft: '0.5rem' }}>

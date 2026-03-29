@@ -95,3 +95,39 @@ describe('useAppShortcuts - New Rotation Logic', () => {
 
   // Removed UX-6 test
 });
+
+describe('useAppShortcuts - Input Guarding', () => {
+  const mockPlayStop = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useBrush as any).mockReturnValue({
+      state: {},
+      actions: {}
+    });
+    (useSimulation as any).mockReturnValue({
+      state: { rotationMode: true },
+      actions: { playStop: mockPlayStop },
+      meta: { movement: { current: {} } }
+    });
+  });
+
+  it('[QA-1] should not trigger shortcuts when a text input is focused', () => {
+    renderHook(() => useAppShortcuts());
+
+    // Create and focus an input element
+    const input = document.createElement('input');
+    input.type = 'text';
+    document.body.appendChild(input);
+    input.focus();
+
+    // Dispatch a keydown event that would normally trigger a shortcut
+    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
+    input.dispatchEvent(event);
+
+    // Expect that the shortcut action was NOT called
+    expect(mockPlayStop).not.toHaveBeenCalled();
+
+    document.body.removeChild(input);
+  });
+});
