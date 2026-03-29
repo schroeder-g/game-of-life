@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Scene } from "../components/Grid";
 import { MainMenu } from "../components/MainMenu";
 import { AppHeaderPanel } from "../components/AppHeaderPanel";
-import { ShortcutOverlay } from "../components/ShortcutOverlay";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -18,7 +17,6 @@ export default function App() {
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
   } = useBrush();
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from MainMenu
   const [showMainMenu, setShowMainMenu] = useState(true); // New state, defaults to true
 
