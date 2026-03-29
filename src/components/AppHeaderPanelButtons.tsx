@@ -512,29 +512,6 @@ export function AppHeaderPanelButtons({
       </div> {/* End of new container div */}
       {/* Removed Auto-Square button */}
 
-      <div className="dropdown-container" ref={helpDropdownRef}>
-        <button
-          className="glass-button"
-          onClick={() => setIsHelpDropdownOpen(prev => !prev)}
-          title="Help (?)"
-          aria-label="Help (?)"
-        >
-          <strong>?</strong>
-        </button>
-        {isHelpDropdownOpen && (
-          <div className="dropdown-menu">
-            <button className="dropdown-item" onClick={handleOpenIntroduction}>
-              Introduction
-            </button>
-            <button className="dropdown-item" onClick={handleOpenDocumentation}>
-              Documentation
-            </button>
-            <button className="dropdown-item" onClick={handleOpenShortcuts}> {/* New Shortcuts button */}
-              Shortcuts
-            </button>
-          </div>
-        )}
-      </div>
       <button
         className={`glass-button primary ${showMainMenu ? 'active' : ''}`}
         onClick={() => setShowMainMenu(!showMainMenu)}
