@@ -1179,6 +1179,7 @@ kbd {
   top: 15px;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 999; /* Ensure it's below Brush Controls (z-index: 1000) */
 
   background: rgba(22, 27, 34, 0.7);
   backdrop-filter: blur(10px);
