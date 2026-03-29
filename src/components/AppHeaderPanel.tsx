@@ -398,8 +398,6 @@ export function AppHeaderPanel() {
             </button>
           </>
         )}
-
-
         <button
           className="glass-button primary"
           onClick={playStop}
