@@ -1,27 +1,29 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { useSimulation } from "../contexts/SimulationContext";
+import { useSimulation } from "../contexts/SimulationContext"; // Keep useSimulation for buildInfo
 
-export function WelcomeModal() {
+interface WelcomeModalProps {
+  setShowIntroduction: (show: boolean) => void;
+  setUserName: (name: string) => void;
+}
+
+export function WelcomeModal({ setShowIntroduction, setUserName }: WelcomeModalProps) {
   const {
-    state: { userName, buildInfo },
-    actions: { setUserName },
+    state: { buildInfo }, // Only need buildInfo from useSimulation now
   } = useSimulation();
 
   const [inputName, setInputName] = useState("");
-  const [dismissed, setDismissed] = useState(false);
-
-  if (dismissed || userName || buildInfo.distribution === "prod") return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputName.trim()) {
       setUserName(inputName.trim());
+      setShowIntroduction(false); // Hide modal after setting name
     }
   };
 
   const handleClose = () => {
-    setDismissed(true);
+    setShowIntroduction(false); // Hide modal on close
   };
 
   return createPortal(
