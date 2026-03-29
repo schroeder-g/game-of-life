@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // Import useEffect
 import './Modal.css'; // Assuming a shared Modal.css for styling
+
+export const HAS_SEEN_INTRODUCTION_KEY = 'hasSeenIntroduction';
 
 interface IntroductionModalProps {
   isOpen: boolean;
@@ -7,10 +9,23 @@ interface IntroductionModalProps {
 }
 
 export function IntroductionModal({ isOpen, onClose }: IntroductionModalProps) {
-  if (!isOpen) return null;
+  useEffect(() => {
+    console.log('IntroductionModal mounted/updated. isOpen:', isOpen);
+  }, [isOpen]);
+
+  if (!isOpen) {
+    console.log('IntroductionModal: Not rendering because isOpen is false.');
+    return null;
+  }
+
+  const handleClose = () => {
+    console.log('IntroductionModal: handleClose called. Setting HAS_SEEN_INTRODUCTION_KEY to true.');
+    localStorage.setItem(HAS_SEEN_INTRODUCTION_KEY, 'true');
+    onClose();
+  };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>Welcome to Cube of Life!</h2>
         <p>
@@ -30,7 +45,7 @@ export function IntroductionModal({ isOpen, onClose }: IntroductionModalProps) {
           Use the controls in the header to manage scenes, switch modes,
           control simulation playback, and adjust the camera view.
         </p>
-        <button className="glass-button" onClick={onClose}>
+        <button className="glass-button" onClick={handleClose}>
           Let's Go!
         </button>
       </div>

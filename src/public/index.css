@@ -1084,7 +1084,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 100000000001; /* Higher than dropdown-menu to ensure visibility */
   backdrop-filter: blur(4px);
   padding: 20px;
 }
