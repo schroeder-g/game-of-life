@@ -12,7 +12,7 @@ import { useAppShortcuts } from "../hooks/useAppShortcuts";
 export default function App() {
   const {
     state: { rotationMode, running, squareUp, userName, buildInfo, showIntroduction },
-    actions: { setRotationMode, recenter, fitDisplay, setSquareUp },
+    actions: { setRotationMode, recenter, fitDisplay, setSquareUp, setShowIntroduction, setUserName },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },

@@ -235,6 +235,9 @@ export function useAppShortcuts() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Ensure e.key is a string before calling toLowerCase()
+      if (typeof e.key !== 'string') return;
+
       const key = e.key.toLowerCase();
       const code = e.code;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
