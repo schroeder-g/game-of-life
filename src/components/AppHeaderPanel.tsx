@@ -347,6 +347,13 @@ export function AppHeaderPanel() {
       <div className="button-group panel-actions">
 
         <SceneSelectorDropdown />
+        <button
+          className="glass-button mode-toggle-button"
+          onClick={() => setRotationMode((p) => !p)}
+          title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+        >
+          {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
+        </button>
         {!rotationMode && (
           <>
             <BrushSelectorDropdown />
@@ -391,13 +398,6 @@ export function AppHeaderPanel() {
             </button>
           </>
         )}
-        <button
-          className="glass-button mode-toggle-button"
-          onClick={() => setRotationMode((p) => !p)}
-          title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
-        >
-          {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
-        </button>
 
 
         <button
