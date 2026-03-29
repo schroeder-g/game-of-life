@@ -299,9 +299,9 @@ export function AppHeaderPanel() {
   } = useSimulation();
   const {
     state: brushState, // Get the whole state object
-    actions: { setSelectedShape, setPaintMode },
+    actions: { setSelectedShape, setPaintMode, setShapeSize },
   } = useBrush();
-  const { selectedShape, paintMode } = brushState; // Removed selectorPos as it's not used here
+  const { selectedShape, paintMode } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
 
@@ -313,8 +313,8 @@ export function AppHeaderPanel() {
     : '0°';
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    brushState.actions.setShapeSize(Number(e.target.value));
-  }, [brushState.actions]);
+    setShapeSize(Number(e.target.value));
+  }, [setShapeSize]);
 
   return (
     <div className="app-header-panel">
