@@ -128,21 +128,6 @@ export default function App() {
 
       <div className="main-content-layout">
         <aside className="ui-overlay">
-          {!rotationMode && selectedShape !== "None" && (
-            <div className="shape-info">
-              Shape: {selectedShape} ({shapeSize}x{shapeSize}
-              {supportsHollow(selectedShape) && `x${shapeSize}`}
-              )
-              {isHollow && supportsHollow(selectedShape) && " (hollow)"}
-            </div>
-          )}
-          <button
-            className="glass-button shortcuts-toggle"
-            onClick={() => setShowShortcuts(true)}
-          >
-            ⌘ Shortcuts
-          </button>
-
 
           <MainMenu isSmallScreen={isSmallScreen} />
         </aside>
@@ -194,6 +179,7 @@ export default function App() {
               <BrushControls />
             </div>
           )}
+
         </main>
       </div>
 

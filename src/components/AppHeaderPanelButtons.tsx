@@ -524,6 +524,12 @@ export function AppHeaderPanelButtons({
           </div>
         )}
       </div>
+      <button
+        className="glass-button shortcuts-toggle"
+        onClick={() => setShowShortcuts(true)}
+      >
+        ⌘ Shortcuts
+      </button>
     </div>
   );
 }
