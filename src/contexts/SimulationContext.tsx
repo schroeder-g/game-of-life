@@ -271,6 +271,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
 
   const hasMounted = useRef(false);
+  const cellsInitializedRef = useRef(false);
 
   const runInitAnimation = useCallback(async (cells?: Array<[number, number, number]>) => {
     // Small pause to allow everything to settle
@@ -371,25 +372,31 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   // Initialization logic
   useEffect(() => {
-    if (Object.keys(initialSettings).length === 0) {
-      const mid = Math.floor(storedSettings.gridSize / 2);
-      const cells: Array<[number, number, number]> = [];
-      for (let x = mid - 1; x <= mid; x++) {
-        for (let y = mid - 1; y <= mid; y++) {
-          for (let z = mid - 1; z <= mid; z++) {
-            // Do NOT set cells in gridRef yet, just record them
-            cells.push([x, y, z]);
+    // Cell capture runs ONCE on mount only — subsequent re-runs (e.g. when
+    // showIntroduction flips to false) must NOT re-read the grid because it
+    // will already have been cleared by the first run.
+    if (!cellsInitializedRef.current) {
+      cellsInitializedRef.current = true;
+      if (Object.keys(initialSettings).length === 0) {
+        const mid = Math.floor(storedSettings.gridSize / 2);
+        const cells: Array<[number, number, number]> = [];
+        for (let x = mid - 1; x <= mid; x++) {
+          for (let y = mid - 1; y <= mid; y++) {
+            for (let z = mid - 1; z <= mid; z++) {
+              // Do NOT set cells in gridRef yet, just record them
+              cells.push([x, y, z]);
+            }
           }
         }
+        initialStateRef.current = cells;
+        setHasInitialState(cells.length > 0);
+      } else {
+        // Capture initial state from settings but clear the grid for animation
+        const cells = gridRef.current.getLivingCells();
+        initialStateRef.current = cells;
+        gridRef.current.clear();
+        setHasInitialState(cells.length > 0);
       }
-      initialStateRef.current = cells;
-      setHasInitialState(cells.length > 0);
-    } else {
-      // Capture initial state from settings but clear the grid for animation
-      const cells = gridRef.current.getLivingCells();
-      initialStateRef.current = cells;
-      gridRef.current.clear();
-      setHasInitialState(cells.length > 0);
     }
 
     if (buildInfo.distribution !== "prod" && !userName) {
