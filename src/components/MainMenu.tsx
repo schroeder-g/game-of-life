@@ -81,7 +81,7 @@ function EnvironmentSection() {
     meta: { gridRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasLiveCells, setHasLiveCells] = useState(false);
 
   useEffect(() => {
@@ -180,7 +180,7 @@ function EnvironmentSection() {
 
 
 function RulesSection() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const {
     state: { surviveMin, surviveMax, birthMin, birthMax, birthMargin,
       neighborFaces, neighborEdges, neighborCorners },
@@ -311,7 +311,7 @@ function RulesSection() {
 
 
 function TestsSection() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
 
 
@@ -354,7 +354,7 @@ function SelectorPositionSection() {
   } = useBrush();
   const { selectorPos } = brushState;
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const deriveKeyMap = useCallback(() => {
     if (cameraOrientation.face === 'unknown' || cameraOrientation.rotation === 'unknown') {
@@ -562,7 +562,7 @@ function CameraControlSection() {
     actions: { setPanSpeed, setRotationSpeed, setRollSpeed, setInvertYaw, setInvertPitch, setInvertRoll, setEaseIn, setEaseOut },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <section className="menu-section">
@@ -713,7 +713,7 @@ function SceneManagementSection() {
     meta: { gridRef, initialStateRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sceneToDelete, setSceneToDelete] = useState<string | null>(null);
 
@@ -1032,14 +1032,13 @@ export function MainMenu({ isSmallScreen }: MainMenuProps) {
             </h3>
           </header>
           <div className="menu-scrollable-content">
-            {rotationMode && !isSmallScreen && <CameraControlSection />}
+            {rotationMode && <CameraControlSection />}
             {!rotationMode && <SceneManagementSection />}
             {!rotationMode && <EnvironmentSection />}
             <RulesSection />
             <TestsSection />
             {!rotationMode && <SelectorPositionSection />}
             {buildInfo.distribution !== "prod" && (
-
               <>
 
               </>

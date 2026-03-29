@@ -5,8 +5,9 @@ import { type CameraFace, type CameraRotation } from "../core/faceOrientationKey
 import { type ShapeType } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
 import { IntroductionModal } from "./IntroductionModal";
-import { ShortcutOverlay } from "./ShortcutOverlay"; // Import ShortcutOverlay
+import { ShortcutOverlay } from "./ShortcutOverlay";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 
 function SimulationStats() {
@@ -56,6 +57,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
     actions: { setPaintMode, setShapeSize, setIsHollow },
   } = useBrush();
   const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
+  const { state: { selectedConfigName } } = useGenesisConfig();
 
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showIntroduction, setShowIntroduction] = useState(true); // Always show by default
@@ -105,6 +107,9 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
       </div>
 
       <div className="cube-status-panel">
+        <div className="scene-status">
+          Scene: {selectedConfigName || "Unsaved"}
+        </div>
         <div className="orientation-status">
           Face: {faceName}, {rotationDegrees}
         </div>

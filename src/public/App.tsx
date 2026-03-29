@@ -130,9 +130,9 @@ export default function App() {
 
       <div className="main-content-layout">
         {showMainMenu && (
-
-          <MainMenu isSmallScreen={isSmallScreen} />
-
+          <div className="ui-overlay">
+            <MainMenu isSmallScreen={isSmallScreen} />
+          </div>
         )}
 
         <main
@@ -148,7 +148,7 @@ export default function App() {
           }}
         >
           {canvasSize > 0 && ( // Only render Canvas once size is determined
-            <Canvas style={{ width: '100%', height: '100%' }}>
+            <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
               <Scene />
             </Canvas>
           )}

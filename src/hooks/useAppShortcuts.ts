@@ -121,9 +121,11 @@ export function useAppShortcuts() {
         // Ctrl+Shift is a hard override for continuous rotation.
         if (e.ctrlKey && e.shiftKey) {
           switch (key) {
+            case "semicolon":
             case ";": movement.current.rotateSemicolon = true; break;
             case "k": movement.current.rotateK = true; break;
             case "o": movement.current.rotateO = true; break;
+            case "period":
             case ".": movement.current.rotatePeriod = true; break;
             case "i": movement.current.rotateI = true; break;
             case "p": movement.current.rotateP = true; break;

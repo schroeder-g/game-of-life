@@ -58,8 +58,8 @@ describe('MainMenu and AppHeaderPanel', () => {
         });
 
         (useGenesisConfig as any).mockReturnValue({
-            state: { savedConfigs: { 'Default': {} }, selectedConfigName: 'Default' },
-            actions: { setSelectedConfigName: vi.fn() },
+            state: { savedConfigs: { 'Default': {} }, selectedConfigName: 'Default', newConfigName: '' },
+            actions: { setSelectedConfigName: vi.fn(), setNewConfigName: vi.fn(), saveConfig: vi.fn(), exportConfig: vi.fn(), importConfig: vi.fn(), deleteConfig: vi.fn() },
         });
     });
 

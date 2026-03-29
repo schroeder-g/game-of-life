@@ -307,7 +307,7 @@ interface AppHeaderPanelButtonsProps {
   paintMode: number;
   shapeSize: number;
   isHollow: boolean;
-  setPaintMode: React.Dispatch<React.SetStateAction<number>>;
+  setPaintMode: (mode: 0 | 1 | -1 | ((prev: 0 | 1 | -1) => 0 | 1 | -1)) => void;
   setShapeSize: (size: number) => void;
   setIsHollow: (isHollow: boolean) => void;
 

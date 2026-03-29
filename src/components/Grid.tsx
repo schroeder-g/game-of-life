@@ -127,7 +127,7 @@ function getCubeVisibility(
     return result;
   }
 
-  const visibilityThreshold = 0.5; // 50% visible means 50% off-screen
+  const visibilityThreshold = 0.4; // 40% of the cube can be off-screen.
 
   const overlapX = Math.max(0, Math.min(maxX, 1) - Math.max(minX, -1));
   const spanX = maxX - minX;
@@ -590,6 +590,11 @@ export function Scene() {
     actions: { setSelectorPos, setCustomBrush },
   } = useBrush();
   const { selectorPos, brushQuaternion } = brushState;
+  useEffect(() => {
+    isSnapLockedRef.current = false;
+    squareUpAnimRef.current = null;
+  }, [squareUp, rotationMode]);
+
   // All useRef declarations first
   const brushStateRef = useRef(brushState);
   const prevSelectionVersionRef = useRef(brushState.shapeSelectionVersion);
@@ -612,6 +617,8 @@ export function Scene() {
     targetQuat: THREE.Quaternion;
     targetUp?: THREE.Vector3;
   } | null>(null);
+  const prevIsDraggingRef = useRef(false);
+  const isSnapLockedRef = useRef(false);
   const lastTick = useRef(0);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const cubeRef = useRef<THREE.Group>(null);
@@ -715,18 +722,37 @@ export function Scene() {
       isDragging.current = false;
     };
 
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const sensitivity = 0.005;
+      if (e.shiftKey) {
+        // Shift-scroll for Pan
+        // -deltaY to velocity.panY (scrolling up moves camera up)
+        // -deltaX to velocity.panX (scrolling left/right)
+        velocity.current.panY += -e.deltaY * sensitivity;
+        velocity.current.panX += -e.deltaX * sensitivity;
+      } else {
+        // Normal scroll for Dolly
+        velocity.current.dolly += -e.deltaY * sensitivity;
+      }
+    };
+
     const canvas = gl?.domElement; // Add nullish coalescing operator
     if (canvas) { // Add a check for canvas existence
       canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
       window.addEventListener('pointermove', handlePointerMove);
       window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('pointercancel', handlePointerUp);
     }
     
     return () => {
       if (canvas) { // Add a check for canvas existence
         canvas.removeEventListener('pointerdown', handlePointerDown);
+        canvas.removeEventListener('wheel', handleWheel);
         window.removeEventListener('pointermove', handlePointerMove);
         window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerUp);
       }
     };
   }, [gl, rotationSpeed, invertYaw, invertPitch, velocity]);
@@ -984,7 +1010,8 @@ export function Scene() {
     // --- Physics Update ---
     const { lerp } = THREE.MathUtils;
     const easeInVal = easeIn > 0.001 ? (1 - Math.exp(-3 * delta / easeIn)) : 1;
-    const dampingVal = easeOut > 0.001 ? Math.exp(-3 * delta / easeOut) : 0;
+    const effectiveEaseOut = squareUp ? 0.25 : easeOut;
+    const dampingVal = effectiveEaseOut > 0.001 ? Math.exp(-3 * delta / effectiveEaseOut) : 0;
     
     // --- Calculate All Velocities ---
     const mDX = mouseMovement.current.x;
@@ -994,6 +1021,10 @@ export function Scene() {
 
     const invY = invertYaw ? -1 : 1;
     const invP = invertPitch ? -1 : 1;
+
+    // --- Drag End Detection for Square-Up ---
+    const dragJustStopped = !isDragging.current && prevIsDraggingRef.current;
+    prevIsDraggingRef.current = isDragging.current;
 
     // Pan/Dolly velocities for View Mode
     const pSpeed = panSpeed * 0.05;
@@ -1010,16 +1041,16 @@ export function Scene() {
     else if (movement.current.down) velocity.current.dolly = lerp(velocity.current.dolly, -dSpeed, easeInVal);
     else velocity.current.dolly *= dampingVal;
 
-    // Rotation velocities
-    const rSpeed = rotationSpeed * 0.05;
-    const rlSpeed = rollSpeed * 0.05;
+    // Rotation velocities - Inhibit if Snap Locked
+    const rSpeed = isSnapLockedRef.current ? 0 : rotationSpeed * 0.05;
+    const rlSpeed = isSnapLockedRef.current ? 0 : rollSpeed * 0.05;
 
     // Pitch
-    if (movement.current.rotateO) {
+    if (!isSnapLockedRef.current && movement.current.rotateO) {
       velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, rSpeed, easeInVal);
-    } else if (movement.current.rotatePeriod) {
+    } else if (!isSnapLockedRef.current && movement.current.rotatePeriod) {
       velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, -rSpeed, easeInVal);
-    } else if (isDragging.current) {
+    } else if (!isSnapLockedRef.current && isDragging.current) {
       const mouseTargetPitch = (mDY / delta) * rotationSpeed * 0.0001;
       velocity.current.rotatePitch = lerp(velocity.current.rotatePitch, mouseTargetPitch * invP, easeInVal);
     } else {
@@ -1027,11 +1058,11 @@ export function Scene() {
     }
 
     // Yaw
-    if (movement.current.rotateK) {
+    if (!isSnapLockedRef.current && movement.current.rotateK) {
       velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, rSpeed, easeInVal);
-    } else if (movement.current.rotateSemicolon) {
+    } else if (!isSnapLockedRef.current && movement.current.rotateSemicolon) {
       velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, -rSpeed, easeInVal);
-    } else if (isDragging.current) {
+    } else if (!isSnapLockedRef.current && isDragging.current) {
       const mouseTargetYaw = (mDX / delta) * rotationSpeed * 0.0001;
       velocity.current.rotateYaw = lerp(velocity.current.rotateYaw, mouseTargetYaw * invY, easeInVal);
     } else {
@@ -1039,11 +1070,11 @@ export function Scene() {
     }
 
     // Roll
-    if (movement.current.rotateI) {
+    if (!isSnapLockedRef.current && movement.current.rotateI) {
       velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, rlSpeed, easeInVal);
-    } else if (movement.current.rotateP) {
+    } else if (!isSnapLockedRef.current && movement.current.rotateP) {
       velocity.current.rotateRoll = lerp(velocity.current.rotateRoll, -rlSpeed, easeInVal);
-    } else if (!isDragging.current) {
+    } else {
       velocity.current.rotateRoll *= dampingVal;
     }
 
@@ -1053,16 +1084,16 @@ export function Scene() {
       const restoringForce = 0.2; // Strength of the push-back
 
       if (visibility.isOffScreenLeft && velocity.current.panX < 0) {
-        velocity.current.panX = lerp(velocity.current.panX, pSpeed * restoringForce, easeInVal);
+        velocity.current.panX = lerp(velocity.current.panX, pSpeed * restoringForce, 0.8);
       }
       if (visibility.isOffScreenRight && velocity.current.panX > 0) {
-        velocity.current.panX = lerp(velocity.current.panX, -pSpeed * restoringForce, easeInVal);
+        velocity.current.panX = lerp(velocity.current.panX, -pSpeed * restoringForce, 0.8);
       }
       if (visibility.isOffScreenBottom && velocity.current.panY < 0) {
-        velocity.current.panY = lerp(velocity.current.panY, pSpeed * restoringForce, easeInVal);
+        velocity.current.panY = lerp(velocity.current.panY, pSpeed * restoringForce, 0.8);
       }
       if (visibility.isOffScreenTop && velocity.current.panY > 0) {
-        velocity.current.panY = lerp(velocity.current.panY, -pSpeed * restoringForce, easeInVal);
+        velocity.current.panY = lerp(velocity.current.panY, -pSpeed * restoringForce, 0.8);
       }
       
       // If the cube is significantly off-screen, prevent further dollying in or out.
@@ -1170,7 +1201,7 @@ export function Scene() {
     if (squareUp) {
       if (!fitAnimRef.current) {
         const hasInput = Object.values(movement.current).some(v => v === true) || isDragging.current;
-        if (hasInput) {
+        if (hasInput && !isSnapLockedRef.current) {
           squareUpAnimRef.current = null;
           if (isSquaredUp) setIsSquaredUp(false);
         } else {
@@ -1225,7 +1256,11 @@ export function Scene() {
                 
                 if (distToTarget < 0.01 && angleToTarget < 0.01 && target.length() < 0.01) {
                   setIsSquaredUp(true);
+                  isSnapLockedRef.current = false;
                 } else {
+                  if (dragJustStopped && squareUp) {
+                    isSnapLockedRef.current = true;
+                  }
                   squareUpAnimRef.current = {
                     mode: 'view',
                     startTime: performance.now() / 1000,
@@ -1245,9 +1280,9 @@ export function Scene() {
               if (squareUpAnimRef.current && squareUpAnimRef.current.mode === 'view') {
                 const anim = squareUpAnimRef.current;
                 const elapsed = (performance.now() / 1000) - anim.startTime;
-                const duration = 1.0;
+                const duration = 0.5;
                 const t = Math.min(elapsed / duration, 1.0);
-                const easeT = t * t; // ease-in
+                const easeT = 1 - Math.pow(1 - t, 3); // ease-out cubic
 
                 target.lerpVectors(anim.startTarget!, new THREE.Vector3(0, 0, 0), easeT);
                 cam.position.lerpVectors(anim.startPos!, anim.targetPos!, easeT);
@@ -1262,6 +1297,7 @@ export function Scene() {
                 if (t >= 1) {
                   setIsSquaredUp(true);
                   squareUpAnimRef.current = null;
+                  isSnapLockedRef.current = false;
                 }
               }
             }
@@ -1293,7 +1329,11 @@ export function Scene() {
                 
                 if (angleToTarget < 0.01) {
                   setIsSquaredUp(true);
+                  isSnapLockedRef.current = false;
                 } else {
+                  if (dragJustStopped && squareUp) {
+                    isSnapLockedRef.current = true;
+                  }
                   squareUpAnimRef.current = {
                     mode: 'edit',
                     startTime: performance.now() / 1000,
@@ -1307,15 +1347,16 @@ export function Scene() {
               if (squareUpAnimRef.current && squareUpAnimRef.current.mode === 'edit') {
                 const anim = squareUpAnimRef.current;
                 const elapsed = (performance.now() / 1000) - anim.startTime;
-                const duration = 1.0;
+                const duration = 0.5;
                 const t = Math.min(elapsed / duration, 1.0);
-                const easeT = t * t; // ease-in
+                const easeT = 1 - Math.pow(1 - t, 3); // ease-out cubic
 
                 cube.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, easeT);
                 
                 if (t >= 1) {
                   setIsSquaredUp(true);
                   squareUpAnimRef.current = null;
+                  isSnapLockedRef.current = false;
                 }
               }
             }
@@ -1324,6 +1365,7 @@ export function Scene() {
       } else {
         if (isSquaredUp) setIsSquaredUp(false);
         squareUpAnimRef.current = null;
+        isSnapLockedRef.current = false;
       }
     }
   });
