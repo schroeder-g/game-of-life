@@ -14,7 +14,6 @@ import { AppHeaderPanel } from "./AppHeaderPanel"; // Import the new component
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes"; // Added
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
-import { CheckCircle, XCircle, Circle, ChevronDown, ChevronRight } from 'lucide-react';
 
 
 interface MainMenuProps {
@@ -1028,45 +1027,39 @@ export function MainMenu() {
     }
   }, [rotationMode]);
 
-  // Collapse Configuration panel when a community is selected
-  useEffect(() => {
-    if (community.length > 0) {
-      setCollapsed(true);
-    }
-  }, [community]);
+
 
   return (
     <>
       <aside
-        className={`main-menu glass-panel ${collapsed ? "collapsed" : ""} ${community.length > 0 && !rotationMode ? "has-sidebar" : ""}`}
+        className={`main-menu glass-panel  ${community.length > 0 && !rotationMode ? "has-sidebar" : ""}`}
         style={{ border: "none" }}
       >
         <div className="tests-panel">
           <header
             className="menu-header"
-            onClick={() => setCollapsed(!collapsed)}
           >
-            <h3 onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              Configuration
-              {collapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+            <h3>
+              Settings
+
             </h3>
           </header>
-          {!collapsed && <ActionsSection />}
-        </div>
-        <div className="menu-scrollable-content">
-          {rotationMode && !isSmallScreen && <CameraControlSection />}
-          {!rotationMode && <SceneManagementSection />}
-          {!rotationMode && <EnvironmentSection />}
-          <RulesSection />
-          <TestsSection />
-          {!rotationMode && <SelectorPositionSection />}
-          {buildInfo.distribution !== "prod" && (
+          <div className="menu-scrollable-content">
+            {rotationMode && !isSmallScreen && <CameraControlSection />}
+            {!rotationMode && <SceneManagementSection />}
+            {!rotationMode && <EnvironmentSection />}
+            <RulesSection />
+            <TestsSection />
+            {!rotationMode && <SelectorPositionSection />}
+            {buildInfo.distribution !== "prod" && (
 
-            <>
+              <>
 
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
+
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
     </>
