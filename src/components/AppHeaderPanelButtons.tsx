@@ -543,6 +543,29 @@ export function AppHeaderPanelButtons({
       >
         <GearIcon />
       </button>
+      <div className="dropdown-container" ref={helpDropdownRef}>
+        <button
+          className="glass-button"
+          onClick={() => setIsHelpDropdownOpen(prev => !prev)}
+          title="Help (?)"
+          aria-label="Help (?)"
+        >
+          ?
+        </button>
+        {isHelpDropdownOpen && (
+          <div className="dropdown-menu">
+            <button className="dropdown-item" onClick={handleOpenIntroduction}>
+              Introduction
+            </button>
+            <button className="dropdown-item" onClick={handleOpenDocumentation}>
+              Documentation
+            </button>
+            <button className="dropdown-item" onClick={handleOpenShortcuts}>
+              Shortcuts
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
