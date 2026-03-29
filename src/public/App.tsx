@@ -12,40 +12,6 @@ import { useAppShortcuts } from "../hooks/useAppShortcuts";
 import { BrushControls } from "../components/BrushControls";
 import { brushControlsDocumentation } from "../data/brushControlsDocumentation"; // NEW IMPORT
 
-function SimulationStats() {
-  const {
-    meta: { gridRef },
-    state: { running },
-  } = useSimulation();
-  const [stats, setStats] = useState({
-    generation: gridRef.current.generation,
-    cells: gridRef.current.getLivingCells().length,
-  });
-
-  const lastVersionRef = useRef(gridRef.current.version);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (gridRef.current.version !== lastVersionRef.current) {
-        lastVersionRef.current = gridRef.current.version;
-        setStats({
-          generation: gridRef.current.generation,
-          cells: gridRef.current.getLivingCells().length,
-        });
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [gridRef]);
-
-  return (
-    <div className="stats">
-      <span>Generation: {stats.generation}</span>
-      <span>Cells: {stats.cells}</span>
-      <span>{running ? "Running" : "Paused"}</span>
-    </div>
-  );
-}
-
 export default function App() {
   const {
     state: { rotationMode, running, squareUp },
@@ -162,8 +128,6 @@ export default function App() {
 
       <div className="main-content-layout">
         <aside className="ui-overlay">
-          <SimulationStats />
-
           {!rotationMode && selectedShape !== "None" && (
             <div className="shape-info">
               Shape: {selectedShape} ({shapeSize}x{shapeSize}

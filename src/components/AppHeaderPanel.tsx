@@ -1,9 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
-import { useBrush } from "../contexts/BrushContext";
-import { useSimulation } from "../contexts/SimulationContext";
-import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
-import { type ShapeType } from "../core/shapes";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
@@ -13,6 +8,37 @@ import { IntroductionModal } from "./IntroductionModal";
 import { ShortcutOverlay } from "./ShortcutOverlay"; // Import ShortcutOverlay
 import { useClickOutside } from "../hooks/useClickOutside";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
+
+function SimulationStats() {
+  const {
+    meta: { gridRef },
+    state: { running },
+  } = useSimulation();
+  const [stats, setStats] = useState({
+    generation: gridRef.current.generation,
+    cells: gridRef.current.getLivingCells().length,
+  });
+
+  const lastVersionRef = useRef(gridRef.current.version);
+
+  useEffect(() => {
+    const updateStats = () => {
+      setStats({
+        generation: gridRef.current.generation,
+        cells: gridRef.current.getLivingCells().length,
+      });
+    };
+
+    const unsubscribe = gridRef.current.on('tick', updateStats);
+    return () => unsubscribe();
+  }, [gridRef]);
+
+  return (
+    <div className="simulation-stats-display">
+      Generation: {stats.generation} Cells: {stats.cells} {running ? 'Running' : 'Paused'}
+    </div>
+  );
+}
 
 export function AppHeaderPanel() {
   const {
