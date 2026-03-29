@@ -19,6 +19,25 @@ export interface GenesisConfig {
 }
 
 export const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
+  "-EMPTY-": {
+    name: "-EMPTY-",
+    cells: [],
+    settings: {
+      speed: 5,
+      density: 0.08,
+      surviveMin: 2,
+      surviveMax: 2,
+      birthMin: 3,
+      birthMax: 3,
+      birthMargin: 0,
+      cellMargin: 0.2,
+      gridSize: 24,
+      neighborFaces: true,
+      neighborEdges: true,
+      neighborCorners: false,
+    },
+    createdAt: new Date().toISOString(),
+  },
   "squid gun": {
     name: "squid gun",
     cells: [
@@ -50,9 +69,9 @@ export const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
   "3d glider": {
     name: "3d glider",
     cells: [
-      [11, 11, 13], 
-      [12, 12, 11], 
-      [12, 11, 13], 
+      [11, 11, 13],
+      [12, 12, 11],
+      [12, 11, 13],
       [12, 12, 12]
     ],
     settings: {
