@@ -6,6 +6,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
+import { IntroductionModal } from "./IntroductionModal"; // Import IntroductionModal
 import { useClickOutside } from "../hooks/useClickOutside";
 import { BrushControls } from "./BrushControls"; // Import BrushControls
 
@@ -305,6 +306,7 @@ export function AppHeaderPanel() {
   const { selectedShape, paintMode } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
+  const [showIntroduction, setShowIntroduction] = useState(false); // New state for IntroductionModal
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -327,8 +329,7 @@ export function AppHeaderPanel() {
   }, []);
 
   const handleOpenIntroduction = useCallback(() => {
-    // Placeholder for introduction logic
-    console.log("Opening Introduction...");
+    setShowIntroduction(true); // Open IntroductionModal
     setIsHelpDropdownOpen(false); // Close dropdown
   }, []);
 
@@ -534,6 +535,10 @@ export function AppHeaderPanel() {
           onClose={() => setShowDocumentation(false)}
         />
 
+        <IntroductionModal
+          isOpen={showIntroduction}
+          onClose={() => setShowIntroduction(false)}
+        />
 
       </div>
     </div>
