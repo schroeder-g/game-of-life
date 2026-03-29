@@ -46,3 +46,12 @@ export interface VitestReport {
   testResults: VitestFileResult[];
   startTime: number;
 }
+
+export interface AutomatedTestResult {
+  id: string; // Full title of the test
+  title: string; // Short title of the test
+  claimIds: string[];
+  status: "pass" | "fail" | "skipped";
+  narrative: string; // Error message or success message
+  timestamp?: number; // When the test was run (from report.startTime)
+}
