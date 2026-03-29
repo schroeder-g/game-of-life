@@ -306,7 +306,7 @@ export function AppHeaderPanel() {
   const { selectedShape, paintMode } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showIntroduction, setShowIntroduction] = useState(false); // New state for IntroductionModal
+  const [showIntroduction, setShowIntroduction] = useState(true); // New state for IntroductionModal, set to true for auto-open
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 
