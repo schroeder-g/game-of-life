@@ -310,6 +310,40 @@ function RulesSection() {
   );
 }
 
+
+function TestsSection() {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+
+
+  return (
+    <section className="menu-section">
+      <h3
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      >
+        Tests
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+      </h3>
+      {!isCollapsed && (
+        <>
+          <ManualTestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
+          />
+          <AutomatedTestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
+          />
+        </>
+      )}
+    </section>
+  );
+}
+
+
 function SelectorPositionSection() {
   const {
     state: { gridSize, cameraOrientation },
@@ -564,7 +598,7 @@ function ShapeBrushSection() {
         onClick={() => setIsCollapsed(!isCollapsed)}
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
-        <span role="img" aria-label="paint-roller">ローラー</span> Shape Brush
+        Shape Brush
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
@@ -1138,31 +1172,26 @@ export function MainMenu() {
           {!rotationMode && <ShapeBrushSection />}
           {!rotationMode && <EnvironmentSection />}
           <RulesSection />
+          <TestsSection />
           {!rotationMode && <SelectorPositionSection />}
+          {buildInfo.distribution !== "prod" && (
+
+            <>
+
+            </>
+          )}
         </div>
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
 
-      {buildInfo.distribution !== "prod" && (
-        <>
-          <ManualTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-          <AutomatedTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-        </>
-      )}
+
     </>
   );
 }
 
 MainMenu.ActionsSection = ActionsSection;
 MainMenu.EnvironmentSection = EnvironmentSection;
+MainMenu.TestsSection = TestsSection;
 MainMenu.RulesSection = RulesSection;
 MainMenu.ShapeBrushSection = ShapeBrushSection;
 MainMenu.SceneManagementSection = SceneManagementSection;

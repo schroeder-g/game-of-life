@@ -155,47 +155,48 @@ export function AutomatedTestsPanel({
   }
 
   return (
-    <div className={`automated-tests-panel glass-panel ${isCollapsed ? "collapsed" : ""}`}>
-      <header className="panel-header" onClick={() => setIsCollapsed(!isCollapsed)}>
-        <h3>Automated Test Results</h3>
-        <span className="collapse-toggle">{isCollapsed ? "▼" : "▲"}</span>
-      </header>
-      {!isCollapsed && (
-        <div className="panel-content">
-          <div className="panel-info">
-            <strong>Last Run:</strong> {testDate}
-          </div>
-          <div className="tests-list">
-            {testResults.map((test) => (
-              <details key={test.id} className={`test-item-details ${test.status}`}>
-                <summary>
-                  <span className={`status-indicator ${test.status}`}>
-                    {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
-                  </span>
-                  <span className="test-id">({test.id})</span>
-                  {test.claimIds.length > 0 && (
-                    <span className="claim-id-tags">
-                      {test.claimIds.map(id => `[${id}]`).join(' ')}
+    <section className="menu-section">
+      <div className={`${isCollapsed ? "collapsed" : ""}`}>
+        <header className="panel-header" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <h3>Automated Test Results</h3>
+          <span className="collapse-toggle">{isCollapsed ? "▼" : "▲"}</span>
+        </header>
+        {!isCollapsed && (
+          <div className="panel-content">
+            <div className="panel-info">
+              <strong>Last Run:</strong> {testDate}
+            </div>
+            <div className="tests-list">
+              {testResults.map((test) => (
+                <details key={test.id} className={`test-item-details ${test.status}`}>
+                  <summary>
+                    <span className={`status-indicator ${test.status}`}>
+                      {test.status === "pass" ? "✔" : test.status === "fail" ? "✖" : "○"}
                     </span>
-                  )}
-                  <div className="test-title">{test.title}</div>
+                    <span className="test-id">({test.id})</span>
+                    {test.claimIds.length > 0 && (
+                      <span className="claim-id-tags">
+                        {test.claimIds.map(id => `[${id}]`).join(' ')}
+                      </span>
+                    )}
+                    <div className="test-title">{test.title}</div>
 
 
-                </summary>
-                <div className="test-narrative">
-                  <pre>
-                    <code>{test.narrative}</code>
-                  </pre>
-                </div>
-              </details>
-            ))}
+                  </summary>
+                  <div className="test-narrative">
+                    <pre>
+                      <code>{test.narrative}</code>
+                    </pre>
+                  </div>
+                </details>
+              ))}
+            </div>
+            <footer className="panel-footer">
+              <strong>Summary:</strong> {summary.passed} Passed, {summary.failed} Failed, {summary.skipped} Skipped
+              ({summary.total} Total)
+            </footer>
           </div>
-          <footer className="panel-footer">
-            <strong>Summary:</strong> {summary.passed} Passed, {summary.failed} Failed, {summary.skipped} Skipped
-            ({summary.total} Total)
-          </footer>
-        </div>
-      )}
-    </div>
+        )}
+      </div></section >
   );
 }

@@ -60,9 +60,9 @@ export function ManualTestsPanel({ manualTests, automatedTestIds }: ManualTestsP
       return newSet;
     });
   };
-  
-  return (
-    <div className="tests-panel glass-panel">
+
+  return (<section className="menu-section">
+    <div >
       <h3 onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         Manual Tests
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
@@ -103,6 +103,6 @@ export function ManualTestsPanel({ manualTests, automatedTestIds }: ManualTestsP
           })}
         </div>
       )}
-    </div>
+    </div></section>
   );
 }
