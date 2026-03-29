@@ -198,7 +198,7 @@ export default function App() {
         </main>
       </div>
 
-      <WelcomeModal />
+      {showIntroduction && <WelcomeModal setShowIntroduction={setShowIntroduction} setUserName={setUserName} />}
     </div>
   );
 }
