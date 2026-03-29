@@ -1099,7 +1099,7 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin: auto; /* Explicitly center the modal content within the flex container */
+  margin: 10% auto auto auto; /* Add 10% top margin, keep horizontal auto-centering */
 }
 
 .modal-content h3 {
