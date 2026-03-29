@@ -162,17 +162,6 @@ export default function App() {
 
       <div className="main-content-layout">
         <aside className="ui-overlay">
-          <p className="explainer">
-            Explore a 3D adaptation of{" "}
-            <a
-              href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Conway's Game of Life
-            </a>{" "}
-            by placing cells in the grid and watching them evolve.
-          </p>
           <SimulationStats />
 
           {!rotationMode && selectedShape !== "None" && (
