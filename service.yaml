@@ -19,6 +19,7 @@ spec:
         run.googleapis.com/client-name: gcloud
         run.googleapis.com/client-version: 477.0.0
         run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/invoker-iam-disabled: 'true' # <--- ADD THIS HERE TOO
       labels:
         client.knative.dev/nonce: xhaiwzsxqg
         run.googleapis.com/startupProbeType: Default
