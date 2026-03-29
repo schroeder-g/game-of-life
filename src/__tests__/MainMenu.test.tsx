@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MainMenu } from '../components/MainMenu';
+import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
 import { useSimulation } from '../contexts/SimulationContext';
 import { useBrush } from '../contexts/BrushContext';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
@@ -18,11 +19,13 @@ describe('MainMenu and AppHeaderPanel', () => {
     let mockSetRotationMode: Mock;
     let mockSetSpeed: Mock;
     let mockPlayStop: Mock;
+    let mockGridOn: Mock;
 
     beforeEach(() => {
         mockSetRotationMode = vi.fn((fn) => fn(false)); // Simulate toggling
         mockSetSpeed = vi.fn();
         mockPlayStop = vi.fn();
+        mockGridOn = vi.fn(() => vi.fn()); // Mock the 'on' method of Emitter
 
         (useSimulation as any).mockReturnValue({
             state: {
@@ -48,7 +51,7 @@ describe('MainMenu and AppHeaderPanel', () => {
             },
             meta: {
                 cameraActionsRef: { current: {} },
-                gridRef: { current: { getLivingCells: () => [], on: vi.fn(() => vi.fn()) } },
+                gridRef: { current: { getLivingCells: () => [], on: mockGridOn, generation: 0, version: 0 } }, // Add generation and version
             }
         });
 
@@ -64,7 +67,7 @@ describe('MainMenu and AppHeaderPanel', () => {
     });
 
     it('[UC-1] should toggle edit/view mode when the mode toggle button is clicked', () => {
-        render(<MainMenu.AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />);
+        render(<AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />); // Render AppHeaderPanel directly
         const toggleButton = screen.getByTitle('Switch to View Mode');
         fireEvent.click(toggleButton);
         expect(mockSetRotationMode).toHaveBeenCalled();
@@ -72,12 +75,12 @@ describe('MainMenu and AppHeaderPanel', () => {
 
     it('[UC-6] should adjust simulation speed when slider is changed', async () => {
         // Mock rotationMode to true to ensure the speed slider is visible
-        (useSimulation as any).mockReturnValueOnce({
-            ...useSimulation(), // Get the default mock from beforeEach
-            state: { ...useSimulation().state, rotationMode: true }
+        (useSimulation as any).mockReturnValue({
+            ...useSimulation().mock.results[0].value, // Get the default mock from beforeEach
+            state: { ...useSimulation().mock.results[0].value.state, rotationMode: true }
         });
 
-        render(<MainMenu isSmallScreen={false} />);
+        render(<AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />); // Render AppHeaderPanel directly
 
         const speedSlider = await screen.findByRole('slider', { name: /Speed/i });
         fireEvent.change(speedSlider, { target: { value: '15' } });
@@ -86,7 +89,7 @@ describe('MainMenu and AppHeaderPanel', () => {
 
 
     it('[UX-5] should display development build info in the header', () => {
-        render(<MainMenu.AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />);
+        render(<AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />); // Render AppHeaderPanel directly
         // Use a regex to match the build info format without being sensitive to the exact time
         expect(screen.getByText(/Build:/)).toBeInTheDocument();
     });

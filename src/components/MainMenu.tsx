@@ -1053,10 +1053,8 @@ export function MainMenu({ isSmallScreen }: MainMenuProps) {
   );
 }
 
-MainMenu.ActionsSection = ActionsSection;
-MainMenu.EnvironmentSection = EnvironmentSection;
-MainMenu.TestsSection = TestsSection;
-MainMenu.RulesSection = RulesSection;
-MainMenu.SceneManagementSection = SceneManagementSection;
-MainMenu.CameraControlSection = CameraControlSection;
-MainMenu.AppHeaderPanel = AppHeaderPanel;
+// These were incorrectly exported as static properties of MainMenu.
+// They are either internal functions or separate components.
+// ActionsSection is an internal function and does not need to be exported.
+// EnvironmentSection, RulesSection, TestsSection, SelectorPositionSection, CameraControlSection, SceneManagementSection are internal components of MainMenu.
+// AppHeaderPanel is a separate component and should be imported directly.
