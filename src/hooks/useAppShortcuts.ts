@@ -129,8 +129,8 @@ export function useAppShortcuts() {
           if (key === '.') { axis.set(1, 0, 0); angle = Math.PI / 2; }
           if (key === 'k') { axis.set(0, 1, 0); angle = -Math.PI / 2; }
           if (key === ';') { axis.set(0, 1, 0); angle = Math.PI / 2; }
-          if (key === 'i') { axis.set(0, 0, 1); angle = -Math.PI / 2; }
-          if (key === 'p') { axis.set(0, 0, 1); angle = Math.PI / 2; }
+          if (key === 'i') { axis.set(0, 0, 1); angle = paintMode === -1 ? Math.PI / 2 : -Math.PI / 2; }
+          if (key === 'p') { axis.set(0, 0, 1); angle = paintMode === -1 ? -Math.PI / 2 : Math.PI / 2; }
           cameraActionsRef.current?.rotateBrush(axis, angle);
         } else {
           // 2. Continuous Rotation (Standard OR Ctrl+Shift Override)

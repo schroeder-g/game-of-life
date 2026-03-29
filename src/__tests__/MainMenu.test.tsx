@@ -79,7 +79,7 @@ describe('MainMenu and AppHeaderPanel', () => {
 
         render(<MainMenu isSmallScreen={false} />);
 
-        const speedSlider = await screen.findByLabelText(/Speed/);
+        const speedSlider = await screen.findByRole('slider', { name: /Speed/i });
         fireEvent.change(speedSlider, { target: { value: '15' } });
         expect(mockSetSpeed).toHaveBeenCalledWith(15);
     });

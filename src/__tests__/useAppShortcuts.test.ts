@@ -38,20 +38,46 @@ describe('useAppShortcuts - UX Claims', () => {
     });
   });
 
-  it('[UX-1] should reverse brush rotation for i and p keys when paint tool is active', () => {
-    // Set paintMode to 1 (Birth)
+  it('[UX-1] should reverse brush rotation for i and p keys when Clear brush tool is active', () => {
+    // Set paintMode to -1 (Clear)
     (useBrush as any).mockReturnValue({
-      state: { selectedShape: 'Cube', paintMode: 1 },
+      state: { selectedShape: 'Cube', paintMode: -1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
       actions: { setSelectorPos: vi.fn() }
     });
 
     renderHook(() => useAppShortcuts());
 
-    const event = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
-    window.dispatchEvent(event);
+    // Test 'i' key (should be +Math.PI/2 for Clear mode)
+    const eventI = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
+    window.dispatchEvent(eventI);
+    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), Math.PI / 2);
+    vi.clearAllMocks(); // Clear mock calls for the next assertion
 
-    // Verify rotateBrush was called with -Math.PI/2 instead of Math.PI/2
-    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), -Math.PI/2);
+    // Test 'p' key (should be -Math.PI/2 for Clear mode)
+    const eventP = new KeyboardEvent('keydown', { code: 'KeyP', key: 'p' });
+    window.dispatchEvent(eventP);
+    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), -Math.PI / 2);
+  });
+
+  it('[UX-1] should NOT reverse brush rotation for i and p keys when Birth brush tool is active', () => {
+    // Set paintMode to 1 (Birth)
+    (useBrush as any).mockReturnValue({
+      state: { selectedShape: 'Cube', paintMode: 1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
+      actions: { setSelectorPos: vi.fn() }
+    });
+
+    renderHook(() => useAppShortcuts());
+
+    // Test 'i' key (should be -Math.PI/2 for Birth mode)
+    const eventI = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
+    window.dispatchEvent(eventI);
+    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), -Math.PI / 2);
+    vi.clearAllMocks();
+
+    // Test 'p' key (should be +Math.PI/2 for Birth mode)
+    const eventP = new KeyboardEvent('keydown', { code: 'KeyP', key: 'p' });
+    window.dispatchEvent(eventP);
+    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), Math.PI / 2);
   });
 
   // Removed UX-3 test

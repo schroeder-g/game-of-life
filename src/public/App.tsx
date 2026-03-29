@@ -194,10 +194,6 @@ export default function App() {
       </div>
 
       <WelcomeModal />
-      <ShortcutOverlay
-        isOpen={showShortcuts}
-        onClose={() => setShowShortcuts(false)}
-      />
     </div>
   );
 }
