@@ -351,17 +351,29 @@ export function AppHeaderPanel() {
           <>
             <BrushSelectorDropdown />
             {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
-              <div className="brush-size-control" style={{ width: '100px' }}>
-                <span>Size: {brushState.shapeSize}</span>
-                <input
-                  type="range"
-                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
-                  max={gridSize}
-                  step={1}
-                  value={brushState.shapeSize}
-                  onChange={handleBrushSizeChange}
-                />
-              </div>
+              <>
+                <div className="brush-size-control" style={{ width: '100px' }}>
+                  <span>Size: {brushState.shapeSize}</span>
+                  <input
+                    type="range"
+                    min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
+                    max={gridSize}
+                    step={1}
+                    value={brushState.shapeSize}
+                    onChange={handleBrushSizeChange}
+                  />
+                </div>
+                <label className="control-label row" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#8b949e' }}>
+                  <input
+                    type="checkbox"
+                    className="glass-checkbox"
+                    checked={brushState.isHollow}
+                    disabled={!supportsHollow(selectedShape)}
+                    onChange={(e) => brushState.actions.setIsHollow(e.target.checked)}
+                  />
+                  Hollow
+                </label>
+              </>
             )}
             <button
               className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}

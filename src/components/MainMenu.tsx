@@ -633,16 +633,6 @@ function ShapeBrushSection() {
           {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
             <>
               <label className="control-label row">
-                <span>Hollow</span>
-                <input
-                  type="checkbox"
-                  className="glass-checkbox"
-                  checked={isHollow}
-                  disabled={!supportsHollow(selectedShape)}
-                  onChange={(e) => setIsHollow(e.target.checked)}
-                />
-              </label>
-              <label className="control-label row">
                 <span>Show Guides</span>
                 <input
                   type="checkbox"
