@@ -396,6 +396,7 @@ export function AppHeaderPanel() {
             >
               <MinusIcon />
             </button>
+            <BrushControls />
           </>
         )}
         <button

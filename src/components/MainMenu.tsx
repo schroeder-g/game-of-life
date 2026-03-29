@@ -1069,9 +1069,6 @@ export function MainMenu() {
         </div>
       </aside>
       {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
-      {!rotationMode && <BrushControls />}
-
-
     </>
   );
 }
