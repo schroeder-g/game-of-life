@@ -8,6 +8,13 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { BrushControls } from "./BrushControls";
 
+const GearIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="18" height="18" rx="2" strokeOpacity="0.3" />
@@ -310,7 +317,9 @@ interface AppHeaderPanelButtonsProps {
   helpDropdownRef: React.RefObject<HTMLDivElement>;
   handleOpenDocumentation: () => void;
   handleOpenIntroduction: () => void;
-  handleOpenShortcuts: () => void; // New prop for shortcuts
+  handleOpenShortcuts: () => void;
+  showMainMenu: boolean; // New prop
+  setShowMainMenu: (show: boolean) => void; // New prop
 }
 
 export function AppHeaderPanelButtons({
@@ -345,7 +354,9 @@ export function AppHeaderPanelButtons({
   helpDropdownRef,
   handleOpenDocumentation,
   handleOpenIntroduction,
-  handleOpenShortcuts, // Destructure new prop
+  handleOpenShortcuts,
+  showMainMenu, // Destructure new prop
+  setShowMainMenu, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -525,10 +536,12 @@ export function AppHeaderPanelButtons({
         )}
       </div>
       <button
-        className="glass-button shortcuts-toggle"
-        onClick={() => setShowShortcuts(true)}
+        className={`glass-button primary ${showMainMenu ? 'active' : ''}`}
+        onClick={() => setShowMainMenu(!showMainMenu)}
+        title="Toggle Main Menu"
+        aria-label="Toggle Main Menu"
       >
-        ⌘ Shortcuts
+        <GearIcon />
       </button>
     </div>
   );

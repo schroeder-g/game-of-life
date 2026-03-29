@@ -40,7 +40,12 @@ function SimulationStats() {
   );
 }
 
-export function AppHeaderPanel() {
+interface AppHeaderPanelProps {
+  showMainMenu: boolean;
+  setShowMainMenu: (show: boolean) => void;
+}
+
+export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanelProps) {
   const {
     state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize },
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setSquareUp, setSpeed },
@@ -143,7 +148,9 @@ export function AppHeaderPanel() {
         helpDropdownRef={helpDropdownRef}
         handleOpenDocumentation={handleOpenDocumentation}
         handleOpenIntroduction={handleOpenIntroduction}
-        handleOpenShortcuts={handleOpenShortcuts} // Pass new handler
+        handleOpenShortcuts={handleOpenShortcuts}
+        showMainMenu={showMainMenu} // Pass new prop
+        setShowMainMenu={setShowMainMenu} // Pass new prop
       />
 
       <DocumentationModal

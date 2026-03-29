@@ -22,6 +22,7 @@ export default function App() {
   } = useBrush();
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from MainMenu
+  const [showMainMenu, setShowMainMenu] = useState(true); // New state, defaults to true
 
   // State for draggable footer position
   const [footerPosition, setFooterPosition] = useState({ x: 10, y: 10 });
@@ -124,13 +125,17 @@ export default function App() {
 
   return (
     <div className="app">
-      <AppHeaderPanel />
+      <AppHeaderPanel
+        showMainMenu={showMainMenu}
+        setShowMainMenu={setShowMainMenu}
+      />
 
       <div className="main-content-layout">
-        <aside className="ui-overlay">
-
-          <MainMenu isSmallScreen={isSmallScreen} />
-        </aside>
+        {showMainMenu && (
+          <aside className="ui-overlay">
+            <MainMenu isSmallScreen={isSmallScreen} />
+          </aside>
+        )}
 
         <main
           ref={canvasContainerRef}
