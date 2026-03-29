@@ -1565,5 +1565,127 @@ div.automated-tests-panel.glass-panel>div>div.tests-list>details>summary>span.te
   color: #ffa657;
   font-weight: bold;
   min-width: 60px;
+}
 
+/* Automated Tests Panel Styling */
+.automated-tests-panel-status {
+  font-size: 0.85em;
+  color: #8b949e;
+  margin-top: 10px;
+}
+
+.automated-tests-panel-status.error {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.tests-list {
+  margin-top: 10px;
+}
+
+.test-item-details {
+  margin-bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.test-item-details summary {
+  padding: 8px 10px;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.test-item-details summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.test-item-details.pass summary {
+  color: #4caf50;
+}
+
+.test-item-details.fail summary {
+  color: #f44336;
+}
+
+.test-item-details.skipped summary {
+  color: #888;
+}
+
+.status-indicator {
+  font-weight: bold;
+  font-size: 1.1em;
+  width: 1em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.status-indicator.pass {
+  color: #4caf50;
+}
+
+.status-indicator.fail {
+  color: #f44336;
+}
+
+.status-indicator.skipped {
+  color: #888;
+}
+
+.test-title {
+  flex-grow: 1;
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
+.test-item-details.fail .test-title {
+  font-weight: bold;
+}
+
+.test-narrative {
+  padding: 5px 10px 10px 10px;
+  font-size: 0.75em;
+  color: #aaa;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.test-narrative pre {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 5px;
+  border-radius: 3px;
+  overflow-x: auto;
+}
+
+.panel-footer {
+  margin-top: 15px;
+  font-size: 0.8em;
+  color: #8b949e;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+}
+
+.claim-id-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.claim-id-tags a {
+  font-size: 0.7em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(138, 180, 248, 0.1);
+  color: #8ab4f8;
+  text-decoration: none;
+}
+
+.claim-id-tags a:hover {
+  background: rgba(138, 180, 248, 0.2);
+  text-decoration: underline;
 }

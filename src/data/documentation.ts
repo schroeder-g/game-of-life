@@ -166,9 +166,9 @@ const CURRENT_MANUAL: DocItem[] = [
   {
     id: "config-shape-brush",
     type: 'p',
-    text: "<b>Shape Brush Section:</b> Customize the selected brush's 'Size' and 'Hollow' properties. Brush rotation is controlled with the 'I' and 'P' keys.",
+    text: "<b>Shape Brush Section:</b> Customize the selected brush's 'Size' and 'Hollow' properties. Brush rotation is controlled with the 'I' and 'P' keys. When using destructive tools like the 'Clear Brush', the rotation direction for 'I' and 'P' is reversed for intuitive control.",
     testIds: ["UX-1"],
-    references: ["src/core/shapes.ts", "src/contexts/BrushContext.tsx"],
+    references: ["src/core/shapes.ts", "src/contexts/BrushContext.tsx", "src/hooks/useAppShortcuts.ts"],
   },
   {
     id: "config-scene-management",

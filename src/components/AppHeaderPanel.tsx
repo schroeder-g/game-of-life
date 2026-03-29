@@ -33,7 +33,7 @@ function SimulationStats() {
 
     const unsubscribe = gridRef.current.on('tick', updateStats);
     return () => unsubscribe();
-  }, [gridRef]);
+  }, [gridRef.current]); // Depend on the current Grid3D instance
 
   return (
     <div className="simulation-stats-display">

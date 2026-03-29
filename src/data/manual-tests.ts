@@ -4,12 +4,14 @@ export const MANUAL_TESTS: ManualTest[] = [
   // Existing Tests (Rewritten)
   {
     id: "UX-1",
-    title: "Verify Brush Rotation",
+    title: "Verify Context-Aware Brush Rotation",
     steps: [
       "Enter Edit Mode.",
-      "Select a non-symmetrical brush (e.g., Triangle).",
-      "Press 'I' and 'P' keys.",
-      "<b>Expected</b>: The brush preview rotates around an axis perpendicular to the screen.",
+      "Select a non-symmetrical brush (e.g., Triangle or Pyramid).",
+      "Ensure 'Paint' mode (+) is active.",
+      "Press 'I' and 'P' keys. <b>Expected</b>: The brush preview rotates around its Z-axis (roll).",
+      "Switch to 'Clear' mode (-).",
+      "Press 'I' and 'P' keys. <b>Expected</b>: The brush preview rotates in the *opposite direction* compared to 'Paint' mode.",
     ],
     claimIds: ["config-shape-brush"],
   },

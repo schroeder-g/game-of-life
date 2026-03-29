@@ -3,6 +3,7 @@
 export {
   KEY_MAP,
   rotationLookup,
+  snapRotationLookup, // Added snapRotationLookup
   CameraFace,
   CameraRotation,
   CameraOrientation,
