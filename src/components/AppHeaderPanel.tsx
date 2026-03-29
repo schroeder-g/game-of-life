@@ -4,7 +4,7 @@ import { useSimulation } from "../contexts/SimulationContext";
 import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { type ShapeType } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
-import { IntroductionModal, HAS_SEEN_INTRODUCTION_KEY } from "./IntroductionModal";
+import { IntroductionModal } from "./IntroductionModal";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 
@@ -21,9 +21,7 @@ export function AppHeaderPanel() {
   const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showIntroduction, setShowIntroduction] = useState(
-    localStorage.getItem(HAS_SEEN_INTRODUCTION_KEY) !== 'true'
-  );
+  const [showIntroduction, setShowIntroduction] = useState(true); // Always show by default
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 

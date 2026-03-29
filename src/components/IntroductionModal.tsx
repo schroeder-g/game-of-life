@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react'; // Import useEffect
+import React from 'react';
 import './Modal.css'; // Assuming a shared Modal.css for styling
-
-export const HAS_SEEN_INTRODUCTION_KEY = 'hasSeenIntroduction';
 
 interface IntroductionModalProps {
   isOpen: boolean;
@@ -9,18 +7,11 @@ interface IntroductionModalProps {
 }
 
 export function IntroductionModal({ isOpen, onClose }: IntroductionModalProps) {
-  useEffect(() => {
-    console.log('IntroductionModal mounted/updated. isOpen:', isOpen);
-  }, [isOpen]);
-
   if (!isOpen) {
-    console.log('IntroductionModal: Not rendering because isOpen is false.');
     return null;
   }
 
   const handleClose = () => {
-    console.log('IntroductionModal: handleClose called. Setting HAS_SEEN_INTRODUCTION_KEY to true.');
-    localStorage.setItem(HAS_SEEN_INTRODUCTION_KEY, 'true');
     onClose();
   };
 
