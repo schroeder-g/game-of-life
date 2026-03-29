@@ -39,19 +39,21 @@ export default function App() {
     }
   }, [rotationMode, recenter, fitDisplay]);
 
-  // Effect to set and update canvas size to be square
+  // Effect to set and update canvas size to be square using ResizeObserver
   useEffect(() => {
-    const updateCanvasSize = () => {
-      if (canvasContainerRef.current) {
-        const { offsetWidth, offsetHeight } = canvasContainerRef.current;
-        setCanvasSize(Math.min(offsetWidth, offsetHeight));
+    if (!canvasContainerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === canvasContainerRef.current) {
+          const { width, height } = entry.contentRect;
+          setCanvasSize(Math.min(width, height));
+        }
       }
-    };
+    });
 
-    updateCanvasSize(); // Set initial size
-    window.addEventListener('resize', updateCanvasSize); // Update on resize
-
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    resizeObserver.observe(canvasContainerRef.current);
+    return () => resizeObserver.disconnect();
   }, []);
 
   // Effect to check screen size for small screens
@@ -139,50 +141,55 @@ export default function App() {
           ref={canvasContainerRef}
           className="canvas-container"
           style={{
-            width: canvasSize > 0 ? canvasSize : '100%', // Apply calculated square size
-            height: canvasSize > 0 ? canvasSize : '100%', // Apply calculated square size
-            aspectRatio: '1 / 1', // Enforce a square aspect ratio
-            display: 'flex', // Ensure Canvas fills the container
+            flex: 1,
+            height: '100%',
+            display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
+            overflow: 'hidden',
           }}
         >
-          {canvasSize > 0 && ( // Only render Canvas once size is determined
-            <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
-              <Scene />
-            </Canvas>
-          )}
-          {!rotationMode && (
+          {canvasSize > 0 && (
             <div
-              ref={footerRef}
               style={{
-                position: 'absolute',
-                left: footerPosition.x,
-                top: footerPosition.y,
-                zIndex: 999, // Ensure it's above other canvas elements
-                cursor: isDragging ? 'grabbing' : 'grab',
-                touchAction: 'none', // Disable touch scrolling for dragging
+                width: canvasSize,
+                height: canvasSize,
+                position: 'relative',
               }}
             >
-              <div
-                style={{
-                  // Grab bar styling
-                  width: '100%',
-                  height: '10px', // Height of the grab bar
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  cursor: 'grab',
-                  position: 'absolute',
-                  top: '-10px', // Position above the controls
-                  left: 0,
-                  borderRadius: '5px 5px 0 0',
-                }}
-                onMouseDown={onMouseDown}
-                onTouchStart={(e) => onMouseDown(e as any)} // For touch devices
-              />
-
+              <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+                <Scene />
+              </Canvas>
+              {!rotationMode && (
+                <div
+                  ref={footerRef}
+                  style={{
+                    position: 'absolute',
+                    left: footerPosition.x,
+                    top: footerPosition.y,
+                    zIndex: 999,
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    touchAction: 'none',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '10px',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      cursor: 'grab',
+                      position: 'absolute',
+                      top: '-10px',
+                      left: 0,
+                      borderRadius: '5px 5px 0 0',
+                    }}
+                    onMouseDown={onMouseDown}
+                    onTouchStart={(e) => onMouseDown(e as any)}
+                  />
+                </div>
+              )}
             </div>
           )}
-
         </main>
       </div>
 

@@ -35,8 +35,9 @@ const RecenterIcon = () => (
 
 const SquareUpOffIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2l7 4v8l-7 4-7-4V6l7-4z" />
-    <path d="M12 12l7-4M12 12v10M12 12l-7-4" />
+    <rect x="5" y="9" width="10" height="10" />
+    <rect x="9" y="5" width="10" height="10" />
+    <path d="M5 9l4-4M15 9l4-4M15 19l4-4M5 19l4-4" />
   </svg>
 );
 
@@ -370,7 +371,7 @@ export function AppHeaderPanelButtons({
       <button
         className="glass-button mode-toggle-button"
         onClick={() => setRotationMode((p) => !p)}
-        title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+        data-tooltip-bottom={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
       >
         {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
       </button>
@@ -405,14 +406,14 @@ export function AppHeaderPanelButtons({
           <button
             className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
             onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-            title="Activate (Paint) (Space)"
+            data-tooltip-bottom="Activate (Paint) (Space)"
           >
             <PlusIcon />
           </button>
           <button
             className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
             onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
-            title="Clear (Delete)"
+            data-tooltip-bottom="Clear (Delete)"
           >
             <MinusIcon />
           </button>
@@ -505,7 +506,7 @@ export function AppHeaderPanelButtons({
         <button
           className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
           onClick={() => setSquareUp(!squareUp)}
-          title={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
+          data-tooltip-bottom={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
         >
           {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
         </button>
@@ -515,7 +516,7 @@ export function AppHeaderPanelButtons({
       <button
         className={`glass-button settings-theme ${showMainMenu ? 'active' : ''}`}
         onClick={() => setShowMainMenu(!showMainMenu)}
-        title="Toggle Main Menu"
+        data-tooltip-bottom="Toggle Main Menu"
         aria-label="Toggle Main Menu"
       >
         <GearIcon />
@@ -524,7 +525,7 @@ export function AppHeaderPanelButtons({
         <button
           className="glass-button"
           onClick={() => setIsHelpDropdownOpen(prev => !prev)}
-          title="Help (?)"
+          data-tooltip-bottom="Help (?)"
           aria-label="Help (?)"
         >
           ?
