@@ -123,12 +123,13 @@ export function BrushControls() {
   useEffect(() => {
     if (panelRef.current) {
       const panelRect = panelRef.current.getBoundingClientRect();
-      // Calculate center position
-      const initialX = (window.innerWidth - panelRect.width) / 2;
-      const initialY = (window.innerHeight - panelRect.height) / 2;
+      const margin = 10; // 10px margin from edges
 
-      // Ensure initial position is not negative and respects a minimum 10px margin
-      setPosition({ x: Math.max(10, initialX), y: Math.max(10, initialY) });
+      // Calculate initial position to be bottom-right with a margin
+      const initialX = window.innerWidth - panelRect.width - margin;
+      const initialY = window.innerHeight - panelRect.height - margin;
+
+      setPosition({ x: initialX, y: initialY });
     }
   }, []); // Empty dependency array means it runs once after initial render
 
