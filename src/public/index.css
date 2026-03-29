@@ -696,22 +696,6 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 
 /* Shortcut Overlay Modal */
-.shortcuts-modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(13, 17, 23, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 305; /* Changed z-index to 305 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s ease-out;
-}
-
 .shortcuts-modal {
   background: rgba(22, 27, 34, 0.65);
   backdrop-filter: blur(24px);
@@ -1093,12 +1077,14 @@ kbd {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(13, 17, 23, 0.6); /* Slightly darker background */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100000000001; /* Higher than dropdown-menu to ensure visibility */
-  backdrop-filter: blur(4px);
+  z-index: 2000000000; /* Extremely high z-index to block all interactions */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modal-content {

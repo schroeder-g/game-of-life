@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useSimulation } from "../contexts/SimulationContext";
 
 export function WelcomeModal() {
@@ -8,8 +9,9 @@ export function WelcomeModal() {
   } = useSimulation();
 
   const [inputName, setInputName] = useState("");
+  const [dismissed, setDismissed] = useState(false);
 
-  if (userName || buildInfo.distribution === "prod") return null;
+  if (dismissed || userName || buildInfo.distribution === "prod") return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,9 +20,13 @@ export function WelcomeModal() {
     }
   };
 
-  return (
-    <div className="modal-overlay welcome-modal">
-      <div className="glass-panel modal-content">
+  const handleClose = () => {
+    setDismissed(true);
+  };
+
+  return createPortal(
+    <div className="modal-overlay welcome-modal" onClick={handleClose}>
+      <div className="glass-panel modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>Welcome to Game of Life 3D</h2>
         <p>Distribution: {buildInfo.distribution}</p>
         <p>Build: {buildInfo.version}</p>
@@ -40,7 +46,8 @@ export function WelcomeModal() {
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

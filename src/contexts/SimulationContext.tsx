@@ -77,6 +77,7 @@ export interface SimulationState {
     buildTime: string;
     distribution: "dev" | "test" | "prod";
   };
+  showIntroduction: boolean;
 }
 
 export interface SimulationActions {
@@ -106,6 +107,7 @@ export interface SimulationActions {
   setIsSquaredUp: (val: boolean) => void;
   setCameraOrientation: (orientation: CameraOrientation) => void;
   setUserName: (name: string) => void;
+  setShowIntroduction: (show: boolean) => void;
 
   playStop: () => void;
   step: () => void;
@@ -211,6 +213,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [cameraOrientation, setCameraOrientation] = useState<CameraOrientation>({ face: 'front', rotation: 0 });
   const [isAnimatingInit, setIsAnimatingInit] = useState(false);
   const [userName, setUserNameState] = useState<string | undefined>(localStorage.getItem("userName") || undefined);
+  const [showIntroduction, setShowIntroduction] = useState(true);
 
   const [buildInfo, setBuildInfo] = useState<SimulationState['buildInfo']>({
     version: "loading...",
@@ -389,8 +392,16 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setHasInitialState(cells.length > 0);
     }
 
+    if (buildInfo.distribution !== "prod" && !userName) {
+      return;
+    }
+
+    if (showIntroduction) {
+      return;
+    }
+
     runInitAnimation();
-  }, [runInitAnimation]);
+  }, [runInitAnimation, userName, buildInfo.distribution, showIntroduction]);
 
   // keep grid's neighbor flags in sync
   useEffect(() => {
@@ -657,6 +668,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       isAnimatingInit,
       userName,
       buildInfo,
+      showIntroduction,
     },
     actions: {
       setSpeed,
@@ -682,6 +694,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setIsSquaredUp,
       setRollSpeed,
       setUserName,
+      setShowIntroduction,
       playStop,
       step,
       stepBackward,

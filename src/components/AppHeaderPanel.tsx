@@ -9,6 +9,7 @@ import { ShortcutOverlay } from "./ShortcutOverlay";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
+import { ReleaseNotesModal } from "./ReleaseNotesModal";
 
 function SimulationStats() {
   const {
@@ -48,8 +49,8 @@ interface AppHeaderPanelProps {
 
 export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanelProps) {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize },
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setSquareUp, setSpeed },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction },
+    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
     meta: { cameraActionsRef },
   } = useSimulation();
   const {
@@ -60,8 +61,8 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
   const { state: { selectedConfigName } } = useGenesisConfig();
 
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showIntroduction, setShowIntroduction] = useState(true); // Always show by default
   const [showShortcuts, setShowShortcuts] = useState(false); // New state for ShortcutOverlay
+  const [showReleaseNotes, setShowReleaseNotes] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -82,10 +83,15 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
   const handleOpenIntroduction = useCallback(() => {
     setShowIntroduction(true);
     setIsHelpDropdownOpen(false);
-  }, []);
+  }, [setShowIntroduction]);
 
   const handleOpenShortcuts = useCallback(() => { // New handler for shortcuts
     setShowShortcuts(true);
+    setIsHelpDropdownOpen(false);
+  }, []);
+
+  const handleOpenReleaseNotes = useCallback(() => {
+    setShowReleaseNotes(true);
     setIsHelpDropdownOpen(false);
   }, []);
 
@@ -154,6 +160,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         handleOpenDocumentation={handleOpenDocumentation}
         handleOpenIntroduction={handleOpenIntroduction}
         handleOpenShortcuts={handleOpenShortcuts}
+        handleOpenReleaseNotes={handleOpenReleaseNotes}
         showMainMenu={showMainMenu} // Pass new prop
         setShowMainMenu={setShowMainMenu} // Pass new prop
       />
@@ -171,6 +178,11 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
       <ShortcutOverlay // Render ShortcutOverlay
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
+      />
+
+      <ReleaseNotesModal
+        isOpen={showReleaseNotes}
+        onClose={() => setShowReleaseNotes(false)}
       />
 
     </div>

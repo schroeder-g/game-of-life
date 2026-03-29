@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from "react-dom";
 
 interface IntroductionModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ export function IntroductionModal({ isOpen, onClose }: IntroductionModalProps) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>Welcome to Cube of Life!</h2>
@@ -39,6 +40,7 @@ export function IntroductionModal({ isOpen, onClose }: IntroductionModalProps) {
           Let's Go!
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -12,7 +12,7 @@ import { useAppShortcuts } from "../hooks/useAppShortcuts";
 
 export default function App() {
   const {
-    state: { rotationMode, running, squareUp },
+    state: { rotationMode, running, squareUp, userName, buildInfo, showIntroduction },
     actions: { setRotationMode, recenter, fitDisplay, setSquareUp },
   } = useSimulation();
   const {
@@ -149,7 +149,7 @@ export default function App() {
             overflow: 'hidden',
           }}
         >
-          {canvasSize > 0 && (
+          {canvasSize > 0 && (userName || buildInfo.distribution === 'prod') && !showIntroduction && (
             <div
               style={{
                 width: canvasSize,

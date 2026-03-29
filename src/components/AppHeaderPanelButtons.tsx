@@ -319,6 +319,7 @@ interface AppHeaderPanelButtonsProps {
   handleOpenDocumentation: () => void;
   handleOpenIntroduction: () => void;
   handleOpenShortcuts: () => void;
+  handleOpenReleaseNotes: () => void;
   showMainMenu: boolean; // New prop
   setShowMainMenu: (show: boolean) => void; // New prop
 }
@@ -356,6 +357,7 @@ export function AppHeaderPanelButtons({
   handleOpenDocumentation,
   handleOpenIntroduction,
   handleOpenShortcuts,
+  handleOpenReleaseNotes,
   showMainMenu, // Destructure new prop
   setShowMainMenu, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
@@ -535,11 +537,14 @@ export function AppHeaderPanelButtons({
             <button className="dropdown-item" onClick={handleOpenIntroduction}>
               Introduction
             </button>
-            <button className="dropdown-item" onClick={handleOpenDocumentation}>
-              Documentation
-            </button>
             <button className="dropdown-item" onClick={handleOpenShortcuts}>
               Shortcuts
+            </button>
+            <button className="dropdown-item" onClick={handleOpenReleaseNotes}>
+              Release Notes
+            </button>
+            <button className="dropdown-item" onClick={handleOpenDocumentation}>
+              Documentation
             </button>
           </div>
         )}

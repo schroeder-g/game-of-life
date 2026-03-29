@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { KeyMapPage } from "./KeyMapPage";
 
 interface ShortcutOverlayProps {
@@ -11,8 +12,8 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="shortcuts-modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
       <div
         className="shortcuts-modal"
         onClick={(e) => e.stopPropagation()}
@@ -222,6 +223,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
           {activeTab === "keymap" && <KeyMapPage />}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
