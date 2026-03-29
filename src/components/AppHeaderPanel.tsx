@@ -305,6 +305,10 @@ export function AppHeaderPanel() {
   const { selectedShape, paintMode } = brushState;
 
   const [showDocumentation, setShowDocumentation] = useState(false);
+  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
+  const helpDropdownRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
 
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
@@ -316,6 +320,17 @@ export function AppHeaderPanel() {
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setShapeSize(Number(e.target.value));
   }, [setShapeSize]);
+
+  const handleOpenDocumentation = useCallback(() => {
+    setShowDocumentation(true);
+    setIsHelpDropdownOpen(false); // Close dropdown when modal opens
+  }, []);
+
+  const handleOpenIntroduction = useCallback(() => {
+    // Placeholder for introduction logic
+    console.log("Opening Introduction...");
+    setIsHelpDropdownOpen(false); // Close dropdown
+  }, []);
 
   return (
     <div className="app-header-panel">
@@ -493,14 +508,26 @@ export function AppHeaderPanel() {
         </div> {/* End of new container div */}
         {/* Removed Auto-Square button */}
 
-        <button
-          className="glass-button"
-          onClick={() => setShowDocumentation(true)}
-          title="Documentation (?)"
-          aria-label="Documentation (?)"
-        >
-          <strong>?</strong>
-        </button>
+        <div className="dropdown-container" ref={helpDropdownRef}>
+          <button
+            className="glass-button"
+            onClick={() => setIsHelpDropdownOpen(prev => !prev)}
+            title="Help (?)"
+            aria-label="Help (?)"
+          >
+            <strong>?</strong>
+          </button>
+          {isHelpDropdownOpen && (
+            <div className="dropdown-menu right-aligned">
+              <button className="dropdown-item" onClick={handleOpenIntroduction}>
+                Introduction
+              </button>
+              <button className="dropdown-item" onClick={handleOpenDocumentation}>
+                Documentation
+              </button>
+            </div>
+          )}
+        </div>
 
         <DocumentationModal
           isOpen={showDocumentation}
