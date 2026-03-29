@@ -1427,6 +1427,23 @@ kbd {
   border-color: #8ab4f8;
 }
 
+.glass-button.settings-theme {
+  background: rgba(255, 165, 0, 0.1); /* Light orange background */
+  border-color: rgba(255, 165, 0, 0.3); /* Orange border */
+  color: #ffa500; /* Orange text/icon color */
+}
+
+.glass-button.settings-theme:hover {
+  background: rgba(255, 165, 0, 0.2); /* Slightly darker orange on hover */
+  border-color: rgba(255, 165, 0, 0.5); /* Darker orange border on hover */
+}
+
+.glass-button.settings-theme.active {
+  background: #ffa500; /* Solid orange when active */
+  border-color: #ffa500; /* Solid orange border when active */
+  color: #0d1117; /* Dark text/icon for contrast */
+}
+
 .glass-button.danger.active {
   background: #f28b82;
   color: #0d1117;

@@ -513,7 +513,7 @@ export function AppHeaderPanelButtons({
       {/* Removed Auto-Square button */}
 
       <button
-        className={`glass-button primary ${showMainMenu ? 'active' : ''}`}
+        className={`glass-button settings-theme ${showMainMenu ? 'active' : ''}`}
         onClick={() => setShowMainMenu(!showMainMenu)}
         title="Toggle Main Menu"
         aria-label="Toggle Main Menu"
