@@ -862,6 +862,10 @@ kbd {
   gap: 10px;
 }
 
+.dropdown-container {
+  position: relative;
+}
+
 .app-header-panel .speed-control {
   width: 100px;
   /* Set the desired width for the speed control */
