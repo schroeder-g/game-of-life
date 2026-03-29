@@ -256,7 +256,7 @@ function BrushSelectorDropdown() {
   };
 
   return (
-    <div className="scene-selector-dropdown" ref={dropdownRef}>
+    <div id="brush-selector-dropdown" className="scene-selector-dropdown" ref={dropdownRef}>
       <button
         className="glass-button"
         onClick={handleButtonClick}
