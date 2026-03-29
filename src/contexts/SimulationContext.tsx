@@ -253,7 +253,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   );
   const [easeIn, setEaseIn] = useState(storedSettings.easeIn);
   const [easeOut, setEaseOut] = useState(storedSettings.easeOut);
-  const [squareUp, setSquareUpState] = useState(Boolean(storedSettings.squareUp));
+  const [squareUp, setSquareUpState] = useState(true); // always on by default, not persisted
   const [isSquaredUp, setIsSquaredUp] = useState(false);
   const [rollSpeed, setRollSpeed] = useState(storedSettings.rollSpeed);
   const [invertRoll, setInvertRoll] = useState(
@@ -442,7 +442,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       invertRoll: invertRoll ? 1 : 0,
       easeIn,
       easeOut,
-      squareUp: squareUp ? 1 : 0,
+
       rollSpeed,
     };
     saveSettings(settings);
