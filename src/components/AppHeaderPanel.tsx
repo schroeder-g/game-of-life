@@ -357,20 +357,6 @@ export function AppHeaderPanel() {
                 onChange={(e) => brushState.actions.setShapeSize(Number(e.target.value))}
               />
             </div>
-          </>
-        )}
-        <button
-          className="glass-button mode-toggle-button"
-          onClick={() => setRotationMode((p) => !p)}
-          title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
-        >
-          {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
-        </button>
-
-
-        {!rotationMode && (
-          <>
-            <BrushSelectorDropdown />
             <button
               className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
@@ -385,9 +371,15 @@ export function AppHeaderPanel() {
             >
               <MinusIcon />
             </button>
-
           </>
         )}
+        <button
+          className="glass-button mode-toggle-button"
+          onClick={() => setRotationMode((p) => !p)}
+          title={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+        >
+          {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
+        </button>
 
 
         <button
