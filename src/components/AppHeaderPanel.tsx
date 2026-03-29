@@ -335,7 +335,7 @@ export function AppHeaderPanel() {
         </div>
         {!rotationMode && (
           <div className="shape-status">
-            Shape: {selectedShape} (Size: {brushState.shapeSize})
+            Shape: {selectedShape}
           </div>
         )}
       </div>
@@ -343,6 +343,22 @@ export function AppHeaderPanel() {
       <div className="button-group panel-actions">
 
         <SceneSelectorDropdown />
+        {!rotationMode && (
+          <>
+            <BrushSelectorDropdown />
+            <div className="brush-size-control" style={{ width: '100px' }}>
+              <span>Size: {brushState.shapeSize}</span>
+              <input
+                type="range"
+                min={1}
+                max={20} // Assuming a max size for the brush
+                step={1}
+                value={brushState.shapeSize}
+                onChange={(e) => brushState.actions.setShapeSize(Number(e.target.value))}
+              />
+            </div>
+          </>
+        )}
         <button
           className="glass-button mode-toggle-button"
           onClick={() => setRotationMode((p) => !p)}
