@@ -426,7 +426,7 @@ function FaceLabels({ size }: { size: number }) {
 
   return (
     <group>
-      <Html key={face} position={[finalX, finalY, finalZ]} center>
+      <Html key={face} position={[finalX, finalY, finalZ]} center zIndexRange={[0, 999]}>
         <div style={labelStyle}>
           {currentFaceData.name}{rotationStr && `, ${rotationStr}`}
         </div>
