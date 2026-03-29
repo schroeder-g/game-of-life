@@ -4,26 +4,26 @@ import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyM
 
 // Icon components for directional controls
 const ArrowUpIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowUpIcon">
-    <path d="M12 0 L5 14 L19 14 Z" />
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-label="ArrowUpIcon">
+    <path d="M10 4.75 L4.75 15.25 L15.25 15.25 Z" />
   </svg>
 );
 
 const ArrowDownIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowDownIcon">
-    <path d="M12 14 L5 0 L19 0 Z" />
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-label="ArrowDownIcon">
+    <path d="M10 15.25 L4.75 4.75 L15.25 4.75 Z" />
   </svg>
 );
 
 const ArrowLeftIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowLeftIcon">
-    <path d="M5 7 L19 0 L19 14 Z" />
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-label="ArrowLeftIcon">
+    <path d="M4.75 10 L15.25 4.75 L15.25 15.25 Z" />
   </svg>
 );
 
 const ArrowRightIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowRightIcon">
-    <path d="M19 7 L5 0 L5 14 Z" />
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-label="ArrowRightIcon">
+    <path d="M15.25 10 L4.75 4.75 L4.75 15.25 Z" />
   </svg>
 );
 
