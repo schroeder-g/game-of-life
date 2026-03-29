@@ -1,0 +1,60 @@
+These instructions are for the AI agent.
+
+Do not Update this file.
+
+Every build must continue to display the major and minor version numbers, build date and time, and  {dev ? "(Dev)" : test ? "(Test) : "" }
+
+As you fulfill prompts, keep these instructions in mind. 
+
+Ensure that the project is well-documented and easy to understand.
+
+Ensure that the project is well-tested and easy to maintain.
+
+Documentation claims should have a minimum of one corresponding test.
+
+Documentaion should be written in a user-friendly style, with attractive Headers, Subheaders, Sub-Sub headers in bold.
+
+Documentation claims and corresponding tests should be cross-referenced. 
+
+Each claim should be followed by the  { TestId, Last Test Date/Time, and Pass/Fail } of the Test(s) associated with it.
+
+No feature will prevent specific keypresses from reaching focused text input controls.  
+
+Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
+
+Ensure that these instructions are followed and that the project is updated accordingly.
+
+
+core/faceOrientationKeyMapping.ts is a critical file that maps the face orientation to the key mapping.
+
+
+core/faceOrientationKeyMapping should not be modified without express approval.
+
+It also can be used to determine the orientation of the next dominant face.
+
+Understand that I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
+
+If the Top side is on top, then this means the current angle is zero degrees.
+
+Documentation claims should be in HTML not markdown.
+
+Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them, and include the Date,time, and effective prompt.
+
+Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim  followed by the supporting tests. 
+
+Documentation should be structured in a visually-pleasing manner, with Headings, Subheadings,  and labels bolded.
+
+A documentation Index shall be provided, accessible via a button in the Documentation panel.
+
+
+
+For deprecated claims, explain clearly why they are deprecated if they are not already deprecated.
+
+Ensure that each claim has a unique ID.  This unique ID should be displayed as a link in the TestingPanel before the test item  
+
+Clicking the claim link should pop up a hint displaying the content of the corresponding documentation claim. 
+
+Tests panel components should align horizontally.
+
+Tests panel items should include explanatory text so the tester knows exactly what to do.
+

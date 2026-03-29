@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules/
+aider-env/
+aider.venv/
+dist/
+build/
+.aider* 
+.env
+deploy.sh
+.gcloudignore
+bun.lock

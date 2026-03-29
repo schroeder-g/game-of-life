@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules/
+dist/
+build/
+aider-env/
+aider.venv/
+.aider*
+.vscode/
+.DS_Store
+*.md
+Google Cloud Run Deployment Synopsis.pdf

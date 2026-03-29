@@ -1,0 +1,22 @@
+steps:
+  # This step builds the Docker image using the Dockerfile in the current directory.
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      # Tag the image with the name provided by the deploy script.
+      - '-t'
+      - '${_IMAGE_TAG}'
+      # Pass the BUILD_DISTRIBUTION variable into the Docker build.
+      - '--build-arg'
+      - 'BUILD_DISTRIBUTION=${_BUILD_DISTRIBUTION}'
+      # The '.' specifies the build context (the current directory).
+      - '.'
+
+# This tells Cloud Build to push the tagged image to the Artifact Registry.
+images:
+  - '${_IMAGE_TAG}'
+
+# Default values for substitution variables. These will be overridden by the deploy script.
+substitutions:
+  _IMAGE_TAG: 'us-central1-docker.pkg.dev/g3d-gol-test/game-of-life-repo/default-image:latest'
+  _BUILD_DISTRIBUTION: 'prod'

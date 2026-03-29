@@ -1,10 +1,16 @@
-export class Grid3D {
+import { Emitter } from "./events"; // Import Emitter
+
+export class Grid3D extends Emitter<{ tick: undefined }> { // Extend Emitter
   size: number;
   private cells: boolean[][][];
   public generation: number = 0;
   public version: number = 0;
+  private pastHistory: Array<boolean[][][]> = [];
+  private futureHistory: Array<boolean[][][]> = [];
+  private readonly historyLimit = 100;
 
   constructor(size: number = 20) {
+    super(); // Call super constructor
     this.size = size;
     this.cells = this.createEmptyGrid();
   }
@@ -15,6 +21,11 @@ export class Grid3D {
         Array.from({ length: this.size }, () => false),
       ),
     );
+  }
+
+  private cloneCells(): boolean[][][] {
+    // We only need to clone up to 2 levels since the 3rd is primitive booleans
+    return this.cells.map(layer => layer.map(row => [...row]));
   }
 
   get(x: number, y: number, z: number): boolean {
@@ -43,6 +54,7 @@ export class Grid3D {
       if (this.cells[z][y][x] !== alive) {
         this.cells[z][y][x] = alive;
         this.version++;
+        this.emit('tick', undefined); // Emit tick event
       }
     }
   }
@@ -58,6 +70,7 @@ export class Grid3D {
     ) {
       this.cells[z][y][x] = !this.cells[z][y][x];
       this.version++;
+      this.emit('tick', undefined); // Emit tick event
     }
   }
 
@@ -65,6 +78,9 @@ export class Grid3D {
     this.cells = this.createEmptyGrid();
     this.generation = 0;
     this.version++;
+    this.pastHistory = [];
+    this.futureHistory = [];
+    this.emit('tick', undefined); // Emit tick event
   }
 
   // Save current state as array of living cell coordinates
@@ -89,6 +105,9 @@ export class Grid3D {
     }
     this.generation = 0;
     this.version++;
+    this.pastHistory = [];
+    this.futureHistory = [];
+    this.emit('tick', undefined); // Emit tick event
   }
 
   randomize(density: number = 0.08): void {
@@ -107,7 +126,45 @@ export class Grid3D {
     if (changed) {
       this.generation = 0;
       this.version++;
+      this.pastHistory = [];
+      this.futureHistory = [];
+      this.emit('tick', undefined); // Emit tick event
     }
+  }
+
+  public get canStepBackward(): boolean {
+    return this.pastHistory.length > 0;
+  }
+
+  stepBackward(): boolean {
+    if (this.pastHistory.length > 0) {
+      this.futureHistory.push(this.cells);
+      this.cells = this.pastHistory.pop()!;
+      this.generation--;
+      this.version++;
+      this.emit('tick', undefined); // Emit tick event
+      return true;
+    }
+    return false;
+  }
+
+  // Captures current state in history before a manual action
+  public recordAction(): void {
+    // Clear future history as we are branching from the current state
+    this.futureHistory = [];
+
+    // Save current cells to past history
+    this.pastHistory.push(this.cells);
+    if (this.pastHistory.length > this.historyLimit) {
+      this.pastHistory.shift();
+    }
+
+    // Replace current cells with a new cloned copy to allow mutation without 
+    // affecting the historical record.
+    this.cells = this.cloneCells();
+    this.generation++;
+    this.version++;
+    this.emit('tick', undefined);
   }
 
   // neighbor inclusion flags (set externally by SimulationContext)
@@ -188,6 +245,15 @@ export class Grid3D {
     birthMax: number,
     birthMargin: number = 0,
   ): void {
+    // When we tick forward, we clear any "future" states from rewinding
+    this.futureHistory = [];
+
+    // Store current state in history before advancing
+    this.pastHistory.push(this.cells);
+    if (this.pastHistory.length > this.historyLimit) {
+      this.pastHistory.shift();
+    }
+
     const newCells = this.createEmptyGrid();
 
     // Pre-compute community map if birth margin is active
@@ -286,6 +352,7 @@ export class Grid3D {
     this.cells = newCells;
     this.generation++;
     this.version++;
+    this.emit('tick', undefined); // Emit tick event
   }
 
   getLivingCells(): Array<[number, number, number]> {

@@ -1,56 +1,34 @@
-export interface GenesisConfig {
-  name: string;
-  cells: Array<[number, number, number]>;
-  settings: {
-    speed: number;
-    density: number;
-    surviveMin: number;
-    surviveMax: number;
-    birthMin: number;
-    birthMax: number;
-    birthMargin: number;
-    cellMargin: number;
-    gridSize: number;
-  };
-  createdAt: string;
-}
+import { DEFAULT_CONFIGS, GenesisConfig } from "../data/default-configs";
+export type { GenesisConfig };
 
 const GENESIS_STORAGE_KEY = "game-of-life-genesis-configs";
 
-const DEFAULT_CONFIGS: Record<string, GenesisConfig> = {
-  "squid gun": {
-    name: "squid gun",
-    cells: [
-      [11, 11, 11],
-      [11, 11, 12],
-      [11, 12, 11],
-      [11, 12, 12],
-      [12, 11, 11],
-      [12, 11, 12],
-      [12, 12, 11],
-      [12, 12, 12],
-    ],
-    settings: {
-      speed: 5,
-      density: 0.08,
-      surviveMin: 2,
-      surviveMax: 2,
-      birthMin: 3,
-      birthMax: 3,
-      birthMargin: 0,
-      cellMargin: 0.2,
-      gridSize: 24,
-    },
-    createdAt: new Date("2026-03-09T00:00:00Z").toISOString(),
-  },
-};
-
 export function loadGenesisConfigs(): Record<string, GenesisConfig> {
-  let configs = { ...DEFAULT_CONFIGS };
+  const configs: Record<string, GenesisConfig> = { ...DEFAULT_CONFIGS };
   try {
     const stored = localStorage.getItem(GENESIS_STORAGE_KEY);
     if (stored) {
-      configs = { ...configs, ...JSON.parse(stored) };
+      const saved = JSON.parse(stored) as Record<string, GenesisConfig>;
+      const defaultKeyMap = new Map(
+        Object.keys(DEFAULT_CONFIGS).map((k) => [k.toLowerCase(), k]),
+      );
+
+      for (const savedKey in saved) {
+        const savedKeyLower = savedKey.toLowerCase();
+        const defaultKey = defaultKeyMap.get(savedKeyLower);
+
+        if (defaultKey && defaultKey !== savedKey) {
+          // Case-insensitive match: saved overrides default.
+          // Use the default's canonical casing for the key.
+          // And remove the saved-casing key if it exists in the merged object.
+          delete configs[savedKey];
+          configs[defaultKey] = saved[savedKey];
+        } else {
+          // No case-insensitive match, or exact match.
+          // Just add/overwrite it.
+          configs[savedKey] = saved[savedKey];
+        }
+      }
     }
   } catch (e) {
     console.error("Failed to load genesis configs:", e);
