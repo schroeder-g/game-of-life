@@ -36,7 +36,7 @@ const defaults = {
   invertRoll: 0,
   easeIn: 0.2,
   easeOut: 0.5,
-  squareUp: 0,
+  squareUp: 1,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -550,20 +550,24 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   ]);
 
   const toggleCell = useCallback((x: number, y: number, z: number) => {
+    gridRef.current.recordAction();
     gridRef.current.toggle(x, y, z);
   }, []);
 
   const setCell = useCallback((x: number, y: number, z: number, alive: boolean) => {
+    gridRef.current.recordAction();
     gridRef.current.set(x, y, z, alive);
   }, []);
 
   const setCells = useCallback((cells: Array<[number, number, number]>) => {
+    gridRef.current.recordAction();
     for (const [x, y, z] of cells) {
       gridRef.current.set(x, y, z, true);
     }
   }, []);
 
   const deleteCells = useCallback((cells: Array<[number, number, number]>) => {
+    gridRef.current.recordAction();
     for (const [x, y, z] of cells) {
       gridRef.current.set(x, y, z, false);
     }

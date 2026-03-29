@@ -34,6 +34,7 @@ export interface VitestError {
 export interface VitestTest {
   name: string;
   fullTitle?: string;
+  claimIds?: string[];
   status: VitestStatus;
   duration?: number;
   errors?: VitestError[];

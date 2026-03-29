@@ -1,4 +1,5 @@
 import { useState, Fragment } from "react";
+import { usePersistentState } from "../hooks/usePersistentState";
 import { DocItem, ManualTest, ManualTestResult } from "../types/testing";
 import { useManualTests } from "../hooks/useManualTests";
 import { CheckCircle, XCircle, Circle, ChevronDown, ChevronRight } from 'lucide-react';
@@ -19,7 +20,7 @@ interface ManualTestsPanelProps {
 
 export function ManualTestsPanel({ manualTests, automatedTestIds }: ManualTestsPanelProps) {
   const { testStatuses, cycleTestStatus } = useManualTests();
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_manual_tests", true);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
 
   const toggleExpandedTest = (testId: string) => {
@@ -35,7 +36,7 @@ export function ManualTestsPanel({ manualTests, automatedTestIds }: ManualTestsP
     <div >
       <h3 onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         Manual Tests
-        {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
         <div style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto', paddingRight: '8px', marginTop: '12px' }}>

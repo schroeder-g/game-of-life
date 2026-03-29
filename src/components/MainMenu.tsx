@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { usePersistentState } from "../hooks/usePersistentState";
 import * as THREE from "three"; // Added
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -81,7 +82,7 @@ function EnvironmentSection() {
     meta: { gridRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_env", true);
   const [hasLiveCells, setHasLiveCells] = useState(false);
 
   useEffect(() => {
@@ -180,7 +181,7 @@ function EnvironmentSection() {
 
 
 function RulesSection() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_rules", true);
   const {
     state: { surviveMin, surviveMax, birthMin, birthMax, birthMargin,
       neighborFaces, neighborEdges, neighborCorners },
@@ -311,7 +312,7 @@ function RulesSection() {
 
 
 function TestsSection() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_tests", true);
 
 
 
@@ -354,7 +355,7 @@ function SelectorPositionSection() {
   } = useBrush();
   const { selectorPos } = brushState;
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_cursor", true);
 
   const deriveKeyMap = useCallback(() => {
     if (cameraOrientation.face === 'unknown' || cameraOrientation.rotation === 'unknown') {
@@ -562,7 +563,7 @@ function CameraControlSection() {
     actions: { setPanSpeed, setRotationSpeed, setRollSpeed, setInvertYaw, setInvertPitch, setInvertRoll, setEaseIn, setEaseOut },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_camera", true);
 
   return (
     <section className="menu-section">
@@ -713,7 +714,7 @@ function SceneManagementSection() {
     meta: { gridRef, initialStateRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_scenes", true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sceneToDelete, setSceneToDelete] = useState<string | null>(null);
 
@@ -1035,9 +1036,9 @@ export function MainMenu({ isSmallScreen }: MainMenuProps) {
             {rotationMode && <CameraControlSection />}
             {!rotationMode && <SceneManagementSection />}
             {!rotationMode && <EnvironmentSection />}
+            {!rotationMode && <SelectorPositionSection />}
             <RulesSection />
             <TestsSection />
-            {!rotationMode && <SelectorPositionSection />}
             {buildInfo.distribution !== "prod" && (
               <>
 

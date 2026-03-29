@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Fragment } from "react";
+import { usePersistentState } from "../hooks/usePersistentState";
 import { DocItem, ManualTest, VitestReport, VitestTest } from "../types/testing";
 import { ClaimHint } from "./ClaimHint";
 
@@ -24,12 +25,7 @@ export function AutomatedTestsPanel({
   const [report, setReport] = useState<VitestReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth <= 768;
-    }
-    return false; // Default to open on larger screens
-  });
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_automated_tests", true);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -91,7 +87,7 @@ export function AutomatedTestsPanel({
       if (matchingTests.length > 0) {
         matchingTests.forEach(parsedTest => {
           const manualTest = manualTests.find(mt => mt.id === expectedClaimId);
-          const title = manualTest ? manualTest.title : parsedTest.fullTitle.replace(/\[.*?\]\s*/g, "").trim();
+          const title = manualTest ? manualTest.title : (parsedTest.fullTitle ?? parsedTest.name).replace(/\[.*?\]\s*/g, "").trim();
 
           finalTestResultsMap.set(parsedTest.name, {
             id: parsedTest.name, // Unique fullTitle
@@ -119,9 +115,9 @@ export function AutomatedTestsPanel({
 
     // 2. Add tests from the report that are not associated with any automatedTestIds (untracked)
     allParsedTests.forEach(parsedTest => {
-      const isTracked = parsedTest.claimIds?.some(claimId => automatedTestIds.has(claimId));
+      const isTracked = parsedTest.claimIds?.some((claimId: string) => automatedTestIds.has(claimId));
       if (!isTracked && !finalTestResultsMap.has(parsedTest.name)) {
-        const title = `(Untracked) ${parsedTest.fullTitle.replace(/\[.*?\]\s*/g, "").trim()}`;
+        const title = `(Untracked) ${(parsedTest.fullTitle ?? parsedTest.name).replace(/\[.*?\]\s*/g, "").trim()}`;
 
         finalTestResultsMap.set(parsedTest.name, {
           id: parsedTest.name,
@@ -158,10 +154,10 @@ export function AutomatedTestsPanel({
   return (
     <section className="menu-section">
       <div className={`${isCollapsed ? "collapsed" : ""}`}>
-        <header className="panel-header" onClick={() => setIsCollapsed(!isCollapsed)}>
-          <h3>Automated Test Results</h3>
-          <span className="collapse-toggle">{isCollapsed ? "▼" : "▲"}</span>
-        </header>
+        <h3 onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          Automated Test Results
+          <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        </h3>
         {!isCollapsed && (
           <div className="panel-content">
             <div className="panel-info">

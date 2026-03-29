@@ -23,6 +23,11 @@ export class Grid3D extends Emitter<{ tick: undefined }> { // Extend Emitter
     );
   }
 
+  private cloneCells(): boolean[][][] {
+    // We only need to clone up to 2 levels since the 3rd is primitive booleans
+    return this.cells.map(layer => layer.map(row => [...row]));
+  }
+
   get(x: number, y: number, z: number): boolean {
     if (
       x < 0 ||
@@ -141,6 +146,25 @@ export class Grid3D extends Emitter<{ tick: undefined }> { // Extend Emitter
       return true;
     }
     return false;
+  }
+
+  // Captures current state in history before a manual action
+  public recordAction(): void {
+    // Clear future history as we are branching from the current state
+    this.futureHistory = [];
+
+    // Save current cells to past history
+    this.pastHistory.push(this.cells);
+    if (this.pastHistory.length > this.historyLimit) {
+      this.pastHistory.shift();
+    }
+
+    // Replace current cells with a new cloned copy to allow mutation without 
+    // affecting the historical record.
+    this.cells = this.cloneCells();
+    this.generation++;
+    this.version++;
+    this.emit('tick', undefined);
   }
 
   // neighbor inclusion flags (set externally by SimulationContext)

@@ -531,7 +531,7 @@ export function AppHeaderPanelButtons({
           ?
         </button>
         {isHelpDropdownOpen && (
-          <div className="dropdown-menu">
+          <div className="dropdown-menu align-right">
             <button className="dropdown-item" onClick={handleOpenIntroduction}>
               Introduction
             </button>
