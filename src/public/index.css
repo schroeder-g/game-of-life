@@ -1086,7 +1086,6 @@ kbd {
   justify-content: center;
   z-index: 100000000001; /* Higher than dropdown-menu to ensure visibility */
   backdrop-filter: blur(4px);
-  padding: 20px;
 }
 
 .modal-content {
