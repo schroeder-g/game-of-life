@@ -4,50 +4,50 @@ import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyM
 
 // Icon components for directional controls
 const ArrowUpIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowUpIcon">
-    <path d="M12 14V0M5 7l7-7 7 7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowUpIcon">
+    <path d="M12 0 L5 14 L19 14 Z" />
   </svg>
 );
 
 const ArrowDownIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowDownIcon">
-    <path d="M12 0v14M19 7l-7 7-7-7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowDownIcon">
+    <path d="M12 14 L5 0 L19 0 Z" />
   </svg>
 );
 
 const ArrowLeftIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowLeftIcon">
-    <path d="M19 7H5M12 14l-7-7 7-7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowLeftIcon">
+    <path d="M5 7 L19 0 L19 14 Z" />
   </svg>
 );
 
 const ArrowRightIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowRightIcon">
-    <path d="M5 7h14M12 0l7 7-7 7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowRightIcon">
+    <path d="M19 7 L5 0 L5 14 Z" />
   </svg>
 );
 
 const ArrowFurtherIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowFurtherIcon">
-    <path d="M12 14V0M5 7l7-7 7 7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowFurtherIcon">
+    <path d="M12 0 L5 14 L19 14 Z" />
   </svg>
 );
 
 const ArrowCloserIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="ArrowCloserIcon">
-    <path d="M12 0v14M19 7l-7 7-7-7" />
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowCloserIcon">
+    <path d="M12 14 L5 0 L19 0 Z" />
   </svg>
 );
 
 const AwayIcon = () => (
-  <svg width="10" height="10" viewBox="5 -1 7 7" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-label="AwayIcon">
-    <path d="M5 7 L5 0 L12 7 Z" />
+  <svg width="10" height="10" viewBox="5 -1 7 7" fill="currentColor" aria-label="AwayIcon">
+    <path d="M8.5 0 L5 7 L12 7 Z" />
   </svg>
 );
 
 const CloserIcon = () => (
-  <svg width="20" height="20" viewBox="0 -2 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="CloserIcon">
-    <path d="M0 0 L0 20 L20 20 Z" />
+  <svg width="20" height="20" viewBox="0 -2 20 20" fill="currentColor" aria-label="CloserIcon">
+    <path d="M10 20 L0 0 L20 0 Z" />
   </svg>
 );
 
