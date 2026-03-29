@@ -7,6 +7,7 @@ import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrien
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { BrushControls } from "./BrushControls"; // Import BrushControls
 
 const FitIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
