@@ -98,68 +98,48 @@ export function useAppShortcuts() {
       const rotation = cameraOrientation.rotation;
       const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
+      // Logical rotation action resolver
+      const getRotationAction = (keyOrCode: string): string | null => {
+        // First normalize the base key name based on physical layout (code)
+        let action: string = keyOrCode === "Period" ? "period"
+          : keyOrCode === "Semicolon" ? "semicolon"
+          : keyOrCode.replace("Key", "").toLowerCase();
+
+        if (!["o", "k", "period", "semicolon", "i", "p"].includes(action)) return null;
+
+        // Apply Inversion Swaps
+        if (invertPitch) {
+          if (action === "o") action = "period"; else if (action === "period") action = "o";
+        }
+        if (invertYaw) {
+          if (action === "k") action = "semicolon"; else if (action === "semicolon") action = "k";
+        }
+        if (invertRoll) {
+          if (action === "i") action = "p"; else if (action === "p") action = "i";
+        }
+        return action;
+      };
+
       if (isRotationCode) {
+        // 1. Step Rotation (Edit Mode with Brush)
         if (!rotationMode && shapeSize > 1 && !(e.ctrlKey && e.shiftKey)) {
-          // Rotate the brush instead of the camera/cube!
           let axis = new THREE.Vector3();
           let angle = Math.PI / 2;
-          
           if (key === 'o') { axis.set(1, 0, 0); angle = -Math.PI / 2; }
           if (key === '.') { axis.set(1, 0, 0); angle = Math.PI / 2; }
           if (key === 'k') { axis.set(0, 1, 0); angle = -Math.PI / 2; }
           if (key === ';') { axis.set(0, 1, 0); angle = Math.PI / 2; }
           if (key === 'i') { axis.set(0, 0, 1); angle = -Math.PI / 2; }
           if (key === 'p') { axis.set(0, 0, 1); angle = Math.PI / 2; }
-          
-          // Execute 90-degree step rotation
           cameraActionsRef.current?.rotateBrush(axis, angle);
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
-
-        // Ctrl+Shift is a hard override for continuous rotation.
-        if (e.ctrlKey && e.shiftKey) {
-          switch (key) {
-            case "semicolon":
-            case ";": movement.current.rotateSemicolon = true; break;
-            case "k": movement.current.rotateK = true; break;
-            case "o": movement.current.rotateO = true; break;
-            case "period":
-            case ".": movement.current.rotatePeriod = true; break;
-            case "i": movement.current.rotateI = true; break;
-            case "p": movement.current.rotateP = true; break;
+        } else {
+          // 2. Continuous Rotation (Standard OR Ctrl+Shift Override)
+          const action = getRotationAction(code);
+          if (action) {
+            const rotFlag = `rotate${action.charAt(0).toUpperCase() + action.slice(1)}`;
+            (movement.current as any)[rotFlag] = true;
           }
-          e.preventDefault();
-          e.stopPropagation();
-          return;
         }
-
-        let rotKey: "o" | "k" | "period" | "semicolon" | "i" | "p" = code === "Period" ? "period"
-          : code === "Semicolon" ? "semicolon"
-          : code.replace("Key", "").toLowerCase() as 'o' | 'k' | 'i' | 'p';
-
-        // Handle inversion by swapping key pairs before lookup
-        if (invertPitch) {
-          if (rotKey === 'o') rotKey = 'period'; else if (rotKey === 'period') rotKey = 'o';
-        }
-        if (invertYaw) {
-          if (rotKey === 'k') rotKey = 'semicolon'; else if (rotKey === 'semicolon') rotKey = 'k';
-        }
-        if (invertRoll) {
-          if (rotKey === 'i') rotKey = 'p'; else if (rotKey === 'p') rotKey = 'i';
-        }
-
-        // Trigger continuous rotation.
-        switch (rotKey) {
-          case "semicolon": movement.current.rotateSemicolon = true; break;
-          case "k": movement.current.rotateK = true; break;
-          case "o": movement.current.rotateO = true; break;
-          case "period": movement.current.rotatePeriod = true; break;
-          case "i": movement.current.rotateI = true; break;
-          case "p": movement.current.rotateP = true; break;
-        }
-
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -259,25 +239,30 @@ export function useAppShortcuts() {
       const code = e.code;
       const isRotationCode = ["KeyO", "KeyK", "Period", "Semicolon", "KeyI", "KeyP"].includes(code);
 
-      let rotKey: string = key;
-      if (isRotationCode) {
-        rotKey = code === "Period" ? "period"
-          : code === "Semicolon" ? "semicolon"
-          : code.replace("Key", "").toLowerCase();
+      // Logical rotation action resolver (mirrors handleKeyDown)
+      const getRotationAction = (keyOrCode: string): string | null => {
+        let action: string = keyOrCode === "Period" ? "period"
+          : keyOrCode === "Semicolon" ? "semicolon"
+          : keyOrCode.replace("Key", "").toLowerCase();
+          
+        if (!["o", "k", "period", "semicolon", "i", "p"].includes(action)) return null;
 
-        // Handle inversion exactly as in handleKeyDown
         if (invertPitch) {
-          if (rotKey === 'o') rotKey = 'period'; else if (rotKey === 'period') rotKey = 'o';
+          if (action === "o") action = "period"; else if (action === "period") action = "o";
         }
         if (invertYaw) {
-          if (rotKey === 'k') rotKey = 'semicolon'; else if (rotKey === 'semicolon') rotKey = 'k';
+          if (action === "k") action = "semicolon"; else if (action === "semicolon") action = "k";
         }
         if (invertRoll) {
-          if (rotKey === 'i') rotKey = 'p'; else if (rotKey === 'p') rotKey = 'i';
+          if (action === "i") action = "p"; else if (action === "p") action = "i";
         }
-      }
+        return action;
+      };
 
+      const rotKey = getRotationAction(isRotationCode ? code : key) || key;
       let handled = true;
+
+      // Handle common movement keys first
       switch (rotKey) {
         case "w": movement.current.forward = false; break;
         case "x": movement.current.backward = false; break;
