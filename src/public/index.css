@@ -1099,6 +1099,7 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin: auto; /* Explicitly center the modal content within the flex container */
 }
 
 .modal-content h3 {

@@ -27,9 +27,6 @@ export function AppHeaderPanel() {
 
   useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
 
-  // Debugging log to check the state of showIntroduction
-  console.log('AppHeaderPanel: showIntroduction state is', showIntroduction);
-
   const faceName = cameraOrientation.face !== 'unknown'
     ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
     : 'Unknown';
