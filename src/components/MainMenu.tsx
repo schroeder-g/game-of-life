@@ -632,17 +632,6 @@ function ShapeBrushSection() {
           </label>
           {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
             <>
-              <label className="control-label">
-                <span>Size: {shapeSize}</span>
-                <input
-                  type="range"
-                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
-                  max={gridSize}
-                  step={1}
-                  value={shapeSize}
-                  onChange={(e) => setShapeSize(Number(e.target.value))}
-                />
-              </label>
               <label className="control-label row">
                 <span>Hollow</span>
                 <input
