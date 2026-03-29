@@ -293,7 +293,7 @@ function BrushSelectorDropdown() {
 
 export function AppHeaderPanel() {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize },
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setCell, setSquareUp, setSpeed },
     meta: { cameraActionsRef },
   } = useSimulation();
@@ -301,7 +301,7 @@ export function AppHeaderPanel() {
     state: brushState, // Get the whole state object
     actions: { setSelectedShape, setPaintMode },
   } = useBrush();
-  const { selectedShape, selectorPos, paintMode } = brushState;
+  const { selectedShape, paintMode } = brushState; // Removed selectorPos as it's not used here
 
   const [showDocumentation, setShowDocumentation] = useState(false);
 
@@ -346,17 +346,19 @@ export function AppHeaderPanel() {
         {!rotationMode && (
           <>
             <BrushSelectorDropdown />
-            <div className="brush-size-control" style={{ width: '100px' }}>
-              <span>Size: {brushState.shapeSize}</span>
-              <input
-                type="range"
-                min={1}
-                max={20} // Assuming a max size for the brush
-                step={1}
-                value={brushState.shapeSize}
-                onChange={(e) => brushState.actions.setShapeSize(Number(e.target.value))}
-              />
-            </div>
+            {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
+              <div className="brush-size-control" style={{ width: '100px' }}>
+                <span>Size: {brushState.shapeSize}</span>
+                <input
+                  type="range"
+                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
+                  max={gridSize}
+                  step={1}
+                  value={brushState.shapeSize}
+                  onChange={(e) => brushState.actions.setShapeSize(Number(e.target.value))}
+                />
+              </div>
+            )}
             <button
               className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
