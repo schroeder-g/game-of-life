@@ -40,14 +40,14 @@ const ArrowCloserIcon = () => (
 );
 
 const AwayIcon = () => (
-  <svg width="10" height="10" viewBox="5 -1 7 7" fill="currentColor" aria-label="AwayIcon">
-    <path d="M8.5 0 L5 7 L12 7 Z" />
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-label="AwayIcon">
+    <rect x="1.5" y="1.5" width="7" height="7" />
   </svg>
 );
 
 const CloserIcon = () => (
-  <svg width="20" height="20" viewBox="0 -2 20 20" fill="currentColor" aria-label="CloserIcon">
-    <path d="M10 20 L0 0 L20 0 Z" />
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-label="CloserIcon">
+    <rect x="0" y="0" width="20" height="20" />
   </svg>
 );
 
