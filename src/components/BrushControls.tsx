@@ -27,8 +27,8 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-const ArrowFurtherIcon = () => (
-  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowFurtherIcon">
+const ArrowFartherIcon = () => (
+  <svg width="20" height="20" viewBox="5 -2 14 14" fill="currentColor" aria-label="ArrowFartherIcon">
     <path d="M12 0 L5 14 L19 14 Z" />
   </svg>
 );
@@ -86,7 +86,7 @@ export function BrushControls() {
       case 'd': // Right
         delta = mapping.d as [number, number, number];
         break;
-      case 'q': // Further
+      case 'q': // Farther
         delta = mapping.q as [number, number, number];
         break;
       case 'z': // Closer
@@ -389,13 +389,13 @@ export function BrushControls() {
 
         <div style={{ gridColumn: '11/ 12', gridRow: '1 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
-            id="furtherBtn"
+            id="fartherBtn"
             className="glass-button"
             onMouseDown={(e) => { e.stopPropagation(); handleMove('q'); setActiveKey('q'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
-          ><AwayIcon />&nbsp;&nbsp;Further</button>
+          ><AwayIcon />&nbsp;&nbsp;Farther</button>
         </div>
 
         <div style={{ gridColumn: '11 / 12', gridRow: '3 / 5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
