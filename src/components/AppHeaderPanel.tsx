@@ -3,8 +3,14 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { type ShapeType } from "../core/shapes";
+import React, { useCallback, useRef, useState } from "react";
+import { useBrush } from "../contexts/BrushContext";
+import { useSimulation } from "../contexts/SimulationContext";
+import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
+import { type ShapeType } from "../core/shapes";
 import { DocumentationModal } from "./DocumentationModal";
 import { IntroductionModal } from "./IntroductionModal";
+import { ShortcutOverlay } from "./ShortcutOverlay"; // Import ShortcutOverlay
 import { useClickOutside } from "../hooks/useClickOutside";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 
@@ -22,6 +28,7 @@ export function AppHeaderPanel() {
 
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showIntroduction, setShowIntroduction] = useState(true); // Always show by default
+  const [showShortcuts, setShowShortcuts] = useState(false); // New state for ShortcutOverlay
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +48,11 @@ export function AppHeaderPanel() {
 
   const handleOpenIntroduction = useCallback(() => {
     setShowIntroduction(true);
+    setIsHelpDropdownOpen(false);
+  }, []);
+
+  const handleOpenShortcuts = useCallback(() => { // New handler for shortcuts
+    setShowShortcuts(true);
     setIsHelpDropdownOpen(false);
   }, []);
 
@@ -104,6 +116,7 @@ export function AppHeaderPanel() {
         helpDropdownRef={helpDropdownRef}
         handleOpenDocumentation={handleOpenDocumentation}
         handleOpenIntroduction={handleOpenIntroduction}
+        handleOpenShortcuts={handleOpenShortcuts} // Pass new handler
       />
 
       <DocumentationModal
@@ -114,6 +127,11 @@ export function AppHeaderPanel() {
       <IntroductionModal
         isOpen={showIntroduction}
         onClose={() => setShowIntroduction(false)}
+      />
+
+      <ShortcutOverlay // Render ShortcutOverlay
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
       />
 
     </div>

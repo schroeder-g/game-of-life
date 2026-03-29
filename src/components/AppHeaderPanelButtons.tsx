@@ -310,6 +310,7 @@ interface AppHeaderPanelButtonsProps {
   helpDropdownRef: React.RefObject<HTMLDivElement>;
   handleOpenDocumentation: () => void;
   handleOpenIntroduction: () => void;
+  handleOpenShortcuts: () => void; // New prop for shortcuts
 }
 
 export function AppHeaderPanelButtons({
@@ -344,6 +345,7 @@ export function AppHeaderPanelButtons({
   helpDropdownRef,
   handleOpenDocumentation,
   handleOpenIntroduction,
+  handleOpenShortcuts, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -515,6 +517,9 @@ export function AppHeaderPanelButtons({
             </button>
             <button className="dropdown-item" onClick={handleOpenDocumentation}>
               Documentation
+            </button>
+            <button className="dropdown-item" onClick={handleOpenShortcuts}> {/* New Shortcuts button */}
+              Shortcuts
             </button>
           </div>
         )}
