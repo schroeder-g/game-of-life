@@ -9,8 +9,6 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { supportsHollow } from "../core/shapes";
 import { useAppShortcuts } from "../hooks/useAppShortcuts";
-import { BrushControls } from "../components/BrushControls";
-import { brushControlsDocumentation } from "../data/brushControlsDocumentation"; // NEW IMPORT
 
 export default function App() {
   const {
@@ -132,9 +130,9 @@ export default function App() {
 
       <div className="main-content-layout">
         {showMainMenu && (
-          <aside className="ui-overlay">
-            <MainMenu isSmallScreen={isSmallScreen} />
-          </aside>
+
+          <MainMenu isSmallScreen={isSmallScreen} />
+
         )}
 
         <main
@@ -181,7 +179,7 @@ export default function App() {
                 onMouseDown={onMouseDown}
                 onTouchStart={(e) => onMouseDown(e as any)} // For touch devices
               />
-              <BrushControls />
+
             </div>
           )}
 

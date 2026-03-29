@@ -932,7 +932,7 @@ function SceneManagementSection() {
   );
 }
 
-export function MainMenu() {
+export function MainMenu({ isSmallScreen }: MainMenuProps) {
   const {
     state: { running, rotationMode, community, buildInfo },
     actions: {
@@ -960,7 +960,6 @@ export function MainMenu() {
     return false;
   });
 
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   // Ensure savedConfigs is an object before calling Object.keys
   const configOptions = savedConfigs ? Object.keys(savedConfigs) : [];
@@ -1003,18 +1002,6 @@ export function MainMenu() {
     }
   }, [selectedConfigName, configOptions, handleSelectConfig]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth <= 768);
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
 
   // Add this new useEffect block:
   useEffect(() => {
@@ -1072,3 +1059,4 @@ MainMenu.TestsSection = TestsSection;
 MainMenu.RulesSection = RulesSection;
 MainMenu.SceneManagementSection = SceneManagementSection;
 MainMenu.CameraControlSection = CameraControlSection;
+MainMenu.AppHeaderPanel = AppHeaderPanel;

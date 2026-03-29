@@ -406,7 +406,7 @@ export function BrushControls() {
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
             style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
-          ><CloserIcon />&nbsp;&nbsp; Closer </button>
+          ><CloserIcon />&nbsp;&nbsp;Closer </button>
         </div>
       </div>
     </div >
