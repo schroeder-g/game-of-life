@@ -31,7 +31,9 @@ export default function App() {
   useAppShortcuts();
 
   useEffect(() => {
+    console.log("App: rotationMode changed to", rotationMode);
     if (rotationMode === false) {
+      console.log("App: Calling recenter and fitDisplay in Edit mode.");
       recenter();
       fitDisplay();
     }
@@ -45,7 +47,9 @@ export default function App() {
       for (const entry of entries) {
         if (entry.target === canvasContainerRef.current) {
           const { width, height } = entry.contentRect;
-          setCanvasSize(Math.min(width, height));
+          const newSize = Math.min(width, height);
+          console.log(`App: Canvas container resized. Width: ${width}, Height: ${height}, Calculated canvasSize: ${newSize}`);
+          setCanvasSize(newSize);
         }
       }
     });
@@ -147,7 +151,8 @@ export default function App() {
             overflow: 'hidden',
           }}
         >
-          {canvasSize > 0 && (userName || buildInfo.distribution === 'prod') && !showIntroduction && (
+          {console.log(`App: Canvas render conditions - canvasSize: ${canvasSize}, userName: ${userName}, distribution: ${buildInfo.distribution}, showIntroduction: ${showIntroduction}`)}
+          {canvasSize > 0 && (userName || buildInfo.distribution === 'prod') && !showIntroduction ? (
             <div
               style={{
                 width: canvasSize,
@@ -187,6 +192,8 @@ export default function App() {
                 </div>
               )}
             </div>
+          ) : (
+            console.log("App: Canvas not rendered due to conditions.")
           )}
         </main>
       </div>
