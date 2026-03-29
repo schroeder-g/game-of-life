@@ -174,11 +174,7 @@ export default function App() {
             by placing cells in the grid and watching them evolve.
           </p>
           <SimulationStats />
-          {!rotationMode && selectorPos && (
-            <div className="selector-pos">
-              Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
-            </div>
-          )}
+
           {!rotationMode && selectedShape !== "None" && (
             <div className="shape-info">
               Shape: {selectedShape} ({shapeSize}x{shapeSize}
