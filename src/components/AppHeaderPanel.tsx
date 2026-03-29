@@ -82,6 +82,7 @@ export function AppHeaderPanel() {
             Shape: {selectedShape}
           </div>
         )}
+        <SimulationStats />
       </div>
 
       <AppHeaderPanelButtons
