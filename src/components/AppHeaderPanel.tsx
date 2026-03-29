@@ -312,6 +312,10 @@ export function AppHeaderPanel() {
     ? `${cameraOrientation.rotation}°`
     : '0°';
 
+  const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    brushState.actions.setShapeSize(Number(e.target.value));
+  }, [brushState.actions]);
+
   return (
     <div className="app-header-panel">
       <div className="title-section">
@@ -355,7 +359,7 @@ export function AppHeaderPanel() {
                   max={gridSize}
                   step={1}
                   value={brushState.shapeSize}
-                  onChange={(e) => brushState.actions.setShapeSize(Number(e.target.value))}
+                  onChange={handleBrushSizeChange}
                 />
               </div>
             )}
