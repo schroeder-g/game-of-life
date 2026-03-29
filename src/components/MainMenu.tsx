@@ -999,7 +999,8 @@ export function MainMenu({ isSmallScreen }: MainMenuProps) {
 
   useEffect(() => {
     if (!selectedConfigName && configOptions.length > 0) {
-      handleSelectConfig(configOptions[0]);
+      // Set the second preinstalled scene as default (index 1)
+      handleSelectConfig(configOptions[1]);
     }
   }, [selectedConfigName, configOptions, handleSelectConfig]);
 

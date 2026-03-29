@@ -216,7 +216,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [showIntroduction, setShowIntroduction] = useState(true);
 
   const [buildInfo, setBuildInfo] = useState<SimulationState['buildInfo']>({
-    version: "loading...",
+    version: "1.7.0",
     buildTime: "",
     distribution: "prod",
   });
