@@ -16,9 +16,14 @@ export function WelcomeModal({ setShowIntroduction, setUserName }: WelcomeModalP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("WelcomeModal: handleSubmit called. setUserName prop:", setUserName);
     if (inputName.trim()) {
-      setUserName(inputName.trim());
-      setShowIntroduction(false); // Hide modal after setting name
+      if (typeof setUserName === 'function') { // Defensive check
+        setUserName(inputName.trim());
+        setShowIntroduction(false); // Hide modal after setting name
+      } else {
+        console.error("WelcomeModal: setUserName is not a function! Received:", setUserName);
+      }
     }
   };
 
