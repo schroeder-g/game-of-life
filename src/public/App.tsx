@@ -159,7 +159,7 @@ export default function App() {
             overflow: 'hidden',
           }}
         >
-          {canvasSize > 0 && (userName || buildInfo.distribution === 'prod') && !showIntroduction ? (
+          {canvasSize > 0 && !showIntroduction ? ( // Simplified condition
             <div
               style={{
                 width: canvasSize,
