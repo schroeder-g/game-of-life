@@ -82,10 +82,12 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDropdown() {
+function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
+  const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual dropdown menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const [shouldDropUp, setShouldDropUp] = useState(false); // State to determine if dropdown should "drop up"
 
   const {
     state: { selectedShape, brushQuaternion },
@@ -128,8 +130,30 @@ function BrushSelectorDropdown() {
     setIsOpen(prev => !prev);
   };
 
+  // Effect to determine if the dropdown should open upwards
+  useEffect(() => {
+    const checkDropdownPosition = () => {
+      if (isOpen && menuRef.current) {
+        // The dropdown should "drop up" if the parent panel is above the screen's equator
+        setShouldDropUp(panelTop < window.innerHeight / 2);
+      }
+    };
+
+    checkDropdownPosition(); // Check initially when dropdown opens
+
+    window.addEventListener('resize', checkDropdownPosition);
+    return () => {
+      window.removeEventListener('resize', checkDropdownPosition);
+    };
+  }, [isOpen, panelTop]); // Re-run when isOpen or panelTop changes
+
   return (
-    <div id="brush-selector-dropdown" className="scene-selector-dropdown" ref={dropdownRef}>
+    <div
+      id="brush-selector-dropdown"
+      className="scene-selector-dropdown"
+      ref={dropdownRef}
+      style={{ position: 'relative' }} // Added position: 'relative'
+    >
       <button
         className="glass-button"
         onClick={handleButtonClick}
@@ -138,7 +162,11 @@ function BrushSelectorDropdown() {
         <PaintBrushIcon />
       </button>
       {isOpen && (
-        <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
+        <div
+          ref={menuRef} // Attach ref to the dropdown menu div
+          className={`dropdown-menu ${shouldDropUp ? 'dropup' : ''}`}
+          onMouseLeave={() => setHoveredName(null)}
+        >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
             const isSelected = name === selectedShape;
             const isHovered = name === hoveredName;
