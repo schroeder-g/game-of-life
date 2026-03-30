@@ -175,9 +175,20 @@ export function BrushControls() {
 
   const {
     state: { cameraOrientation, rotationMode, gridSize },
-    actions: { setCommunity }, // Add setCommunity here
+    actions: { setCommunity },
     meta: { eventBus, gridRef },
   } = useSimulation();
+
+  const {
+    state: { brushQuaternion },
+    actions: { incrementBrushRotationVersion },
+  } = useBrush();
+
+  const rotateBrush = useCallback((axis: THREE.Vector3, angle: number) => {
+    const rotationQuaternion = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+    brushQuaternion.current.multiply(rotationQuaternion);
+    incrementBrushRotationVersion();
+  }, [brushQuaternion, incrementBrushRotationVersion]);
 
   const handleMove = useCallback((key: string) => {
     const face = cameraOrientation.face;
