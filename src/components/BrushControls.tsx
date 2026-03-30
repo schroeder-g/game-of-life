@@ -149,9 +149,8 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
         <div
           id="brush-list"
           className="dropdown-menu" // Apply dropdown-menu class
-          AI:When Brush Controls is above the middle of the screen, the dropdown menu should be below the button. Otherwise, it should be above the button.
-      style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
-      onMouseLeave={() => setHoveredName(null)}
+          style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
+          onMouseLeave={() => setHoveredName(null)}
         >
       {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
         const isSelected = name === selectedShape;
