@@ -9,9 +9,8 @@ body.view-mode .community-sidebar {
   display: none !important;
 }
 
-/* Main container for the dropdown button and its menu */
+/* Main container for the brush selector button wrapper */
 .scene-selector-dropdown {
-  /* position: relative; -- Removed as it was for dropdown positioning */
 }
 
 /* The dropdown menu panel */

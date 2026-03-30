@@ -82,10 +82,9 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
+function BrushSelectorDrop() {
   const [isOpen, setIsOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
-  const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual drop menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
 
   const {
