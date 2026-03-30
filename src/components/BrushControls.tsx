@@ -147,29 +147,31 @@ function BrushSelectorDrop() {
         <div
           id="brush-list"
           className="dropdown-menu" // Apply dropdown-menu class
-          style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
-          onMouseLeave={() => setHoveredName(null)}
+          AI:When Brush Controls is above the middle of the screen, the dropdown menu should be below the button. Otherwise, it should be above the button.
+      style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
+      onMouseLeave={() => setHoveredName(null)}
         >
-          {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
-            const isSelected = name === selectedShape;
-            const isHovered = name === hoveredName;
+      {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
+        const isSelected = name === selectedShape;
+        const isHovered = name === hoveredName;
 
-            const isActive = isHovered || (hoveredName === null && isSelected);
+        const isActive = isHovered || (hoveredName === null && isSelected);
 
-            return (
-              <button
-                key={name}
-                className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
-                onClick={() => handleSelectShape(name)}
-                onMouseEnter={() => setHoveredName(name)}
-              >
-                {name}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        return (
+          <button
+            key={name}
+            className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
+            onClick={() => handleSelectShape(name)}
+            onMouseEnter={() => setHoveredName(name)}
+          >
+            {name}
+          </button>
+        );
+      })}
     </div>
+  )
+}
+    </div >
   );
 }
 
