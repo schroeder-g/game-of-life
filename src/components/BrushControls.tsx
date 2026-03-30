@@ -639,12 +639,11 @@ export function BrushControls() {
               );
             })()}
 
-            <div style={{ gridColumn: '4 / 5', gridRow: '1 / 2' }}>{/* Activate and Clear buttons moved outside conditional rendering */}
+            <div style={{ gridColumn: '4 / 6', gridRow: '1 / 2', display: 'flex', gap: '5px' }}>{/* Activate and Clear buttons moved outside conditional rendering */}
               <button
                 className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
                 onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
                 data-tooltip-bottom="Activate (Paint) (Space)"
-                style={{ gridColumn: '4 / 4', gridRow: '1 / 2' }}
               >
                 <PlusIcon />
               </button>
@@ -652,7 +651,6 @@ export function BrushControls() {
                 className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
                 onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
                 data-tooltip-bottom="Clear (Delete)"
-                style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
               >
                 <MinusIcon />
               </button></div>
