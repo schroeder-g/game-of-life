@@ -5,6 +5,7 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 import { useClickOutside } from "../hooks/useClickOutside";
+import { CommunitySidebar } from "./Controls"; // Import CommunitySidebar
 
 
 
@@ -175,7 +176,7 @@ function BrushSelectorDropdown() {
 export function BrushControls() {
   const {
     state: { selectedShape, shapeSize, isHollow, paintMode },
-    actions: { setShapeSize, setIsHollow, setPaintMode },
+    actions: { setShapeSize, setIsHollow, setPaintMode, setSelectedShape, setCustomBrush },
   } = useBrush();
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,8 +184,8 @@ export function BrushControls() {
   }, [setShapeSize]);
 
   const {
-    state: { cameraOrientation, rotationMode, gridSize },
-    meta: { eventBus },
+    state: { cameraOrientation, rotationMode, gridSize, community },
+    meta: { eventBus, gridRef },
   } = useSimulation();
 
   const handleMove = useCallback((key: string) => {
@@ -426,6 +427,48 @@ export function BrushControls() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  useEffect(() => {
+    const handleCellClick = (payload: { x: number; y: number; z: number }) => {
+      const { x, y, z } = payload;
+
+      // Only respond to clicks in edit mode
+      if (rotationMode) {
+        return;
+      }
+
+      const grid = gridRef.current;
+      if (!grid) {
+        console.warn("Grid not available for cell click.");
+        return;
+      }
+
+      // Check if the clicked cell is alive
+      if (grid.cells[z][y][x]) {
+        const communityMap = grid.getAllCommunities();
+        const clickedCellKey = `${x},${y},${z}`;
+        const clickedCommunityId = communityMap.get(clickedCellKey);
+
+        if (clickedCommunityId !== undefined) {
+          const selectedCommunityCells: Array<[number, number, number]> = [];
+          for (const [key, id] of communityMap.entries()) {
+            if (id === clickedCommunityId) {
+              const parts = key.split(',').map(Number);
+              selectedCommunityCells.push([parts[0], parts[1], parts[2]]);
+            }
+          }
+
+          setCustomBrush(selectedCommunityCells);
+          setSelectedShape("Selected Community");
+          setPaintMode(1); // Set to Activate mode
+        }
+      }
+    };
+
+    const unsubscribe = eventBus.on('cellClick', handleCellClick);
+
+    return () => unsubscribe();
+  }, [rotationMode, gridRef, eventBus, setCustomBrush, setSelectedShape, setPaintMode]);
+
   return (
     <div
       id="brush-controls"
@@ -628,6 +671,7 @@ export function BrushControls() {
           ><CloserIcon />&nbsp;&nbsp;Closer </button>
         </div>
       </div>
-    </div >
+      {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
+    </>
   );
 }

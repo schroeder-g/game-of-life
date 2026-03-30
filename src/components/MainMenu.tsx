@@ -1050,7 +1050,6 @@ export function MainMenu({ isSmallScreen }: MainMenuProps) {
         </div>
 
       </aside>
-      {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
     </>
   );
 }
