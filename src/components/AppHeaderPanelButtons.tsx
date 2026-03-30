@@ -518,8 +518,8 @@ export function AppHeaderPanelButtons({
       <button
         className={`glass-button settings-theme ${showMainMenu ? 'active' : ''}`}
         onClick={() => setShowMainMenu(!showMainMenu)}
-        data-tooltip-bottom="Toggle Main Menu"
-        aria-label="Toggle Main Menu"
+        data-tooltip-bottom="Toggle Settings"
+        aria-label="Toggle Settings"
       >
         <GearIcon />
       </button>
