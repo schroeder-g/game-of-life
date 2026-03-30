@@ -267,19 +267,27 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
         position: 'fixed',
         top: position.y,
         left: position.x,
-        cursor: isDragging ? 'grabbing' : 'grab',
+        width: isCollapsed ? 'fit-content' : '25vw', // Set width based on collapsed state
+        minWidth: isCollapsed ? 'unset' : '220px', // Consistent min-width with BrushControls
+        maxWidth: isCollapsed ? 'unset' : '400px', // Optional: Add a max-width to prevent it from getting too wide
         touchAction: 'none',
         zIndex: 1000,
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
     >
       <header
         className="sidebar-header"
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isCollapsed ? 0 : '12px' }}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: isCollapsed ? 0 : '12px',
+          cursor: isDragging ? 'grabbing' : 'grab', // Apply cursor to header
+        }}
+        onMouseDown={handleMouseDown} // Dragging from header
+        onTouchStart={handleTouchStart} // Dragging from header
       >
         <div
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }} // Stop propagation for collapse click
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
         >
           <span style={{ fontSize: "12px", opacity: 0.6, width: '12px' }}>{isCollapsed ? "▼" : "▲"}</span>
