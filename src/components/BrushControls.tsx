@@ -185,8 +185,15 @@ interface BrushControlsProps {
 
 export function BrushControls(props: BrushControlsProps) {
   const {
-
+    selectedShape,
+    paintMode,
+    shapeSize,
+    isHollow,
+    setPaintMode,
+    setShapeSize,
+    setIsHollow,
   } = props;
+
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setShapeSize(Number(e.target.value));
   }, [setShapeSize]);
