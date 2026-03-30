@@ -429,7 +429,8 @@ export function BrushControls() {
         position: 'fixed', // Changed from absolute
         top: position.y,
         left: position.x,
-        // Removed bottom: 0 and width: '100%'
+        width: 'fit-content',
+        minWidth: '220px',
         backgroundColor: 'rgba(13, 17, 23, 0.8)', // Using a specific color with transparency
         padding: '5px', // Reduced padding to make space for the header
         boxShadow: '0 -2px 10px rgba(0,0,0,0.2)',
@@ -445,9 +446,20 @@ export function BrushControls() {
       onTouchStart={handleTouchStart}
       aria-label="Brush Controls Panel" // Added for accessibility in tests
     >
-      <div
+      <span id='Selected-Brush-Label'
         style={{
-          width: '100%',
+
+          textAlign: 'left',
+          paddingBottom: '5px',
+          fontWeight: 'bold',
+          color: '#FFA500', // Subtler orange color for text
+          cursor: 'inherit', // Inherit cursor from parent for dragging
+        }}
+      >
+        Brush: {selectedShape} {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
+      </span><span id="brush-effect-label"
+        style={{
+
           textAlign: 'right',
           paddingBottom: '5px',
           fontWeight: 'bold',
@@ -455,16 +467,16 @@ export function BrushControls() {
           cursor: 'inherit', // Inherit cursor from parent for dragging
         }}
       >
-        Brush: {selectedShape} {paintMode === 1 ? 'Alive' : paintMode === -1 ? 'Dead' : 'None'}
-      </div>
+        {selectedShape} {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
+      </    span>
+
+
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(6, 1fr)', // Reduced to 6 columns
           gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
           gap: '5px',
-          maxWidth: '250px', // Reduced max width
-          justifyContent: 'center',
           alignItems: 'center',
         }}
         aria-label="Brush Controls Grid" // Added for accessibility in tests
@@ -472,37 +484,67 @@ export function BrushControls() {
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
           <BrushSelectorDropdown />
         </div>
-        {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
-          <>
-            <div className="brush-size-control" style={{ gridColumn: '2 / 4', gridRow: '1 / 2', width: 'unset' }}> {/* width: 'unset' to let grid handle it */}
-              <span>Size: {shapeSize}</span>
-              <input
-                type="range"
-                min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
-                max={gridSize}
-                step={1}
-                value={shapeSize}
-                onChange={handleBrushSizeChange}
-              />
-            </div>
-            <label className="control-label row" style={{ gridColumn: '4 / 5', gridRow: '1 / 2', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#8b949e' }}>
-              <input
-                type="checkbox"
-                className="glass-checkbox"
-                checked={isHollow}
-                disabled={!supportsHollow(selectedShape)}
-                onChange={(e) => setIsHollow(e.target.checked)}
-              />
-              Hollow
-            </label>
-          </>
-        )}
+        {(() => {
+          const showSizeControls = selectedShape !== "Selected Community" &&
+            selectedShape !== "Single Cell" &&
+            selectedShape !== "None";
+          return (
+            <>
+              {/* Size and Hollow controls: Always in DOM to preserve space, but hidden when not applicable */}
+              <div
+                className="brush-size-control"
+                style={{
+                  gridColumn: '2/5',
+                  gridRow: '1 / 2',
+                  width: 'unset',
+                  visibility: showSizeControls ? 'visible' : 'hidden',
+                  pointerEvents: showSizeControls ? 'auto' : 'none',
+                }}
+              >
+                <span>Size: {shapeSize}</span>
+                <input
+                  type="range"
+                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
+                  max={gridSize}
+                  step={1}
+                  value={shapeSize}
+                  onChange={handleBrushSizeChange}
+                />
+              </div>
+              <label
+                className="control-label row"
+                style={{
+                  gridColumn: '1  / 1',
+                  gridRow: '2 / 2',
+                  margin: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  color: '#8b949e',
+                  visibility: showSizeControls ? 'visible' : 'hidden',
+                  pointerEvents: showSizeControls ? 'auto' : 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  className="glass-checkbox"
+                  checked={isHollow}
+                  disabled={!supportsHollow(selectedShape)}
+                  onChange={(e) => setIsHollow(e.target.checked)}
+                />
+                Hollow
+              </label>
+            </>
+          );
+        })()}
+
         {/* Activate and Clear buttons moved outside conditional rendering */}
         <button
           className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
           onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
           data-tooltip-bottom="Activate (Paint) (Space)"
-          style={{ gridColumn: '5 / 6', gridRow: '1 / 2' }}
+          style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
         >
           <PlusIcon />
         </button>
@@ -510,13 +552,13 @@ export function BrushControls() {
           className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
           onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
           data-tooltip-bottom="Clear (Delete)"
-          style={{ gridColumn: '6 / 7', gridRow: '1 / 2' }}
+          style={{ gridColumn: '6 / 6', gridRow: '1 / 2' }}
         >
           <MinusIcon />
         </button>
 
         {/* Directional controls */}
-        <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '3 / 4', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
           <button
             id="upBtn"
             className="glass-button"
@@ -527,7 +569,7 @@ export function BrushControls() {
           ><ArrowUpIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '3/ 4', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
           <button
             id="downBtn"
             className="glass-button"
@@ -538,7 +580,7 @@ export function BrushControls() {
           ><ArrowDownIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '1 / 2', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
             id="leftBtn"
             className="glass-button"
@@ -549,7 +591,7 @@ export function BrushControls() {
           ><ArrowLeftIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '3 / 4', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '4 / 5', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
             id="rightBtn"
             className="glass-button"
@@ -560,7 +602,7 @@ export function BrushControls() {
           ><ArrowRightIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '4 / 7', gridRow: '2 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '5 / 7  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="fartherBtn"
             className="glass-button"
@@ -571,7 +613,7 @@ export function BrushControls() {
           ><AwayIcon />&nbsp;&nbsp;Farther</button>
         </div>
 
-        <div style={{ gridColumn: '4 / 7', gridRow: '4 / 5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '5 / 7', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="closerBtn"
             className="glass-button"
