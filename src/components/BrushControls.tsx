@@ -354,7 +354,7 @@ export function BrushControls() {
           Col 3
         </div>
 
-        <div style={{ gridColumn: '5 / 6', gridRow: '1 / 3', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '5 / 6', gridRow: '2 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
             id="upBtn"
             className="glass-button"
@@ -365,7 +365,7 @@ export function BrushControls() {
           ><ArrowUpIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '5 / 6', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '5 / 6', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
           <button
             id="downBtn"
             className="glass-button"
@@ -376,7 +376,7 @@ export function BrushControls() {
           ><ArrowDownIcon /></button>
         </div>
 
-        <div style={{ gridColumn: ' 4 / 5', gridRow: '2 / 4', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: ' 4 / 5', gridRow: '3 / 5', display: 'flex', justifyContent: 'center' }}>
           <button
             id="leftBtn"
             className="glass-button"
@@ -387,7 +387,7 @@ export function BrushControls() {
           ><ArrowLeftIcon /></button>
         </div>
 
-        <div style={{ gridColumn: ' 6 / 7', gridRow: '2 / 4', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: ' 6 / 7', gridRow: '3 / 5', display: 'flex', justifyContent: 'center' }}>
           <button
             id="rightBtn"
             className="glass-button"
@@ -398,7 +398,7 @@ export function BrushControls() {
           ><ArrowRightIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '14 / 15', gridRow: '1 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '14 / 15', gridRow: '2 / 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="fartherBtn"
             className="glass-button"
@@ -409,7 +409,7 @@ export function BrushControls() {
           ><AwayIcon />&nbsp;&nbsp;Farther</button>
         </div>
 
-        <div style={{ gridColumn: '14 / 15', gridRow: '3 / 5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '14 / 15', gridRow: '4 / 6', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="closerBtn"
             className="glass-button"
