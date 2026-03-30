@@ -5,10 +5,6 @@ import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 import { useClickOutside } from "../hooks/useClickOutside";
-import { CommunitySidebar } from "./Controls"; // Import CommunitySidebar
-
-
-
 const PaintBrushIcon = () => (
   <svg width="20" height="20" viewBox="0 0 220 220" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     {/* Handle */}
@@ -93,10 +89,10 @@ function BrushSelectorDropdown() {
 
   const {
     state: { selectedShape, brushQuaternion },
-    actions: { setSelectedShape, setCustomBrush, incrementBrushRotationVersion },
+    actions: { setSelectedShape, incrementBrushRotationVersion },
   } = useBrush();
 
-  const { state: { community, cameraOrientation } } = useSimulation();
+  const { state: { cameraOrientation } } = useSimulation();
 
   const initBrushOrientation = useCallback(() => {
     const face = cameraOrientation.face;
@@ -120,14 +116,10 @@ function BrushSelectorDropdown() {
   }, [cameraOrientation, brushQuaternion, incrementBrushRotationVersion]);
 
   const handleSelectShape = useCallback((shape: ShapeType) => {
-    if (shape === "Selected Community") {
-      setCustomBrush(community);
-    } else {
-      setSelectedShape(shape);
-      initBrushOrientation();
-    }
+    setSelectedShape(shape);
+    initBrushOrientation();
     setIsOpen(false);
-  }, [setCustomBrush, community, setSelectedShape, initBrushOrientation]);
+  }, [setSelectedShape, initBrushOrientation]);
 
   // Effect to close dropdown on outside click
   useClickOutside(dropdownRef, () => setIsOpen(false));
@@ -147,10 +139,9 @@ function BrushSelectorDropdown() {
       </button>
       {isOpen && (
         <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
-          {SHAPES.map((name) => {
+          {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
             const isSelected = name === selectedShape;
             const isHovered = name === hoveredName;
-            const isDisabled = name === "Selected Community" && community.length === 0;
 
             const isActive = isHovered || (hoveredName === null && isSelected);
 
@@ -160,7 +151,6 @@ function BrushSelectorDropdown() {
                 className={`dropdown-item ${isActive ? 'selected' : ''}`}
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
-                disabled={isDisabled}
               >
                 {name}
               </button>
@@ -184,7 +174,7 @@ export function BrushControls() {
   }, [setShapeSize]);
 
   const {
-    state: { cameraOrientation, rotationMode, gridSize, community },
+    state: { cameraOrientation, rotationMode, gridSize }, // Removed community from here
     meta: { eventBus, gridRef },
   } = useSimulation();
 

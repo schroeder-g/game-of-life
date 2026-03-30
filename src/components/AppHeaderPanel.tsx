@@ -10,6 +10,7 @@ import { useClickOutside } from "../hooks/useClickOutside";
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 import { ReleaseNotesModal } from "./ReleaseNotesModal";
+import { SelectedCommunityPanel } from "./SelectedCommunityPanel"; // Import the new panel
 
 function SimulationStats() {
   const {
@@ -49,9 +50,9 @@ interface AppHeaderPanelProps {
 
 export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanelProps) {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction },
+    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction, community }, // Added community
     actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
-    meta: { cameraActionsRef },
+    meta: { cameraActionsRef, eventBus }, // Added eventBus
   } = useSimulation();
   const {
     state: brushState,
@@ -61,9 +62,10 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
   const { state: { selectedConfigName } } = useGenesisConfig();
 
   const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false); // New state for ShortcutOverlay
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [showReleaseNotes, setShowReleaseNotes] = useState(false);
   const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
+  const [showCommunityPanel, setShowCommunityPanel] = useState(false); // New state for Community Panel
   const helpDropdownRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
@@ -94,6 +96,18 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
     setShowReleaseNotes(true);
     setIsHelpDropdownOpen(false);
   }, []);
+
+  const toggleCommunityPanel = useCallback(() => {
+    setShowCommunityPanel(prev => !prev);
+  }, []);
+
+  // Listen for 'showCommunityPanel' event from BrushControls
+  useEffect(() => {
+    const unsubscribe = eventBus.on('showCommunityPanel', (show) => {
+      setShowCommunityPanel(show);
+    });
+    return () => unsubscribe();
+  }, [eventBus]);
 
   return (
     <div className="app-header-panel">
@@ -161,8 +175,10 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         handleOpenIntroduction={handleOpenIntroduction}
         handleOpenShortcuts={handleOpenShortcuts}
         handleOpenReleaseNotes={handleOpenReleaseNotes}
-        showMainMenu={showMainMenu} // Pass new prop
-        setShowMainMenu={setShowMainMenu} // Pass new prop
+        showMainMenu={showMainMenu}
+        setShowMainMenu={setShowMainMenu}
+        showCommunityPanel={showCommunityPanel} // Pass new prop
+        toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
       />
 
       <DocumentationModal
@@ -175,7 +191,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         onClose={() => setShowIntroduction(false)}
       />
 
-      <ShortcutOverlay // Render ShortcutOverlay
+      <ShortcutOverlay
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
@@ -185,6 +201,10 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         onClose={() => setShowReleaseNotes(false)}
       />
 
+      <SelectedCommunityPanel
+        isVisible={showCommunityPanel && community.length > 0 && !rotationMode}
+        onClose={() => setShowCommunityPanel(false)}
+      />
     </div>
   );
 }
