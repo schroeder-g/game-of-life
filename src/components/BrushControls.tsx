@@ -670,6 +670,6 @@ export function BrushControls() {
           ><CloserIcon />&nbsp;&nbsp;Closer </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
