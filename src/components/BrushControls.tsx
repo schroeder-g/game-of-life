@@ -509,16 +509,6 @@ export function BrushControls() {
         >
           <MinusIcon />
         </button>
-        {/* New empty columns for identification, spanning the new height */}
-        <div style={{ gridColumn: '1 / 2', gridRow: '1 / 9', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#aaa', fontSize: '0.7em' }}>
-          Col 1
-        </div>
-        <div style={{ gridColumn: '2 / 3', gridRow: '1 / 9', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#aaa', fontSize: '0.7em' }}>
-          Col 2
-        </div>
-        <div style={{ gridColumn: '3 / 4', gridRow: '1 / 9', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#aaa', fontSize: '0.7em' }}>
-          Col 3
-        </div>
 
         <div style={{ gridColumn: '5 / 6', gridRow: '2 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
