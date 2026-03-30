@@ -248,6 +248,7 @@ export function BrushControls() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [isContentVisible, setIsContentVisible] = useState(true); // New state for toggling content visibility
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -311,8 +312,8 @@ export function BrushControls() {
   }, []); // Empty dependency array: listener is set up once and uses functional update for state
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Prevent dragging if the event originated from the size slider
-    if ((e.target as HTMLElement).type === 'range') {
+    // Prevent dragging if the event originated from the size slider or the header toggle
+    if ((e.target as HTMLElement).type === 'range' || (e.target as HTMLElement).closest('#brush-controls-header')) {
       return;
     }
 
@@ -381,6 +382,11 @@ export function BrushControls() {
   }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Prevent dragging if the event originated from the size slider or the header toggle
+    if ((e.target as HTMLElement).type === 'range' || (e.target as HTMLElement).closest('#brush-controls-header')) {
+      return;
+    }
+
     if (panelRef.current) {
       e.preventDefault(); // Prevent scrolling or zooming
       const panelElement = panelRef.current;
@@ -495,6 +501,10 @@ export function BrushControls() {
     };
   }, [rotationMode, gridRef, eventBus, setCustomBrush, setSelectedShape, setPaintMode]);
 
+  const toggleContentVisibility = useCallback(() => {
+    setIsContentVisible(prev => !prev);
+  }, []);
+
   return (
     <div
       id="brush-controls"
@@ -520,7 +530,17 @@ export function BrushControls() {
       onTouchStart={handleTouchStart}
       aria-label="Brush Controls Panel" // Added for accessibility in tests
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px' }}>
+      <div
+        id="brush-controls-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingBottom: '5px',
+          cursor: 'pointer', // Indicate it's clickable
+        }}
+        onClick={toggleContentVisibility}
+      >
         <span id='Selected-Brush-Label'
           style={{
             fontWeight: 'bold',
@@ -540,164 +560,176 @@ export function BrushControls() {
         >
           {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(No Effect)'}
         </span>
+        {/* Arrow indicator for expand/collapse */}
+        <span style={{ marginLeft: 'auto', transform: isContentVisible ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s ease' }}>
+          <ArrowDownIcon />
+        </span>
       </div>
 
+      {isContentVisible && (
+        <>
+          {/* Debug info */}
+          <div style={{ fontSize: '0.7em', color: '#8b949e', marginBottom: '5px', textAlign: 'center' }}>
+            Screen: {window.innerWidth}x{window.innerHeight} | Midline Y: {Math.round(window.innerHeight / 2)} | Panel Y: {Math.round(position.y)}
+          </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)', // Reduced to 6 columns
-          gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
-          gap: '5px',
-          alignItems: 'center',
-        }}
-        aria-label="Brush Controls Grid" // Added for accessibility in tests
-      >
-        <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-          <BrushSelectorDrop panelTop={position.y} />
-        </div>
-        {(() => {
-          // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
-          const showSizeControls = selectedShape !== "Selected Community" &&
-            selectedShape !== "Single Cell" &&
-            selectedShape !== "None";
-          const showHollowCheckbox = showSizeControls && shapeSize > 2; // New condition for hollow checkbox visibility
-          return (
-            <>
-              {/* Size and Hollow controls: Always in DOM to preserve space, but hidden when not applicable */}
-              <div
-                className="brush-size-control"
-                style={{
-                  gridColumn: '2/5',
-                  gridRow: '1 / 2',
-                  width: 'unset',
-                  visibility: showSizeControls ? 'visible' : 'hidden',
-                  pointerEvents: showSizeControls ? 'auto' : 'none',
-                }}
-              >
-                <span>Size: {shapeSize}</span>
-                <input
-                  type="range"
-                  min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
-                  max={gridSize}
-                  step={1}
-                  value={shapeSize}
-                  onChange={handleBrushSizeChange}
-                />
-              </div>
-              <label
-                className="control-label row"
-                style={{
-                  gridColumn: '1  / 1',
-                  gridRow: '2 / 2',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  cursor: 'pointer',
-                  color: '#8b949e',
-                  visibility: showHollowCheckbox ? 'visible' : 'hidden', // Use new condition
-                  pointerEvents: showHollowCheckbox ? 'auto' : 'none',   // Use new condition
-                }}
-              >
-                <input
-                  type="checkbox"
-                  className="glass-checkbox"
-                  checked={isHollow}
-                  disabled={!supportsHollow(selectedShape)}
-                  onChange={(e) => setIsHollow(e.target.checked)}
-                />
-                Hollow
-              </label>
-            </>
-          );
-        })()}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(6, 1fr)', // Reduced to 6 columns
+              gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
+              gap: '5px',
+              alignItems: 'center',
+            }}
+            aria-label="Brush Controls Grid" // Added for accessibility in tests
+          >
+            <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
+              <BrushSelectorDrop panelTop={position.y} />
+            </div>
+            {(() => {
+              // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
+              const showSizeControls = selectedShape !== "Selected Community" &&
+                selectedShape !== "Single Cell" &&
+                selectedShape !== "None";
+              const showHollowCheckbox = showSizeControls && shapeSize > 2; // New condition for hollow checkbox visibility
+              return (
+                <>
+                  {/* Size and Hollow controls: Always in DOM to preserve space, but hidden when not applicable */}
+                  <div
+                    className="brush-size-control"
+                    style={{
+                      gridColumn: '2/5',
+                      gridRow: '1 / 2',
+                      width: 'unset',
+                      visibility: showSizeControls ? 'visible' : 'hidden',
+                      pointerEvents: showSizeControls ? 'auto' : 'none',
+                    }}
+                  >
+                    <span>Size: {shapeSize}</span>
+                    <input
+                      type="range"
+                      min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
+                      max={gridSize}
+                      step={1}
+                      value={shapeSize}
+                      onChange={handleBrushSizeChange}
+                    />
+                  </div>
+                  <label
+                    className="control-label row"
+                    style={{
+                      gridColumn: '1  / 1',
+                      gridRow: '2 / 2',
+                      margin: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      color: '#8b949e',
+                      visibility: showHollowCheckbox ? 'visible' : 'hidden', // Use new condition
+                      pointerEvents: showHollowCheckbox ? 'auto' : 'none',   // Use new condition
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      className="glass-checkbox"
+                      checked={isHollow}
+                      disabled={!supportsHollow(selectedShape)}
+                      onChange={(e) => setIsHollow(e.target.checked)}
+                    />
+                    Hollow
+                  </label>
+                </>
+              );
+            })()}
 
-        {/* Activate and Clear buttons moved outside conditional rendering */}
-        <button
-          className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
-          onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-          data-tooltip-bottom="Activate (Paint) (Space)"
-          style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
-        >
-          <PlusIcon />
-        </button>
-        <button
-          className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
-          onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
-          data-tooltip-bottom="Clear (Delete)"
-          style={{ gridColumn: '6 / 6', gridRow: '1 / 2' }}
-        >
-          <MinusIcon />
-        </button>
+            {/* Activate and Clear buttons moved outside conditional rendering */}
+            <button
+              className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
+              data-tooltip-bottom="Activate (Paint) (Space)"
+              style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
+            >
+              <PlusIcon />
+            </button>
+            <button
+              className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
+              data-tooltip-bottom="Clear (Delete)"
+              style={{ gridColumn: '6 / 6', gridRow: '1 / 2' }}
+            >
+              <MinusIcon />
+            </button>
 
-        {/* Directional controls */}
-        <div style={{ gridColumn: '3 / 4', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
-          <button
-            id="upBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('w'); setActiveKey('w'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '50px', height: '30px' }}
-          ><ArrowUpIcon /></button>
-        </div>
+            {/* Directional controls */}
+            <div style={{ gridColumn: '3 / 4', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
+              <button
+                id="upBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('w'); setActiveKey('w'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '50px', height: '30px' }}
+              ><ArrowUpIcon /></button>
+            </div>
 
-        <div style={{ gridColumn: '3/ 4', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
-          <button
-            id="downBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('x'); setActiveKey('x'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '50px', height: '30px' }}
-          ><ArrowDownIcon /></button>
-        </div>
+            <div style={{ gridColumn: '3/ 4', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
+              <button
+                id="downBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('x'); setActiveKey('x'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '50px', height: '30px' }}
+              ><ArrowDownIcon /></button>
+            </div>
 
-        <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
-          <button
-            id="leftBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('a'); setActiveKey('a'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '50px', height: '30px' }}
-          ><ArrowLeftIcon /></button>
-        </div>
+            <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+              <button
+                id="leftBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('a'); setActiveKey('a'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '50px', height: '30px' }}
+              ><ArrowLeftIcon /></button>
+            </div>
 
-        <div style={{ gridColumn: '4 / 5', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
-          <button
-            id="rightBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('d'); setActiveKey('d'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '50px', height: '30px' }}
-          ><ArrowRightIcon /></button>
-        </div>
+            <div style={{ gridColumn: '4 / 5', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+              <button
+                id="rightBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('d'); setActiveKey('d'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '50px', height: '30px' }}
+              ><ArrowRightIcon /></button>
+            </div>
 
-        <div style={{ gridColumn: '5 / 7  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <button
-            id="fartherBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('q'); setActiveKey('q'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
-          ><AwayIcon />&nbsp;&nbsp;Farther</button>
-        </div>
+            <div style={{ gridColumn: '5 / 7  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <button
+                id="fartherBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('q'); setActiveKey('q'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
+              ><AwayIcon />&nbsp;&nbsp;Farther</button>
+            </div>
 
-        <div style={{ gridColumn: '5 / 7', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <button
-            id="closerBtn"
-            className="glass-button"
-            onMouseDown={(e) => { e.stopPropagation(); handleMove('z'); setActiveKey('z'); }}
-            onMouseUp={() => setActiveKey(null)}
-            onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
-          ><CloserIcon />&nbsp;&nbsp;Closer </button>
-        </div>
-      </div>
+            <div style={{ gridColumn: '5 / 7', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <button
+                id="closerBtn"
+                className="glass-button"
+                onMouseDown={(e) => { e.stopPropagation(); handleMove('z'); setActiveKey('z'); }}
+                onMouseUp={() => setActiveKey(null)}
+                onMouseLeave={() => setActiveKey(null)}
+                style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+              ><CloserIcon />&nbsp;&nbsp;Closer </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
