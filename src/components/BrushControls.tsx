@@ -448,15 +448,23 @@ export function BrushControls() {
           }
 
           setCustomBrush(selectedCommunityCells);
-          setSelectedShape("Selected Community");
+          setSelectedShape("Selected Community"); // Keep this for internal state, but it won't be in dropdown
           setPaintMode(1); // Set to Activate mode
+          eventBus.emit('showCommunityPanel', true); // Emit event to show the new panel
         }
       }
     };
 
     const unsubscribe = eventBus.on('cellClick', handleCellClick);
+    const unsubscribeShowCommunityPanel = eventBus.on('showCommunityPanel', (show) => {
+      // This listener is just to prevent errors if the event is emitted before AppHeaderPanel is ready
+      // The actual state management for showing the panel will be in AppHeaderPanel
+    });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeShowCommunityPanel();
+    };
   }, [rotationMode, gridRef, eventBus, setCustomBrush, setSelectedShape, setPaintMode]);
 
   return (
@@ -521,6 +529,7 @@ export function BrushControls() {
           <BrushSelectorDropdown />
         </div>
         {(() => {
+          // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
           const showSizeControls = selectedShape !== "Selected Community" &&
             selectedShape !== "Single Cell" &&
             selectedShape !== "None";
@@ -661,7 +670,6 @@ export function BrushControls() {
           ><CloserIcon />&nbsp;&nbsp;Closer </button>
         </div>
       </div>
-      {community.length > 0 && !rotationMode && <CommunitySidebar community={community} />}
     </>
   );
 }
