@@ -1,6 +1,25 @@
 import React, { useCallback, useState, useRef, useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
 import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyMapping";
+import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
+import { useBrush } from "../contexts/BrushContext";
+import * as THREE from "three";
+import { useClickOutside } from "../hooks/useClickOutside";
+
+
+
+const PaintBrushIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 220 220" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {/* Handle */}
+    <rect x="70" y="0" width="80" height="56" fill="currentColor" stroke="none" />
+    {/* Ferrule */}
+    <rect x="66" y="56" width="88" height="48" fill="none" stroke="currentColor" />
+    <line x1="66" y1="56" x2="154" y2="104" stroke="currentColor" />
+    <line x1="154" y1="56" x2="66" y2="104" stroke="currentColor" />
+    {/* Bristles */}
+    <path d="M66,104 C66,115 86,130 86,150 C86,190 94,220 110,220 C126,220 134,190 134,150 C134,130 154,115 154,104 Z" fill="none" stroke="currentColor" />
+  </svg>
+);
 
 // Icon components for directional controls
 const ArrowUpIcon = () => (
@@ -51,8 +70,102 @@ const CloserIcon = () => (
   </svg>
 );
 
+function BrushSelectorDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [hoveredName, setHoveredName] = useState<string | null>(null);
+
+  const {
+    state: { selectedShape, brushQuaternion },
+    actions: { setSelectedShape, setCustomBrush, incrementBrushRotationVersion },
+  } = useBrush();
+
+  const { state: { community, cameraOrientation } } = useSimulation();
+
+  const initBrushOrientation = useCallback(() => {
+    const face = cameraOrientation.face;
+    const rotation = cameraOrientation.rotation;
+    if (face === 'unknown' || rotation === 'unknown') {
+      brushQuaternion.current.identity();
+      return;
+    }
+    const mapping = KEY_MAP[face as CameraFace][rotation as CameraRotation] as any;
+    const right = mapping.d as number[];
+    const up = mapping.w as number[];
+    const depth = mapping.q as number[];
+    const m = new THREE.Matrix4().set(
+      right[0], up[0], depth[0], 0,
+      right[1], up[1], depth[1], 0,
+      right[2], up[2], depth[2], 0,
+      0, 0, 0, 1,
+    );
+    brushQuaternion.current.setFromRotationMatrix(m);
+    incrementBrushRotationVersion();
+  }, [cameraOrientation, brushQuaternion, incrementBrushRotationVersion]);
+
+  const handleSelectShape = useCallback((shape: ShapeType) => {
+    if (shape === "Selected Community") {
+      setCustomBrush(community);
+    } else {
+      setSelectedShape(shape);
+      initBrushOrientation();
+    }
+    setIsOpen(false);
+  }, [setCustomBrush, community, setSelectedShape, initBrushOrientation]);
+
+  // Effect to close dropdown on outside click
+  useClickOutside(dropdownRef, () => setIsOpen(false));
+
+  const handleButtonClick = () => {
+    setIsOpen(prev => !prev);
+  };
+
+  return (
+    <div id="brush-selector-dropdown" className="scene-selector-dropdown" ref={dropdownRef}>
+      <button
+        className="glass-button"
+        onClick={handleButtonClick}
+        data-tooltip-bottom="Select Brush Shape"
+      >
+        <PaintBrushIcon />
+      </button>
+      {isOpen && (
+        <div className="dropdown-menu" onMouseLeave={() => setHoveredName(null)}>
+          {SHAPES.map((name) => {
+            const isSelected = name === selectedShape;
+            const isHovered = name === hoveredName;
+            const isDisabled = name === "Selected Community" && community.length === 0;
+
+            const isActive = isHovered || (hoveredName === null && isSelected);
+
+            return (
+              <button
+                key={name}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`}
+                onClick={() => handleSelectShape(name)}
+                onMouseEnter={() => setHoveredName(name)}
+                disabled={isDisabled}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface BrushControlsProps {
 
+  // Brush state and actions
+  selectedShape: ShapeType;
+  paintMode: number;
+  shapeSize: number;
+  isHollow: boolean;
+  setPaintMode: (mode: 0 | 1 | -1 | ((prev: 0 | 1 | -1) => 0 | 1 | -1)) => void;
+  setShapeSize: (size: number) => void;
+  setIsHollow: (isHollow: boolean) => void;
 }
 
 export function BrushControls() {
@@ -343,6 +456,47 @@ export function BrushControls() {
         }}
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
+        <BrushSelectorDropdown />
+        {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
+          <>
+            <div className="brush-size-control" style={{ width: '100px' }}>
+              <span>Size: {shapeSize}</span>
+              <input
+                type="range"
+                min={(selectedShape === "Cube" || selectedShape === "Square") ? 2 : 3}
+                max={gridSize}
+                step={1}
+                value={shapeSize}
+                onChange={handleBrushSizeChange}
+              />
+            </div>
+            <label className="control-label row" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#8b949e' }}>
+              <input
+                type="checkbox"
+                className="glass-checkbox"
+                checked={isHollow}
+                disabled={!supportsHollow(selectedShape)}
+                onChange={(e) => setIsHollow(e.target.checked)}
+              />
+              Hollow
+            </label>
+
+            <button
+              className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
+              data-tooltip-bottom="Activate (Paint) (Space)"
+            >
+              <PlusIcon />
+            </button>
+            <button
+              className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
+              onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
+              data-tooltip-bottom="Clear (Delete)"
+            >
+              <MinusIcon />
+            </button>
+          </>
+        )}
         {/* New empty columns for identification, spanning the new height */}
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 9', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#aaa', fontSize: '0.7em' }}>
           Col 1
