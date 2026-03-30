@@ -152,26 +152,26 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
           style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
           onMouseLeave={() => setHoveredName(null)}
         >
-      {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
-        const isSelected = name === selectedShape;
-        const isHovered = name === hoveredName;
+          {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
+            const isSelected = name === selectedShape;
+            const isHovered = name === hoveredName;
 
-        const isActive = isHovered || (hoveredName === null && isSelected);
+            const isActive = isHovered || (hoveredName === null && isSelected);
 
-        return (
-          <button
-            key={name}
-            className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
-            onClick={() => handleSelectShape(name)}
-            onMouseEnter={() => setHoveredName(name)}
-          >
-            {name}
-          </button>
-        );
-      })}
-    </div>
-  )
-}
+            return (
+              <button
+                key={name}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
+                onClick={() => handleSelectShape(name)}
+                onMouseEnter={() => setHoveredName(name)}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      )
+      }
     </div >
   );
 }
@@ -572,7 +572,7 @@ export function BrushControls() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)', // Reduced to 6 columns
+              gridTemplateColumns: 'repeat(12 , 1fr)', // Reduced to 6 columns
               gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
               gap: '5px',
               alignItems: 'center',
@@ -639,26 +639,27 @@ export function BrushControls() {
               );
             })()}
 
-            {/* Activate and Clear buttons moved outside conditional rendering */}
-            <button
-              className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
-              onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-              data-tooltip-bottom="Activate (Paint) (Space)"
-              style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
-            >
-              <PlusIcon />
-            </button>
-            <button
-              className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
-              onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
-              data-tooltip-bottom="Clear (Delete)"
-              style={{ gridColumn: '6 / 6', gridRow: '1 / 2' }}
-            >
-              <MinusIcon />
-            </button>
+            <div style={{ gridColumn: '4 / 5', gridRow: '1 / 2' }}>{/* Activate and Clear buttons moved outside conditional rendering */}
+              <button
+                className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
+                onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
+                data-tooltip-bottom="Activate (Paint) (Space)"
+                style={{ gridColumn: '4 / 4', gridRow: '1 / 2' }}
+              >
+                <PlusIcon />
+              </button>
+              <button
+                className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
+                onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
+                data-tooltip-bottom="Clear (Delete)"
+                style={{ gridColumn: '5 / 5', gridRow: '1 / 2' }}
+              >
+                <MinusIcon />
+              </button></div>
 
             {/* Directional controls */}
-            <div style={{ gridColumn: '3 / 4', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
+            {/* UP */}
+            <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="upBtn"
                 className="glass-button"
@@ -668,8 +669,8 @@ export function BrushControls() {
                 style={{ width: '50px', height: '30px' }}
               ><ArrowUpIcon /></button>
             </div>
-
-            <div style={{ gridColumn: '3/ 4', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
+            {/* DOWN */}
+            <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="downBtn"
                 className="glass-button"
@@ -679,8 +680,8 @@ export function BrushControls() {
                 style={{ width: '50px', height: '30px' }}
               ><ArrowDownIcon /></button>
             </div>
-
-            <div style={{ gridColumn: '2 / 3', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+            {/* LEFT */}
+            <div style={{ gridColumn: '1 / 2', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="leftBtn"
                 className="glass-button"
@@ -690,8 +691,8 @@ export function BrushControls() {
                 style={{ width: '50px', height: '30px' }}
               ><ArrowLeftIcon /></button>
             </div>
-
-            <div style={{ gridColumn: '4 / 5', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+            {/* RIGHT */}
+            <div style={{ gridColumn: '3 / 4', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="rightBtn"
                 className="glass-button"
@@ -701,8 +702,8 @@ export function BrushControls() {
                 style={{ width: '50px', height: '30px' }}
               ><ArrowRightIcon /></button>
             </div>
-
-            <div style={{ gridColumn: '5 / 7  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* FARTHER */}
+            <div style={{ gridColumn: '4 / 4  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <button
                 id="fartherBtn"
                 className="glass-button"
@@ -712,8 +713,8 @@ export function BrushControls() {
                 style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
               ><AwayIcon />&nbsp;&nbsp;Farther</button>
             </div>
-
-            <div style={{ gridColumn: '5 / 7', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* CLOSER */}
+            <div style={{ gridColumn: '4 / 4', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <button
                 id="closerBtn"
                 className="glass-button"
