@@ -493,23 +493,22 @@ export function BrushControls() {
               />
               Hollow
             </label>
-
-            <button
-              className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
-              onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
-              data-tooltip-bottom="Activate (Paint) (Space)"
-            >
-              <PlusIcon />
-            </button>
-            <button
-              className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
-              onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
-              data-tooltip-bottom="Clear (Delete)"
-            >
-              <MinusIcon />
-            </button>
           </>
         )}
+        <button
+          className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
+          onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
+          data-tooltip-bottom="Activate (Paint) (Space)"
+        >
+          <PlusIcon />
+        </button>
+        <button
+          className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
+          onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
+          data-tooltip-bottom="Clear (Delete)"
+        >
+          <MinusIcon />
+        </button>
         {/* New empty columns for identification, spanning the new height */}
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 9', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#aaa', fontSize: '0.7em' }}>
           Col 1
