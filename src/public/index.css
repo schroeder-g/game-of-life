@@ -16,7 +16,6 @@ body.view-mode .community-sidebar {
 /* The dropdown menu panel */
 .dropdown-menu {
   position: absolute;
-  top: 100%;
   left: 0;
   z-index: 100000000000;
   /* Ensures it floats above other content */
@@ -31,7 +30,6 @@ body.view-mode .community-sidebar {
 
   /* Layout and appearance */
   padding: 4px;
-  margin-top: 8px;
   min-width: 160px;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -40,6 +38,10 @@ body.view-mode .community-sidebar {
 .dropdown-menu.align-right {
   left: auto;
   right: 0;
+}
+
+.dropdown-menu.dropup {
+  /* No specific top/bottom/margin here, handled by inline style in JS */
 }
 
 /* Individual items within the dropdown */

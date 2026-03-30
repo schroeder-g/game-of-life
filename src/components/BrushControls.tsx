@@ -82,10 +82,12 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDrop() {
+function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
+  const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual brush list menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const [shouldDropUp, setShouldDropUp] = useState(false); // State to determine if brush list should "drop up"
 
   const {
     state: { selectedShape, brushQuaternion },
@@ -552,7 +554,7 @@ export function BrushControls() {
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-          <BrushSelectorDrop />
+          <BrushSelectorDrop panelTop={position.y} />
         </div>
         {(() => {
           // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
