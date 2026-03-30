@@ -87,7 +87,7 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
   const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
   const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual brush list menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
-  const [shouldDropUp, setShouldDropUp] = useState(false); // State to determine if brush list should "drop up"
+  const [shouldDropUp, setShouldDropUp] = useState(true); // State to determine if brush list should "drop up" (default to true)
 
   const {
     state: { selectedShape, brushQuaternion },
