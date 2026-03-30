@@ -463,12 +463,13 @@ export function BrushControls() {
         </span>
         <span id="brush-effect-label"
           style={{
+            marginRight: '17px',
             fontWeight: 'bold',
             color: '#FFA500', // Subtler orange color for text
             cursor: 'inherit', // Inherit cursor from parent for dragging
           }}
         >
-          {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
+          {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(No Effect)'}
         </span>
       </div>
 
