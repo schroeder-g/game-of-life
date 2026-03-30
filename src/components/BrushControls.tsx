@@ -539,7 +539,7 @@ export function BrushControls() {
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-          <BrushSelectorDropdown />
+          <BrushSelectorDropdown panelTop={position.y} />
         </div>
         {(() => {
           // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
