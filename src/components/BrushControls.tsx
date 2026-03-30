@@ -168,9 +168,19 @@ interface BrushControlsProps {
   setIsHollow: (isHollow: boolean) => void;
 }
 
-export function BrushControls() {
+export function BrushControls(props: BrushControlsProps) {
   const {
-    state: { cameraOrientation, rotationMode },
+    selectedShape,
+    paintMode,
+    shapeSize,
+    isHollow,
+    setPaintMode,
+    setShapeSize,
+    setIsHollow,
+  } = props;
+
+  const {
+    state: { cameraOrientation, rotationMode, gridSize },
     meta: { eventBus },
   } = useSimulation();
 
