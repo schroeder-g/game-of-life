@@ -491,6 +491,7 @@ export function BrushControls() {
           const showSizeControls = selectedShape !== "Selected Community" &&
             selectedShape !== "Single Cell" &&
             selectedShape !== "None";
+          const showHollowCheckbox = showSizeControls && shapeSize > 2; // New condition for hollow checkbox visibility
           return (
             <>
               {/* Size and Hollow controls: Always in DOM to preserve space, but hidden when not applicable */}
@@ -525,8 +526,8 @@ export function BrushControls() {
                   gap: '4px',
                   cursor: 'pointer',
                   color: '#8b949e',
-                  visibility: showSizeControls ? 'visible' : 'hidden',
-                  pointerEvents: showSizeControls ? 'auto' : 'none',
+                  visibility: showHollowCheckbox ? 'visible' : 'hidden', // Use new condition
+                  pointerEvents: showHollowCheckbox ? 'auto' : 'none',   // Use new condition
                 }}
               >
                 <input
