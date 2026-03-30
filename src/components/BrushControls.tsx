@@ -87,7 +87,6 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
   const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual dropdown menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
-  const [shouldDropUp, setShouldDropUp] = useState(false); // State to determine if dropdown should "drop up"
 
   const {
     state: { selectedShape, brushQuaternion },
@@ -176,7 +175,7 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
             return (
               <button
                 key={name}
-                className={`dropdown-item ${isActive ? 'selected' : ''}`}
+                className={`dropdown-item dropup ${isActive ? 'selected' : ''}`}
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
