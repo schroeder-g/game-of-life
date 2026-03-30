@@ -293,6 +293,11 @@ export function BrushControls() {
   }, []); // Empty dependency array: listener is set up once and uses functional update for state
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Prevent dragging if the event originated from the size slider
+    if ((e.target as HTMLElement).type === 'range') {
+      return;
+    }
+
     if (panelRef.current) {
       const panelElement = panelRef.current;
       const panelRect = panelElement.getBoundingClientRect();
