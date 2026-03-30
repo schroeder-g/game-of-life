@@ -164,7 +164,7 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
       {isOpen && (
         <div
           ref={menuRef} // Attach ref to the dropdown menu div
-          className={`dropdown-menu ${shouldDropUp ? 'dropup' : ''}`}
+          className={`dropdown-menu  dropup`}
           onMouseLeave={() => setHoveredName(null)}
         >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
