@@ -462,40 +462,41 @@ function SelectorPositionSection() {
     const unsubscribe = eventBus.on('moveSelector', (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
 
-      setSelectorPos((currentPos: [number, number, number] | null) => {
-        if (!currentPos) return null;
+      // Get current selector position from brushState
+      const currentPos = brushState.selectorPos;
+      if (!currentPos) return; // Should not happen if selectorPos is initialized
 
-        const nextPos: [number, number, number] = [
-          currentPos[0] + delta[0],
-          currentPos[1] + delta[1],
-          currentPos[2] + delta[2],
-        ];
+      const nextPos: [number, number, number] = [
+        currentPos[0] + delta[0],
+        currentPos[1] + delta[1],
+        currentPos[2] + delta[2],
+      ];
 
-        const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
+      const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
 
-        let finalPos: [number, number, number];
-        let moved = false;
+      let finalPos: [number, number, number];
+      let moved = false;
 
-        // Determine the final, allowed position for the cursor
-        if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
-          finalPos = nextPos;
-          moved = true;
-        } else {
-          finalPos = currentPos;
+      // Determine the final, allowed position for the cursor
+      if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
+        finalPos = nextPos;
+        moved = true;
+      } else {
+        finalPos = currentPos;
+      }
+
+      // Update the selector position state
+      setSelectorPos(finalPos);
+
+      // If the cursor successfully moved and a paint mode is active, perform the action.
+      // This is now a direct side effect of the event, not part of the state updater function.
+      if (moved && brushState.paintMode !== 0) {
+        if (brushState.paintMode === 1) {
+          cameraActionsRef.current?.birthBrushCells();
+        } else if (brushState.paintMode === -1) {
+          cameraActionsRef.current?.clearBrushCells();
         }
-
-        // If the cursor successfully moved and a paint mode is active, perform the action.
-        if (moved && brushState.paintMode !== 0) {
-          if (brushState.paintMode === 1) {
-            cameraActionsRef.current?.birthBrushCells();
-          } else if (brushState.paintMode === -1) {
-            cameraActionsRef.current?.clearBrushCells();
-          }
-        }
-
-        // Return the final position to update the state
-        return finalPos;
-      });
+      }
     });
 
     return () => unsubscribe();
