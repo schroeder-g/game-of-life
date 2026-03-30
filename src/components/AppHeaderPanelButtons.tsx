@@ -90,6 +90,15 @@ const MinusIcon = () => (
   </svg>
 );
 
+const UsersIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
 
 
 function SceneSelectorDropdown() {
@@ -225,8 +234,10 @@ interface AppHeaderPanelButtonsProps {
   handleOpenIntroduction: () => void;
   handleOpenShortcuts: () => void;
   handleOpenReleaseNotes: () => void;
-  showMainMenu: boolean; // New prop
-  setShowMainMenu: (show: boolean) => void; // New prop
+  showMainMenu: boolean;
+  setShowMainMenu: (show: boolean) => void;
+  showCommunityPanel: boolean; // New prop for community panel visibility
+  toggleCommunityPanel: () => void; // New prop to toggle community panel
 }
 
 export function AppHeaderPanelButtons({
@@ -263,8 +274,10 @@ export function AppHeaderPanelButtons({
   handleOpenIntroduction,
   handleOpenShortcuts,
   handleOpenReleaseNotes,
-  showMainMenu, // Destructure new prop
-  setShowMainMenu, // Destructure new prop
+  showMainMenu,
+  setShowMainMenu,
+  showCommunityPanel, // Destructure new prop
+  toggleCommunityPanel, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -381,6 +394,14 @@ export function AppHeaderPanelButtons({
       </div> {/* End of new container div */}
       {/* Removed Auto-Square button */}
 
+      <button
+        className={`glass-button ${showCommunityPanel ? 'active' : ''}`}
+        onClick={toggleCommunityPanel}
+        data-tooltip-bottom="Toggle Community Panel"
+        aria-label="Toggle Community Panel"
+      >
+        <UsersIcon />
+      </button>
       <button
         className={`glass-button settings-theme ${showMainMenu ? 'active' : ''}`}
         onClick={() => setShowMainMenu(!showMainMenu)}
