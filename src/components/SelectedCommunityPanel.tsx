@@ -108,9 +108,9 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
       const panelRect = panelRef.current.getBoundingClientRect();
       const margin = 10; // 10px margin from edges
 
-      // Calculate initial position to be bottom-right with a margin
+      // Calculate initial position to be top-right with a margin
       const initialX = window.innerWidth - panelRect.width - margin;
-      const initialY = window.innerHeight - panelRect.height - margin;
+      const initialY = margin; // Top margin
 
       setPosition({ x: initialX, y: initialY });
     }
