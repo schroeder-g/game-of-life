@@ -446,29 +446,26 @@ export function BrushControls() {
       onTouchStart={handleTouchStart}
       aria-label="Brush Controls Panel" // Added for accessibility in tests
     >
-      <span id='Selected-Brush-Label'
-        style={{
-
-          textAlign: 'left',
-          paddingBottom: '5px',
-          fontWeight: 'bold',
-          color: '#FFA500', // Subtler orange color for text
-          cursor: 'inherit', // Inherit cursor from parent for dragging
-        }}
-      >
-        Brush: {selectedShape} {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
-      </span><span id="brush-effect-label"
-        style={{
-
-          textAlign: 'right',
-          paddingBottom: '5px',
-          fontWeight: 'bold',
-          color: '#FFA500', // Subtler orange color for text
-          cursor: 'inherit', // Inherit cursor from parent for dragging
-        }}
-      >
-        {selectedShape} {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
-      </    span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '5px' }}>
+        <span id='Selected-Brush-Label'
+          style={{
+            fontWeight: 'bold',
+            color: '#FFA500', // Subtler orange color for text
+            cursor: 'inherit', // Inherit cursor from parent for dragging
+          }}
+        >
+          Brush: {selectedShape}
+        </span>
+        <span id="brush-effect-label"
+          style={{
+            fontWeight: 'bold',
+            color: '#FFA500', // Subtler orange color for text
+            cursor: 'inherit', // Inherit cursor from parent for dragging
+          }}
+        >
+          {paintMode === 1 ? 'Activate' : paintMode === -1 ? 'Deactivate' : '(n/a)'}
+        </span>
+      </div>
 
 
       <div
