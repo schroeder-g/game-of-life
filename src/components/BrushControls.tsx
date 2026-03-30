@@ -569,11 +569,6 @@ export function BrushControls() {
 
       {isContentVisible && (
         <>
-          {/* Debug info */}
-          <div style={{ fontSize: '0.7em', color: '#8b949e', marginBottom: '5px', textAlign: 'center' }}>
-            Screen: {window.innerWidth}x{window.innerHeight} | Midline Y: {Math.round(window.innerHeight / 2)} | Panel Y: {Math.round(position.y)}
-          </div>
-
           <div
             style={{
               display: 'grid',
