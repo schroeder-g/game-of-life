@@ -82,9 +82,10 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDropdown() {
+function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
+  const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
+  const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual drop menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
 
   const {
@@ -121,8 +122,8 @@ function BrushSelectorDropdown() {
     setIsOpen(false);
   }, [setSelectedShape, initBrushOrientation]);
 
-  // Effect to close dropdown on outside click
-  useClickOutside(dropdownRef, () => setIsOpen(false));
+  // Effect to close drop on outside click
+  useClickOutside(dropRef, () => setIsOpen(false));
 
   const handleButtonClick = () => {
     setIsOpen(prev => !prev);
@@ -130,11 +131,13 @@ function BrushSelectorDropdown() {
 
   return (
     <div
-      id="brush-selector-dropdown"
-      className="scene-selector-dropdown"
-      ref={dropdownRef}
+      id="brush-selector-button-wrapper"
+
+      ref={dropRef}
+      style={{ position: 'relative' }} // Added position: 'relative'
     >
       <button
+        id="brush-selector-button"
         className="glass-button"
         onClick={handleButtonClick}
         data-tooltip-bottom="Select Brush Shape"
@@ -143,7 +146,9 @@ function BrushSelectorDropdown() {
       </button>
       {isOpen && (
         <div
-          className="dropdown-menu"
+          id="brush-list"
+          ref={menuRef} // Attach ref to the dropdown menu div
+
           onMouseLeave={() => setHoveredName(null)}
         >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
@@ -155,7 +160,6 @@ function BrushSelectorDropdown() {
             return (
               <button
                 key={name}
-                className={`dropdown-item ${isActive ? 'selected' : ''}`}
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
@@ -546,7 +550,7 @@ export function BrushControls() {
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-          <BrushSelectorDropdown />
+          <BrushSelectorDropdown panelTop={position.y} />
         </div>
         {(() => {
           // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
