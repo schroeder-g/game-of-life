@@ -133,7 +133,7 @@ function BrushSelectorDrop() {
       id="brush-selector-button-wrapper"
 
       ref={dropRef}
-      style={{ position: 'relative' }} // Added position: 'relative'
+      style={{ position: 'relative' }} // Keep position: 'relative' here for the parent
     >
       <button
         id="brush-selector-button"
@@ -146,8 +146,8 @@ function BrushSelectorDrop() {
       {isOpen && (
         <div
           id="brush-list"
-          ref={menuRef} // Attach ref to the dropdown menu div
-
+          className="dropdown-menu" // Apply dropdown-menu class
+          style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
           onMouseLeave={() => setHoveredName(null)}
         >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
@@ -159,6 +159,7 @@ function BrushSelectorDrop() {
             return (
               <button
                 key={name}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
@@ -549,7 +550,7 @@ export function BrushControls() {
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
         <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-          <BrushSelectorDropdown panelTop={position.y} />
+          <BrushSelectorDrop />
         </div>
         {(() => {
           // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
