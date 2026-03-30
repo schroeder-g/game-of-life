@@ -109,6 +109,13 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
     return () => unsubscribe();
   }, [eventBus]);
 
+  // Ensure community panel is visible in edit mode if a community is selected
+  useEffect(() => {
+    if (!rotationMode && community.length > 0) {
+      setShowCommunityPanel(true);
+    }
+  }, [rotationMode, community.length]);
+
   return (
     <div className="app-header-panel">
       <div className="title-section">
