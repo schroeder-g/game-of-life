@@ -337,7 +337,7 @@ export function BrushControls() {
           gridTemplateColumns: 'repeat(18, 1fr)', // 3 cells wider (15 + 3)
           gridTemplateRows: 'repeat(8, auto)', // 2 cells taller (6 + 2)
           gap: '5px',
-          maxWidth: '360px', // Adjusted for 18 columns (300 / 15 * 18)
+          maxWidth: '450px', // Adjusted to give more room for column content (18 columns * 25px)
           justifyContent: 'center',
           alignItems: 'center',
         }}
