@@ -171,28 +171,12 @@ function BrushSelectorDropdown() {
   );
 }
 
-interface BrushControlsProps {
 
-  // Brush state and actions
-  selectedShape: ShapeType;
-  paintMode: number;
-  shapeSize: number;
-  isHollow: boolean;
-  setPaintMode: (mode: 0 | 1 | -1 | ((prev: 0 | 1 | -1) => 0 | 1 | -1)) => void;
-  setShapeSize: (size: number) => void;
-  setIsHollow: (isHollow: boolean) => void;
-}
-
-export function BrushControls(props: BrushControlsProps) {
+export function BrushControls() {
   const {
-    selectedShape,
-    paintMode,
-    shapeSize,
-    isHollow,
-    setPaintMode,
-    setShapeSize,
-    setIsHollow,
-  } = props;
+    state: { selectedShape, shapeSize, isHollow, paintMode },
+    actions: { setShapeSize, setIsHollow, setPaintMode },
+  } = useBrush();
 
   const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setShapeSize(Number(e.target.value));
@@ -471,7 +455,7 @@ export function BrushControls(props: BrushControlsProps) {
           cursor: 'inherit', // Inherit cursor from parent for dragging
         }}
       >
-        Brush Controls
+        Brush: {selectedShape} {paintMode === 1 ? 'Alive' : paintMode === -1 ? 'Dead' : 'None'}
       </div>
       <div
         style={{
@@ -511,7 +495,7 @@ export function BrushControls(props: BrushControlsProps) {
             </label>
 
             <button
-              className={`glass-button edit-action-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
+              className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
               onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
               data-tooltip-bottom="Activate (Paint) (Space)"
             >
