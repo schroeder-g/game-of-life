@@ -11,13 +11,7 @@ body.view-mode .community-sidebar {
 
 /* Main container for the dropdown button and its menu */
 .scene-selector-dropdown {
-  position: relative;
-}
-
-/* The dropdown menu panel */
-/* Main container for the dropdown button and its menu */
-.scene-selector-dropdown {
-  position: relative;
+  /* position: relative; -- Removed as it was for dropdown positioning */
 }
 
 /* The dropdown menu panel */

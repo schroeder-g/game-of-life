@@ -82,10 +82,9 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
+function BrushSelectorDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
-  const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual dropdown menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
 
   const {
@@ -129,29 +128,11 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
     setIsOpen(prev => !prev);
   };
 
-  // Effect to determine if the dropdown should open upwards
-  useEffect(() => {
-    const checkDropdownPosition = () => {
-      if (isOpen && menuRef.current) {
-        // The dropdown should "drop up" if the parent panel is above the screen's equator
-        setShouldDropUp(panelTop < window.innerHeight / 2);
-      }
-    };
-
-    checkDropdownPosition(); // Check initially when dropdown opens
-
-    window.addEventListener('resize', checkDropdownPosition);
-    return () => {
-      window.removeEventListener('resize', checkDropdownPosition);
-    };
-  }, [isOpen, panelTop]); // Re-run when isOpen or panelTop changes
-
   return (
     <div
       id="brush-selector-dropdown"
       className="scene-selector-dropdown"
       ref={dropdownRef}
-      style={{ position: 'relative' }} // Added position: 'relative'
     >
       <button
         className="glass-button"
@@ -162,8 +143,7 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
       </button>
       {isOpen && (
         <div
-          ref={menuRef} // Attach ref to the dropdown menu div
-          className={`dropdown-menu  dropup`}
+          className="dropdown-menu"
           onMouseLeave={() => setHoveredName(null)}
         >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
@@ -175,7 +155,7 @@ function BrushSelectorDropdown({ panelTop }: { panelTop: number }) {
             return (
               <button
                 key={name}
-                className={`dropdown-item dropup ${isActive ? 'selected' : ''}`}
+                className={`dropdown-item ${isActive ? 'selected' : ''}`}
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
