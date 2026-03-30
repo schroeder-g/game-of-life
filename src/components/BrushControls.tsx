@@ -334,7 +334,7 @@ export function BrushControls() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(12, 1fr)',
+          gridTemplateColumns: 'repeat(15, 1fr)',
           gridTemplateRows: 'auto auto auto auto auto auto',
           gap: '5px',
           maxWidth: '300px', // 50% wider (200px * 1.5 = 300px)
