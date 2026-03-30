@@ -174,7 +174,8 @@ export function BrushControls() {
   }, [setShapeSize]);
 
   const {
-    state: { cameraOrientation, rotationMode, gridSize }, // Removed community from here
+    state: { cameraOrientation, rotationMode, gridSize },
+    actions: { setCommunity }, // Add setCommunity here
     meta: { eventBus, gridRef },
   } = useSimulation();
 
@@ -448,6 +449,7 @@ export function BrushControls() {
           }
 
           setCustomBrush(selectedCommunityCells);
+          setCommunity(selectedCommunityCells); // Set the community in SimulationContext
           setSelectedShape("Selected Community"); // Keep this for internal state, but it won't be in dropdown
           setPaintMode(1); // Set to Activate mode
           eventBus.emit('showCommunityPanel', true); // Emit event to show the new panel
