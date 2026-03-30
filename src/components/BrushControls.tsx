@@ -460,19 +460,21 @@ export function BrushControls() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(18, 1fr)', // 3 cells wider (15 + 3)
-          gridTemplateRows: 'repeat(8, auto)', // 2 cells taller (6 + 2)
+          gridTemplateColumns: 'repeat(6, 1fr)', // Reduced to 6 columns
+          gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
           gap: '5px',
-          maxWidth: '450px', // Adjusted to give more room for column content (18 columns * 25px)
+          maxWidth: '250px', // Reduced max width
           justifyContent: 'center',
           alignItems: 'center',
         }}
         aria-label="Brush Controls Grid" // Added for accessibility in tests
       >
-        <BrushSelectorDropdown />
+        <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
+          <BrushSelectorDropdown />
+        </div>
         {selectedShape !== "Selected Community" && selectedShape !== "Single Cell" && selectedShape !== "None" && (
           <>
-            <div className="brush-size-control" style={{ width: '100px' }}>
+            <div className="brush-size-control" style={{ gridColumn: '2 / 4', gridRow: '1 / 2', width: 'unset' }}> {/* width: 'unset' to let grid handle it */}
               <span>Size: {shapeSize}</span>
               <input
                 type="range"
@@ -483,7 +485,7 @@ export function BrushControls() {
                 onChange={handleBrushSizeChange}
               />
             </div>
-            <label className="control-label row" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#8b949e' }}>
+            <label className="control-label row" style={{ gridColumn: '4 / 5', gridRow: '1 / 2', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#8b949e' }}>
               <input
                 type="checkbox"
                 className="glass-checkbox"
@@ -495,10 +497,12 @@ export function BrushControls() {
             </label>
           </>
         )}
+        {/* Activate and Clear buttons moved outside conditional rendering */}
         <button
           className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
           onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
           data-tooltip-bottom="Activate (Paint) (Space)"
+          style={{ gridColumn: '5 / 6', gridRow: '1 / 2' }}
         >
           <PlusIcon />
         </button>
@@ -506,11 +510,13 @@ export function BrushControls() {
           className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
           onClick={() => setPaintMode(prev => (prev === -1 ? 0 : -1))}
           data-tooltip-bottom="Clear (Delete)"
+          style={{ gridColumn: '6 / 7', gridRow: '1 / 2' }}
         >
           <MinusIcon />
         </button>
 
-        <div style={{ gridColumn: '5 / 6', gridRow: '2 / 4', display: 'flex', justifyContent: 'center' }}>
+        {/* Directional controls */}
+        <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
           <button
             id="upBtn"
             className="glass-button"
@@ -521,7 +527,7 @@ export function BrushControls() {
           ><ArrowUpIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '5 / 6', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
           <button
             id="downBtn"
             className="glass-button"
@@ -532,7 +538,7 @@ export function BrushControls() {
           ><ArrowDownIcon /></button>
         </div>
 
-        <div style={{ gridColumn: ' 4 / 5', gridRow: '3 / 5', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '1 / 2', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
             id="leftBtn"
             className="glass-button"
@@ -543,7 +549,7 @@ export function BrushControls() {
           ><ArrowLeftIcon /></button>
         </div>
 
-        <div style={{ gridColumn: ' 6 / 7', gridRow: '3 / 5', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ gridColumn: '3 / 4', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
           <button
             id="rightBtn"
             className="glass-button"
@@ -554,25 +560,25 @@ export function BrushControls() {
           ><ArrowRightIcon /></button>
         </div>
 
-        <div style={{ gridColumn: '14 / 15', gridRow: '2 / 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '4 / 7', gridRow: '2 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="fartherBtn"
             className="glass-button"
             onMouseDown={(e) => { e.stopPropagation(); handleMove('q'); setActiveKey('q'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
+            style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8pt' }}
           ><AwayIcon />&nbsp;&nbsp;Farther</button>
         </div>
 
-        <div style={{ gridColumn: '14 / 15', gridRow: '4 / 6', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ gridColumn: '4 / 7', gridRow: '4 / 5', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <button
             id="closerBtn"
             className="glass-button"
             onMouseDown={(e) => { e.stopPropagation(); handleMove('z'); setActiveKey('z'); }}
             onMouseUp={() => setActiveKey(null)}
             onMouseLeave={() => setActiveKey(null)}
-            style={{ width: '100px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+            style={{ width: '100%', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
           ><CloserIcon />&nbsp;&nbsp;Closer </button>
         </div>
       </div>
