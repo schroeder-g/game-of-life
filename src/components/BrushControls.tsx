@@ -148,7 +148,7 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
       {isOpen && (
         <div
           id="brush-list"
-          className="dropdown-menu" // Apply dropdown-menu class
+          className="dropdown-menu dropup" // Apply dropdown-menu class
           style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
           onMouseLeave={() => setHoveredName(null)}
         >
