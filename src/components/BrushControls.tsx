@@ -572,7 +572,7 @@ export function BrushControls() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(12 , 1fr)', // Reduced to 6 columns
+              gridTemplateColumns: 'repeat7, 1fr)', // Reduced to 6 columns
               gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
               gap: '5px',
               alignItems: 'center',
@@ -639,7 +639,7 @@ export function BrushControls() {
               );
             })()}
 
-            <div style={{ gridColumn: '4 / 6', gridRow: '1 / 2', display: 'flex', gap: '5px' }}>{/* Activate and Clear buttons moved outside conditional rendering */}
+            <div style={{ gridColumn: '6/7', gridRow: '1 / 2', display: 'flex', gap: '5px' }}>{/* Activate and Clear buttons moved outside conditional rendering */}
               <button
                 className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
                 onClick={() => setPaintMode(prev => (prev === 1 ? 0 : 1))}
@@ -657,7 +657,7 @@ export function BrushControls() {
 
             {/* Directional controls */}
             {/* UP */}
-            <div style={{ gridColumn: '2 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ gridColumn: '3 / 3', gridRow: '2 / 3', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="upBtn"
                 className="glass-button"
@@ -668,7 +668,7 @@ export function BrushControls() {
               ><ArrowUpIcon /></button>
             </div>
             {/* DOWN */}
-            <div style={{ gridColumn: '2 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ gridColumn: '3 / 3', gridRow: '4 / 5', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="downBtn"
                 className="glass-button"
@@ -679,7 +679,7 @@ export function BrushControls() {
               ><ArrowDownIcon /></button>
             </div>
             {/* LEFT */}
-            <div style={{ gridColumn: '1 / 2', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ gridColumn: '2/2', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="leftBtn"
                 className="glass-button"
@@ -690,7 +690,7 @@ export function BrushControls() {
               ><ArrowLeftIcon /></button>
             </div>
             {/* RIGHT */}
-            <div style={{ gridColumn: '3 / 4', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ gridColumn: '4 / 4', gridRow: '3 / 4', display: 'flex', justifyContent: 'center' }}>
               <button
                 id="rightBtn"
                 className="glass-button"
@@ -701,7 +701,7 @@ export function BrushControls() {
               ><ArrowRightIcon /></button>
             </div>
             {/* FARTHER */}
-            <div style={{ gridColumn: '4 / 4  ', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ gridColumn: '6 / 7', gridRow: '3 / 3', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <button
                 id="fartherBtn"
                 className="glass-button"
@@ -712,7 +712,7 @@ export function BrushControls() {
               ><AwayIcon />&nbsp;&nbsp;Farther</button>
             </div>
             {/* CLOSER */}
-            <div style={{ gridColumn: '4 / 4', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ gridColumn: '6 / 7', gridRow: '4/ 4', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <button
                 id="closerBtn"
                 className="glass-button"
