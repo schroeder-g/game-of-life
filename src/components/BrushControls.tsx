@@ -149,7 +149,6 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
         <div
           id="brush-list"
           className="dropdown-menu dropup" // Apply dropdown-menu class
-          style={{ bottom: '100%', top: 'auto', marginBottom: '8px' }} // Position above the button
           onMouseLeave={() => setHoveredName(null)}
         >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"

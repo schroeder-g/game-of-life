@@ -41,7 +41,9 @@ body.view-mode .community-sidebar {
 }
 
 .dropdown-menu.dropup {
-  /* No specific top/bottom/margin here, handled by inline style in JS */
+  bottom: 100%;
+  top: auto;
+  margin-bottom: 8px;
 }
 
 /* Individual items within the dropdown */
