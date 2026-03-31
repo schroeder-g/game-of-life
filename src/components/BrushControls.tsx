@@ -148,9 +148,6 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
       {isOpen && (
         <div
           id="brush-list"
-          className="dropdown-menu dropup" // Apply dropdown-menu class
-          onMouseLeave={() => setHoveredName(null)}
-        >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
             const isSelected = name === selectedShape;
             const isHovered = name === hoveredName;

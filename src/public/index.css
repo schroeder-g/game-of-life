@@ -40,11 +40,6 @@ body.view-mode .community-sidebar {
   right: 0;
 }
 
-.dropdown-menu.dropup {
-  bottom: 100%;
-  top: auto;
-  margin-bottom: 8px;
-}
 
 /* Individual items within the dropdown */
 .dropdown-item {
