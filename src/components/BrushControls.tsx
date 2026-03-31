@@ -82,12 +82,11 @@ const CloserIcon = () => (
   </svg>
 );
 
-function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
+function BrushSelectorDrop() {
   const [isOpen, setIsOpen] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
   const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual brush list menu
   const [hoveredName, setHoveredName] = useState<string | null>(null);
-  const [shouldDropUp, setShouldDropUp] = useState(true); // State to determine if brush list should "drop up" (default to true)
 
   const {
     state: { selectedShape, brushQuaternion },
@@ -148,6 +147,9 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
       {isOpen && (
         <div
           id="brush-list"
+          className="dropdown-menu dropup" // Apply dropdown-menu and dropup classes
+          onMouseLeave={() => setHoveredName(null)}
+        >
           {SHAPES.filter(name => name !== "Selected Community").map((name) => { // Filter out "Selected Community"
             const isSelected = name === selectedShape;
             const isHovered = name === hoveredName;
@@ -157,7 +159,7 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
             return (
               <button
                 key={name}
-                className={`dropdown-item dropup ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
+                className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
@@ -578,7 +580,7 @@ export function BrushControls() {
             aria-label="Brush Controls Grid" // Added for accessibility in tests
           >
             <div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-              <BrushSelectorDrop panelTop={position.y} />
+              <BrushSelectorDrop />
             </div>
             {(() => {
               // "Selected Community" is no longer in the dropdown, but can still be the selectedShape
