@@ -160,7 +160,7 @@ function BrushSelectorDrop({ panelTop }: { panelTop: number }) {
             return (
               <button
                 key={name}
-                className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
+                className={`dropdown-item dropup ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
                 onClick={() => handleSelectShape(name)}
                 onMouseEnter={() => setHoveredName(name)}
               >
@@ -569,7 +569,9 @@ export function BrushControls() {
       {isContentVisible && (
         <>
           <div
+            className="dropdown-item dropup"
             style={{
+
               display: 'grid',
               gridTemplateColumns: 'repeat7, 1fr)', // Reduced to 6 columns
               gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
