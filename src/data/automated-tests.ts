@@ -55,6 +55,9 @@ export const AUTOMATED_TEST_IDS = new Set([
   'AHPB_HELP_NOTES_001',
   'AHPB_HELP_DOCS_001',
 
+  // AppHeaderPanel.test.tsx - Scene Selection
+  'AHP_SCENE_SELECT_001',
+
   // BrushControls.test.tsx
   'TEST_BC_DRAG_001',
   'TEST_BC_INIT_001',
