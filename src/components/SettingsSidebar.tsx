@@ -16,7 +16,7 @@ import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrien
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
 
 
-interface MainMenuProps {
+interface SettingsSidebarProps {
   isSmallScreen: boolean;
 }
 
@@ -933,7 +933,7 @@ function SceneManagementSection() {
   );
 }
 
-export function MainMenu({ isSmallScreen }: MainMenuProps) {
+export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
   const {
     state: { running, rotationMode, community, buildInfo },
     actions: {

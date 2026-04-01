@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { MainMenu } from '../components/MainMenu';
+import { SettingsSidebar } from '../components/SettingsSidebar';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
 import { useSimulation } from '../contexts/SimulationContext';
 import { useBrush } from '../contexts/BrushContext';
@@ -15,7 +15,7 @@ vi.mock('../contexts/BrushContext', () => ({ useBrush: vi.fn() }));
 vi.mock('../contexts/GenesisConfigContext', () => ({ useGenesisConfig: vi.fn() }));
 vi.mock('../hooks/useClickOutside', () => ({ useClickOutside: vi.fn() }));
 
-describe('MainMenu and AppHeaderPanel', () => {
+describe('SettingsSidebar and AppHeaderPanel', () => {
     let mockSetRotationMode: Mock;
     let mockSetSpeed: Mock;
     let mockPlayStop: Mock;
