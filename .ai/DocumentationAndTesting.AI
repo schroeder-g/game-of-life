@@ -11,6 +11,15 @@ The system is designed to ensure every documented feature (a "claim") is verifie
 -   **Automated Tests**: Located in `src/components/__tests__/*.test.tsx` and other `__tests__` directories. Test descriptions (`it(...)`) contain a unique ID that links them to a claim.
 -   **Test ID Registry**: The file `src/data/automated-tests.ts` contains a `Set` of all automated test IDs. This is used for data integrity checks.
 -   **Data Integrity**: The test file `src/tests/DataIntegrity.test.ts` verifies that all claims have tests and all test IDs are valid.
+-   **UI Integration**: The `DocumentationModal` component is responsible for displaying the documentation. It cross-references claims with test results to show the status (`Pass/Fail/Unchecked`), Test ID, and last test run date for each claim.
+-   **Documentation Index**: The documentation modal provides an index of all topics, grouped by their source file (e.g., "Brush Controls"), for easy navigation.
+    -   **Adding a New Group**: The index groups are defined in the `DOCUMENTATION_INDEX_GROUPS` array in `src/data/documentation/_Documentation.ts`. To add a new group for a documentation file (e.g., for a new component):
+        1.  Ensure all `h3` headings in the new documentation file share a common, unique ID prefix (e.g., `NC_` for New Component).
+        2.  Add a new `IndexGroup` object to the `DOCUMENTATION_INDEX_GROUPS` array.
+        3.  Set the `title` to the human-friendly name for the group (e.g., "New Component Controls").
+        4.  Set `idPrefix` to the unique prefix you chose (e.g., `NC_`).
+        5.  Set `stripPrefix` to the common leading phrase in the heading text that should be removed in the index (e.g., "<b>New Component ").
+        The `generateGroupedIndex` function in `src/components/DocumentationModal.tsx` will automatically use this data to build the index.
 
 ## Workflow for Managing Features
 
