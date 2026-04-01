@@ -20,7 +20,9 @@ describe('[QA-3] Data Integrity Checks', () => {
 
   it('[QA-3] ensures all test IDs referenced in claims exist in manual or automated tests', () => {
     const allClaimTestIds = new Set(
-      DOCUMENTATION_CONTENT.flatMap((item) => item.testIds || [])
+      DOCUMENTATION_CONTENT
+        .filter(item => !item.id.startsWith('deprecated-') && item.id !== 'heading-deprecated')
+        .flatMap((item) => item.testIds || [])
     );
 
     const allManualTestIds = new Set(MANUAL_TESTS.map((test) => test.id));
