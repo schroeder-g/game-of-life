@@ -237,4 +237,4 @@ const CURRENT_MANUAL: DocItem[] = [
   },
 ];
 
-export const DOCUMENTATION_CONTENT: DocItem[] = [ ...CURRENT_MANUAL, ...DEPRECATED_CONTENT ];
+export const DOCUMENTATION_CONTENT: DocItem[] = [ ...CURRENT_MANUAL, ...brushControlsDocumentation, ...DEPRECATED_CONTENT ];
