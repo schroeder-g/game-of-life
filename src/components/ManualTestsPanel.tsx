@@ -15,7 +15,6 @@ const StatusIcon = ({ status }: { status: ManualTestResult['status'] }) => {
 interface ManualTestsPanelProps {
   manualTests: ManualTest[];
   automatedTestIds: Set<string>;
-  documentation: DocItem[]; // This prop is maintained for API compatibility but is not used internally.
 }
 
 export function ManualTestsPanel({ manualTests, automatedTestIds }: ManualTestsPanelProps) {

@@ -21,4 +21,12 @@ export const AUTOMATED_TEST_IDS = new Set([
   'QA-3', // Verify All Claims Have Tests
   'UC-1', // Toggle Edit/View Mode
   'UC-6', // Adjust Simulation Speed
+
+  // AppHeaderPanel.test.tsx
+  'AHP_TITLE_001',
+  'AHP_STATUS_001',
+  'AHP_MODAL_001',
+  'AHPB_CONTROLS_001',
+  'AHPB_MENUS_001',
+  'AHPB_CONTEXT_001',
 ]);

@@ -22,6 +22,7 @@ export const appHeaderPanelDocumentation: DocItem[] = [
     type: "p",
     text: `The left section of the header displays the application title, "Cube of Life". Below the title, it shows build information, including the version number and build time. In non-production builds, it also displays a personalized welcome message if a username is set.`,
     references: ["src/components/AppHeaderPanel.tsx"],
+    testIds: ["AHP_TITLE_001"],
   },
   {
     id: "AHP_STATUS_001",
@@ -33,6 +34,7 @@ export const appHeaderPanelDocumentation: DocItem[] = [
     type: "p",
     text: `The central status panel provides real-time information about the simulation state. It displays the current scene name, the camera's face orientation and rotation, the active brush shape (in Edit Mode), and live simulation statistics like generation count and number of living cells.`,
     references: ["src/components/AppHeaderPanel.tsx"],
+    testIds: ["AHP_STATUS_001"],
   },
   {
     id: "AHP_MODAL_001",
@@ -44,5 +46,6 @@ export const appHeaderPanelDocumentation: DocItem[] = [
     type: "p",
     text: `The header panel is responsible for managing the visibility of several key UI elements, including the <span class="code-ref">DocumentationModal</span>, <span class="code-ref">IntroductionModal</span>, <span class="code-ref">ShortcutOverlay</span>, <span class="code-ref">ReleaseNotesModal</span>, and the <span class="code-ref">SelectedCommunityPanel</span>. It ensures these overlays are presented correctly based on user interaction and application state.`,
     references: ["src/components/AppHeaderPanel.tsx"],
+    testIds: ["AHP_MODAL_001"],
   },
 ];

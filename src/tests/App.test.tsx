@@ -101,45 +101,6 @@ describe('Automated UI & Feature Tests', () => {
     });
   });
 
-  describe('[UI-2] Documentation Modal Access', () => {
-    it('opens and closes the documentation modal', async () => {
-      render(<App />); // Render App
-      const helpButton = screen.getByRole('button', { name: 'Help (?)' }); // Changed to Help button
-      fireEvent.click(helpButton);
-
-      const docButton = screen.getByRole('button', { name: 'Documentation' });
-      fireEvent.click(docButton);
-
-      expect(await screen.findByRole('heading', { name: 'User Manual' })).toBeInTheDocument();
-
-      const closeButton = screen.getByRole('button', { name: 'Close' }); // Changed to Close button
-      fireEvent.click(closeButton);
-      expect(screen.queryByRole('heading', { name: 'User Manual' })).not.toBeInTheDocument();
-    });
-  });
-
-  describe('[UC-1] Mode Toggle', () => {
-    it('toggles between View and Edit mode icons', () => {
-      render(<App />); // Render App
-      const toggleButton = screen.getByTitle('Switch to Edit Mode');
-      expect(toggleButton).toBeInTheDocument();
-      fireEvent.click(toggleButton);
-      expect(screen.getByTitle('Switch to View Mode')).toBeInTheDocument();
-    });
-  });
-
-  describe('[UC-6] Adjust Simulation Speed', () => {
-    it('renders the speed slider and its value', async () => {
-      render(<App />); // Render App
-      // Ensure rotationMode is true for speed slider to be visible
-      const toggleButton = screen.getByTitle('Switch to Edit Mode');
-      fireEvent.click(toggleButton); // Switch to View Mode
-
-      const speedSlider = await screen.findByRole('slider', { name: /Speed/i });
-      expect(speedSlider).toBeInTheDocument();
-      expect(screen.getByText(/Speed: 5/i)).toBeInTheDocument(); // Checks default
-    });
-  });
 
   describe('[UX-6] Test Panel Persistence', () => {
     it('saves and loads test statuses from localStorage', async () => {

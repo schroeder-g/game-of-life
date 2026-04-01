@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { MANUAL_TESTS } from '../data/manual-tests.ts';
 import { DOCUMENTATION_CONTENT } from '../data/documentation/_Documentation.js';
+import { AUTOMATED_TEST_IDS } from '../data/automated-tests.ts';
 
 describe('[QA-3] Data Integrity Checks', () => {
   it('ensures all documentation claims have at least one test ID', () => {
@@ -17,16 +18,17 @@ describe('[QA-3] Data Integrity Checks', () => {
     expect(claimsMissingTests, `Claims missing testIds: ${missingIds.join(', ')}`).toHaveLength(0);
   });
 
-  it('ensures all test IDs referenced in claims exist in manual-tests.ts', () => {
+  it('ensures all test IDs referenced in claims exist in manual or automated tests', () => {
     const allClaimTestIds = new Set(
       DOCUMENTATION_CONTENT.flatMap((item) => item.testIds || [])
     );
 
     const allManualTestIds = new Set(MANUAL_TESTS.map((test) => test.id));
+    const allAutomatedTestIds = AUTOMATED_TEST_IDS; // It's already a Set
 
     const invalidTestIds: string[] = [];
     allClaimTestIds.forEach((testId) => {
-      if (!allManualTestIds.has(testId)) {
+      if (!allManualTestIds.has(testId) && !allAutomatedTestIds.has(testId)) {
         invalidTestIds.push(testId);
       }
     });
