@@ -295,12 +295,7 @@ export function AppHeaderPanelButtons({
       >
         {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
       </button>
-      {!rotationMode && (
-        <>
-
-          <BrushControls />
-        </>
-      )}
+      <BrushControls />
       <button
         className="glass-button primary"
         onClick={playStop}

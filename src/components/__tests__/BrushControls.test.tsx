@@ -39,8 +39,20 @@ describe('BrushControls', () => {
       },
     });
     (useBrush as vi.Mock).mockReturnValue({
-      state: {},
-      actions: {},
+      state: {
+        selectedShape: 'Cube',
+        paintMode: 0,
+        shapeSize: 3,
+        isHollow: false,
+      },
+      actions: {
+        setShapeSize: vi.fn(),
+        setIsHollow: vi.fn(),
+        setPaintMode: vi.fn(),
+        setSelectedShape: vi.fn(),
+        setCustomBrush: vi.fn(),
+        incrementBrushRotationVersion: vi.fn(),
+      },
     });
 
     // Mock window dimensions for centering tests
@@ -89,7 +101,7 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_INIT_001
-  it('TEST_BC_INIT_001: initializes in the center of the screen', async () => {
+  it('TEST_BC_INIT_001: initializes in the bottom-right of the screen', async () => {
     // Mock getBoundingClientRect to return a consistent size for calculation
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, width: 300, height: 200, top: 0, left: 0, right: 0, bottom: 0,
@@ -99,9 +111,9 @@ describe('BrushControls', () => {
     render(<BrushControls />);
     const panel = screen.getByLabelText('Brush Controls Panel');
 
-    // Calculate expected center position
-    const expectedX = (1024 - 300) / 2;
-    const expectedY = (768 - 200) / 2;
+    // Calculate expected bottom-right position
+    const expectedX = 1024 - 300 - 10; // innerWidth - panelWidth - margin
+    const expectedY = 768 - 200 - 10; // innerHeight - panelHeight - margin
 
     await waitFor(() => {
       expect(panel).toHaveStyle(`left: ${expectedX}px`);
@@ -110,10 +122,10 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_APPEAR_001
-  it('TEST_BC_APPEAR_001: displays "Brush Controls" header, orange outline, and rounded corners', () => {
+  it('TEST_BC_APPEAR_001: displays dynamic header, orange outline, and rounded corners', () => {
     render(<BrushControls />);
     const panel = screen.getByLabelText('Brush Controls Panel');
-    const header = screen.getByText('Brush Controls');
+    const header = screen.getByText('Brush: Cube');
 
     expect(header).toBeInTheDocument();
     expect(header).toHaveStyle('color: #FFA500');
@@ -122,11 +134,11 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_APPEAR_002
-  it('TEST_BC_APPEAR_002: is 50% wider than default', () => {
+  it('TEST_BC_APPEAR_002: has a minimum width to fit controls', () => {
     render(<BrushControls />);
-    const innerGrid = screen.getByLabelText('Brush Controls Grid'); // Assuming an accessible label for the inner grid
+    const panel = screen.getByLabelText('Brush Controls Panel');
 
-    expect(innerGrid).toHaveStyle('max-width: 300px');
+    expect(panel).toHaveStyle('min-width: 220px');
   });
 
   // TEST_BC_VIS_001
