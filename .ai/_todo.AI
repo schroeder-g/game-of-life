@@ -19,7 +19,7 @@
 *   **TODO-010:** [COMPLETED] `UC-9` (from `config-cursor`) - In progress in `SettingsSidebar.test.tsx`.
 *   **TODO-009:** [COMPLETED] `UC-8` (from `config-rules`) - In progress in `SettingsSidebar.test.tsx`.
 *   **TODO-008:** [COMPLETED] `UC-7` (from `config-environment`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-002:** [COMPLETED] `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`) - Missing automated test.
+*   **TODO-002:** [COMPLETED] `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`) - Claim highlights removed.
 *   **TODO-059:** [COMPLETED] Update the ReleaseNotes based on Git commits before a build.
 *   **TODO-006:** [COMPLETED] `UC-4` (from `edit-paint-clear`)
 *   **TODO-007:** [COMPLETED] `UC-5` (from `edit-brush-selector`)

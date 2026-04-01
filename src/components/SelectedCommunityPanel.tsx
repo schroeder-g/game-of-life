@@ -339,7 +339,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
           ) : (
             <>
               <div className="community-stats">
-                <span>Cells: {community.length} <ClaimHint claimId="COMMUNITY_STATS_CLAIM" /></span>
+                <span>Cells: {community.length}</span>
               </div>
               <div className="community-3d-wrapper">
                 <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
@@ -348,7 +348,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
                   <CommunityPreview community={community} gridSize={gridSize} />
                 </Canvas>
                 <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-                  <ClaimHint claimId="COMMUNITY_PREVIEW_3D_CLAIM" />
+                  {/* Claim hint removed from here as per request */}
                 </div>
               </div>
             </>

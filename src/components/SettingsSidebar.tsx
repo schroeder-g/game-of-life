@@ -577,7 +577,7 @@ function CameraControlSection() {
           alignItems: "center",
         }}
       >
-        Camera Controls <ClaimHint claimId="UC-11" />
+        Camera Controls
         <span style={{ fontSize: "12px", opacity: 0.6 }}>
           {isCollapsed ? "▼" : "▲"}
         </span>
