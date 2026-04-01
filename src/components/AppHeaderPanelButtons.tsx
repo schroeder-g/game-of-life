@@ -381,6 +381,9 @@ export function AppHeaderPanelButtons({
         <GearIcon />
       </button>
       <div className="dropdown-container" ref={helpDropdownRef}>
+        <span style={{display: 'none'}} className="AiReminder">
+          AI Prompt: The Help dropdown button is not documented. Add a new documentation claim for the 'Help' dropdown button itself, with a unique ID like 'AHPB_HELP_001'. This claim should describe that clicking the '?' button opens a menu with options for Introduction, Shortcuts, Release Notes, and Documentation. Also, create a new test 'AHPB_HELP_001' to verify that the dropdown opens and closes. The existing help-related claims (AHPB_HELP_INT_001, AHPB_HELP_SHORT_001, etc.) should be re-organized to be sub-items under a new 'Help Dropdown' h3 section in the documentation.
+        </span>
         <button
           className="glass-button"
           onClick={() => setIsHelpDropdownOpen(prev => !prev)}
