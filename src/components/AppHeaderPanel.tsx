@@ -50,8 +50,8 @@ interface AppHeaderPanelProps {
 
 export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanelProps) {
   const {
-    state: { running, rotationMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction, community }, // Added community
-    actions: { playStop, step, stepBackward, reset, setRotationMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
+    state: { running, viewMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction, community }, // Added community
+    actions: { playStop, step, stepBackward, reset, setviewMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
     meta: { cameraActionsRef, eventBus }, // Added eventBus
   } = useSimulation();
   const {
@@ -111,10 +111,10 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
 
   // Ensure community panel is visible in edit mode if a community is selected
   useEffect(() => {
-    if (!rotationMode && community.length > 0) {
+    if (!viewMode && community.length > 0) {
       setShowCommunityPanel(true);
     }
-  }, [rotationMode, community.length]);
+  }, [viewMode, community.length]);
 
   return (
     <div className="app-header-panel">
@@ -140,7 +140,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         <div className="orientation-status">
           Face: {faceName}, {rotationDegrees}
         </div>
-        {!rotationMode && (
+        {!viewMode && (
           <div className="shape-status">
             Shape: {selectedShape}
           </div>
@@ -150,7 +150,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
 
       <AppHeaderPanelButtons
         running={running}
-        rotationMode={rotationMode}
+        viewMode={viewMode}
         hasInitialState={hasInitialState}
         hasPastHistory={hasPastHistory}
         squareUp={squareUp}
@@ -161,7 +161,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         step={step}
         stepBackward={stepBackward}
         reset={reset}
-        setRotationMode={setRotationMode}
+        setviewMode={setviewMode}
         fitDisplay={fitDisplay}
         recenter={recenter}
         setSquareUp={setSquareUp}
@@ -209,7 +209,7 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
       />
 
       <SelectedCommunityPanel
-        isVisible={showCommunityPanel && community.length > 0 && !rotationMode}
+        isVisible={showCommunityPanel && community.length > 0 && !viewMode}
         onClose={() => setShowCommunityPanel(false)}
       />
     </div>

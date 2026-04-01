@@ -53,7 +53,7 @@ export interface SimulationState {
   birthMargin: number;
   running: boolean;
   community: Array<[number, number, number]>;
-  rotationMode: boolean;
+  viewMode: boolean;
   neighborFaces: boolean;
   neighborEdges: boolean;
   neighborCorners: boolean;
@@ -94,7 +94,7 @@ export interface SimulationActions {
   setNeighborEdges: (val: boolean) => void;
   setNeighborCorners: (val: boolean) => void;
   setCommunity: (community: Array<[number, number, number]>) => void;
-  setRotationMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
+  setviewMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
   setPanSpeed: (speed: number) => void;
   setRotationSpeed: (speed: number) => void;
   setRollSpeed: (speed: number) => void;
@@ -206,7 +206,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, [hasPastHistory]);
 
   const [running, setRunning] = useState(false);
-  const [rotationMode, setRotationMode] = useState(true);
+  const [viewMode, setviewMode] = useState(true);
   const [community, setCommunity] = useState<Array<[number, number, number]>>(
     [],
   );
@@ -276,19 +276,19 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const runInitAnimation = useCallback(async (cells?: Array<[number, number, number]>) => {
     // Small pause to allow everything to settle
     await new Promise(r => setTimeout(r, 500));
-    
+
     if (isFirstLoadRef.current) {
       cameraActionsRef.current?.fitDisplay();
       isFirstLoadRef.current = false;
     }
-    
+
     setIsAnimatingInit(true);
     if (cells) {
       initialStateRef.current = cells;
       gridRef.current.clear();
       setHasInitialState(cells.length > 0);
     }
-    
+
     const size = gridRef.current.size;
     const originalCells = initialStateRef.current;
     const originalSet = new Set(originalCells.map(([x, y, z]) => `${x},${y},${z}`));
@@ -311,17 +311,17 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       centerX = (minX + maxX) / 2;
       centerY = (minY + maxY) / 2;
       centerZ = (minZ + maxZ) / 2;
-      
+
       let maxDistSq = 0;
       for (const [x, y, z] of originalCells) {
         const dx = x - centerX;
         const dy = y - centerY;
         const dz = z - centerZ;
-        maxDistSq = Math.max(maxDistSq, dx*dx + dy*dy + dz*dz);
+        maxDistSq = Math.max(maxDistSq, dx * dx + dy * dy + dz * dz);
       }
       radius = Math.sqrt(maxDistSq) + 2; // +2 for generous padding
     }
-    
+
     // Ensure the sphere is at least 30% the volume of the cube
     // (4/3)*pi*r^3 >= 0.3 * size^3  =>  r >= size * cbrt(0.225/pi) approx 0.415 * size
     const minRadius = size * 0.415;
@@ -330,7 +330,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     // 1 second total: 0.5s fill, 0.5s empty
     const fillDuration = 500;
     const stepDelay = fillDuration / size;
-    
+
     // Phase 1: Fill bottom-up (Y from 0 to size-1)
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -338,7 +338,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
           const dx = x - centerX;
           const dy = y - centerY;
           const dz = z - centerZ;
-          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
           // Hollow shell with thickness 1
           if (dist <= radius && dist >= radius - 1) {
@@ -366,7 +366,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
     // Wait for the last few cells to finish their shrinking animation (0.2s)
     await new Promise(r => setTimeout(r, 300));
-    
+
     setIsAnimatingInit(false);
   }, []);
 
@@ -603,7 +603,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       } else {
         gridRef.current.clear();
       }
-      
+
       // We don't restore state immediately here because runInitAnimation handles it
       runInitAnimation(cells);
       setCommunity([]);
@@ -624,9 +624,9 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const handleSetRotationMode = useCallback(
+  const handleSetviewMode = useCallback(
     (mode: boolean | ((prev: boolean) => boolean)) => {
-      setRotationMode((prev) => {
+      setviewMode((prev) => {
         const next = typeof mode === "function" ? mode(prev) : mode;
         if (next === false) {
           setRunning(false);
@@ -656,7 +656,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       birthMargin,
       running,
       community,
-      rotationMode,
+      viewMode,
       neighborFaces,
       neighborEdges,
       neighborCorners,
@@ -688,7 +688,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setBirthMax,
       setBirthMargin,
       setCommunity,
-      setRotationMode: handleSetRotationMode,
+      setviewMode: handleSetviewMode,
       setCameraOrientation,
       setPanSpeed,
       setRotationSpeed,

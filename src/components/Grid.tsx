@@ -445,7 +445,7 @@ function KeyboardSelector({
   cameraActionsRef: React.RefObject<any>;
 }) {
   const {
-    state: { gridSize, rotationMode, cellMargin },
+    state: { gridSize, viewMode, cellMargin },
     meta: { gridRef },
   } = useSimulation();
   const {
@@ -502,7 +502,7 @@ function KeyboardSelector({
     customOffsets,
   ]);
 
-  if (rotationMode || !selectorPos) return null;
+  if (viewMode || !selectorPos) return null;
 
   const offset = (gridSize - 1) / 2;
   const cellKeys = useMemo(() => new Set(previewCells.map(p => p.cell.join(','))), [previewCells]);
@@ -569,7 +569,7 @@ export function Scene() {
   const {
     speed,
     cellMargin,
-    rotationMode,
+    viewMode,
     running,
     community,
     gridSize,
@@ -593,7 +593,7 @@ export function Scene() {
   useEffect(() => {
     isSnapLockedRef.current = false;
     squareUpAnimRef.current = null;
-  }, [squareUp, rotationMode]);
+  }, [squareUp, viewMode]);
 
   // All useRef declarations first
   const brushStateRef = useRef(brushState);
@@ -643,13 +643,13 @@ export function Scene() {
         if (cameraRef.current && cubeRef.current) {
           const cam = cameraRef.current;
           const target = cameraTargetRef.current;
-          
+
           const posWorld = cam.position.clone().sub(target);
           const cubeInvQuat = cubeRef.current.quaternion.clone().invert();
           const posLocal = posWorld.clone().applyQuaternion(cubeInvQuat);
-          
+
           const ax = Math.abs(posLocal.x), ay = Math.abs(posLocal.y), az = Math.abs(posLocal.z);
-          
+
           let lookDirLocal = new THREE.Vector3();
           if (az >= ax && az >= ay) {
             lookDirLocal.set(0, 0, posLocal.z > 0 ? -1 : 1);
@@ -681,7 +681,7 @@ export function Scene() {
           const localX = rightLocal;
           const localY = lookDirLocal.clone().multiplyScalar(-1);
           const localZ = idealUpLocal.clone().multiplyScalar(-1);
-          
+
           const mat = new THREE.Matrix4().makeBasis(localX, localY, localZ);
           brushQuaternion.current.setFromRotationMatrix(mat);
 
@@ -705,16 +705,16 @@ export function Scene() {
 
     const handlePointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
-      
+
       const dx = e.clientX - lastMouse.current.x;
       const dy = e.clientY - lastMouse.current.y;
-      
+
       if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
         wasRotating.current = true;
         mouseMovement.current.x += dx;
         mouseMovement.current.y += dy;
       }
-      
+
       lastMouse.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -745,7 +745,7 @@ export function Scene() {
       window.addEventListener('pointerup', handlePointerUp);
       window.addEventListener('pointercancel', handlePointerUp);
     }
-    
+
     return () => {
       if (canvas) { // Add a check for canvas existence
         canvas.removeEventListener('pointerdown', handlePointerDown);
@@ -798,7 +798,7 @@ export function Scene() {
         velocity.current.rotateRoll = 0;
 
         const size = gridRef.current.size;
-        const padding = 1.1; 
+        const padding = 1.1;
         const radius = (size / 2) * Math.sqrt(3);
         const fov = cam.fov;
         const aspect = cam.aspect;
@@ -813,7 +813,7 @@ export function Scene() {
           startPos: cam.position.clone(),
           startTarget: target.clone(),
           targetDist: distance,
-          duration: 1.0, 
+          duration: 1.0,
         };
       },
       recenter: () => {
@@ -980,23 +980,23 @@ export function Scene() {
       const { startTime, startPos, startTarget, targetDist, duration } = fitAnimRef.current;
       const elapsed = (performance.now() / 1000) - startTime;
       const t = Math.min(elapsed / duration, 1.0);
-      
+
       // "Ease-in only" transition (t*t)
       const easeT = t * t;
-      
+
       const cam = cameraRef.current || camera;
       const target = cameraTargetRef.current;
-      
+
       // Lerp target to (0,0,0)
       target.lerpVectors(startTarget, new THREE.Vector3(0, 0, 0), easeT);
-      
+
       // Calculate start direction and distance from original start
       const startDir = new THREE.Vector3().subVectors(startPos, startTarget).normalize();
       const startD = new THREE.Vector3().subVectors(startPos, startTarget).length();
-      
+
       // Current distance is lerped between start distance and target fit distance
       const currentD = THREE.MathUtils.lerp(startD, targetDist, easeT);
-      
+
       // Set camera position along the same direction relative to current target
       cam.position.copy(target).add(startDir.clone().multiplyScalar(currentD));
       cam.lookAt(target);
@@ -1004,7 +1004,7 @@ export function Scene() {
       if (t >= 1) {
         fitAnimRef.current = null;
       }
-      return; 
+      return;
     }
 
     // --- Physics Update ---
@@ -1012,7 +1012,7 @@ export function Scene() {
     const easeInVal = easeIn > 0.001 ? (1 - Math.exp(-3 * delta / easeIn)) : 1;
     const effectiveEaseOut = squareUp ? 0.25 : easeOut;
     const dampingVal = effectiveEaseOut > 0.001 ? Math.exp(-3 * delta / effectiveEaseOut) : 0;
-    
+
     // --- Calculate All Velocities ---
     const mDX = mouseMovement.current.x;
     const mDY = mouseMovement.current.y;
@@ -1031,7 +1031,7 @@ export function Scene() {
     if (movement.current.right) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
     else if (movement.current.left) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
     else velocity.current.panX *= dampingVal;
-    
+
     if (movement.current.forward) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
     else if (movement.current.backward) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
     else velocity.current.panY *= dampingVal;
@@ -1079,7 +1079,7 @@ export function Scene() {
     }
 
     // --- Soft Boundary Enforcement ---
-    if (rotationMode && cubeRef.current && cameraRef.current) {
+    if (viewMode && cubeRef.current && cameraRef.current) {
       const visibility = getCubeVisibility(cubeRef.current, cameraRef.current, gridSize);
       const restoringForce = 0.2; // Strength of the push-back
 
@@ -1095,13 +1095,13 @@ export function Scene() {
       if (visibility.isOffScreenTop && velocity.current.panY > 0) {
         velocity.current.panY = lerp(velocity.current.panY, -pSpeed * restoringForce, 0.8);
       }
-      
+
       // If the cube is significantly off-screen, prevent further dollying in or out.
       if (visibility.isOffScreen) {
         velocity.current.dolly = 0;
       }
     }
-    
+
     const totalPanX = velocity.current.panX;
     const totalPanY = velocity.current.panY;
     const totalDolly = velocity.current.dolly;
@@ -1110,7 +1110,7 @@ export function Scene() {
     const totalRotateRoll = velocity.current.rotateRoll;
 
     // --- Apply Velocities ---
-    if (rotationMode) {
+    if (viewMode) {
       // VIEW MODE: Manipulate the camera
       if (cameraRef.current) {
         const cam = cameraRef.current;
@@ -1137,7 +1137,7 @@ export function Scene() {
             cam.position.copy(target).add(toTarget);
           }
         }
-        
+
         // Apply Rotations
         const hasRot = Math.abs(totalRotatePitch) > 1e-7 || Math.abs(totalRotateYaw) > 1e-7 || Math.abs(totalRotateRoll) > 1e-7;
         if (hasRot) {
@@ -1150,14 +1150,14 @@ export function Scene() {
           const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2), rollSpeedVal);
 
           const q = qPitch.multiply(qYaw).multiply(qRoll);
-          
+
           const pivot = new THREE.Vector3(0, 0, 0);
           const toCam = new THREE.Vector3().subVectors(cam.position, pivot);
           const toTarget = new THREE.Vector3().subVectors(target, pivot);
-          
+
           toCam.applyQuaternion(q);
           toTarget.applyQuaternion(q);
-          
+
           cam.position.copy(pivot).add(toCam);
           target.copy(pivot).add(toTarget);
           cam.up.applyQuaternion(q);
@@ -1205,7 +1205,7 @@ export function Scene() {
           squareUpAnimRef.current = null;
           if (isSquaredUp) setIsSquaredUp(false);
         } else {
-          if (rotationMode) {
+          if (viewMode) {
             // VIEW MODE: Center, Level, and Snap to Dominant Face
             const cam = cameraRef.current || camera;
             const target = cameraTargetRef.current;
@@ -1214,10 +1214,10 @@ export function Scene() {
                 const pos = cam.position.clone().sub(target);
                 const dist = pos.length();
                 const ax = Math.abs(pos.x), ay = Math.abs(pos.y), az = Math.abs(pos.z);
-                
+
                 const idealPos = new THREE.Vector3();
                 let lookDir = new THREE.Vector3();
-                
+
                 if (az >= ax && az >= ay) {
                   idealPos.set(0, 0, pos.z > 0 ? dist : -dist);
                   lookDir.set(0, 0, pos.z > 0 ? -1 : 1);
@@ -1228,7 +1228,7 @@ export function Scene() {
                   idealPos.set(0, pos.y > 0 ? dist : -dist, 0);
                   lookDir.set(0, pos.y > 0 ? -1 : 1, 0);
                 }
-                
+
                 // 3. Snap Up to nearest 90-deg increment (orthogonal to lookDir)
                 let idealUp = new THREE.Vector3(0, 1, 0);
                 const currentUp = cam.up.clone();
@@ -1240,7 +1240,7 @@ export function Scene() {
                 } else {
                   candidates.push(new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0));
                 }
-                
+
                 let maxDot = -Infinity;
                 for (const cand of candidates) {
                   const d = currentUp.dot(cand);
@@ -1253,7 +1253,7 @@ export function Scene() {
 
                 const distToTarget = cam.position.distanceTo(targetPos.clone().add(target));
                 const angleToTarget = cam.quaternion.angleTo(targetQuat);
-                
+
                 if (distToTarget < 0.01 && angleToTarget < 0.01 && target.length() < 0.01) {
                   setIsSquaredUp(true);
                   isSnapLockedRef.current = false;
@@ -1288,12 +1288,12 @@ export function Scene() {
                 cam.position.lerpVectors(anim.startPos!, anim.targetPos!, easeT);
                 cam.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, easeT);
                 cam.up.lerpVectors(anim.startUp!, anim.targetUp!, easeT);
-                
+
                 // Preserve start distance exactly, avoiding chord cutting
                 const currentD = anim.startDist!;
                 const dir = cam.position.clone().sub(target).normalize();
                 cam.position.copy(target).add(dir.multiplyScalar(currentD));
-                
+
                 if (t >= 1) {
                   setIsSquaredUp(true);
                   squareUpAnimRef.current = null;
@@ -1326,7 +1326,7 @@ export function Scene() {
                 const targetMat = new THREE.Matrix4().makeBasis(targetX, targetY, targetZ);
                 const targetQuat = new THREE.Quaternion().setFromRotationMatrix(targetMat);
                 const angleToTarget = cube.quaternion.angleTo(targetQuat);
-                
+
                 if (angleToTarget < 0.01) {
                   setIsSquaredUp(true);
                   isSnapLockedRef.current = false;
@@ -1352,7 +1352,7 @@ export function Scene() {
                 const easeT = 1 - Math.pow(1 - t, 3); // ease-out cubic
 
                 cube.quaternion.slerpQuaternions(anim.startQuat, anim.targetQuat, easeT);
-                
+
                 if (t >= 1) {
                   setIsSquaredUp(true);
                   squareUpAnimRef.current = null;
@@ -1405,10 +1405,10 @@ export function Scene() {
         <Cells
           grid={gridRef.current}
           margin={cellMargin}
-          selectorPos={rotationMode ? null : selectorPos}
-          rotationMode={rotationMode}
+          selectorPos={viewMode ? null : selectorPos}
+          viewMode={viewMode}
           onClick={(e) => {
-            if (running || rotationMode || wasRotating.current) return;
+            if (running || viewMode || wasRotating.current) return;
             e.stopPropagation();
             const { instanceId } = e;
             if (instanceId !== undefined) {
@@ -1417,7 +1417,7 @@ export function Scene() {
               if (cell) {
                 const [x, y, z] = cell;
                 setSelectorPos([x, y, z]);
-                if (!rotationMode) {
+                if (!viewMode) {
                   const community = gridRef.current.getCommunity(x, y, z);
                   setCommunity(community);
                   console.log("Clicked cell at", x, y, z, "Community:", community.length);
@@ -1427,7 +1427,7 @@ export function Scene() {
           }}
         />
         <BoundingBox size={gridRef.current.size} />
-        {!rotationMode && (
+        {!viewMode && (
           <>
             <FaceLabels size={gridRef.current.size} />
             <KeyboardSelector

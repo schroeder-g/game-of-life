@@ -32,7 +32,7 @@ describe('BrushControls', () => {
     (useSimulation as vi.Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
-        rotationMode: false,
+        viewMode: false,
       },
       meta: {
         eventBus: mockEventBus,
@@ -142,12 +142,12 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_VIS_001
-  it('TEST_BC_VIS_001: is only visible in edit mode (rotationMode false)', () => {
-    // In edit mode (rotationMode: false)
+  it('TEST_BC_VIS_001: is only visible in edit mode (viewMode false)', () => {
+    // In edit mode (viewMode: false)
     (useSimulation as vi.Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
-        rotationMode: false,
+        viewMode: false,
       },
       meta: {
         eventBus: mockEventBus,
@@ -156,11 +156,11 @@ describe('BrushControls', () => {
     const { rerender } = render(<BrushControls />);
     expect(screen.getByLabelText('Brush Controls Panel')).toBeInTheDocument();
 
-    // In rotation mode (rotationMode: true)
+    // In view mode (viewMode: true)
     (useSimulation as vi.Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
-        rotationMode: true,
+        viewMode: true,
       },
       meta: {
         eventBus: mockEventBus,

@@ -53,7 +53,7 @@ export const brushControlsDocumentation: DocItem[] = [
   {
     id: "BC_VIS_001_CLAIM",
     type: "p",
-    text: `The <span class="code-ref">BrushControls</span> panel is only visible when the simulation is in edit mode (i.e., when <span class="code-ref">rotationMode</span> is <span class="code-ref">false</span>). This conditional rendering is managed in <span class="code-ref">src/components/AppHeaderPanel.tsx</span>, ensuring the controls do not clutter the interface during camera rotation.`,
+    text: `The <span class="code-ref">BrushControls</span> panel is only visible when the simulation is in edit mode (i.e., when <span class="code-ref">viewMode</span> is <span class="code-ref">false</span>). This conditional rendering is managed in <span class="code-ref">src/components/AppHeaderPanel.tsx</span>, ensuring the controls do not clutter the interface during camera View Mode.`,
     testIds: ["TEST_BC_VIS_001"],
   },
   {

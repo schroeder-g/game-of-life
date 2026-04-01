@@ -15,7 +15,7 @@ export function useAppShortcuts() {
   const {
     state: {
       running,
-      rotationMode,
+      viewMode,
       cameraOrientation,
       isAnimatingInit,
       hasInitialState,
@@ -27,7 +27,7 @@ export function useAppShortcuts() {
       squareUp, // Added squareUp to state destructuring
     },
     actions: {
-      setRotationMode,
+      setviewMode,
       playStop,
       step,
       stepBackward,
@@ -66,13 +66,13 @@ export function useAppShortcuts() {
 
   useEffect(() => {
     // When entering edit mode, if cursor is not set, center it.
-    if (!rotationMode && !selectorPos) {
+    if (!viewMode && !selectorPos) {
       const center = Math.floor(gridSize / 2);
       if (setSelectorPos) { // Defensive check
         setSelectorPos([center, center, center]);
       }
     }
-  }, [rotationMode, selectorPos, setSelectorPos, gridSize]);
+  }, [viewMode, selectorPos, setSelectorPos, gridSize]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,7 +103,7 @@ export function useAppShortcuts() {
         // First normalize the base key name based on physical layout (code)
         let action: string = keyOrCode === "Period" ? "period"
           : keyOrCode === "Semicolon" ? "semicolon"
-          : keyOrCode.replace("Key", "").toLowerCase();
+            : keyOrCode.replace("Key", "").toLowerCase();
 
         if (!["o", "k", "period", "semicolon", "i", "p"].includes(action)) return null;
 
@@ -122,7 +122,7 @@ export function useAppShortcuts() {
 
       if (isRotationCode) {
         // 1. Step Rotation (Edit Mode with Brush)
-        if (!rotationMode && shapeSize > 1 && !(e.ctrlKey && e.shiftKey)) {
+        if (!viewMode && shapeSize > 1 && !(e.ctrlKey && e.shiftKey)) {
           let axis = new THREE.Vector3();
           let angle = Math.PI / 2;
           if (key === 'o') { axis.set(1, 0, 0); angle = -Math.PI / 2; }
@@ -147,7 +147,7 @@ export function useAppShortcuts() {
 
       let handled = true;
 
-      if (!rotationMode) {
+      if (!viewMode) {
         // --- EDIT MODE CONTROLS ---
         if (["w", "x", "a", "d", "q", "z"].includes(key)) {
           if (hasValidOrientation) {
@@ -181,8 +181,8 @@ export function useAppShortcuts() {
             case "[": changeSize(-1, 0); break;
             case "]": changeSize(1, 0); break;
             case "escape": clearShape(); break;
-            case "e": setRotationMode(false); break;
-            case "v": setRotationMode(true); break;
+            case "e": setviewMode(false); break;
+            case "v": setviewMode(true); break;
             case "f": fitDisplay(); break;
             case "l": setSquareUp(prev => !prev); break; // Changed 'l' to toggle squareUp
             case "s": recenter(); break;
@@ -200,19 +200,19 @@ export function useAppShortcuts() {
       } else {
         // --- VIEW MODE CONTROLS ---
         switch (key) {
-          case "e": setRotationMode(false); break;
-          case "v": setRotationMode(true); break;
+          case "e": setviewMode(false); break;
+          case "v": setviewMode(true); break;
           case "f": fitDisplay(); break;
           case "l": setSquareUp(prev => !prev); break; // Changed 'l' to toggle squareUp
           case "s": recenter(); break;
           case "r": if (hasInitialState) reset(); break;
           case " ": playStop(); break;
           case "arrowup":
-            if(e.shiftKey) movement.current.up = true;
+            if (e.shiftKey) movement.current.up = true;
             else movement.current.forward = true;
             break;
           case "arrowdown":
-            if(e.shiftKey) movement.current.down = true;
+            if (e.shiftKey) movement.current.down = true;
             else movement.current.backward = true;
             break;
           case "arrowleft":
@@ -246,8 +246,8 @@ export function useAppShortcuts() {
       const getRotationAction = (keyOrCode: string): string | null => {
         let action: string = keyOrCode === "Period" ? "period"
           : keyOrCode === "Semicolon" ? "semicolon"
-          : keyOrCode.replace("Key", "").toLowerCase();
-          
+            : keyOrCode.replace("Key", "").toLowerCase();
+
         if (!["o", "k", "period", "semicolon", "i", "p"].includes(action)) return null;
 
         if (invertPitch) {
@@ -314,8 +314,8 @@ export function useAppShortcuts() {
       window.removeEventListener("blur", handleBlur);
     };
   }, [
-    running, rotationMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
-    invertPitch, invertRoll, setRotationMode, playStop, step, stepBackward, reset,
+    running, viewMode, cameraOrientation, hasInitialState, hasPastHistory, invertYaw,
+    invertPitch, invertRoll, setviewMode, playStop, step, stepBackward, reset,
     fitDisplay, recenter, movement, eventBus, changeSize, clearShape,
     gridSize, selectorPos, setSelectorPos, cameraActionsRef, selectedShape, setCell, setPaintMode, paintMode, isAnimatingInit,
   ]);

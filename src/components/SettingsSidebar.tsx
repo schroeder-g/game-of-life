@@ -27,7 +27,7 @@ function ActionsSection() {
   } = useGenesisConfig();
 
   const {
-    state: { rotationMode, speed, running },
+    state: { viewMode, speed, running },
     actions: {
       setSpeed, applyCells, setDensity, setSurviveMin, setSurviveMax,
       setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
@@ -76,7 +76,7 @@ function ActionsSection() {
 
 function EnvironmentSection() {
   const {
-    state: { gridSize, running, rotationMode, density, cellMargin },
+    state: { gridSize, running, viewMode, density, cellMargin },
     actions: { setGridSize, reset, clear, randomize, setDensity, setCellMargin },
     meta: { gridRef },
   } = useSimulation();
@@ -140,20 +140,20 @@ function EnvironmentSection() {
                 className="glass-button danger"
                 style={{ flex: 1 }}
                 onClick={clear}
-                disabled={rotationMode || !hasLiveCells}
-                title={rotationMode ? "Switch to Edit mode to clear" : !hasLiveCells ? "No live cells to clear" : undefined}
+                disabled={viewMode || !hasLiveCells}
+                title={viewMode ? "Switch to Edit mode to clear" : !hasLiveCells ? "No live cells to clear" : undefined}
               >
                 Clear
               </button>
             </div>
 
-            {!rotationMode && (
+            {!viewMode && (
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                 <button
                   className="glass-button"
                   onClick={randomize}
-                  disabled={rotationMode || hasLiveCells}
-                  title={rotationMode ? "Switch to Edit mode to randomize" : hasLiveCells ? "Clear board to randomize" : undefined}
+                  disabled={viewMode || hasLiveCells}
+                  title={viewMode ? "Switch to Edit mode to randomize" : hasLiveCells ? "Clear board to randomize" : undefined}
                   style={{ flexShrink: 0 }}
                 >
                   Random
@@ -935,7 +935,7 @@ function SceneManagementSection() {
 
 export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
   const {
-    state: { running, rotationMode, community, buildInfo },
+    state: { running, viewMode, community, buildInfo },
     actions: {
       playStop,
       step,
@@ -943,7 +943,7 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
       reset,
       randomize,
       clear,
-      setRotationMode, applyCells, setSpeed, setDensity, setSurviveMin, setSurviveMax,
+      setviewMode, applyCells, setSpeed, setDensity, setSurviveMin, setSurviveMax,
       setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
       setNeighborFaces, setNeighborEdges, setNeighborCorners,
       fitDisplay
@@ -1007,21 +1007,21 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
 
   // Add this new useEffect block:
   useEffect(() => {
-    if (rotationMode) {
+    if (viewMode) {
       document.body.classList.add("view-mode");
       document.body.classList.remove("edit-mode");
     } else {
       document.body.classList.add("edit-mode");
       document.body.classList.remove("view-mode");
     }
-  }, [rotationMode]);
+  }, [viewMode]);
 
 
 
   return (
     <>
       <aside
-        className={`main-menu glass-panel  ${community.length > 0 && !rotationMode ? "has-sidebar" : ""}`}
+        className={`main-menu glass-panel  ${community.length > 0 && !viewMode ? "has-sidebar" : ""}`}
         style={{ border: "none" }}
       >
         <div className="tests-panel">
@@ -1034,10 +1034,10 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
             </h3>
           </header>
           <div className="menu-scrollable-content">
-            {rotationMode && <CameraControlSection />}
-            {!rotationMode && <SceneManagementSection />}
-            {!rotationMode && <EnvironmentSection />}
-            {!rotationMode && <SelectorPositionSection />}
+            {viewMode && <CameraControlSection />}
+            {!viewMode && <SceneManagementSection />}
+            {!viewMode && <EnvironmentSection />}
+            {!viewMode && <SelectorPositionSection />}
             <RulesSection />
             <TestsSection isProd={buildInfo.distribution === "prod"} />
             {buildInfo.distribution !== "prod" && (

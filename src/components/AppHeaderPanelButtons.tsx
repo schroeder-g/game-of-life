@@ -198,7 +198,7 @@ function SceneSelectorDropdown() {
 
 interface AppHeaderPanelButtonsProps {
   running: boolean;
-  rotationMode: boolean;
+  viewMode: boolean;
   hasInitialState: boolean;
   hasPastHistory: boolean;
   squareUp: boolean;
@@ -208,7 +208,7 @@ interface AppHeaderPanelButtonsProps {
   step: () => void;
   stepBackward: () => void;
   reset: () => void;
-  setRotationMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setviewMode: React.Dispatch<React.SetStateAction<boolean>>;
   fitDisplay: () => void;
   recenter: () => void;
   setSquareUp: (value: boolean) => void;
@@ -230,7 +230,7 @@ interface AppHeaderPanelButtonsProps {
 
 export function AppHeaderPanelButtons({
   running,
-  rotationMode,
+  viewMode,
   hasInitialState,
   hasPastHistory,
   squareUp,
@@ -240,7 +240,7 @@ export function AppHeaderPanelButtons({
   step,
   stepBackward,
   reset,
-  setRotationMode,
+  setviewMode,
   fitDisplay,
   recenter,
   setSquareUp,
@@ -265,21 +265,21 @@ export function AppHeaderPanelButtons({
       <SceneSelectorDropdown />
       <button
         className="glass-button mode-toggle-button"
-        onClick={() => setRotationMode((p) => !p)}
-        data-tooltip-bottom={rotationMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+        onClick={() => setviewMode((p) => !p)}
+        data-tooltip-bottom={viewMode ? "Switch to Edit Mode" : "Switch to View Mode"}
       >
-        {rotationMode ? <PencilIcon /> : <ProjectorIcon />}
+        {viewMode ? <PencilIcon /> : <ProjectorIcon />}
       </button>
       <BrushControls />
       <button
         className="glass-button primary"
         onClick={playStop}
-        style={{ display: !rotationMode ? "none" : "block" }}
-        data-tooltip-bottom={!rotationMode ? "Playback disabled in Edit mode" : running ? "Pause (Space)" : "Play (Space)"}
+        style={{ display: !viewMode ? "none" : "block" }}
+        data-tooltip-bottom={!viewMode ? "Playback disabled in Edit mode" : running ? "Pause (Space)" : "Play (Space)"}
       >
         {running ? "⏸" : "▶"}
       </button>
-      {rotationMode && (
+      {viewMode && (
         <div className="speed-control">
           <span>Speed: {speed}</span>
           <input

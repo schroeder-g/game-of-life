@@ -186,7 +186,7 @@ export function BrushControls() {
   }, [setShapeSize]);
 
   const {
-    state: { cameraOrientation, rotationMode, gridSize },
+    state: { cameraOrientation, viewMode, gridSize },
     actions: { setCommunity },
     meta: { eventBus, gridRef },
   } = useSimulation();
@@ -452,7 +452,7 @@ export function BrushControls() {
       const { x, y, z } = payload;
 
       // Only respond to clicks in edit mode
-      if (rotationMode) {
+      if (viewMode) {
         return;
       }
 
@@ -496,13 +496,13 @@ export function BrushControls() {
       unsubscribe();
       unsubscribeShowCommunityPanel();
     };
-  }, [rotationMode, gridRef, eventBus, setCustomBrush, setSelectedShape, setPaintMode]);
+  }, [viewMode, gridRef, eventBus, setCustomBrush, setSelectedShape, setPaintMode]);
 
   const toggleContentVisibility = useCallback(() => {
     setIsContentVisible(prev => !prev);
   }, []);
 
-  if (rotationMode) return null;
+  if (viewMode) return null;
 
   return (
     <div

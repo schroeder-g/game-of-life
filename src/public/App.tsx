@@ -11,8 +11,8 @@ import { useAppShortcuts } from "../hooks/useAppShortcuts";
 
 export default function App() {
   const {
-    state: { rotationMode, running, squareUp, userName, buildInfo, showIntroduction },
-    actions: { setRotationMode, recenter, fitDisplay, setSquareUp, setShowIntroduction, setUserName },
+    state: { viewMode, running, squareUp, userName, buildInfo, showIntroduction },
+    actions: { setviewMode, recenter, fitDisplay, setSquareUp, setShowIntroduction, setUserName },
   } = useSimulation();
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
@@ -31,13 +31,13 @@ export default function App() {
   useAppShortcuts();
 
   useEffect(() => {
-    console.log("App: rotationMode changed to", rotationMode);
-    if (rotationMode === false) {
+    console.log("App: viewMode changed to", viewMode);
+    if (viewMode === false) {
       console.log("App: Calling recenter and fitDisplay in Edit mode.");
       recenter();
       fitDisplay();
     }
-  }, [rotationMode, recenter, fitDisplay]);
+  }, [viewMode, recenter, fitDisplay]);
 
   // Effect to set and update canvas size to be square using ResizeObserver
   useEffect(() => {
@@ -170,7 +170,7 @@ export default function App() {
               <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
                 <Scene />
               </Canvas>
-              {!rotationMode && (
+              {!viewMode && (
                 <div
                   ref={footerRef}
                   style={{

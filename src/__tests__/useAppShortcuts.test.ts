@@ -20,18 +20,18 @@ describe('useAppShortcuts - UX Claims', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useBrush as any).mockReturnValue({
-      state: { selectorPos: [0,0,0], selectedShape: 'Cube', paintMode: 0, shapeSize: 1 },
+      state: { selectorPos: [0, 0, 0], selectedShape: 'Cube', paintMode: 0, shapeSize: 1 },
       actions: { setSelectorPos: vi.fn() }
     });
     (useSimulation as any).mockReturnValue({
-      state: { 
-        rotationMode: false, 
+      state: {
+        viewMode: false,
         cameraOrientation: { face: 'front', rotation: 0 },
         invertYaw: false, invertPitch: false, invertRoll: false
       },
       actions: {},
-      meta: { 
-        movement: { current: {} }, 
+      meta: {
+        movement: { current: {} },
         eventBus: { emit: vi.fn() },
         cameraActionsRef: { current: { rotateBrush: mockRotateBrush, snapRotateWithAxis: mockSnapRotateWithAxis } }
       }
@@ -132,7 +132,7 @@ describe('useAppShortcuts - Input Guarding', () => {
       actions: {}
     });
     (useSimulation as any).mockReturnValue({
-      state: { rotationMode: true },
+      state: { viewMode: true },
       actions: { playStop: mockPlayStop },
       meta: { movement: { current: {} } }
     });

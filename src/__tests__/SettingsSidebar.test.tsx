@@ -16,13 +16,13 @@ vi.mock('../contexts/GenesisConfigContext', () => ({ useGenesisConfig: vi.fn() }
 vi.mock('../hooks/useClickOutside', () => ({ useClickOutside: vi.fn() }));
 
 describe('SettingsSidebar and AppHeaderPanel', () => {
-    let mockSetRotationMode: Mock;
+    let mockSetviewMode: Mock;
     let mockSetSpeed: Mock;
     let mockPlayStop: Mock;
     let mockGridOn: Mock;
 
     beforeEach(() => {
-        mockSetRotationMode = vi.fn((fn) => fn(false)); // Simulate toggling
+        mockSetviewMode = vi.fn((fn) => fn(false)); // Simulate toggling
         mockSetSpeed = vi.fn();
         mockPlayStop = vi.fn();
         mockGridOn = vi.fn(() => vi.fn()); // Mock the 'on' method of Emitter
@@ -30,7 +30,7 @@ describe('SettingsSidebar and AppHeaderPanel', () => {
         (useSimulation as any).mockReturnValue({
             state: {
                 running: false,
-                rotationMode: false,
+                viewMode: false,
                 hasInitialState: true,
                 hasPastHistory: false,
                 speed: 10,
@@ -42,7 +42,7 @@ describe('SettingsSidebar and AppHeaderPanel', () => {
                 community: [],
             },
             actions: {
-                setRotationMode: mockSetRotationMode,
+                setviewMode: mockSetviewMode,
                 setSpeed: mockSetSpeed,
                 playStop: mockPlayStop,
                 fitDisplay: vi.fn(),
@@ -70,14 +70,14 @@ describe('SettingsSidebar and AppHeaderPanel', () => {
         render(<AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />); // Render AppHeaderPanel directly
         const toggleButton = screen.getByTitle('Switch to View Mode');
         fireEvent.click(toggleButton);
-        expect(mockSetRotationMode).toHaveBeenCalled();
+        expect(mockSetviewMode).toHaveBeenCalled();
     });
 
     it('[UC-6] should adjust simulation speed when slider is changed', async () => {
-        // Mock rotationMode to true to ensure the speed slider is visible
+        // Mock viewMode to true to ensure the speed slider is visible
         (useSimulation as any).mockReturnValue({
             ...useSimulation().mock.results[0].value, // Get the default mock from beforeEach
-            state: { ...useSimulation().mock.results[0].value.state, rotationMode: true }
+            state: { ...useSimulation().mock.results[0].value.state, viewMode: true }
         });
 
         render(<AppHeaderPanel showMainMenu={true} setShowMainMenu={vi.fn()} />); // Render AppHeaderPanel directly

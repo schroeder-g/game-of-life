@@ -50,7 +50,7 @@ export function Cells({
   margin: number;
   onClick?: (e: any) => void;
   selectorPos: [number, number, number] | null;
-  rotationMode?: boolean;
+  viewMode?: boolean;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -58,7 +58,7 @@ export function Cells({
   const ghostMeshRef = useRef<THREE.InstancedMesh>(null);
   const lastVersion = useRef(-1);
   const lastSelectorPos = useRef<string | null>(null);
-  const lastRotationMode = useRef<boolean | null>(null);
+  const lastviewMode = useRef<boolean | null>(null);
 
   // Setup colors and matrices
   const { colorScale, offset, center, gridSize } = useMemo(() => {
@@ -73,7 +73,7 @@ export function Cells({
   }, [grid]);
 
   const {
-    state: { speed, isAnimatingInit, rotationMode },
+    state: { speed, isAnimatingInit, viewMode },
   } = useSimulation();
 
   // Use useFrame to natively poll the Grid3D instance without triggering React re-renders
@@ -84,23 +84,23 @@ export function Cells({
     if (!meshRef.current || !edgesRef.current) return;
 
     const selectorPosStr = JSON.stringify(selectorPos);
-    
+
     // Detect changes
     const gridChanged = grid.version !== lastVersion.current;
     const selectorChanged = selectorPosStr !== lastSelectorPos.current;
-    const modeChanged = rotationMode !== lastRotationMode.current;
-    
+    const modeChanged = viewMode !== lastviewMode.current;
+
     if (!gridChanged && !selectorChanged && !modeChanged) {
       return;
     }
-    
+
     lastVersion.current = grid.version;
     lastSelectorPos.current = selectorPosStr;
-    lastRotationMode.current = rotationMode;
+    lastviewMode.current = viewMode;
 
     const livingCells = grid.getLivingCells();
     const tempObject = new THREE.Object3D();
-    
+
     const count = livingCells.length;
     const colors = new Float32Array(count * 3);
     const opacities = new Float32Array(count);
@@ -118,12 +118,12 @@ export function Cells({
       edgesRef.current!.setMatrixAt(i, tempObject.matrix);
 
       // Hue based on X position (blue to red)
-      const hue = (x / gridSize) * 300; 
+      const hue = (x / gridSize) * 300;
       const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
       let color = chroma.hsl(240 - hue, saturation, 0.55);
 
-      const onAxis = !rotationMode && selectorPos && (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
-      const isSelected = !rotationMode && selectorPos && x === selectorPos[0] && y === selectorPos[1] && z === selectorPos[2];
+      const onAxis = !viewMode && selectorPos && (x === selectorPos[0] || y === selectorPos[1] || z === selectorPos[2]);
+      const isSelected = !viewMode && selectorPos && x === selectorPos[0] && y === selectorPos[1] && z === selectorPos[2];
 
       if (isSelected) {
         color = chroma('white');
@@ -137,7 +137,7 @@ export function Cells({
       colors[i * 3 + 2] = b;
 
       // Edges & Highlights
-      const sharesTwoCoords = !rotationMode && selectorPos &&
+      const sharesTwoCoords = !viewMode && selectorPos &&
         ((x === selectorPos[0] && y === selectorPos[1]) ||
           (x === selectorPos[0] && z === selectorPos[2]) ||
           (y === selectorPos[1] && z === selectorPos[2]));
@@ -207,14 +207,14 @@ export function Cells({
     edgesRef.current.computeBoundingSphere();
 
     // --- Ghost Axis Highlights (Edit Mode only) ---
-    if (!rotationMode && selectorPos && ghostMeshRef.current) {
+    if (!viewMode && selectorPos && ghostMeshRef.current) {
       const [sx, sy, sz] = selectorPos;
       const gridSize = grid.size;
       const offset = (gridSize - 1) / 2;
       const cellSize = 1 - margin;
-      
+
       const livingKeys = new Set(livingCells.map(([x, y, z]) => `${x},${y},${z}`));
-      
+
       let ghostCount = 0;
       // Use a simple triple-loop approach but filter for axis
       // X-axis
@@ -281,10 +281,10 @@ export function Cells({
       </instancedMesh>
       <instancedMesh ref={ghostMeshRef} args={[undefined, undefined, 1000]}>
         <boxGeometry args={[cellSize, cellSize, cellSize]} />
-        <meshBasicMaterial 
-          color="white" 
-          transparent 
-          opacity={0.05} 
+        <meshBasicMaterial
+          color="white"
+          transparent
+          opacity={0.05}
           depthWrite={false}
         />
       </instancedMesh>

@@ -93,7 +93,7 @@ interface SelectedCommunityPanelProps {
 }
 
 export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunityPanelProps) {
-  const { state: { gridSize, community, rotationMode }, actions: { setCommunity } } = useSimulation();
+  const { state: { gridSize, community, viewMode }, actions: { setCommunity } } = useSimulation();
   const { actions: { setCustomBrush, setSelectedShape, setPaintMode } } = useBrush();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
