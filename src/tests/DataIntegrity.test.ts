@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MANUAL_TESTS } from '../data/manual-tests.ts';
-import { DOCUMENTATION_CONTENT } from '../data/documentation/documentation.js';
+import { DOCUMENTATION_CONTENT } from '../data/documentation/_Documentation.js';
 
 describe('[QA-3] Data Integrity Checks', () => {
   it('ensures all documentation claims have at least one test ID', () => {

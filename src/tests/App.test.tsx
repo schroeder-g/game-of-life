@@ -4,7 +4,7 @@ import { render } from './test-utils';
 import App from '../public/App'; // Import the main App component
 import { WelcomeModal } from '../components/WelcomeModal';
 import { ManualTestsPanel } from '../components/ManualTestsPanel';
-import { DOCUMENTATION_CONTENT } from '../data/documentation/documentation';
+import { DOCUMENTATION_CONTENT } from '../data/documentation/_Documentation';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
