@@ -57,14 +57,14 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "<b>Mode Toggle (✏️/📽️):</b> Switches between Edit Mode (Pencil icon), where you can modify the grid, and View Mode (Projector icon), where you can run the simulation and freely move the camera.",
     testIds: ["UC-1"],
-    references: ["src/contexts/BrushContext.tsx"],
+    references: ["src/contexts/BrushContext.tsx", "src/contexts/SimulationContext.tsx"],
   },
   {
     id: "header-playback",
     type: 'p',
     text: "<b>Playback Controls (▶/⏸, ⏮/⏭, ↺):</b> Play/Pause the simulation (Spacebar), step forward/backward one generation (→/←), or reset the grid to its initial state (R). Step and Reset are only available when paused.",
     testIds: ["UC-2"],
-    references: ["src/core/Grid3D.ts"],
+    references: ["src/core/Grid3D.ts", "src/contexts/SimulationContext.tsx"],
   },
   {
     id: "header-camera",
@@ -124,7 +124,7 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "<b>Paint/Clear Modes (+/-):</b> Select Paint (+) to add cells or Clear (-) to remove them. You can click-and-drag on the grid, or use the Spacebar (paint) and Delete (clear) keys to apply the current brush.",
     testIds: ["UC-4"],
-    references: ["src/contexts/BrushContext.tsx"],
+    references: ["src/contexts/BrushContext.tsx", "src/contexts/SimulationContext.tsx"],
   },
   {
     id: "edit-brush-selector",
@@ -161,7 +161,7 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "<b>Cursor Position Section:</b> Provides inputs to set the editor cursor's X, Y, and Z coordinates. It also shows the keyboard shortcuts for moving the cursor, which change based on your camera angle.",
     testIds: ["UC-9"],
-    references: ["src/contexts/BrushContext.tsx"],
+    references: ["src/contexts/BrushContext.tsx", "src/contexts/SimulationContext.tsx"],
   },
   {
     id: "config-shape-brush",
