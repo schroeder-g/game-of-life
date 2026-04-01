@@ -21,7 +21,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
         style={{ backgroundColor: "rgba(20, 20, 22, 0.95)" }}
       >
         <div className="shortcuts-header">
-          <h2>Shortcuts <ClaimHint claimId="SHORTCUTS_OVERVIEW_CLAIM" /></h2>
+          <h2>Shortcuts</h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
@@ -32,19 +32,19 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             className={`tab-btn ${activeTab === "view" ? "active" : ""}`}
             onClick={() => setActiveTab("view")}
           >
-            View Mode <ClaimHint claimId="SHORTCUTS_VIEW_CLAIM" />
+            View Mode
           </button>
           <button
             className={`tab-btn ${activeTab === "edit" ? "active" : ""}`}
             onClick={() => setActiveTab("edit")}
           >
-            Edit Mode <ClaimHint claimId="SHORTCUTS_EDIT_CLAIM" />
+            Edit Mode
           </button>
           <button
             className={`tab-btn ${activeTab === "keymap" ? "active" : ""}`}
             onClick={() => setActiveTab("keymap")}
           >
-            Key Map <ClaimHint claimId="SHORTCUTS_TABS_CLAIM" />
+            Key Map
           </button>
         </div>
 

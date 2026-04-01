@@ -173,7 +173,7 @@ export function BoundingBox({ size }: { size: number }) {
         <lineBasicMaterial color="silver" transparent opacity={opacity} />
       </lineSegments>
       <Html position={[size / 2, size / 2, size / 2]}>
-        <ClaimHint claimId="GRID_BOUNDS_CLAIM" />
+        {/* Claim hint removed from here as per request */}
       </Html>
     </group>
   );
@@ -335,7 +335,7 @@ function BrushProjectionGuides({
       {paintMode === -1 && (
         <>
           <Html position={[0, gridSize / 2 + 1, 0]}>
-            <ClaimHint claimId="GRID_PROJECTION_GUIDES_CLAIM" />
+            {/* Claim hint removed from here as per request */}
           </Html>
           <instancedMesh ref={redOutlineRef} args={[undefined, undefined, 50000]} raycast={() => null}>
             <boxGeometry args={[1, 1, 1]} />
@@ -437,7 +437,7 @@ function FaceLabels({ size }: { size: number }) {
     <group>
       <Html key={face} position={[finalX, finalY, finalZ]} center zIndexRange={[0, 999]}>
         <div style={labelStyle}>
-          {currentFaceData.name}{rotationStr && `, ${rotationStr}`} <ClaimHint claimId="GRID_FACE_LABELS_CLAIM" />
+          {currentFaceData.name}{rotationStr && `, ${rotationStr}`} {/* Claim hint removed from here as per request */}
         </div>
       </Html>
     </group>

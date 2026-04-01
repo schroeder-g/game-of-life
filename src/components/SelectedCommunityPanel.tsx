@@ -292,7 +292,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
         >
           <span style={{ fontSize: "12px", opacity: 0.6, width: '12px' }}>{isCollapsed ? "▼" : "▲"}</span>
-          <h3 style={{ margin: 0 }}>Community Selection <ClaimHint claimId="COMMUNITY_PANEL_OVERVIEW_CLAIM" /></h3>
+          <h3 style={{ margin: 0 }}>Community Selection</h3>
         </div>
 
         {community.length > 0 && (
@@ -308,10 +308,10 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                 <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
               </svg>
-              <ClaimHint claimId="COMMUNITY_ACTIVATE_BRUSH_CLAIM" />
+              {/* Claim hint removed from here as per request */}
             </button>
             <button
               className="icon-button danger"

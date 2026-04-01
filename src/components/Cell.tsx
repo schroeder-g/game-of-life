@@ -265,10 +265,7 @@ export function Cells({
     <group key={`cells-${margin}`}>
       <Html position={[0, gridSize / 2 + 0.5, 0]}>
         <div style={{ display: 'flex', gap: '4px' }}>
-          <ClaimHint claimId="CELL_COLOR_CLAIM" />
-          <ClaimHint claimId="CELL_OPACITY_CLAIM" />
-          {!viewMode && selectorPos && <ClaimHint claimId="CELL_PULSE_CLAIM" />}
-          {!viewMode && selectorPos && <ClaimHint claimId="CELL_GHOST_CLAIM" />}
+          {/* Claim hints removed from here as per request */}
         </div>
       </Html>
       <instancedMesh
