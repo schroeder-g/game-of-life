@@ -191,8 +191,6 @@ export function BrushControls() {
     meta: { eventBus, gridRef },
   } = useSimulation();
 
-  if (rotationMode) return null;
-
   const {
     state: { brushQuaternion },
     actions: { incrementBrushRotationVersion },
@@ -503,6 +501,8 @@ export function BrushControls() {
   const toggleContentVisibility = useCallback(() => {
     setIsContentVisible(prev => !prev);
   }, []);
+
+  if (rotationMode) return null;
 
   return (
     <div
