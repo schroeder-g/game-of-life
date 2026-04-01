@@ -40,7 +40,7 @@ import { documentationModalDocumentation } from "./DocumentationModal_Documentat
 import { gridDocumentation } from "./Grid_Documentation";
 import { introductionModalDocumentation } from "./IntroductionModal_Documentation";
 import { keyMapPageDocumentation } from "./KeyMapPage_Documentation";
-import { settingsSidebarDocumentation } from "./SettingsSidebar_Documentation";
+import { settingsSidebarDocumentation } from "./SettingsSidebar_Documentation"; // New import
 import { manualTestsPanelDocumentation } from "./ManualTestsPanel_Documentation";
 import { releaseNotesModalDocumentation } from "./ReleaseNotesModal_Documentation";
 import { selectedCommunityPanelDocumentation } from "./SelectedCommunityPanel_Documentation";
@@ -48,10 +48,10 @@ import { shortcutOverlayDocumentation } from "./ShortcutOverlay_Documentation";
 import { welcomeModalDocumentation } from "./WelcomeModal_Documentation";
 
 const DEPRECATED_CONTENT: DocItem[] = [
-  { 
-    id: 'heading-deprecated', 
-    type: 'h3', 
-    text: 'DEPRECATED CLAIMS' 
+  {
+    id: 'heading-deprecated',
+    type: 'h3',
+    text: 'DEPRECATED CLAIMS'
   },
   {
     id: "deprecated-camera-control",
@@ -86,10 +86,10 @@ const DEPRECATED_CONTENT: DocItem[] = [
 ];
 
 const CURRENT_MANUAL: DocItem[] = [
-  { 
-    id: 'intro', 
-    type: 'p', 
-    text: "Welcome to Cube of Life! This manual explains how to interact with the simulation. The application has two main modes: View Mode for observing, and Edit Mode for modifying the grid." 
+  {
+    id: 'intro',
+    type: 'p',
+    text: "Welcome to Cube of Life! This manual explains how to interact with the simulation. The application has two main modes: View Mode for observing, and Edit Mode for modifying the grid."
   },
 
   { id: 'heading-header', type: 'h3', text: 'Main Header Controls' },
@@ -276,7 +276,7 @@ export const DOCUMENTATION_CONTENT: DocItem[] = [
   ...gridDocumentation,
   ...introductionModalDocumentation,
   ...keyMapPageDocumentation,
-  ...settingsSidebarDocumentation,
+  ...settingsSidebarDocumentation, // Add new documentation
   ...manualTestsPanelDocumentation,
   ...releaseNotesModalDocumentation,
   ...selectedCommunityPanelDocumentation,

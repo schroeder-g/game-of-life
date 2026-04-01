@@ -143,3 +143,29 @@ export const settingsSidebarDocumentation: DocItem[] = [
     testIds: ["UC-11"],
   },
 ];
+import { DocItem } from './_Documentation';
+
+export const settingsSidebarDocumentation: DocItem[] = [
+  {
+    id: 'SS_SCENE_NAME_INPUT_001',
+    type: 'p',
+    text: 'The <b>Scene Name</b> input field allows users to enter a name for saving or exporting a scene. When focused, this input field correctly captures keyboard input and suppresses global keyboard shortcuts, ensuring that typing "R" (reset) or "Space" (play/pause) does not trigger those actions.',
+    references: [
+      'src/components/SettingsSidebar.tsx::SceneManagementSection',
+      'src/components/SettingsSidebar.tsx::handleSaveConfig',
+      'src/components/SettingsSidebar.tsx::handleExportConfig',
+    ],
+    testIds: ['SS_SCENE_NAME_INPUT_001_TEST'],
+  },
+  {
+    id: 'SS_CURSOR_POSITION_KEY_HINTS_001',
+    type: 'p',
+    text: 'The <b>Cursor Position</b> section displays keyboard shortcuts for moving the brush cursor along the X, Y, and Z axes. These hints dynamically update based on the current camera orientation (face and rotation) to reflect the screen-relative movement keys.',
+    references: [
+      'src/components/SettingsSidebar.tsx::SelectorPositionSection',
+      'src/components/SettingsSidebar.tsx::deriveKeyMap',
+      'src/core/faceOrientationKeyMapping.ts::KEY_MAP',
+    ],
+    testIds: ['SS_CURSOR_POSITION_KEY_HINTS_001_TEST'],
+  },
+];
