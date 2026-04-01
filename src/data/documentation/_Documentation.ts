@@ -263,6 +263,11 @@ const CURRENT_MANUAL: DocItem[] = [
 
 export const DOCUMENTATION_INDEX_GROUPS: IndexGroup[] = [
   {
+    title: "Header Buttons",
+    idPrefix: "AHPB_",
+    stripPrefix: "",
+  },
+  {
     title: "Brush Controls",
     idPrefix: "BC_",
     stripPrefix: "<b>Brush Controls Panel ",

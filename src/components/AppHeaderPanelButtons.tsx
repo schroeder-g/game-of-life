@@ -3,8 +3,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping";
-import { SHAPES, ShapeType, supportsHollow } from "../core/shapes"; //remove
 import { useClickOutside } from "../hooks/useClickOutside";
 import { BrushControls } from "./BrushControls";
 
@@ -206,7 +204,6 @@ interface AppHeaderPanelButtonsProps {
   squareUp: boolean;
   isSquaredUp: boolean;
   speed: number;
-  gridSize: number;
   playStop: () => void;
   step: () => void;
   stepBackward: () => void;
@@ -216,15 +213,6 @@ interface AppHeaderPanelButtonsProps {
   recenter: () => void;
   setSquareUp: (value: boolean) => void;
   setSpeed: (speed: number) => void;
-
-  // Brush state and actions
-  selectedShape: ShapeType;
-  paintMode: number;
-  shapeSize: number;
-  isHollow: boolean;
-  setPaintMode: (mode: 0 | 1 | -1 | ((prev: 0 | 1 | -1) => 0 | 1 | -1)) => void;
-  setShapeSize: (size: number) => void;
-  setIsHollow: (isHollow: boolean) => void;
 
   // Help dropdown state and handlers
   isHelpDropdownOpen: boolean;
@@ -248,7 +236,6 @@ export function AppHeaderPanelButtons({
   squareUp,
   isSquaredUp,
   speed,
-  gridSize,
   playStop,
   step,
   stepBackward,
@@ -258,14 +245,6 @@ export function AppHeaderPanelButtons({
   recenter,
   setSquareUp,
   setSpeed,
-
-  selectedShape,
-  paintMode,
-  shapeSize,
-  isHollow,
-  setPaintMode,
-  setShapeSize,
-  setIsHollow,
 
   isHelpDropdownOpen,
   setIsHelpDropdownOpen,
@@ -279,10 +258,6 @@ export function AppHeaderPanelButtons({
   showCommunityPanel, // Destructure new prop
   toggleCommunityPanel, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
-
-  const handleBrushSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setShapeSize(Number(e.target.value));
-  }, [setShapeSize]);
 
   return (
     <div className="button-group panel-actions">

@@ -80,3 +80,11 @@ When a feature is removed or superseded:
     -   **Automated Tests**: Find the test in its `*.test.tsx` file. You can either delete the test or skip it using `it.skip(...)`. If you delete it, also remove its ID from `src/data/automated-tests.ts`.
     -   **Manual Tests**: Find the test in `src/data/manual-tests.ts`. It's best to remove it entirely to keep the manual testing process clean.
 4.  **Verify Integrity**: Run `bun test` to ensure no broken links remain.
+
+## Building Static Documentation
+
+A static HTML version of the documentation can be generated for distribution or offline viewing.
+
+1.  **Run the Build Script**: Execute the command `bun run scripts/build-docs.ts`.
+2.  **Output**: This will generate a single, self-contained HTML file at `src/public/documentation.html`.
+3.  **Purpose**: This script reads all `DocItem` objects from `DOCUMENTATION_CONTENT` in `_Documentation.ts` and renders them into a styled HTML page. It includes claims, references, and test IDs. Note that it does **not** include live test status data, which is only available in the in-app documentation modal.
