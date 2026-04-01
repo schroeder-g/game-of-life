@@ -265,7 +265,7 @@ export const DOCUMENTATION_INDEX_GROUPS: IndexGroup[] = [
   {
     title: "Header Buttons",
     idPrefix: "AHPB_",
-    stripPrefix: "",
+    stripPrefix: "<b>",
   },
   {
     title: "Brush Controls",
