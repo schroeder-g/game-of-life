@@ -1,5 +1,12 @@
 # AI Instructions for Documentation & Testing
 
+-   Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim followed by the supporting tests.
+-   Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them, and include the Date, time, and effective prompt. For deprecated claims, explain clearly why they are deprecated if they are not already deprecated.
+-   End-User documentation shall be in HTML. End user documentation should be structured in a visually-pleasing manner, with Headings, Subheadings, and labels bolded.
+-   A documentation Index shall be provided, accessible via a button in the Documentation panel.
+-   Documentation data shall be stored in `src/data/documentation` in various `*_Documentation.ts` files. `src/data/documentation/_Documentation.ts` is the main file that exports all documentation claims, including claims from other `*_Documentation.ts` files.
+-   `src/data/documentation/_Documentation.ts` and related files shall be used to create the end-user `src/public/documentation.html` file.
+
 This document outlines the process for managing the intertwined documentation and testing system for the "Cube of Life" project.
 
 ## System Overview
