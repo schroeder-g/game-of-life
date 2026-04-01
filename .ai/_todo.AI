@@ -4,7 +4,7 @@
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
-*   **TODO-003:** `UC-3` (from `header-scene-selector`) - Missing automated test.
+*   **TODO-003:** `UC-3` (from `header-scene-selector`) - Missing automated test. You should be able to select a scene, and have it load.
 *   **TODO-004:** `UI-2` (from `header-docs`, `deprecated-accessing-documentation`) - Missing automated test.
 *   **TODO-005:** `UC-12` (from `header-shortcuts`) - Missing automated test.
 *   **TODO-015:** `UX-7` (from `quality-input-focus`) - Missing automated test.

@@ -175,54 +175,6 @@ const CURRENT_MANUAL: DocItem[] = [
     references: ["src/contexts/BrushContext.tsx", "src/core/Grid3D.ts"],
   },
 
-  { id: 'heading-config', type: 'h3', text: 'Configuration Panel' },
-  {
-    id: "config-speed",
-    type: 'p',
-    text: "<b>Speed:</b> In View Mode, this slider controls the simulation speed in generations per second.",
-    testIds: ["UC-6"],
-    references: ["src/contexts/SimulationContext.tsx"],
-  },
-  {
-    id: "config-environment",
-    type: 'p',
-    text: "<b>Environment Section:</b> Controls the grid's properties. Adjust 'Grid Size' and 'Cell Margin'. 'Reset' reverts to the initial state, 'Clear' removes all cells, and 'Random' populates the grid based on the 'Density' slider.",
-    testIds: ["UC-7"],
-    references: ["src/contexts/SimulationContext.tsx", "src/core/Grid3D.ts"],
-  },
-  {
-    id: "config-rules",
-    type: 'p',
-    text: "<b>Rules Section:</b> Defines the automaton's logic. Set the neighbor count for a cell to 'Survive' or for a new cell to be 'Born'. Checkboxes for Faces, Edges, and Corners determine which neighbor types are counted.",
-    testIds: ["UC-8"],
-    references: ["src/contexts/SimulationContext.tsx"],
-  },
-  {
-    id: "config-cursor",
-    type: 'p',
-    text: "<b>Cursor Position Section:</b> Provides inputs to set the editor cursor's X, Y, and Z coordinates. It also shows the keyboard shortcuts for moving the cursor, which change based on your camera angle.",
-    testIds: ["UC-9"],
-    references: ["src/contexts/BrushContext.tsx", "src/contexts/SimulationContext.tsx"],
-  },
-  {
-    id: "config-shape-brush",
-    type: 'p',
-    text: "<b>Shape Brush Section:</b> Customize the selected brush's 'Size' and 'Hollow' properties. Brush rotation is controlled with the 'I' and 'P' keys. When using destructive tools like the 'Clear Brush', the rotation direction for 'I' and 'P' is reversed for intuitive control.",
-    testIds: ["UX-1"],
-    references: ["src/core/shapes.ts", "src/contexts/BrushContext.tsx", "src/hooks/useAppShortcuts.ts"],
-  },
-  {
-    id: "config-scene-management",
-    type: 'p',
-    text: "<b>Scene Management Section:</b> Save the current grid, rules, and settings as a new named scene. You can also 'Export' scenes to a file, 'Import' them from a file, or 'Delete' saved scenes.",
-    testIds: ["UC-10"],
-  },
-  {
-    id: "config-camera-controls",
-    type: 'p',
-    text: "<b>Camera Controls Section:</b> Adjust sensitivity for Pan, Yaw (swivel), and Roll. You can invert controls and set camera easing (acceleration/deceleration) for smoother movements.",
-    testIds: ["UC-11"],
-  },
 
   { id: 'heading-dev', type: 'h3', text: 'Developer & Testing Features' },
   {
