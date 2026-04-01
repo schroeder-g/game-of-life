@@ -1,3 +1,4 @@
+// @documentation-skip
 import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
 
 const KeyDisplay = ({ k, v }: { k: string; v: readonly number[] }) => (

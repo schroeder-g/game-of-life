@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import { useSimulation } from "../contexts/SimulationContext"; // Keep useSimulation for buildInfo
 
+// @documentation-skip
 interface WelcomeModalProps {
   setShowIntroduction: (show: boolean) => void;
   setUserName: (name: string) => void;
