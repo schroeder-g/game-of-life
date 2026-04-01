@@ -45,6 +45,12 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
 
   const headings = DOCUMENTATION_CONTENT.filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-'));
 
+  const stripHtmlTags = (html: string) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
+
   const handleIndexClick = (id: string) => {
     const el = contentRef.current?.querySelector(`#${id}`);
     el?.scrollIntoView({ behavior: 'smooth' });
@@ -158,7 +164,7 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
               <ul style={{ listStyle: 'none', padding: 0, columns: 2 }}>
                 {headings.map(h => (
                   <li key={h.id} style={{ marginBottom: '0.5rem' }}>
-                    <a href={`#${h.id}`} onClick={(e) => { e.preventDefault(); handleIndexClick(h.id); }} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{h.text}</a>
+                    <a href={`#${h.id}`} onClick={(e) => { e.preventDefault(); handleIndexClick(h.id); }} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{stripHtmlTags(h.text)}</a>
                   </li>
                 ))}
               </ul>
