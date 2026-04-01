@@ -5,62 +5,68 @@ Here are the findings:
 **1. Documentation Claims with Missing Corresponding Automated Tests:**
 The following `testIds` are specified in documentation claims but do not have a matching `it(...)` block in the provided test files:
 
-*   `UC-2` (from `header-playback`, `deprecated-camera-control`)
-*   `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`)
-*   `UC-3` (from `header-scene-selector`)
-*   `UI-2` (from `header-docs`, `deprecated-accessing-documentation`)
-*   `UC-12` (from `header-shortcuts`)
-*   `UC-4` (from `edit-paint-clear`)
-*   `UC-5` (from `edit-brush-selector`)
-*   `UC-7` (from `config-environment`)
-*   `UC-8` (from `config-rules`)
-*   `UC-9` (from `config-cursor`)
-*   `UC-10` (from `config-scene-management`)
-*   `UX-4` (from `dev-welcome`, `deprecated-dev-welcome`)
-*   `UI-1` (from `dev-testing-panel`, `deprecated-dev-testing-panel`)
-*   `UX-6` (from `dev-testing-panel`, `deprecated-dev-testing-panel`)
-*   `UX-7` (from `quality-input-focus`)
-*   `QA-2` (from `quality-key-mapping`)
-*   `QA-3` (from `quality-doc-test-process`)
-*   `AHP_TITLE_001` (from `AHP_TITLE_001_CLAIM`)
-*   `AHP_STATUS_001` (from `AHP_STATUS_001_CLAIM`)
-*   `AHP_MODAL_001` (from `AHP_MODAL_001_CLAIM`)
-*   `AHP_MENU_001` (from `AHP_MENU_001_CLAIM`)
-*   `TEST_BC_DRAG_001` (from `BC_DRAG_001_CLAIM`)
-*   `TEST_BC_INIT_001` (from `BC_INIT_001_CLAIM`)
-*   `TEST_BC_APPEAR_001` (from `BC_APPEAR_001_CLAIM`)
-*   `TEST_BC_APPEAR_002` (from `BC_APPEAR_002_CLAIM`)
-*   `TEST_BC_VIS_001` (from `BC_VIS_001_CLAIM`)
-*   `TEST_BC_BUTTON_001_W`, `TEST_BC_BUTTON_001_X`, `TEST_BC_BUTTON_001_A`, `TEST_BC_BUTTON_001_D`, `TEST_BC_BUTTON_001_Q`, `TEST_BC_BUTTON_001_Z` (from `BC_BUTTON_001_CLAIM`)
-*   `AHPB_SCENE_001` (from `AHP_SCENE_001_CLAIM`)
-*   `AHPB_MODE_001` (from `AHPB_MODE_001_CLAIM`)
-*   `AHPB_PLAY_001` (from `AHPB_PLAY_001_CLAIM`)
-*   `AHPB_SPEED_001` (from `AHPB_SPEED_001_CLAIM`)
-*   `AHPB_STEP_BACK_001` (from `AHPB_STEP_BACK_001_CLAIM`)
-*   `AHPB_STEP_FWD_001` (from `AHPB_STEP_FWD_001_CLAIM`)
-*   `AHPB_RESET_001` (from `AHPB_RESET_001_CLAIM`)
-*   `AHPB_FIT_001` (from `AHPB_FIT_001_CLAIM`)
-*   `AHPB_RECENTER_001` (from `AHPB_RECENTER_001_CLAIM`)
-*   `AHPB_SQUARE_001` (from `AHPB_SQUARE_001_CLAIM`)
-*   `AHPB_COMM_001` (from `AHPB_COMM_001_CLAIM`)
-*   `AHPB_GEAR_001` (from `AHPB_GEAR_001_CLAIM`)
-*   `AHPB_HELP_001` (from `AHPB_HELP_001_CLAIM`)
-*   `AHPB_HELP_INT_001` (from `AHPB_HELP_INT_001_CLAIM`)
-*   `AHPB_HELP_SHORT_001` (from `AHPB_HELP_SHORT_001_CLAIM`)
-*   `AHPB_HELP_NOTES_001` (from `AHPB_HELP_NOTES_001_CLAIM`)
-*   `AHPB_HELP_DOCS_001` (from `AHPB_HELP_DOCS_001_CLAIM`)
+*   **TODO-001:** `UC-2` (from `header-playback`, `deprecated-camera-control`)
+*   **TODO-002:** `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`)
+*   **TODO-003:** `UC-3` (from `header-scene-selector`)
+*   **TODO-004:** `UI-2` (from `header-docs`, `deprecated-accessing-documentation`)
+*   **TODO-005:** `UC-12` (from `header-shortcuts`)
+*   **TODO-006:** `UC-4` (from `edit-paint-clear`)
+*   **TODO-007:** `UC-5` (from `edit-brush-selector`)
+*   **TODO-008:** `UC-7` (from `config-environment`)
+*   **TODO-009:** `UC-8` (from `config-rules`)
+*   **TODO-010:** `UC-9` (from `config-cursor`)
+*   **TODO-011:** `UC-10` (from `config-scene-management`)
+*   **TODO-012:** `UX-4` (from `dev-welcome`, `deprecated-dev-welcome`)
+*   **TODO-013:** `UI-1` (from `dev-testing-panel`, `deprecated-dev-testing-panel`)
+*   **TODO-014:** `UX-6` (from `dev-testing-panel`, `deprecated-dev-testing-panel`)
+*   **TODO-015:** `UX-7` (from `quality-input-focus`)
+*   **TODO-016:** `QA-2` (from `quality-key-mapping`)
+*   **TODO-017:** `QA-3` (from `quality-doc-test-process`)
+*   **TODO-018:** `AHP_TITLE_001` (from `AHP_TITLE_001_CLAIM`)
+*   **TODO-019:** `AHP_STATUS_001` (from `AHP_STATUS_001_CLAIM`)
+*   **TODO-020:** `AHP_MODAL_001` (from `AHP_MODAL_001_CLAIM`)
+*   **TODO-021:** `AHP_MENU_001` (from `AHP_MENU_001_CLAIM`)
+*   **TODO-022:** `TEST_BC_DRAG_001` (from `BC_DRAG_001_CLAIM`)
+*   **TODO-023:** `TEST_BC_INIT_001` (from `BC_INIT_001_CLAIM`)
+*   **TODO-024:** `TEST_BC_APPEAR_001` (from `BC_APPEAR_001_CLAIM`)
+*   **TODO-025:** `TEST_BC_APPEAR_002` (from `BC_APPEAR_002_CLAIM`)
+*   **TODO-026:** `TEST_BC_VIS_001` (from `BC_VIS_001_CLAIM`)
+*   **TODO-027:** `TEST_BC_BUTTON_001_W` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-028:** `TEST_BC_BUTTON_001_X` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-029:** `TEST_BC_BUTTON_001_A` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-030:** `TEST_BC_BUTTON_001_D` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-031:** `TEST_BC_BUTTON_001_Q` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-032:** `TEST_BC_BUTTON_001_Z` (from `BC_BUTTON_001_CLAIM`)
+*   **TODO-033:** `AHPB_SCENE_001` (from `AHP_SCENE_001_CLAIM`)
+*   **TODO-034:** `AHPB_MODE_001` (from `AHPB_MODE_001_CLAIM`)
+*   **TODO-035:** `AHPB_PLAY_001` (from `AHPB_PLAY_001_CLAIM`)
+*   **TODO-036:** `AHPB_SPEED_001` (from `AHPB_SPEED_001_CLAIM`)
+*   **TODO-037:** `AHPB_STEP_BACK_001` (from `AHPB_STEP_BACK_001_CLAIM`)
+*   **TODO-038:** `AHPB_STEP_FWD_001` (from `AHPB_STEP_FWD_001_CLAIM`)
+*   **TODO-039:** `AHPB_RESET_001` (from `AHPB_RESET_001_CLAIM`)
+*   **TODO-040:** `AHPB_FIT_001` (from `AHPB_FIT_001_CLAIM`)
+*   **TODO-041:** `AHPB_RECENTER_001` (from `AHPB_RECENTER_001_CLAIM`)
+*   **TODO-042:** `AHPB_SQUARE_001` (from `AHPB_SQUARE_001_CLAIM`)
+*   **TODO-043:** `AHPB_COMM_001` (from `AHPB_COMM_001_CLAIM`)
+*   **TODO-044:** `AHPB_GEAR_001` (from `AHPB_GEAR_001_CLAIM`)
+*   **TODO-045:** `AHPB_HELP_001` (from `AHPB_HELP_001_CLAIM`)
+*   **TODO-046:** `AHPB_HELP_INT_001` (from `AHPB_HELP_INT_001_CLAIM`)
+*   **TODO-047:** `AHPB_HELP_SHORT_001` (from `AHPB_HELP_SHORT_001_CLAIM`)
+*   **TODO-048:** `AHPB_HELP_NOTES_001` (from `AHPB_HELP_NOTES_001_CLAIM`)
+*   **TODO-049:** `AHPB_HELP_DOCS_001` (from `AHPB_HELP_DOCS_001_CLAIM`)
 
 **2. Documentation Claims with No `testIds` Specified:**
 The following documentation claims do not specify any `testIds`, violating the rule "Documentation claims should have a minimum of one corresponding test":
 
-*   `src/data/documentation/Controls_Documentation.ts`: `CONTROLS_DEPRECATED_001_CLAIM`
-*   `src/data/documentation/ManualTestsPanel_Documentation.ts`: `MTP_PANEL_001_CLAIM`
+*   **TODO-050:** `src/data/documentation/Controls_Documentation.ts`: `CONTROLS_DEPRECATED_001_CLAIM`
+*   **TODO-051:** `src/data/documentation/ManualTestsPanel_Documentation.ts`: `MTP_PANEL_001_CLAIM`
 
 **3. Test Files Not Following `[ID]` Naming Convention:**
 The `it(...)` blocks in the following test files do not consistently include a `[ID]` prefix, making it impossible to automatically link them to documentation claims as required by the `.ai/DocumentationAndTesting.AI` guidelines:
 
-*   `src/__tests__/BrushContext.test.tsx`
-*   `src/__tests__/Grid.test.tsx`
+*   **TODO-052:** `src/__tests__/BrushContext.test.tsx`
+*   **TODO-053:** `src/__tests__/Grid.test.tsx`
 
 **4. Documentation File Inconsistency:**
 The file `src/data/documentation/SettingsSidebar_Documentation.ts` is present but exports an empty array named `mainMenuDocumentation`. This suggests that the documentation for the `SettingsSidebar` component (which was refactored from `MainMenu`) is currently missing, and the import in `src/data/documentation/_Documentation.ts` still references the old name.
+*   **TODO-054:** Address `src/data/documentation/SettingsSidebar_Documentation.ts` inconsistency.
