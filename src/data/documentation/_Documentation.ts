@@ -1,14 +1,31 @@
+/**
+ * Represents a single piece of documentation content.
+ * Each item is a block-level element, like a heading or a paragraph,
+ * and can be linked to tests and source code references.
+ */
 export interface DocItem {
+  /** A unique identifier for the documentation item, used for linking and keys. */
   id:string;
+  /** The type of the documentation item, determining its HTML tag. */
   type: 'h3' | 'p'; // h3 for section headings, p for paragraphs/claims
+  /** The main content of the item, which may include HTML for formatting. */
   text: string;
+  /** An optional array of test IDs (e.g., "UC-1", "QA-3") that verify this claim. */
   testIds?: string[];
+  /** An optional array of source file paths relevant to this documentation item. */
   references?: string[];
 }
 
+/**
+ * Defines a grouping for documentation items in the index.
+ * This is used to create collapsible sections in the documentation modal's index.
+ */
 export interface IndexGroup {
+  /** The display title for the group in the documentation index UI. */
   title: string;
+  /** The prefix used to identify which `DocItem`s belong to this group. */
   idPrefix: string;
+  /** A string, often HTML tags like `<b>`, to be stripped from the item's text for a cleaner display in the index. */
   stripPrefix: string;
 }
 
