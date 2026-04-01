@@ -4,7 +4,6 @@
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
-*   **TODO-001:** `UC-2` (from `header-playback`, `deprecated-camera-control`) - Missing automated test.
 *   **TODO-002:** `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`) - Missing automated test.
 *   **TODO-003:** `UC-3` (from `header-scene-selector`) - Missing automated test.
 *   **TODO-004:** `UI-2` (from `header-docs`, `deprecated-accessing-documentation`) - Missing automated test.
@@ -13,25 +12,10 @@
 *   **TODO-009:** `UC-8` (from `config-rules`) - In progress in `SettingsSidebar.test.tsx`.
 *   **TODO-010:** `UC-9` (from `config-cursor`) - In progress in `SettingsSidebar.test.tsx`.
 *   **TODO-011:** `UC-10` (from `config-scene-management`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-012:** `UX-4` (from `dev-welcome`, `deprecated-dev-welcome`) - Missing automated test.
-*   **TODO-013:** `UI-1` (from `dev-testing-panel`, `deprecated-dev-testing-panel`) - Missing automated test.
-*   **TODO-014:** `UX-6` (from `dev-testing-panel`, `deprecated-dev-testing-panel`) - Missing automated test.
 *   **TODO-015:** `UX-7` (from `quality-input-focus`) - Missing automated test.
 *   **TODO-016:** `QA-2` (from `quality-key-mapping`) - Missing automated test.
 *   **TODO-017:** `QA-3` (from `quality-doc-test-process`) - Missing automated test.
-*   **TODO-058:** Audit and populate end-user documentation for:
-    *   [x] `SettingsSidebar.tsx` (Populated `SettingsSidebar_Documentation.ts`)
-    *   [x] `Grid.tsx` (Populated `Grid_Documentation.ts`)
-    *   [x] `Cell.tsx` (Populated `Cell_Documentation.ts`)
-    *   [x] `IntroductionModal.tsx` (Populated `IntroductionModal_Documentation.ts`)
-    *   [x] `WelcomeModal.tsx` (Skipped for end-user documentation)
-    *   [x] `ShortcutOverlay.tsx` (Populated `ShortcutOverlay_Documentation.ts`)
-    *   [x] `ReleaseNotesModal.tsx` (Skipped for end-user documentation)
-    *   [x] `KeyMapPage.tsx` (Skipped for end-user documentation)
-    *   [x] `AutomatedTestsPanel.tsx` (Skipped for end-user documentation)
-    *   [x] `DocumentationModal.tsx` (Skipped for end-user documentation)
-    *   [x] `SelectedCommunityPanel.tsx` (Populated `SelectedCommunityPanel_Documentation.ts`)
-    *   [x] `ClaimHint.tsx` (Skipped for end-user documentation)
+
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
