@@ -1,9 +1,15 @@
 export interface DocItem {
-  id: string;
+  id:string;
   type: 'h3' | 'p'; // h3 for section headings, p for paragraphs/claims
   text: string;
   testIds?: string[];
   references?: string[];
+}
+
+export interface IndexGroup {
+  title: string;
+  idPrefix: string;
+  stripPrefix: string;
 }
 
 import { brushControlsDocumentation } from "./brushControls_Documentation";
@@ -252,6 +258,14 @@ const CURRENT_MANUAL: DocItem[] = [
      tick must correctly apply the rules of life.`,
     testIds: ['CORE-1', 'CORE-2', 'CORE-3', 'CORE-4', 'CORE-5', 'CORE-6', 'CORE-7', 'CORE-8'],
     references: ["src/core/Grid3D.ts"],
+  },
+];
+
+export const DOCUMENTATION_INDEX_GROUPS: IndexGroup[] = [
+  {
+    title: "Brush Controls",
+    idPrefix: "BC_",
+    stripPrefix: "<b>Brush Controls Panel ",
   },
 ];
 

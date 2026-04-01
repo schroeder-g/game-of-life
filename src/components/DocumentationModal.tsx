@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { DOCUMENTATION_CONTENT } from "../data/documentation/_Documentation";
+import { DOCUMENTATION_CONTENT, DOCUMENTATION_INDEX_GROUPS } from "../data/documentation/_Documentation";
 import { useManualTests } from "../hooks/useManualTests";
 import { CheckCircle, XCircle, Circle } from 'lucide-react';
 import { useAutomatedTestResults } from "../hooks/useAutomatedTestResults"; // Import the new hook
@@ -61,29 +61,31 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
 
   const generateGroupedIndex = (): GroupedIndexSection[] => {
     const grouped: GroupedIndexSection[] = [];
+    const allGroupedIds = new Set<string>();
 
-    // Main Manual Section
+    // Process defined groups first
+    DOCUMENTATION_INDEX_GROUPS.forEach(group => {
+      const items: IndexHeadingItem[] = DOCUMENTATION_CONTENT
+        .filter(item => item.type === 'h3' && item.id.startsWith(group.idPrefix) && !item.id.startsWith('deprecated-'))
+        .map(item => {
+          allGroupedIds.add(item.id);
+          const cleanedText = item.text.replace(group.stripPrefix, '');
+          return { id: item.id, text: stripHtmlTags(cleanedText) };
+        });
+
+      if (items.length > 0) {
+        grouped.push({ title: group.title, items });
+      }
+    });
+
+    // Main Manual Section (items not in any other group)
     const mainManualItems: IndexHeadingItem[] = DOCUMENTATION_CONTENT
-      .filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-') && !item.id.startsWith('BC_'))
+      .filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-') && !allGroupedIds.has(item.id))
       .map(item => ({ id: item.id, text: stripHtmlTags(item.text) }));
 
     if (mainManualItems.length > 0) {
-      grouped.push({ title: "Main Manual", items: mainManualItems });
-    }
-
-    // Brush Controls Section
-    const brushControlsPrefix = "<b>Brush Controls Panel ";
-    const brushControlsItems: IndexHeadingItem[] = DOCUMENTATION_CONTENT
-      .filter(item => item.type === 'h3' && item.id.startsWith('BC_') && !item.id.startsWith('deprecated-'))
-      .map(item => {
-        let text = item.text;
-        // Remove the prefix, case-insensitively and handling bold tags
-        const cleanedText = text.replace(brushControlsPrefix, '');
-        return { id: item.id, text: stripHtmlTags(cleanedText) };
-      });
-
-    if (brushControlsItems.length > 0) {
-      grouped.push({ title: "Brush Controls", items: brushControlsItems });
+      // Prepend "Main Manual" to keep it at the top
+      grouped.unshift({ title: "Main Manual", items: mainManualItems });
     }
 
     return grouped;
