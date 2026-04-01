@@ -43,13 +43,53 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
   const deprecatedHeader = deprecatedItems.find(item => item.id === 'heading-deprecated');
   const deprecatedClaims = deprecatedItems.filter(item => item.id !== 'heading-deprecated');
 
-  const headings = DOCUMENTATION_CONTENT.filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-'));
-
   const stripHtmlTags = (html: string) => {
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';
   };
+
+  interface IndexHeadingItem {
+    id: string;
+    text: string;
+  }
+
+  interface GroupedIndexSection {
+    title: string;
+    items: IndexHeadingItem[];
+  }
+
+  const generateGroupedIndex = (): GroupedIndexSection[] => {
+    const grouped: GroupedIndexSection[] = [];
+
+    // Main Manual Section
+    const mainManualItems: IndexHeadingItem[] = DOCUMENTATION_CONTENT
+      .filter(item => item.type === 'h3' && !item.id.startsWith('deprecated-') && !item.id.startsWith('BC_'))
+      .map(item => ({ id: item.id, text: stripHtmlTags(item.text) }));
+
+    if (mainManualItems.length > 0) {
+      grouped.push({ title: "Main Manual", items: mainManualItems });
+    }
+
+    // Brush Controls Section
+    const brushControlsPrefix = "<b>Brush Controls Panel ";
+    const brushControlsItems: IndexHeadingItem[] = DOCUMENTATION_CONTENT
+      .filter(item => item.type === 'h3' && item.id.startsWith('BC_') && !item.id.startsWith('deprecated-'))
+      .map(item => {
+        let text = item.text;
+        // Remove the prefix, case-insensitively and handling bold tags
+        const cleanedText = text.replace(brushControlsPrefix, '');
+        return { id: item.id, text: stripHtmlTags(cleanedText) };
+      });
+
+    if (brushControlsItems.length > 0) {
+      grouped.push({ title: "Brush Controls", items: brushControlsItems });
+    }
+
+    return grouped;
+  };
+
+  const groupedIndex = generateGroupedIndex();
 
   const handleIndexClick = (id: string) => {
     const el = contentRef.current?.querySelector(`#${id}`);
@@ -161,10 +201,17 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
           {showIndex && (
             <div className="doc-index" style={{ border: '1px solid #444', padding: '1rem', borderRadius: '4px', margin: '1rem 0' }}>
               <h4 style={{ marginTop: 0 }}>Index</h4>
-              <ul style={{ listStyle: 'none', padding: 0, columns: 2 }}>
-                {headings.map(h => (
-                  <li key={h.id} style={{ marginBottom: '0.5rem' }}>
-                    <a href={`#${h.id}`} onClick={(e) => { e.preventDefault(); handleIndexClick(h.id); }} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{stripHtmlTags(h.text)}</a>
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                {groupedIndex.map(section => (
+                  <li key={section.title} style={{ marginBottom: '1rem' }}>
+                    <strong style={{ color: '#fff' }}>{section.title}</strong>
+                    <ul style={{ listStyle: 'none', paddingLeft: '1rem', columns: 2 }}>
+                      {section.items.map(h => (
+                        <li key={h.id} style={{ marginBottom: '0.5rem' }}>
+                          <a href={`#${h.id}`} onClick={(e) => { e.preventDefault(); handleIndexClick(h.id); }} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{h.text}</a>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
