@@ -1,12 +1,5 @@
-Use this file to store all TODO's as requested.
+(See GENERAL RULES )
 
-Each item should be sufficiently articulated so that another AI with access to the project can perform the necessary actions.
-
-After completing an item move it (prepend it) into the COMPLETED ITEMS section
-
-If appropriate, make sure UI items will be documented, or their documentation will updated, by adding an AiReminder span. 
-
-When considering this file, see if any ACTIVE ITEMS are completed, and need to be moved, and whether the RECOMMENDED SEQUENCE does not contain any completed items.
 
 **RECOMMENDED SEQUENCE**
 1.  **Tagging Pass (TODO-057 check)**: Verify `[ID]` prefixes in `src/core/__tests__/Grid3D.test.ts` and `src/hooks/__tests__/useAppShortcuts.test.ts`.
@@ -90,3 +83,20 @@ When considering this file, see if any ACTIVE ITEMS are completed, and need to b
 *   **TODO-054:** [COMPLETED] Address `SettingsSidebar_Documentation.ts` inconsistency.
 *   **TODO-055:** [COMPLETED] Full audit of `src/data/documentation/`
 *   **TODO-057:** [COMPLETED] Perform a tagging pass on remaining files in `src/__tests__`.
+
+**GENERAL RULES**
+Use this file to store all TODO's as requested.
+
+Each item should be sufficiently articulated so that another AI with access to the project can perform the necessary actions.
+
+After completing an item move it (prepend it) into the COMPLETED ITEMS section
+
+If appropriate, make sure UI items will be documented, or their documentation will updated, by adding an AiReminder span. 
+
+When considering this file, see if any ACTIVE ITEMS are completed, and need to be moved, and whether the RECOMMENDED SEQUENCE does not contain any completed items.
+
+We don't need End-User documentation for some tsx files. Such as WelcomeModal, KeyMapPage, AutomatedTestsPanel, DocumentationModal,
+or ClaimHint. 
+
+When I tell you a file does not need end-user documentation, then update that file with a flag that tells you not to force it to be documented. 
+
