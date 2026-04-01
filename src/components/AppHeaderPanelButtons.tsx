@@ -222,8 +222,8 @@ interface AppHeaderPanelButtonsProps {
   handleOpenIntroduction: () => void;
   handleOpenShortcuts: () => void;
   handleOpenReleaseNotes: () => void;
-  showMainMenu: boolean;
-  setShowMainMenu: (show: boolean) => void;
+  showSettingsSidebar: boolean;
+  setShowSettingsSidebar: (show: boolean) => void;
   showCommunityPanel: boolean; // New prop for community panel visibility
   toggleCommunityPanel: () => void; // New prop to toggle community panel
 }
@@ -253,8 +253,8 @@ export function AppHeaderPanelButtons({
   handleOpenIntroduction,
   handleOpenShortcuts,
   handleOpenReleaseNotes,
-  showMainMenu,
-  setShowMainMenu,
+  showSettingsSidebar,
+  setShowSettingsSidebar,
   showCommunityPanel, // Destructure new prop
   toggleCommunityPanel, // Destructure new prop
 }: AppHeaderPanelButtonsProps) {
@@ -373,8 +373,8 @@ export function AppHeaderPanelButtons({
         <UsersIcon />
       </button>
       <button
-        className={`glass-button settings-theme ${showMainMenu ? 'active' : ''}`}
-        onClick={() => setShowMainMenu(!showMainMenu)}
+        className={`glass-button settings-theme ${showSettingsSidebar ? 'active' : ''}`}
+        onClick={() => setShowSettingsSidebar(!showSettingsSidebar)}
         data-tooltip-bottom="Toggle Settings"
         aria-label="Toggle Settings"
       >
