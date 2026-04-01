@@ -2,12 +2,7 @@
 
 
 **RECOMMENDED SEQUENCE**
-1.  **Tagging Pass (TODO-057 check)**: Verify `[ID]` prefixes in `src/core/__tests__/Grid3D.test.ts` and `src/hooks/__tests__/useAppShortcuts.test.ts`.
-2.  **Align Active Documentation with Tests (TODO-058/TODO-056)**: 
-    *   [x] Update `DataIntegrity.test.ts` (`npm test src/tests/DataIntegrity.test.ts`) so it only examines active claims for test dependencies.
-3.  **Expand Automated Coverage (TODO-056)**: Transition manual tests to automated versions in `App.test.tsx` or component-specific test files.
-4.  **Final Integrity Verification**: Run `DataIntegrity.test.ts` to confirm 100% alignment across the repository.
-
+ 
 **ACTIVE ITEMS**
 *   **TODO-001:** `UC-2` (from `header-playback`, `deprecated-camera-control`) - Missing automated test.
 *   **TODO-002:** `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`) - Missing automated test.
