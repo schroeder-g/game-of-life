@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { KeyMapPage } from "./KeyMapPage";
+import { ClaimHint } from "./ClaimHint";
 
 interface ShortcutOverlayProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
         style={{ backgroundColor: "rgba(20, 20, 22, 0.95)" }}
       >
         <div className="shortcuts-header">
-          <h2>Shortcuts</h2>
+          <h2>Shortcuts <ClaimHint claimId="SHORTCUTS_OVERVIEW_CLAIM" /></h2>
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
@@ -31,19 +32,19 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             className={`tab-btn ${activeTab === "view" ? "active" : ""}`}
             onClick={() => setActiveTab("view")}
           >
-            View Mode
+            View Mode <ClaimHint claimId="SHORTCUTS_VIEW_CLAIM" />
           </button>
           <button
             className={`tab-btn ${activeTab === "edit" ? "active" : ""}`}
             onClick={() => setActiveTab("edit")}
           >
-            Edit Mode
+            Edit Mode <ClaimHint claimId="SHORTCUTS_EDIT_CLAIM" />
           </button>
           <button
             className={`tab-btn ${activeTab === "keymap" ? "active" : ""}`}
             onClick={() => setActiveTab("keymap")}
           >
-            Key Map
+            Key Map <ClaimHint claimId="SHORTCUTS_TABS_CLAIM" />
           </button>
         </div>
 

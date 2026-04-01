@@ -14,6 +14,7 @@ import { DOCUMENTATION_CONTENT } from "../data/documentation/_Documentation";
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
 
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
+import { ClaimHint } from "./ClaimHint";
 
 
 interface SettingsSidebarProps {
@@ -97,13 +98,13 @@ function EnvironmentSection() {
         onClick={() => setIsCollapsed(!isCollapsed)}
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
-        Environment
+        Environment <ClaimHint claimId="UC-7" />
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
         <>
           <label className="control-label">
-            <span>Grid Size: {gridSize}</span>
+            <span>Grid Size: {gridSize} <ClaimHint claimId="UC-7_GRID_SIZE_CLAIM" /></span>
             <input
               type="range"
               min={10}
@@ -114,7 +115,7 @@ function EnvironmentSection() {
             />
           </label>
           <label className="control-label">
-            <span>Cell Margin: {cellMargin.toFixed(2)}</span>
+            <span>Cell Margin: {cellMargin.toFixed(2)} <ClaimHint claimId="UC-7_CELL_MARGIN_CLAIM" /></span>
             <input
               type="range"
               min={0}
@@ -134,7 +135,7 @@ function EnvironmentSection() {
                 disabled={running}
                 title={running ? "Pause simulation to reset" : undefined}
               >
-                Reset
+                Reset <ClaimHint claimId="UC-7_RESET_CLAIM" />
               </button>
               <button
                 className="glass-button danger"
@@ -143,7 +144,7 @@ function EnvironmentSection() {
                 disabled={viewMode || !hasLiveCells}
                 title={viewMode ? "Switch to Edit mode to clear" : !hasLiveCells ? "No live cells to clear" : undefined}
               >
-                Clear
+                Clear <ClaimHint claimId="UC-7_CLEAR_CLAIM" />
               </button>
             </div>
 
@@ -156,7 +157,7 @@ function EnvironmentSection() {
                   title={viewMode ? "Switch to Edit mode to randomize" : hasLiveCells ? "Clear board to randomize" : undefined}
                   style={{ flexShrink: 0 }}
                 >
-                  Random
+                  Random <ClaimHint claimId="UC-7_RANDOM_CLAIM" />
                 </button>
                 <label className="control-label" style={{ margin: 0, flex: 1 }}>
                   <span style={{ fontSize: "12px" }}>Density: {density.toFixed(2)}</span>
@@ -208,13 +209,13 @@ function RulesSection() {
         onClick={() => setIsCollapsed(!isCollapsed)}
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
-        Rules
+        Rules <ClaimHint claimId="UC-8" />
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
         <>
           <div className="neighbor-controls" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#8b949e", flexWrap: "wrap", marginBottom: "8px" }}>
-            <span>Neighbors:</span>
+            <span>Neighbors: <ClaimHint claimId="UC-8_NEIGHBORS_CLAIM" /></span>
             <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
               <input
                 type="checkbox"
@@ -248,7 +249,7 @@ function RulesSection() {
           </div>
           <div className="rules-grid">
             <label className="control-label mini">
-              <span>Survive Min: {surviveMin}</span>
+              <span>Survive Min: {surviveMin} <ClaimHint claimId="UC-8_SURVIVE_CLAIM" /></span>
               <input
                 type="range"
                 min={0}
@@ -270,7 +271,7 @@ function RulesSection() {
               />
             </label>
             <label className="control-label mini">
-              <span>Birth Min: {birthMin}</span>
+              <span>Birth Min: {birthMin} <ClaimHint claimId="UC-8_BIRTH_CLAIM" /></span>
               <input
                 type="range"
                 min={0}
@@ -508,7 +509,7 @@ function SelectorPositionSection() {
         style={{ cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
       >
         <span>
-          Cursor Position
+          Cursor Position <ClaimHint claimId="UC-9" />
           {cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown' && (
             <span style={{ color: '#aaa', marginLeft: '8px', fontSize: '0.8em', fontWeight: 'normal' }}>
               ({cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)}, {cameraOrientation.rotation}°)
@@ -521,7 +522,7 @@ function SelectorPositionSection() {
         <div className="selector-position-section">
           {(["X", "Y", "Z"] as const).map((axis) => (
             <div key={axis} className="coordinate-input-container">
-              <label>{axis}</label>
+              <label>{axis} <ClaimHint claimId="UC-9_COORDINATES_CLAIM" /></label>
               <div className="coordinate-input-group">
                 <input
                   type="number"
@@ -576,7 +577,7 @@ function CameraControlSection() {
           alignItems: "center",
         }}
       >
-        Camera Controls
+        Camera Controls <ClaimHint claimId="UC-11" />
         <span style={{ fontSize: "12px", opacity: 0.6 }}>
           {isCollapsed ? "▼" : "▲"}
         </span>
@@ -584,7 +585,7 @@ function CameraControlSection() {
       {!isCollapsed && (
         <>
           <label className="control-label">
-            <span>Pan/Dolly Speed: {panSpeed}</span>
+            <span>Pan/Dolly Speed: {panSpeed} <ClaimHint claimId="UC-11_SPEEDS_CLAIM" /></span>
             <input
               type="range"
               min={1}
@@ -617,7 +618,7 @@ function CameraControlSection() {
             />
           </label>
           <label className="control-label row">
-            <span>Invert Yaw (Swivel)</span>
+            <span>Invert Yaw (Swivel) <ClaimHint claimId="UC-11_INVERSION_CLAIM" /></span>
             <input
               type="checkbox"
               className="glass-checkbox"
@@ -644,7 +645,7 @@ function CameraControlSection() {
             />
           </label>
           <label className="control-label">
-            <span>Ease In (accel): {easeIn.toFixed(1)}s</span>
+            <span>Ease In (accel): {easeIn.toFixed(1)}s <ClaimHint claimId="UC-11_EASING_CLAIM" /></span>
             <input
               type="range"
               min={0}
@@ -832,7 +833,7 @@ function SceneManagementSection() {
         onClick={() => setIsCollapsed(!isCollapsed)}
         style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
-        Scene Management
+        Scene Management <ClaimHint claimId="UC-10" />
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
       </h3>
       {!isCollapsed && (
@@ -854,7 +855,7 @@ function SceneManagementSection() {
               disabled={!newConfigName.trim()}
               title={!newConfigName.trim() ? "Enter a Scene Name to save" : ""}
             >
-              Save Current
+              Save Current <ClaimHint claimId="UC-10_SAVE_CLAIM" />
             </button>
             <button
               className="glass-button"
@@ -862,10 +863,10 @@ function SceneManagementSection() {
               disabled={!newConfigName.trim() && !selectedConfigName}
               title={!newConfigName.trim() && !selectedConfigName ? "Enter a Scene Name or select a scene to export" : ""}
             >
-              Export
+              Export <ClaimHint claimId="UC-10_EXPORT_CLAIM" />
             </button>
             <button className="glass-button" onClick={handleImportConfig}>
-              Import
+              Import <ClaimHint claimId="UC-10_IMPORT_CLAIM" />
             </button>
             <button
               className="glass-button danger"
@@ -1053,8 +1054,8 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
   );
 }
 
-// These were incorrectly exported as static properties of MainMenu.
+// These were incorrectly exported as static properties of SettingsSidebar.
 // They are either internal functions or separate components.
 // ActionsSection is an internal function and does not need to be exported.
-// EnvironmentSection, RulesSection, TestsSection, SelectorPositionSection, CameraControlSection, SceneManagementSection are internal components of MainMenu.
+// EnvironmentSection, RulesSection, TestsSection, SelectorPositionSection, CameraControlSection, SceneManagementSection are internal components of SettingsSidebar.
 // AppHeaderPanel is a separate component and should be imported directly.

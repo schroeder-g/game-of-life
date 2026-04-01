@@ -8,6 +8,7 @@ import { generateShape } from "../core/shapes";
 import { Cells } from "./Cell";
 import { type CameraOrientation } from "../core/cameraUtils";
 import { type CameraFace, type CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
+import { ClaimHint } from "./ClaimHint";
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -166,10 +167,15 @@ export function BoundingBox({ size }: { size: number }) {
   });
 
   return (
-    <lineSegments raycast={() => null}>
-      <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
-      <lineBasicMaterial color="silver" transparent opacity={opacity} />
-    </lineSegments>
+    <group>
+      <lineSegments raycast={() => null}>
+        <edgesGeometry args={[new THREE.BoxGeometry(size, size, size)]} />
+        <lineBasicMaterial color="silver" transparent opacity={opacity} />
+      </lineSegments>
+      <Html position={[size / 2, size / 2, size / 2]}>
+        <ClaimHint claimId="GRID_BOUNDS_CLAIM" />
+      </Html>
+    </group>
   );
 }
 
@@ -328,6 +334,9 @@ function BrushProjectionGuides({
 
       {paintMode === -1 && (
         <>
+          <Html position={[0, gridSize / 2 + 1, 0]}>
+            <ClaimHint claimId="GRID_PROJECTION_GUIDES_CLAIM" />
+          </Html>
           <instancedMesh ref={redOutlineRef} args={[undefined, undefined, 50000]} raycast={() => null}>
             <boxGeometry args={[1, 1, 1]} />
             <meshBasicMaterial
@@ -428,7 +437,7 @@ function FaceLabels({ size }: { size: number }) {
     <group>
       <Html key={face} position={[finalX, finalY, finalZ]} center zIndexRange={[0, 999]}>
         <div style={labelStyle}>
-          {currentFaceData.name}{rotationStr && `, ${rotationStr}`}
+          {currentFaceData.name}{rotationStr && `, ${rotationStr}`} <ClaimHint claimId="GRID_FACE_LABELS_CLAIM" />
         </div>
       </Html>
     </group>

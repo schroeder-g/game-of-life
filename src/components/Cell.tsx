@@ -1,9 +1,11 @@
+import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import chroma from "chroma-js";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Grid3D } from "../core/Grid3D";
 import { useSimulation } from "../contexts/SimulationContext";
+import { ClaimHint } from "./ClaimHint";
 
 // Custom shader material for per-instance color and opacity
 const cellShaderMaterial = {
@@ -261,6 +263,14 @@ export function Cells({
 
   return (
     <group key={`cells-${margin}`}>
+      <Html position={[0, gridSize / 2 + 0.5, 0]}>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <ClaimHint claimId="CELL_COLOR_CLAIM" />
+          <ClaimHint claimId="CELL_OPACITY_CLAIM" />
+          {!viewMode && selectorPos && <ClaimHint claimId="CELL_PULSE_CLAIM" />}
+          {!viewMode && selectorPos && <ClaimHint claimId="CELL_GHOST_CLAIM" />}
+        </div>
+      </Html>
       <instancedMesh
         ref={meshRef}
         args={[undefined, undefined, 50000]}

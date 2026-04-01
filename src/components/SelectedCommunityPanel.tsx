@@ -4,6 +4,7 @@ import * as THREE from "three";
 import chroma from "chroma-js";
 import { useSimulation } from "../contexts/SimulationContext";
 import { useBrush } from "../contexts/BrushContext";
+import { ClaimHint } from "./ClaimHint";
 
 // Rotating community 3D preview
 function CommunityPreview({
@@ -239,20 +240,20 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove, { passive: false });
-      window.addEventListener('touchend', handleTouchEnd);
+      window.addEventListener('touchmove', handleTouchMove as unknown as EventListener, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd as unknown as EventListener);
     } else {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove, { passive: false });
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener);
+      window.removeEventListener('touchend', handleTouchEnd as unknown as EventListener);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove, { passive: false });
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener);
+      window.removeEventListener('touchend', handleTouchEnd as unknown as EventListener);
     };
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
@@ -291,7 +292,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}
         >
           <span style={{ fontSize: "12px", opacity: 0.6, width: '12px' }}>{isCollapsed ? "▼" : "▲"}</span>
-          <h3 style={{ margin: 0 }}>Community Selection</h3>
+          <h3 style={{ margin: 0 }}>Community Selection <ClaimHint claimId="COMMUNITY_PANEL_OVERVIEW_CLAIM" /></h3>
         </div>
 
         {community.length > 0 && (
@@ -310,6 +311,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
                 <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
               </svg>
+              <ClaimHint claimId="COMMUNITY_ACTIVATE_BRUSH_CLAIM" />
             </button>
             <button
               className="icon-button danger"
@@ -337,7 +339,7 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
           ) : (
             <>
               <div className="community-stats">
-                <span>Cells: {community.length}</span>
+                <span>Cells: {community.length} <ClaimHint claimId="COMMUNITY_STATS_CLAIM" /></span>
               </div>
               <div className="community-3d-wrapper">
                 <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
@@ -345,6 +347,9 @@ export function SelectedCommunityPanel({ isVisible, onClose }: SelectedCommunity
                   <pointLight position={[10, 10, 10]} intensity={1} />
                   <CommunityPreview community={community} gridSize={gridSize} />
                 </Canvas>
+                <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
+                  <ClaimHint claimId="COMMUNITY_PREVIEW_3D_CLAIM" />
+                </div>
               </div>
             </>
           )}
