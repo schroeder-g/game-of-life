@@ -6,6 +6,8 @@ export interface DocItem {
   references?: string[];
 }
 
+import { brushControlsDocumentation } from "./brushControls_Documentation";
+
 const DEPRECATED_CONTENT: DocItem[] = [
   { 
     id: 'heading-deprecated', 
