@@ -118,7 +118,7 @@ const CURRENT_MANUAL: DocItem[] = [
     id: "header-scene-selector",
     type: 'p',
     text: "<b>Select Scene (🖼️):</b> Opens a dropdown to quickly load pre-made or user-saved scenes, including their patterns and rules.",
-    testIds: ["UC-3"],
+    testIds: ["UC-3", "AHP_SCENE_SELECT_001"],
   },
   {
     id: "header-docs",

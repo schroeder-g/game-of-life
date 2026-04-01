@@ -73,7 +73,21 @@ describe('AppHeaderPanel', () => {
     });
 
     mockUseGenesisConfig.mockReturnValue({
-      state: { selectedConfigName: 'Test Scene' },
+      state: {
+        selectedConfigName: 'Test Scene',
+        savedConfigs: { // Add savedConfigs for scene selection
+          'Test Scene': { name: 'Test Scene', description: 'A test scene', cells: [[0, 0, 0]] },
+          'Scene One': { name: 'Scene One', description: 'Another scene', cells: [[1, 1, 1]] },
+        },
+      },
+      actions: {
+        setSelectedConfigName: vi.fn(), // Mock this action
+        saveConfig: vi.fn(),
+        exportConfig: vi.fn(),
+        importConfig: vi.fn(),
+        deleteConfig: vi.fn(),
+        setNewConfigName: vi.fn(),
+      },
     });
   });
 
@@ -82,6 +96,53 @@ describe('AppHeaderPanel', () => {
     expect(screen.getByText('Cube of Life')).toBeInTheDocument();
     expect(screen.getByText(/Build: 2.1.0/)).toBeInTheDocument();
     expect(screen.getByText('Welcome, Tester!')).toBeInTheDocument();
+  });
+
+  it('[AHP_SCENE_SELECT_001][UC-3] allows selecting a scene and loads it', async () => {
+    const mockSetSelectedConfigName = vi.fn();
+    const mockLoadScene = vi.fn();
+
+    mockUseGenesisConfig.mockReturnValue({
+      state: {
+        selectedConfigName: 'Test Scene',
+        savedConfigs: {
+          'Test Scene': { name: 'Test Scene', description: 'A test scene', cells: [[0, 0, 0]] },
+          'Scene One': { name: 'Scene One', description: 'Another scene', cells: [[1, 1, 1]] },
+        },
+      },
+      actions: {
+        setSelectedConfigName: mockSetSelectedConfigName,
+        saveConfig: vi.fn(),
+        exportConfig: vi.fn(),
+        importConfig: vi.fn(),
+        deleteConfig: vi.fn(),
+        setNewConfigName: vi.fn(),
+      },
+    });
+
+    mockUseSimulation.mockReturnValue({
+      ...mockUseSimulation(), // Keep existing simulation state/actions
+      actions: {
+        ...mockSimulationActions, // Keep existing simulation actions
+        loadScene: mockLoadScene, // Override loadScene
+      },
+    });
+
+    render(<AppHeaderPanel showSettingsSidebar={false} setShowSettingsSidebar={() => { }} />);
+
+    // Click the "Select Scene" button to open the dropdown
+    const sceneButton = screen.getByRole('button', { name: 'Select Scene' });
+    fireEvent.click(sceneButton);
+
+    // Find and click the "Scene One" option in the dropdown
+    const sceneOneOption = await screen.findByText('Scene One');
+    fireEvent.click(sceneOneOption);
+
+    // Verify that setSelectedConfigName was called
+    expect(mockSetSelectedConfigName).toHaveBeenCalledWith('Scene One');
+
+    // Verify that loadScene was called with the correct cells for 'Scene One'
+    expect(mockLoadScene).toHaveBeenCalledWith([[1, 1, 1]]);
   });
 
   it('[AHP_STATUS_001] displays scene name, camera orientation, and simulation stats', () => {
