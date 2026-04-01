@@ -36,14 +36,14 @@ When considering this file, see if any ACTIVE ITEMS are completed, and need to b
     *   [x] `Grid.tsx` (Populated `Grid_Documentation.ts`)
     *   [x] `Cell.tsx` (Populated `Cell_Documentation.ts`)
     *   [x] `IntroductionModal.tsx` (Populated `IntroductionModal_Documentation.ts`)
-    *   `WelcomeModal.tsx` (Empty: `WelcomeModal_Documentation.ts`)
+    *   [x] `WelcomeModal.tsx` (Skipped for end-user documentation)
     *   [x] `ShortcutOverlay.tsx` (Populated `ShortcutOverlay_Documentation.ts`)
-    *   `ReleaseNotesModal.tsx` (Empty: `ReleaseNotesModal_Documentation.ts`)
-    *   `KeyMapPage.tsx` (Empty: `KeyMapPage_Documentation.ts`)
-    *   `AutomatedTestsPanel.tsx` (Empty: `AutomatedTestsPanel_Documentation.ts`)
-    *   `DocumentationModal.tsx` (Empty: `DocumentationModal_Documentation.ts`)
+    *   [x] `ReleaseNotesModal.tsx` (Skipped for end-user documentation)
+    *   [x] `KeyMapPage.tsx` (Skipped for end-user documentation)
+    *   [x] `AutomatedTestsPanel.tsx` (Skipped for end-user documentation)
+    *   [x] `DocumentationModal.tsx` (Skipped for end-user documentation)
     *   [x] `SelectedCommunityPanel.tsx` (Populated `SelectedCommunityPanel_Documentation.ts`)
-    *   `ClaimHint.tsx` (Empty: `ClaimHint_Documentation.ts`)
+    *   [x] `ClaimHint.tsx` (Skipped for end-user documentation)
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
