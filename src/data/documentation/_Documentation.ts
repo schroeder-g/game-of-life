@@ -7,6 +7,22 @@ export interface DocItem {
 }
 
 import { brushControlsDocumentation } from "./brushControls_Documentation";
+import { appHeaderPanelDocumentation } from "./AppHeaderPanel_Documentation";
+import { appHeaderPanelButtonsDocumentation } from "./AppHeaderPanelButtons_Documentation";
+import { automatedTestsPanelDocumentation } from "./AutomatedTestsPanel_Documentation";
+import { cellDocumentation } from "./Cell_Documentation";
+import { claimHintDocumentation } from "./ClaimHint_Documentation";
+import { controlsDocumentation } from "./Controls_Documentation";
+import { documentationModalDocumentation } from "./DocumentationModal_Documentation";
+import { gridDocumentation } from "./Grid_Documentation";
+import { introductionModalDocumentation } from "./IntroductionModal_Documentation";
+import { keyMapPageDocumentation } from "./KeyMapPage_Documentation";
+import { mainMenuDocumentation } from "./MainMenu_Documentation";
+import { manualTestsPanelDocumentation } from "./ManualTestsPanel_Documentation";
+import { releaseNotesModalDocumentation } from "./ReleaseNotesModal_Documentation";
+import { selectedCommunityPanelDocumentation } from "./SelectedCommunityPanel_Documentation";
+import { shortcutOverlayDocumentation } from "./ShortcutOverlay_Documentation";
+import { welcomeModalDocumentation } from "./WelcomeModal_Documentation";
 
 const DEPRECATED_CONTENT: DocItem[] = [
   { 
@@ -239,4 +255,24 @@ const CURRENT_MANUAL: DocItem[] = [
   },
 ];
 
-export const DOCUMENTATION_CONTENT: DocItem[] = [ ...CURRENT_MANUAL, ...brushControlsDocumentation, ...DEPRECATED_CONTENT ];
+export const DOCUMENTATION_CONTENT: DocItem[] = [
+  ...CURRENT_MANUAL,
+  ...brushControlsDocumentation,
+  ...appHeaderPanelDocumentation,
+  ...appHeaderPanelButtonsDocumentation,
+  ...automatedTestsPanelDocumentation,
+  ...cellDocumentation,
+  ...claimHintDocumentation,
+  ...controlsDocumentation,
+  ...documentationModalDocumentation,
+  ...gridDocumentation,
+  ...introductionModalDocumentation,
+  ...keyMapPageDocumentation,
+  ...mainMenuDocumentation,
+  ...manualTestsPanelDocumentation,
+  ...releaseNotesModalDocumentation,
+  ...selectedCommunityPanelDocumentation,
+  ...shortcutOverlayDocumentation,
+  ...welcomeModalDocumentation,
+  ...DEPRECATED_CONTENT,
+];
