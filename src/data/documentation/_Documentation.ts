@@ -40,7 +40,7 @@ import { documentationModalDocumentation } from "./DocumentationModal_Documentat
 import { gridDocumentation } from "./Grid_Documentation";
 import { introductionModalDocumentation } from "./IntroductionModal_Documentation";
 import { keyMapPageDocumentation } from "./KeyMapPage_Documentation";
-import { mainMenuDocumentation } from "./MainMenu_Documentation";
+import { settingsSidebarDocumentation } from "./SettingsSidebar_Documentation";
 import { manualTestsPanelDocumentation } from "./ManualTestsPanel_Documentation";
 import { releaseNotesModalDocumentation } from "./ReleaseNotesModal_Documentation";
 import { selectedCommunityPanelDocumentation } from "./SelectedCommunityPanel_Documentation";
@@ -324,7 +324,7 @@ export const DOCUMENTATION_CONTENT: DocItem[] = [
   ...gridDocumentation,
   ...introductionModalDocumentation,
   ...keyMapPageDocumentation,
-  ...mainMenuDocumentation,
+  ...settingsSidebarDocumentation,
   ...manualTestsPanelDocumentation,
   ...releaseNotesModalDocumentation,
   ...selectedCommunityPanelDocumentation,

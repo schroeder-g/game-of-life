@@ -9,14 +9,14 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe('BrushContext', () => {
-  it('should initialize with default values', () => {
+  it('[UC-5] should initialize with default values', () => {
     const { result } = renderHook(() => useBrush(), { wrapper });
     expect(result.current.state.selectedShape).toBe('Single Cell');
     expect(result.current.state.shapeSize).toBe(1);
     expect(result.current.state.paintMode).toBe(0);
   });
 
-  it('should change shape size correctly', () => {
+  it('[UX-1] should change shape size correctly', () => {
     const { result } = renderHook(() => useBrush(), { wrapper });
     // First switch to Cube so changeSize is not blocked
     act(() => {
@@ -29,7 +29,7 @@ describe('BrushContext', () => {
     expect(result.current.state.shapeSize).toBe(3);
   });
 
-  it('should toggle paint modes correctly', () => {
+  it('[UC-4] should toggle paint modes correctly', () => {
     const { result } = renderHook(() => useBrush(), { wrapper });
     act(() => {
       result.current.actions.setPaintMode(1);

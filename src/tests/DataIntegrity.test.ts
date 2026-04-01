@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { MANUAL_TESTS } from '../data/manual-tests.ts';
+import { MANUAL_TESTS } from '../data/manual-tests';
 import { DOCUMENTATION_CONTENT } from '../data/documentation/_Documentation.js';
-import { AUTOMATED_TEST_IDS } from '../data/automated-tests.ts';
+import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 
 describe('[QA-3] Data Integrity Checks', () => {
-  it('ensures all documentation claims have at least one test ID', () => {
+  it('[QA-3] ensures all documentation claims have at least one test ID', () => {
     const claimsWithText = DOCUMENTATION_CONTENT.filter(
       (item) => item.type === 'p' && !item.id.startsWith('deprecated-') && item.id !== 'intro'
     );
@@ -18,7 +18,7 @@ describe('[QA-3] Data Integrity Checks', () => {
     expect(claimsMissingTests, `Claims missing testIds: ${missingIds.join(', ')}`).toHaveLength(0);
   });
 
-  it('ensures all test IDs referenced in claims exist in manual or automated tests', () => {
+  it('[QA-3] ensures all test IDs referenced in claims exist in manual or automated tests', () => {
     const allClaimTestIds = new Set(
       DOCUMENTATION_CONTENT.flatMap((item) => item.testIds || [])
     );
@@ -38,7 +38,7 @@ describe('[QA-3] Data Integrity Checks', () => {
 });
 
 describe('[QA-2] Key Mapping Documentation', () => {
-  it('documentation contains the warning about faceOrientationKeyMapping', () => {
+  it('[QA-2] documentation contains the warning about faceOrientationKeyMapping', () => {
     const claim = DOCUMENTATION_CONTENT.find(item => item.id === 'quality-key-mapping');
     expect(claim?.text).toContain('core/faceOrientationKeyMapping.ts');
   });

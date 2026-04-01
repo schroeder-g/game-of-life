@@ -18,7 +18,7 @@ vi.mock('@react-three/drei', () => ({
 }));
 
 describe('Grid Component UI Claims', () => {
-  it('should render the Scene without error', () => {
+  it('[CORE-1] should render the Scene without error', () => {
     render(
       <SimulationProvider>
         <BrushProvider>

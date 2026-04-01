@@ -1,5 +1,5 @@
 import { DocItem } from "./_Documentation";
 
-export const mainMenuDocumentation: DocItem[] = [
+export const settingsSidebarDocumentation: DocItem[] = [
   // documentation items will go here
 ];

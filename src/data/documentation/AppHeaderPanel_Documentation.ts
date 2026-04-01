@@ -11,6 +11,7 @@ export const appHeaderPanelDocumentation: DocItem[] = [
     type: "p",
     text: `The <span class="code-ref">AppHeaderPanel</span> (<span class="code-ref">src/components/AppHeaderPanel.tsx</span>) serves as the main control and information hub at the top of the screen. It is divided into three main sections: the title, the status panel, and the control buttons area.`,
     references: ["src/components/AppHeaderPanel.tsx"],
+    testIds: ["AHP_TITLE_001"],
   },
   {
     id: "AHP_TITLE_001",

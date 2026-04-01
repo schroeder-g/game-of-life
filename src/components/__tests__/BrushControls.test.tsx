@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrushControls } from '../BrushControls';
@@ -29,7 +29,7 @@ const mockCameraOrientation = {
 describe('BrushControls', () => {
   beforeEach(() => {
     // Reset mocks before each test
-    (useSimulation as vi.Mock).mockReturnValue({
+    (useSimulation as Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
         viewMode: false,
@@ -38,7 +38,7 @@ describe('BrushControls', () => {
         eventBus: mockEventBus,
       },
     });
-    (useBrush as vi.Mock).mockReturnValue({
+    (useBrush as Mock).mockReturnValue({
       state: {
         selectedShape: 'Cube',
         paintMode: 0,
@@ -59,7 +59,7 @@ describe('BrushControls', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
     // Mock getBoundingClientRect for panelRef
-    if (HTMLElement.prototype.getBoundingClientRect) {
+    if (HTMLElement.prototype.getBoundingClientRect && typeof HTMLElement.prototype.getBoundingClientRect === 'function') {
       vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
         x: 0, y: 0, width: 300, height: 200, top: 0, left: 0, right: 0, bottom: 0,
         toJSON: () => ({})
@@ -72,7 +72,7 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_DRAG_001
-  it('TEST_BC_DRAG_001: allows dragging and updates position', async () => {
+  it('[TEST_BC_DRAG_001] allows dragging and updates position', async () => {
     render(<BrushControls />);
     const panel = screen.getByLabelText('Brush Controls Panel'); // Use an accessible label
 
@@ -101,7 +101,7 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_INIT_001
-  it('TEST_BC_INIT_001: initializes in the bottom-right of the screen', async () => {
+  it('[TEST_BC_INIT_001] initializes in the bottom-right of the screen', async () => {
     // Mock getBoundingClientRect to return a consistent size for calculation
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, width: 300, height: 200, top: 0, left: 0, right: 0, bottom: 0,
@@ -122,7 +122,7 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_APPEAR_001
-  it('TEST_BC_APPEAR_001: displays dynamic header, orange outline, and rounded corners', () => {
+  it('[TEST_BC_APPEAR_001] displays dynamic header, orange outline, and rounded corners', () => {
     render(<BrushControls />);
     const panel = screen.getByLabelText('Brush Controls Panel');
     const header = screen.getByText('Brush: Cube');
@@ -134,7 +134,7 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_APPEAR_002
-  it('TEST_BC_APPEAR_002: has a minimum width to fit controls', () => {
+  it('[TEST_BC_APPEAR_002] has a minimum width to fit controls', () => {
     render(<BrushControls />);
     const panel = screen.getByLabelText('Brush Controls Panel');
 
@@ -142,9 +142,9 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_VIS_001
-  it('TEST_BC_VIS_001: is only visible in edit mode (viewMode false)', () => {
+  it('[TEST_BC_VIS_001] is only visible in edit mode (viewMode false)', () => {
     // In edit mode (viewMode: false)
-    (useSimulation as vi.Mock).mockReturnValue({
+    (useSimulation as Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
         viewMode: false,
@@ -157,7 +157,7 @@ describe('BrushControls', () => {
     expect(screen.getByLabelText('Brush Controls Panel')).toBeInTheDocument();
 
     // In view mode (viewMode: true)
-    (useSimulation as vi.Mock).mockReturnValue({
+    (useSimulation as Mock).mockReturnValue({
       state: {
         cameraOrientation: mockCameraOrientation,
         viewMode: true,
@@ -171,42 +171,42 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_BUTTON_001_W
-  it('TEST_BC_BUTTON_001_W: "Up" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_W] "Up" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowUpIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 1, 0] });
   });
 
   // TEST_BC_BUTTON_001_X
-  it('TEST_BC_BUTTON_001_X: "Down" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_X] "Down" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowDownIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, -1, 0] });
   });
 
   // TEST_BC_BUTTON_001_A
-  it('TEST_BC_BUTTON_001_A: "Left" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_A] "Left" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowLeftIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [-1, 0, 0] });
   });
 
   // TEST_BC_BUTTON_001_D
-  it('TEST_BC_BUTTON_001_D: "Right" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_D] "Right" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowRightIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [1, 0, 0] });
   });
 
   // TEST_BC_BUTTON_001_Q
-  it('TEST_BC_BUTTON_001_Q: "Further" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_Q] "Further" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /Further/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 0, -1] });
   });
 
   // TEST_BC_BUTTON_001_Z
-  it('TEST_BC_BUTTON_001_Z: "Closer" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_Z] "Closer" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /Closer/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 0, 1] });

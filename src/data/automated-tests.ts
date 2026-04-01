@@ -21,12 +21,22 @@ export const AUTOMATED_TEST_IDS = new Set([
   'QA-3', // Verify All Claims Have Tests
   'UC-1', // Toggle Edit/View Mode
   'UC-2', // Playback Controls
+  'UC-3', // Select Scene
+  'UC-4', // Paint/Clear Modes
+  'UC-5', // Select Brush
   'UC-6', // Adjust Simulation Speed
+  'UC-7', // Environment Section
+  'UC-8', // Rules Section
+  'UC-9', // Cursor Position Section
+  'UC-10', // Scene Management Section
+  'UC-11', // Camera Controls Section
+  'UC-12', // Shortcuts Help
 
   // AppHeaderPanel.test.tsx
   'AHP_TITLE_001',
   'AHP_STATUS_001',
   'AHP_MODAL_001',
+  'AHP_MENU_001',
   'AHPB_SCENE_001',
   'AHPB_MODE_001',
   'AHPB_PLAY_001',
@@ -39,6 +49,7 @@ export const AUTOMATED_TEST_IDS = new Set([
   'AHPB_SQUARE_001',
   'AHPB_COMM_001',
   'AHPB_GEAR_001',
+  'AHPB_HELP_001',
   'AHPB_HELP_INT_001',
   'AHPB_HELP_SHORT_001',
   'AHPB_HELP_NOTES_001',
