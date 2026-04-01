@@ -20,6 +20,7 @@ export const AUTOMATED_TEST_IDS = new Set([
   'QA-2', // Verify Key Mapping Warning in Documentation
   'QA-3', // Verify All Claims Have Tests
   'UC-1', // Toggle Edit/View Mode
+  'UC-2', // Playback Controls
   'UC-6', // Adjust Simulation Speed
 
   // AppHeaderPanel.test.tsx
