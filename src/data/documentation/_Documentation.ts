@@ -189,7 +189,7 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "A welcome message with your name and build info is shown in the header. Your name is remembered between sessions.",
     testIds: ["UX-4", "UX-5"],
-    references: ["src/hooks/useSettings.ts"],
+    references: ["src/hooks/useSettings.ts", "src/contexts/SimulationContext.tsx"],
   },
   {
     id: "dev-testing-panel",
@@ -233,6 +233,7 @@ const CURRENT_MANUAL: DocItem[] = [
      clearing, saving, and restoring its state without data loss. Its simulation
      tick must correctly apply the rules of life.`,
     testIds: ['CORE-1', 'CORE-2', 'CORE-3', 'CORE-4', 'CORE-5', 'CORE-6', 'CORE-7', 'CORE-8'],
+    references: ["src/core/Grid3D.ts"],
   },
 ];
 
