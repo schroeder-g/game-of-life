@@ -36,3 +36,19 @@ Consult the other files in .ai to understand the overarching design principles, 
 
 If your response could benefit from asking 10  questions, do not change anything. Ask your questions and wait for clearance to proceed.
 
+***** Maintain a list of "TODO" items in .ai/_todo.AI
+
+Items in _todo.AI should all be uniquely numbered so I can tell you to do a specific one of them.
+When instructed to execute a specific TODO item, then identify any other TODO items that would be a prerequisite to completing thie TODO item, and provide a list of them, and ask if I would like you to work on them in order.
+
+When instructed to execute a specific TODO item, then consider whether it may be advisable to do another TODO item or other ITEMS at the same time  (because they interact)
+
+
+
+
+*******
+At the end of every prompt response, provide an executive summary of what was changed and why.
+Include a section on Recommendations
+
+Include a section on how many TODO items are in the TODO list. But consider, How do you know there are 0 TODO items in the TODO list if you don't have .ai/_todo.AI open? Ask for it if you must.
+
