@@ -4,8 +4,6 @@
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
-*   **TODO-004:** `UI-2` (from `header-docs`, `deprecated-accessing-documentation`) - Missing automated test.
-*   **TODO-005:** `UC-12` (from `header-shortcuts`) - Missing automated test.
 *   **TODO-015:** `UX-7` (from `quality-input-focus`) - Missing automated test.
 *   **TODO-016:** `QA-2` (from `quality-key-mapping`) - Missing automated test.
 *   **TODO-017:** `QA-3` (from `quality-doc-test-process`) - Missing automated test.
@@ -13,6 +11,8 @@
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
+*   **TODO-005:** [COMPLETED] `UC-12` (from `header-shortcuts`) - Missing automated test.
+*   **TODO-004:** [COMPLETED] `UI-2` (from `header-docs`, `deprecated-accessing-documentation`) - Missing automated test.
 *   **TODO-003:** [COMPLETED] `UC-3` (from `header-scene-selector`) - Missing automated test. You should be able to select a scene, and have it load.
 *   **TODO-011:** [COMPLETED] `UC-10` (from `config-scene-management`) - In progress in `SettingsSidebar.test.tsx`.
 *   **TODO-010:** [COMPLETED] `UC-9` (from `config-cursor`) - In progress in `SettingsSidebar.test.tsx`.
