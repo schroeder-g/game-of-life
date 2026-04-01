@@ -1,0 +1,38 @@
+These instructions are for the AI agent.
+
+
+Do not Update this file.
+
+
+As you fulfill prompts, keep these instructions in mind. 
+
+If given an instruction that requires you to violate these principle, do not make any changes. Explain the conflict thoroughly.
+
+Every build must continue to display the major and minor version numbers, build date and time, and  {dev ? "(Dev)" : test ? "(Test) : "" } ("prod" - blank)
+
+Ensure that the project is well-documented and easy to understand.
+
+Ensure that the project is well-tested and easy to maintain.
+
+Ensure that no feature will prevent specific keypresses from reaching a focused input control.  
+
+Ensure that these instructions are followed and that the project is updated accordingly.
+
+
+core/faceOrientationKeyMapping.ts is a critical file that maps the face orientation to the key mapping.
+
+core/faceOrientationKeyMapping should not be modified without express approval.
+
+It also can be used to determine the orientation of the next dominant face.
+
+Understand that I refer to a "face" I am referring to one of the 24 possible orientations of the cube.
+
+If the Top side is on top, then this means the current angle is zero degrees.
+
+
+
+
+Consult the other files in .ai to understand the overarching design principles, and intuit how they should work together when designing and implementing user interfaces, as well as adding test-gates to the prod deploy script.
+
+If your response could benefit from asking 10  questions, do not change anything. Ask your questions and wait for clearance to proceed.
+

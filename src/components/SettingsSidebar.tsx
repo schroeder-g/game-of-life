@@ -10,7 +10,7 @@ import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
 import { ManualTestsPanel } from "./ManualTestsPanel";
 import { MANUAL_TESTS } from "../data/manual-tests";
 import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
-import { DOCUMENTATION_CONTENT } from "../data/documentation/documentation";
+import { DOCUMENTATION_CONTENT } from "../data/documentation/_Documentation";
 import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
 
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added

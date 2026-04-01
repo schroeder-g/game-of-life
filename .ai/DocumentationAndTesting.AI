@@ -1,13 +1,28 @@
 # AI Instructions for Documentation & Testing
+This document outlines the process for managing the intertwined documentation and testing system for the "Cube of Life" project.
 
--   Always make sure that all user controls are appropriately documented in a user-friendly style, with each claim followed by the supporting tests.
+-   Always make sure that all user controls (e.g., each individual button, slider, toggle, or dropdown) are appropriately documented individually in a user-friendly style, avoiding grouped claims. Each individual control must have its own dedicated documentation claim followed by corresponding specific supporting tests.
 -   Don't ever remove documentation claims. Mark sections DEPRECATED if you would like to remove them, and include the Date, time, and effective prompt. For deprecated claims, explain clearly why they are deprecated if they are not already deprecated.
 -   End-User documentation shall be in HTML. End user documentation should be structured in a visually-pleasing manner, with Headings, Subheadings, and labels bolded.
 -   A documentation Index shall be provided, accessible via a button in the Documentation panel.
 -   Documentation data shall be stored in `src/data/documentation` in various `*_Documentation.ts` files. `src/data/documentation/_Documentation.ts` is the main file that exports all documentation claims, including claims from other `*_Documentation.ts` files.
 -   `src/data/documentation/_Documentation.ts` and related files shall be used to create the end-user `src/public/documentation.html` file.
+-   Ensure that    every individual control is appropriately documented in a human-friendly style, with each claim  followed by the supporting tests. 
+-   If a control has an icon, then include that icon in the control's documentation header.
+-   Documentation claims should have a minimum of one corresponding test.
 
-This document outlines the process for managing the intertwined documentation and testing system for the "Cube of Life" project.
+-   Documentaion should be written in a user-friendly style, with attractive Headers, Subheaders, Sub-Sub headers in bold.
+
+-   Documentation claims and corresponding tests should be cross-referenced. 
+
+-   Claims should be supported in the documentation by references to code filenames, functions, constants, variables, etc.
+
+-   In the End-User Documentation, each claim should be followed by the  { TestId, Last Test Date/Time, and Pass/Fail } of the Test(s) associated with it.
+
+-   If you do something (make changes to the code) that would impact its documentation, insert or modify a <span style="display:none" className="AiReminder" />in the code containing an AI prompt for later processing that describes how to fully document and test the modified feature.  
+
+-   If you encounter </span className="AiReminder"> then make a note of it in your action summary after finishing the current prompt.
+
 
 ## System Overview
 
@@ -19,14 +34,17 @@ The system is designed to ensure every documented feature (a "claim") is verifie
 -   **Test ID Registry**: The file `src/data/automated-tests.ts` contains a `Set` of all automated test IDs. This is used for data integrity checks.
 -   **Data Integrity**: The test file `src/tests/DataIntegrity.test.ts` verifies that all claims have tests and all test IDs are valid.
 -   **UI Integration**: The `DocumentationModal` component is responsible for displaying the documentation. It cross-references claims with test results to show the status (`Pass/Fail/Unchecked`), Test ID, and last test run date for each claim.
--   **Documentation Index**: The documentation modal provides an index of all topics, grouped by their source file (e.g., "Brush Controls"), for easy navigation.
-    -   **Adding a New Group**: The index groups are defined in the `DOCUMENTATION_INDEX_GROUPS` array in `src/data/documentation/_Documentation.ts`. To add a new group for a documentation file (e.g., for a new component):
+-   **Documentation Index**: The documentation modal provides a hierarchical index of all topics, accessible via a dedicated popup modal.
+    -   **Tree Structure**: The index is organized by component group and then by section headings (`h3`). It **does not** include individual claim paragraphs (`p`), ensuring the index remains a concise "tree of topics" for easy navigation.
+    -   **Navigation**: Clicking an entry in the index will smoothly scroll the main documentation to that topic and apply a brief highlight effect. The index modal closes automatically after selection.
+    -   **Search**: The index modal includes a search bar to filter topics by title or claim text in real-time.
+    -   **Adding a New Group**: The index groups are defined in the `DOCUMENTATION_INDEX_GROUPS` array in `src/data/documentation/_Documentation.ts`. To add a new group for a documentation file:
         1.  Ensure all `h3` headings in the new documentation file share a common, unique ID prefix (e.g., `NC_` for New Component).
         2.  Add a new `IndexGroup` object to the `DOCUMENTATION_INDEX_GROUPS` array.
-        3.  Set the `title` to the human-friendly name for the group (e.g., "New Component Controls").
-        4.  Set `idPrefix` to the unique prefix you chose (e.g., `NC_`).
-        5.  Set `stripPrefix` to the common leading phrase in the heading text that should be removed in the index (e.g., "<b>New Component ").
-        The `generateGroupedIndex` function in `src/components/DocumentationModal.tsx` will automatically use this data to build the index.
+        3.  Set the `title` to the human-friendly name for the group.
+        4.  Set `idPrefix` to the unique prefix (e.g., `NC_`).
+        5.  Set `stripPrefix` to any common leading phrase in the heading text to be removed in the index (e.g., "<b>").
+        The hierarchical index logic in `src/components/DocumentationModal.tsx` will automatically process these groups.
 
 ## Workflow for Managing Features
 
@@ -77,7 +95,7 @@ When a feature is removed or superseded:
     -   **Do not delete it.** Instead, prepend the `text` with `[DEPRECATED as of YYYY-MM-DD: Reason]`.
     -   Move the `DocItem` object from its original array into the `DEPRECATED_CONTENT` array in `src/data/documentation/_Documentation.ts`. This keeps it visible in a special section of the manual for historical context.
 3.  **Handle Tests**:
-    -   **Automated Tests**: Find the test in its `*.test.tsx` file. You can either delete the test or skip it using `it.skip(...)`. If you delete it, also remove its ID from `src/data/automated-tests.ts`.
+    -   **Automated Tests**: Find the test in its `*.test.tsx` file. If the test is not linked to any non-deprecated tests, skip it using `it.skip(...)`.  If you delete it, also remove its ID from `src/data/automated-tests.ts`.
     -   **Manual Tests**: Find the test in `src/data/manual-tests.ts`. It's best to remove it entirely to keep the manual testing process clean.
 4.  **Verify Integrity**: Run `bun test` to ensure no broken links remain.
 

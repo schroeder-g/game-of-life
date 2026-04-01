@@ -1,0 +1,294 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube of Life - Documentation</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6; 
+      padding: 20px; 
+      max-width: 900px; 
+      margin: 0 auto; 
+      background-color: #f4f4f4; 
+      color: #333;
+    }
+    h1 { color: #1a1a1a; text-align: center; margin-bottom: 40px; }
+    h3 { 
+      border-bottom: 2px solid #007acc; 
+      padding-bottom: 8px; 
+      margin-top: 40px;
+      color: #005689;
+    }
+    p { margin-bottom: 16px; }
+    .toc {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+    .toc h2 { margin-top: 0; font-size: 1.2rem; color: #1a1a1a; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+    .toc ul { list-style: none; padding-left: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .toc ul ul { display: block; padding-left: 15px; margin-top: 5px; }
+    .toc li strong { display: block; margin-top: 10px; color: #005689; font-size: 0.9rem; text-transform: uppercase; }
+    .toc li a { color: #007acc; text-decoration: none; font-size: 0.95rem; }
+    .toc li a:hover { text-decoration: underline; }
+    
+    .claim {
+      background-color: #fff;
+      border-left: 4px solid #007acc;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      border-radius: 0 5px 5px 0;
+    }
+    .code-ref { 
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background-color: #eef; 
+      padding: 2px 5px; 
+      border-radius: 4px; 
+      font-size: 0.9em;
+    }
+    .references, .test-ids { 
+      font-size: 0.85em; 
+      color: #555;
+      font-style: italic;
+    }
+    .test-ids { color: #005689; }
+  </style>
+</head>
+<body>
+  <h1>Cube of Life - User Manual</h1>
+<div class="toc"><h2>Table of Contents</h2><ul><li><strong>Application Header</strong><ul><li><a href="#AHP_HEADER_001">Application Header Panel</a></li><li><a href="#AHP_TITLE_001">Title and Build Information</a></li><li><a href="#AHP_STATUS_001">Live Status Panel</a></li><li><a href="#AHP_MODAL_001">Modal and Panel Management</a></li></ul></li><li><strong>Header Buttons</strong><ul><li><a href="#AHPB_CONTROLS_001">Header Button Controls</a></li><li><a href="#AHPB_MENUS_001">Menus and Toggles</a></li><li><a href="#AHPB_CONTEXT_001">Contextual Control Visibility</a></li></ul></li><li><strong>Brush Controls</strong><ul><li><a href="#BC_DRAG_001">Brush Controls Panel Draggability</a></li><li><a href="#BC_INIT_001">Brush Controls Panel Initialization</a></li><li><a href="#BC_APPEAR_001">Brush Controls Panel Appearance</a></li><li><a href="#BC_APPEAR_002">Brush Controls Panel Width</a></li><li><a href="#BC_VIS_001">Brush Controls Panel Visibility</a></li><li><a href="#BC_BUTTON_001">Brush Controls Directional Buttons</a></li></ul></li><li><strong>Manual Testing</strong><ul><li><a href="#MTP_PANEL_001">Manual Tests Panel</a></li></ul></li><li><strong>Reference Manual</strong><ul><li><a href="#heading-header">Main Header Controls</a></li><li><a href="#heading-camera-rotation">Camera Controls & Rotation</a></li><li><a href="#heading-edit">Editing the Grid (Edit Mode)</a></li><li><a href="#heading-config">Configuration Panel</a></li><li><a href="#heading-dev">Developer & Testing Features</a></li><li><a href="#heading-quality">Architectural & Quality Claims</a></li><li><a href="#CONTROLS_DEPRECATED_001">[DEPRECATED] Controls Component</a></li><li><a href="#heading-deprecated">DEPRECATED CLAIMS</a></li></ul></li></ul></div><div class="claim" id="intro">
+  <p>Welcome to Cube of Life! This manual explains how to interact with the simulation. The application has two main modes: View Mode for observing, and Edit Mode for modifying the grid.</p>
+</div>
+<h3 id="heading-header">Main Header Controls</h3>
+<div class="claim" id="header-mode-toggle">
+  <p><b>Mode Toggle (✏️/📽️):</b> Switches between Edit Mode (Pencil icon), where you can modify the grid, and View Mode (Projector icon), where you can run the simulation and freely move the camera.</p>
+  <p class="references"><b>References:</b> src/contexts/BrushContext.tsx, src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-1</p>
+</div>
+<div class="claim" id="header-playback">
+  <p><b>Playback Controls (▶/⏸, ⏮/⏭, ↺):</b> Play/Pause the simulation (Spacebar), step forward/backward one generation (→/←), or reset the grid to its initial state (R). Step and Reset are only available when paused.</p>
+  <p class="references"><b>References:</b> src/core/Grid3D.ts, src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-2</p>
+</div>
+<div class="claim" id="header-camera">
+  <p><b>Camera Actions (Fit/Recenter):</b> Use 'Fit' (F) to zoom and frame all live cells. 'Recenter' (S) moves the camera to the origin.</p>
+  <p class="references"><b>References:</b> src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-11</p>
+</div>
+<div class="claim" id="header-scene-selector">
+  <p><b>Select Scene (🖼️):</b> Opens a dropdown to quickly load pre-made or user-saved scenes, including their patterns and rules.</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-3</p>
+</div>
+<div class="claim" id="header-docs">
+  <p><b>Documentation (?):</b> Opens this user manual. (Shortcut: ? or Shift+/)</p>
+  <p class="references"><b>References:</b> src/components/DocumentationModal.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UI-2</p>
+</div>
+<div class="claim" id="header-shortcuts">
+  <p><b>Shortcuts Help:</b> Opens a modal displaying all keyboard shortcuts for both View and Edit modes. The overlay can be closed by clicking its backdrop or pressing 'Escape'.</p>
+  <p class="references"><b>References:</b> src/components/ShortcutOverlay.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-12</p>
+</div>
+<h3 id="heading-camera-rotation">Camera Controls & Rotation</h3>
+<div class="claim" id="rotation-free-form">
+  <p><b>Camera Rotation:</b> Use the rotation keys (<b>O/Period</b> for Pitch, <b>K/Semicolon</b> for Yaw, <b>I/P</b> for Roll) for smooth, continuous 'flight-sim' style rotation. This is the only rotation mode, optimized for intuitive navigation.</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-11</p>
+</div>
+<div class="claim" id="rotation-edit-mode">
+  <p><b>Special Rules in Edit Mode:</b> When a brush shape is active (e.g., 'Cube', 'Sphere'), the rotation keys will rotate the brush instead of the camera. To rotate the camera while a brush is active, you must use the <b>Ctrl/Shift</b> override.</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-1</p>
+</div>
+<div class="claim" id="rotation-override">
+  <p><b>Ctrl/Shift Override:</b> At any time, holding <b>Ctrl</b> or <b>Shift</b> (or both) while pressing a rotation key will temporarily perform smooth, continuous camera rotation, even if a brush is active.</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-5</p>
+</div>
+<h3 id="heading-edit">Editing the Grid (Edit Mode)</h3>
+<div class="claim" id="edit-paint-clear">
+  <p><b>Paint/Clear Modes (+/-):</b> Select Paint (+) to add cells or Clear (-) to remove them. You can click-and-drag on the grid, or use the Spacebar (paint) and Delete (clear) keys to apply the current brush.</p>
+  <p class="references"><b>References:</b> src/contexts/BrushContext.tsx, src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-4</p>
+</div>
+<div class="claim" id="edit-brush-selector">
+  <p><b>Select Brush (🖌️):</b> Opens a dropdown to choose a brush shape, such as Cube or Sphere. You can also select a 'Community' of cells from the grid to use as a custom brush.</p>
+  <p class="references"><b>References:</b> src/contexts/BrushContext.tsx, src/core/Grid3D.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-5</p>
+</div>
+<h3 id="heading-config">Configuration Panel</h3>
+<div class="claim" id="config-speed">
+  <p><b>Speed:</b> In View Mode, this slider controls the simulation speed in generations per second.</p>
+  <p class="references"><b>References:</b> src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-6</p>
+</div>
+<div class="claim" id="config-environment">
+  <p><b>Environment Section:</b> Controls the grid's properties. Adjust 'Grid Size' and 'Cell Margin'. 'Reset' reverts to the initial state, 'Clear' removes all cells, and 'Random' populates the grid based on the 'Density' slider.</p>
+  <p class="references"><b>References:</b> src/contexts/SimulationContext.tsx, src/core/Grid3D.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-7</p>
+</div>
+<div class="claim" id="config-rules">
+  <p><b>Rules Section:</b> Defines the automaton's logic. Set the neighbor count for a cell to 'Survive' or for a new cell to be 'Born'. Checkboxes for Faces, Edges, and Corners determine which neighbor types are counted.</p>
+  <p class="references"><b>References:</b> src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-8</p>
+</div>
+<div class="claim" id="config-cursor">
+  <p><b>Cursor Position Section:</b> Provides inputs to set the editor cursor's X, Y, and Z coordinates. It also shows the keyboard shortcuts for moving the cursor, which change based on your camera angle.</p>
+  <p class="references"><b>References:</b> src/contexts/BrushContext.tsx, src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-9</p>
+</div>
+<div class="claim" id="config-shape-brush">
+  <p><b>Shape Brush Section:</b> Customize the selected brush's 'Size' and 'Hollow' properties. Brush rotation is controlled with the 'I' and 'P' keys. When using destructive tools like the 'Clear Brush', the rotation direction for 'I' and 'P' is reversed for intuitive control.</p>
+  <p class="references"><b>References:</b> src/core/shapes.ts, src/contexts/BrushContext.tsx, src/hooks/useAppShortcuts.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-1</p>
+</div>
+<div class="claim" id="config-scene-management">
+  <p><b>Scene Management Section:</b> Save the current grid, rules, and settings as a new named scene. You can also 'Export' scenes to a file, 'Import' them from a file, or 'Delete' saved scenes.</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-10</p>
+</div>
+<div class="claim" id="config-camera-controls">
+  <p><b>Camera Controls Section:</b> Adjust sensitivity for Pan, Yaw (swivel), and Roll. You can invert controls and set camera easing (acceleration/deceleration) for smoother movements.</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-11</p>
+</div>
+<h3 id="heading-dev">Developer & Testing Features</h3>
+<div class="claim" id="dev-welcome">
+  <p>A welcome message with your name and build info is shown in the header. Your name is remembered between sessions.</p>
+  <p class="references"><b>References:</b> src/hooks/useSettings.ts, src/contexts/SimulationContext.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-4, UX-5</p>
+</div>
+<div class="claim" id="dev-testing-panel">
+  <p>The 'Manual Tests' panel is available in non-production builds for feature verification. Your checked items are saved for your next session.</p>
+  <p class="references"><b>References:</b> src/hooks/useManualTests.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> UI-1, UX-6</p>
+</div>
+<h3 id="heading-quality">Architectural & Quality Claims</h3>
+<div class="claim" id="quality-input-focus">
+  <p>To prevent accidental actions while typing, global keyboard shortcuts are disabled when an input field (e.g., in the Configuration Panel or the Welcome Modal) is focused. This ensures typing does not trigger camera movement or simulation controls.</p>
+  <p class="references"><b>References:</b> src/hooks/useAppShortcuts.ts, src/components/WelcomeModal.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> QA-1, UX-7</p>
+</div>
+<div class="claim" id="quality-key-mapping">
+  <p>The file `core/faceOrientationKeyMapping.ts` is critical for predictable camera and brush orientation. It must not be modified without a deep understanding of its spatial rotation logic. This ensures that user controls for navigation remain consistent and reliable.</p>
+  <p class="references"><b>References:</b> src/core/faceOrientationKeyMapping.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> QA-2</p>
+</div>
+<div class="claim" id="quality-doc-test-process">
+  <p>This project adheres to a strict quality process. Every feature or claim documented in this manual is cross-referenced with one or more manual tests (e.g., UX-1, QA-1). This ensures all documented functionality is verifiable and that the documentation stays in sync with the application's behavior. (`src/data/documentation.ts`, `src/data/manual-tests.ts`)</p>
+  <p class="test-ids"><b>Test IDs:</b> QA-3</p>
+</div>
+<div class="claim" id="DS-1">
+  <p><b>Data Structure Integrity (DS-1):</b> The core <code>Grid3D</code> data structure shall
+     reliably manage cell states. It must initialize correctly, handle out-of-bounds
+     access gracefully, accurately set, get, and toggle cell states, and support
+     clearing, saving, and restoring its state without data loss. Its simulation
+     tick must correctly apply the rules of life.</p>
+  <p class="references"><b>References:</b> src/core/Grid3D.ts</p>
+  <p class="test-ids"><b>Test IDs:</b> CORE-1, CORE-2, CORE-3, CORE-4, CORE-5, CORE-6, CORE-7, CORE-8</p>
+</div>
+<h3 id="BC_DRAG_001"><b>Brush Controls Panel Draggability</b></h3>
+<div class="claim" id="BC_DRAG_001_CLAIM">
+  <p>The <span class="code-ref">BrushControls</span> panel (<span class="code-ref">src/components/BrushControls.tsx</span>) is designed to be freely draggable anywhere on the screen. Users can click and drag the panel to reposition it according to their preference. This functionality is implemented using mouse and touch event listeners (<span class="code-ref">handleMouseDown</span>, <span class="code-ref">handleMouseMove</span>, <span class="code-ref">handleMouseUp</span>, <span class="code-ref">handleTouchStart</span>, <span class="code-ref">handleTouchMove</span>, <span class="code-ref">handleTouchEnd</span>) that update the panel's <span class="code-ref">position</span> state.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_DRAG_001</p>
+</div>
+<h3 id="BC_INIT_001"><b>Brush Controls Panel Initialization</b></h3>
+<div class="claim" id="BC_INIT_001_CLAIM">
+  <p>Upon initialization, the <span class="code-ref">BrushControls</span> panel (<span class="code-ref">src/components/BrushControls.tsx</span>) automatically centers itself on the screen. This ensures a consistent and user-friendly starting layout, regardless of screen size or previous usage. The initial positioning logic is handled within a <span class="code-ref">useEffect</span> hook that calculates the center coordinates based on <span class="code-ref">window.innerWidth</span> and <span class="code-ref">window.innerHeight</span>.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_INIT_001</p>
+</div>
+<h3 id="BC_APPEAR_001"><b>Brush Controls Panel Appearance</b></h3>
+<div class="claim" id="BC_APPEAR_001_CLAIM">
+  <p>The <span class="code-ref">BrushControls</span> panel features a clear "Brush Controls" header, a subtle orange outline, and rounded corners for a modern and integrated look. The header text is styled with <span class="code-ref">color: #FFA500</span> and the panel border with <span class="code-ref">border: 2px solid #FFA50080</span> and <span class="code-ref">borderRadius: '8px'</span> in <span class="code-ref">src/components/BrushControls.tsx</span>.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_APPEAR_001</p>
+</div>
+<h3 id="BC_APPEAR_002"><b>Brush Controls Panel Width</b></h3>
+<div class="claim" id="BC_APPEAR_002_CLAIM">
+  <p>The <span class="code-ref">BrushControls</span> panel is designed to be 50% wider than its default size, providing more space for its controls. This is achieved by setting the <span class="code-ref">maxWidth</span> property of its internal grid container to <span class="code-ref">'300px'</span> in <span class="code-ref">src/components/BrushControls.tsx</span>.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_APPEAR_002</p>
+</div>
+<h3 id="BC_VIS_001"><b>Brush Controls Panel Visibility</b></h3>
+<div class="claim" id="BC_VIS_001_CLAIM">
+  <p>The <span class="code-ref">BrushControls</span> panel is only visible when the simulation is in edit mode (i.e., when <span class="code-ref">rotationMode</span> is <span class="code-ref">false</span>). This conditional rendering is managed in <span class="code-ref">src/components/AppHeaderPanel.tsx</span>, ensuring the controls do not clutter the interface during camera rotation.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_VIS_001</p>
+</div>
+<h3 id="BC_BUTTON_001"><b>Brush Controls Directional Buttons</b></h3>
+<div class="claim" id="BC_BUTTON_001_CLAIM">
+  <p>The directional buttons (Up, Down, Left, Right, Further, Closer) on the <span class="code-ref">BrushControls</span> panel (<span class="code-ref">src/components/BrushControls.tsx</span>) allow precise manipulation of the brush selector. When clicked, these buttons emit a <span class="code-ref">moveSelector</span> event via the <span class="code-ref">eventBus</span> with a <span class="code-ref">delta</span> value determined by the current <span class="code-ref">cameraOrientation</span>, ensuring movement is relative to the user's view.</p>
+  <p class="test-ids"><b>Test IDs:</b> TEST_BC_BUTTON_001_W, TEST_BC_BUTTON_001_X, TEST_BC_BUTTON_001_A, TEST_BC_BUTTON_001_D, TEST_BC_BUTTON_001_Q, TEST_BC_BUTTON_001_Z</p>
+</div>
+<h3 id="AHP_HEADER_001"><b>Application Header Panel</b></h3>
+<div class="claim" id="AHP_HEADER_001_CLAIM">
+  <p>The <span class="code-ref">AppHeaderPanel</span> (<span class="code-ref">src/components/AppHeaderPanel.tsx</span>) serves as the main control and information hub at the top of the screen. It is divided into three main sections: the title, the status panel, and the control buttons area.</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanel.tsx</p>
+</div>
+<h3 id="AHP_TITLE_001"><b>Title and Build Information</b></h3>
+<div class="claim" id="AHP_TITLE_001_CLAIM">
+  <p>The left section of the header displays the application title, "Cube of Life". Below the title, it shows build information, including the version number and build time. In non-production builds, it also displays a personalized welcome message if a username is set.</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanel.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHP_TITLE_001</p>
+</div>
+<h3 id="AHP_STATUS_001"><b>Live Status Panel</b></h3>
+<div class="claim" id="AHP_STATUS_001_CLAIM">
+  <p>The central status panel provides real-time information about the simulation state. It displays the current scene name, the camera's face orientation and rotation, the active brush shape (in Edit Mode), and live simulation statistics like generation count and number of living cells.</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanel.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHP_STATUS_001</p>
+</div>
+<h3 id="AHP_MODAL_001"><b>Modal and Panel Management</b></h3>
+<div class="claim" id="AHP_MODAL_001_CLAIM">
+  <p>The header panel is responsible for managing the visibility of several key UI elements, including the <span class="code-ref">DocumentationModal</span>, <span class="code-ref">IntroductionModal</span>, <span class="code-ref">ShortcutOverlay</span>, <span class="code-ref">ReleaseNotesModal</span>, and the <span class="code-ref">SelectedCommunityPanel</span>. It ensures these overlays are presented correctly based on user interaction and application state.</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanel.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHP_MODAL_001</p>
+</div>
+<h3 id="AHPB_CONTROLS_001"><b>Header Button Controls</b></h3>
+<div class="claim" id="AHPB_CONTROLS_001_CLAIM">
+  <p>The <span class="code-ref">AppHeaderPanelButtons</span> component (<span class="code-ref">src/components/AppHeaderPanelButtons.tsx</span>) contains primary interactive elements like the Scene Selector, a mode toggle (UC-1), playback controls (Play/Pause, Step, Reset), and camera actions (Fit, Recenter, Square Up).</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanelButtons.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHPB_CONTROLS_001</p>
+</div>
+<h3 id="AHPB_MENUS_001"><b>Menus and Toggles</b></h3>
+<div class="claim" id="AHPB_MENUS_001_CLAIM">
+  <p>This component also houses the Help dropdown menu for accessing documentation (UI-2), shortcuts, and release notes. It also contains toggles for the main Settings panel (gear icon) and the <span class="code-ref">SelectedCommunityPanel</span> (community icon).</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanelButtons.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHPB_MENUS_001</p>
+</div>
+<h3 id="AHPB_CONTEXT_001"><b>Contextual Control Visibility</b></h3>
+<div class="claim" id="AHPB_CONTEXT_001_CLAIM">
+  <p>Controls are displayed contextually. The Play/Pause button and Speed slider (UC-6) are only available in View mode. 'Step' or 'Reset' buttons are disabled while the simulation runs. The community icon appears only when a community is selected in Edit mode.</p>
+  <p class="references"><b>References:</b> src/components/AppHeaderPanelButtons.tsx</p>
+  <p class="test-ids"><b>Test IDs:</b> AHPB_CONTEXT_001</p>
+</div>
+<h3 id="CONTROLS_DEPRECATED_001"><b>[DEPRECATED] Controls Component</b></h3>
+<div class="claim" id="CONTROLS_DEPRECATED_001_CLAIM">
+  <p>The <span class="code-ref">Controls.tsx</span> component is deprecated and no longer in use. Its functionality, which previously included the community selection sidebar, has been moved to <span class="code-ref">SelectedCommunityPanel.tsx</span>. This documentation entry is retained for historical purposes.</p>
+  <p class="references"><b>References:</b> src/components/Controls.tsx, src/components/SelectedCommunityPanel.tsx</p>
+</div>
+<h3 id="MTP_PANEL_001"><b>Manual Tests Panel</b></h3>
+<div class="claim" id="MTP_PANEL_001_CLAIM">
+  <p>Available in non-production builds, the <span class="code-ref">ManualTestsPanel</span> (<span class="code-ref">src/components/ManualTestsPanel.tsx</span>) allows developers and testers to track the verification status of features. Users can cycle a test's status between 'unchecked', 'checked', and 'failed'. Test details, including steps and associated documentation claims, can be viewed by expanding each test item. Statuses are persisted in local storage under the key <span class="code-ref">'manual-tests-statuses'</span>, as managed by the <span class="code-ref">useManualTests</span> hook.</p>
+  <p class="references"><b>References:</b> src/components/ManualTestsPanel.tsx, src/hooks/useManualTests.ts</p>
+</div>
+<h3 id="heading-deprecated">DEPRECATED CLAIMS</h3>
+<div class="claim" id="deprecated-camera-control">
+  <p>[DEPRECATED as of 2024-03-15: Content merged into claim 'header-camera'] You can toggle the 'Auto Square Up' mode using the 'L' key. When this mode is disabled, the camera can be rotated freely for cinematic views. When enabled, camera movement will snap to the nearest face of the cube, which is ideal for editing the grid.</p>
+  <p class="test-ids"><b>Test IDs:</b> UC-11, UC-2</p>
+</div>
+<div class="claim" id="deprecated-brush-control">
+  <p>[DEPRECATED as of 2024-03-15: Content merged into claim 'config-shape-brush'] While in Edit Mode, you can use a 'brush' to place patterns of cells. This brush can be rotated using the 'I' and 'P' keys. These rotations are always relative to your current screen orientation, making them intuitive to use regardless of the camera's angle.</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-1</p>
+</div>
+<div class="claim" id="deprecated-dev-welcome">
+  <p>[DEPRECATED as of 2024-03-15: Content merged into claim 'dev-welcome'] For development and test builds, the application provides a personalized experience. Your name is requested on first launch and remembered across sessions, with a welcome message displayed in the header.</p>
+  <p class="test-ids"><b>Test IDs:</b> UX-4, UX-5</p>
+</div>
+<div class="claim" id="deprecated-dev-testing-panel">
+  <p>[DEPRECATED as of 2024-03-15: Content merged into claim 'dev-testing-panel'] A 'Manual Tests' panel is also available in non-production builds. This panel allows you to track which features you have tested. Your checked items are saved in your browser's local storage and will be remembered on your next visit.</p>
+  <p class="test-ids"><b>Test IDs:</b> UI-1, UX-6</p>
+</div>
+<div class="claim" id="deprecated-accessing-documentation">
+  <p>[DEPRECATED as of 2024-03-15: Content merged into claim 'header-docs'] This documentation modal can be opened at any time by clicking the '?' button located in the main control panel.</p>
+  <p class="test-ids"><b>Test IDs:</b> UI-2</p>
+</div>
+
+</body>
+</html>

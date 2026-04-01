@@ -1,4 +1,4 @@
-import { DocItem } from "./documentation";
+import { DocItem } from "./_Documentation";
 
 export const brushControlsDocumentation: DocItem[] = [
   {

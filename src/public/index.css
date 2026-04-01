@@ -1693,3 +1693,19 @@ div.automated-tests-panel.glass-panel>div>div.tests-list>details>summary>span.te
   background: rgba(138, 180, 248, 0.2);
   text-decoration: underline;
 }
+
+@keyframes highlightFlash {
+  0% { background-color: rgba(138, 180, 248, 0.4); }
+  100% { background-color: transparent; }
+}
+
+.highlight-flash {
+  animation: highlightFlash 2s ease-out;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.index-overlay {
+  z-index: 2000000001 !important;
+}
+
