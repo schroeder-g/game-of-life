@@ -263,6 +263,11 @@ const CURRENT_MANUAL: DocItem[] = [
 
 export const DOCUMENTATION_INDEX_GROUPS: IndexGroup[] = [
   {
+    title: "Application Header",
+    idPrefix: "AHP_",
+    stripPrefix: "<b>",
+  },
+  {
     title: "Header Buttons",
     idPrefix: "AHPB_",
     stripPrefix: "<b>",
@@ -270,7 +275,22 @@ export const DOCUMENTATION_INDEX_GROUPS: IndexGroup[] = [
   {
     title: "Brush Controls",
     idPrefix: "BC_",
-    stripPrefix: "<b>Brush Controls Panel ",
+    stripPrefix: "<b>",
+  },
+  {
+    title: "Simulation Controls",
+    idPrefix: "CTRL_",
+    stripPrefix: "<b>",
+  },
+  {
+    title: "Manual Testing",
+    idPrefix: "MTP_",
+    stripPrefix: "<b>",
+  },
+  {
+    title: "Automated Testing",
+    idPrefix: "ATP_",
+    stripPrefix: "<b>",
   },
 ];
 
