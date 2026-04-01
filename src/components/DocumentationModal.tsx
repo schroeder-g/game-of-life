@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { DOCUMENTATION_CONTENT } from "../data/documentation";
+import { DOCUMENTATION_CONTENT } from "../data/documentation/documentation";
 import { useManualTests } from "../hooks/useManualTests";
 import { CheckCircle, XCircle, Circle } from 'lucide-react';
 import { useAutomatedTestResults } from "../hooks/useAutomatedTestResults"; // Import the new hook
@@ -36,7 +36,7 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
   if (!isOpen) {
     return null;
   }
-  
+
   // Separate current and deprecated content
   const currentItems = DOCUMENTATION_CONTENT.filter(item => !item.id.startsWith('deprecated-') && item.id !== 'heading-deprecated');
   const deprecatedItems = DOCUMENTATION_CONTENT.filter(item => item.id.startsWith('deprecated-') || item.id === 'heading-deprecated');
@@ -154,11 +154,11 @@ export function DocumentationModal({ isOpen, onClose }: DocumentationModalProps)
         <div ref={contentRef} className="doc-content" style={{ overflowY: 'auto', flexGrow: 1, padding: '0 1.5rem 1rem' }}>
           {showIndex && (
             <div className="doc-index" style={{ border: '1px solid #444', padding: '1rem', borderRadius: '4px', margin: '1rem 0' }}>
-              <h4 style={{marginTop: 0}}>Index</h4>
+              <h4 style={{ marginTop: 0 }}>Index</h4>
               <ul style={{ listStyle: 'none', padding: 0, columns: 2 }}>
                 {headings.map(h => (
                   <li key={h.id} style={{ marginBottom: '0.5rem' }}>
-                    <a href={`#${h.id}`} onClick={(e) => {e.preventDefault(); handleIndexClick(h.id);}} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{h.text}</a>
+                    <a href={`#${h.id}`} onClick={(e) => { e.preventDefault(); handleIndexClick(h.id); }} style={{ color: '#a5d6ff', textDecoration: 'none' }}>{h.text}</a>
                   </li>
                 ))}
               </ul>

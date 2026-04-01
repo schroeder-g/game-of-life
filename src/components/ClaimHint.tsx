@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DOCUMENTATION_CONTENT } from "../data/documentation";
+import { DOCUMENTATION_CONTENT } from "../data/documentation/documentation";
 
 export const ClaimHint = ({ claimId }: { claimId: string }) => {
   const [showHint, setShowHint] = useState(false);

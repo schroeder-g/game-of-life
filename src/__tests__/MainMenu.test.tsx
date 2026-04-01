@@ -7,7 +7,7 @@ import { useBrush } from '../contexts/BrushContext';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
-import { DOCUMENTATION_CONTENT } from '../data/documentation';
+import { DOCUMENTATION_CONTENT } from '../data/documentation/documentation';
 
 // Mock all the necessary contexts
 vi.mock('../contexts/SimulationContext', () => ({ useSimulation: vi.fn() }));

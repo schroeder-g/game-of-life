@@ -4,7 +4,7 @@ import { render } from './test-utils';
 import App from '../public/App'; // Import the main App component
 import { WelcomeModal } from '../components/WelcomeModal';
 import { ManualTestsPanel } from '../components/ManualTestsPanel';
-import { DOCUMENTATION_CONTENT } from '../data/documentation';
+import { DOCUMENTATION_CONTENT } from '../data/documentation/documentation';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
@@ -73,10 +73,10 @@ describe('Automated UI & Feature Tests', () => {
       expect(input).toBeInTheDocument();
 
       fireEvent.change(input, { target: { value: 'Tester' } });
-      
+
       const button = screen.getByRole('button', { name: 'Start Testing' });
       fireEvent.click(button);
-      
+
       expect(localStorage.getItem('userName')).toBe('Tester');
       expect(screen.queryByPlaceholderText('Your Name')).not.toBeInTheDocument();
     });
@@ -87,7 +87,7 @@ describe('Automated UI & Feature Tests', () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester'); // prevent welcome modal
       render(<App />); // Render App
-      
+
       expect(screen.getByText(/Build: 2.1.0/)).toBeInTheDocument();
       expect(screen.getByText('Manual Tests')).toBeInTheDocument();
     });
@@ -96,28 +96,28 @@ describe('Automated UI & Feature Tests', () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'prod', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester');
       render(<App />); // Render App
-      
+
       expect(screen.queryByText('Manual Tests')).not.toBeInTheDocument();
     });
   });
-  
+
   describe('[UI-2] Documentation Modal Access', () => {
     it('opens and closes the documentation modal', async () => {
       render(<App />); // Render App
       const helpButton = screen.getByRole('button', { name: 'Help (?)' }); // Changed to Help button
       fireEvent.click(helpButton);
-      
+
       const docButton = screen.getByRole('button', { name: 'Documentation' });
       fireEvent.click(docButton);
 
       expect(await screen.findByRole('heading', { name: 'User Manual' })).toBeInTheDocument();
-      
+
       const closeButton = screen.getByRole('button', { name: 'Close' }); // Changed to Close button
       fireEvent.click(closeButton);
       expect(screen.queryByRole('heading', { name: 'User Manual' })).not.toBeInTheDocument();
     });
   });
-  
+
   describe('[UC-1] Mode Toggle', () => {
     it('toggles between View and Edit mode icons', () => {
       render(<App />); // Render App
@@ -146,7 +146,7 @@ describe('Automated UI & Feature Tests', () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester');
       render(<App />); // Render App
-      
+
       // Open the panel (assuming it's initially collapsed)
       const header = screen.getByRole('heading', { name: /Manual Tests/i });
       fireEvent.click(header);
