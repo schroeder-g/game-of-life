@@ -1,0 +1,66 @@
+# AI Instructions for Documentation & Testing
+
+This document outlines the process for managing the intertwined documentation and testing system for the "Cube of Life" project.
+
+## System Overview
+
+The system is designed to ensure every documented feature (a "claim") is verified by at least one test.
+
+-   **Documentation Claims**: Located in `src/data/documentation/*.ts` files. Each functional paragraph is a `DocItem` with a unique `id`.
+-   **Manual Tests**: Defined in `src/data/manual-tests.ts`. Each `ManualTest` has a unique `id` and a `claimIds` array linking it to documentation.
+-   **Automated Tests**: Located in `src/components/__tests__/*.test.tsx` and other `__tests__` directories. Test descriptions (`it(...)`) contain a unique ID that links them to a claim.
+-   **Test ID Registry**: The file `src/data/automated-tests.ts` contains a `Set` of all automated test IDs. This is used for data integrity checks.
+-   **Data Integrity**: The test file `src/tests/DataIntegrity.test.ts` verifies that all claims have tests and all test IDs are valid.
+
+## Workflow for Managing Features
+
+### 1. Adding a New Feature
+
+When adding a new feature (e.g., a new UI component or a new shortcut):
+
+1.  **Implement the Feature**: Write the source code for the feature (e.g., in `src/components/MyNewComponent.tsx`).
+2.  **Create/Update Documentation File**:
+    -   Create a corresponding documentation file: `src/data/documentation/MyNewComponent_Documentation.ts`.
+    -   Define `DocItem` objects for each new claim. Each `DocItem` should have a unique `id` (e.g., `MNC_INIT_001_CLAIM`), a `type: 'p'`, and descriptive `text`. Use `h3` for section headers.
+    -   Add `references` to the relevant source files.
+3.  **Integrate Documentation**:
+    -   Open `src/data/documentation/_Documentation.ts`.
+    -   Import the new documentation array (e.g., `myNewComponentDocumentation`).
+    -   Add the imported array to the `DOCUMENTATION_CONTENT` export.
+4.  **Write Tests**:
+    -   **Automated Test**: Create a test file `src/components/__tests__/MyNewComponent.test.tsx`. Write tests using `vitest`. The `it` block description **must** contain a unique ID that matches the claim ID (e.g., `it('MNC_INIT_001: does something', ...)`).
+    -   **Manual Test**: If the feature requires manual verification, add a new `ManualTest` object to `src/data/manual-tests.ts`. Give it a unique `id` and link it to the claim via `claimIds`.
+5.  **Update Test Registries**:
+    -   Add the new automated test ID(s) to the `Set` in `src/data/automated-tests.ts`.
+6.  **Link Documentation to Tests**:
+    -   Go back to `src/data/documentation/MyNewComponent_Documentation.ts`.
+    -   Add the new test ID(s) to the `testIds` array of the corresponding `DocItem` claim.
+7.  **Verify Integrity**:
+    -   Run `bun test`. The `DataIntegrity.test.ts` suite should pass, confirming all links are correct.
+
+### 2. Updating an Existing Feature
+
+When a feature's behavior changes:
+
+1.  **Update Source Code**: Modify the component or hook.
+2.  **Update Documentation**:
+    -   Find the relevant `*_Documentation.ts` file.
+    -   Update the `text` of the `DocItem` claim to reflect the new behavior.
+3.  **Update Tests**:
+    -   Find the corresponding test file (`*.test.tsx`) or manual test entry (`manual-tests.ts`).
+    -   Update the test logic and assertions to match the new behavior. The test ID should remain the same if it's testing the same conceptual feature.
+4.  **Verify Integrity**: Run `bun test` to ensure all tests still pass.
+
+### 3. Deprecating a Feature
+
+When a feature is removed or superseded:
+
+1.  **Update Source Code**: Remove or comment out the feature's code.
+2.  **Deprecate Documentation Claim**:
+    -   Find the relevant `DocItem` in its `*_Documentation.ts` file.
+    -   **Do not delete it.** Instead, prepend the `text` with `[DEPRECATED as of YYYY-MM-DD: Reason]`.
+    -   Move the `DocItem` object from its original array into the `DEPRECATED_CONTENT` array in `src/data/documentation/_Documentation.ts`. This keeps it visible in a special section of the manual for historical context.
+3.  **Handle Tests**:
+    -   **Automated Tests**: Find the test in its `*.test.tsx` file. You can either delete the test or skip it using `it.skip(...)`. If you delete it, also remove its ID from `src/data/automated-tests.ts`.
+    -   **Manual Tests**: Find the test in `src/data/manual-tests.ts`. It's best to remove it entirely to keep the manual testing process clean.
+4.  **Verify Integrity**: Run `bun test` to ensure no broken links remain.
