@@ -20,6 +20,7 @@ export default function App() {
   } = useBrush();
   const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from SettingsSidebar
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(true); // New state, defaults to true
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false); // New state to track internal dropdown
 
   // State for draggable footer poTODO-055sition
   const canvasContainerRef = useRef<HTMLDivElement>(null); // Ref for the canvas container

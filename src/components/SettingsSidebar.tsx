@@ -19,6 +19,7 @@ import { ClaimHint } from "./ClaimHint";
 
 interface SettingsSidebarProps {
   isSmallScreen: boolean;
+  setIsSettingsDropdownOpen: (isOpen: boolean) => void;
 }
 
 function EnvironmentSection() {
@@ -849,7 +850,7 @@ function SceneManagementSection() {
   );
 }
 
-export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
+export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: SettingsSidebarProps) {
   const {
     state: { running, viewMode, community, buildInfo },
     actions: {
@@ -876,6 +877,11 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
     }
     return false;
   });
+
+  // Effect to communicate the collapsed state of the Settings dropdown to App.tsx
+  useEffect(() => {
+    setIsSettingsDropdownOpen(!collapsed);
+  }, [collapsed, setIsSettingsDropdownOpen]);
 
 
   // Ensure savedConfigs is an object before calling Object.keys
