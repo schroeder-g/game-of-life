@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { KeyMapPage } from "./KeyMapPage";
-import { ClaimHint } from "./ClaimHint";
 
 interface ShortcutOverlayProps {
   isOpen: boolean;
@@ -9,7 +7,7 @@ interface ShortcutOverlayProps {
 }
 
 export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
-  const [activeTab, setActiveTab] = useState<"view" | "edit" | "keymap">("view");
+  const [activeTab, setActiveTab] = useState<"view" | "edit">("view");
 
   if (!isOpen) return null;
 
@@ -22,31 +20,27 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
       >
         <div className="shortcuts-header">
           <h2>Shortcuts</h2>
+          <div className="shortcuts-tabs">
+            <button
+              className={`tab-btn ${activeTab === "view" ? "active" : ""}`}
+              onClick={() => setActiveTab("view")}
+            >
+              View Mode
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "edit" ? "active" : ""}`}
+              onClick={() => setActiveTab("edit")}
+            >
+              Edit Mode
+            </button>
+          </div>
+
           <button className="close-btn" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        <div className="shortcuts-tabs">
-          <button
-            className={`tab-btn ${activeTab === "view" ? "active" : ""}`}
-            onClick={() => setActiveTab("view")}
-          >
-            View Mode
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "edit" ? "active" : ""}`}
-            onClick={() => setActiveTab("edit")}
-          >
-            Edit Mode
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "keymap" ? "active" : ""}`}
-            onClick={() => setActiveTab("keymap")}
-          >
-            Key Map
-          </button>
-        </div>
+
 
         <div
           className="shortcuts-content"
@@ -221,7 +215,7 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             </>
           )}
 
-          {activeTab === "keymap" && <KeyMapPage />}
+
         </div>
       </div>
     </div>,
