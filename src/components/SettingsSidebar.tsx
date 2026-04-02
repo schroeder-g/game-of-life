@@ -21,60 +21,6 @@ interface SettingsSidebarProps {
   isSmallScreen: boolean;
 }
 
-function ActionsSection() {
-  const {
-    state: { savedConfigs, selectedConfigName },
-    actions: { setSelectedConfigName },
-  } = useGenesisConfig();
-
-  const {
-    state: { viewMode, speed, running },
-    actions: {
-      setSpeed, applyCells, setDensity, setSurviveMin, setSurviveMax,
-      setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
-      setNeighborFaces, setNeighborEdges, setNeighborCorners,
-      fitDisplay
-    },
-  } = useSimulation();
-
-  const configOptions = Object.keys(savedConfigs);
-
-  const handleSelectConfig = useCallback((name: string) => {
-    setSelectedConfigName(name);
-    if (name && savedConfigs[name]) {
-      const config = savedConfigs[name];
-      applyCells(config.cells, config.settings.gridSize);
-      // apply saved settings as well
-      setSpeed(config.settings.speed);
-      setDensity(config.settings.density);
-      setSurviveMin(config.settings.surviveMin);
-      setSurviveMax(config.settings.surviveMax);
-      setBirthMin(config.settings.birthMin);
-      setBirthMax(config.settings.birthMax);
-      setBirthMargin(config.settings.birthMargin);
-      setCellMargin(config.settings.cellMargin);
-      if (config.settings.neighborFaces !== undefined) {
-        setNeighborFaces(config.settings.neighborFaces);
-      }
-      if (config.settings.neighborEdges !== undefined) {
-        setNeighborEdges(config.settings.neighborEdges);
-      }
-      if (config.settings.neighborCorners !== undefined) {
-        setNeighborCorners(config.settings.neighborCorners);
-      }
-      fitDisplay();
-    }
-  }, [
-    setSelectedConfigName, savedConfigs, applyCells, setSpeed, setDensity,
-    setSurviveMin, setSurviveMax, setBirthMin, setBirthMax, setBirthMargin,
-    setCellMargin, setNeighborFaces, setNeighborEdges, setNeighborCorners,
-    fitDisplay
-  ]);
-
-
-  return;
-}
-
 function EnvironmentSection() {
   const {
     state: { gridSize, running, viewMode, density, cellMargin },
@@ -1052,8 +998,38 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
   );
 }
 
-// These were incorrectly exported as static properties of SettingsSidebar.
-// They are either internal functions or separate components.
-// ActionsSection is an internal function and does not need to be exported.
-// EnvironmentSection, RulesSection, TestsSection, SelectorPositionSection, CameraControlSection, SceneManagementSection are internal components of SettingsSidebar.
-// AppHeaderPanel is a separate component and should be imported directly.
+function TestsSection() {
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_tests", true);
+  const {
+    state: { buildInfo },
+  } = useSimulation();
+
+  if (buildInfo.distribution === "prod") {
+    return null; // Don't render tests in production
+  }
+
+  return (
+    <section className="menu-section">
+      <h3
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      >
+        Tests
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+      </h3>
+      {!isCollapsed && (
+        <div className="menu-scrollable-content">
+          <ManualTestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+          />
+          <AutomatedTestsPanel
+            manualTests={MANUAL_TESTS}
+            automatedTestIds={AUTOMATED_TEST_IDS}
+            documentation={DOCUMENTATION_CONTENT}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
