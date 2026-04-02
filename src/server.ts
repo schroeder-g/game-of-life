@@ -34,6 +34,11 @@ async function buildMainJs() {
   const build = await Bun.build({
     entrypoints: [mainJsEntrypoint],
     sourcemap: "inline",
+    define: {
+      "process.env.APP_VERSION": JSON.stringify(baseVersion),
+      "process.env.BUILD_TIME": JSON.stringify(buildTime),
+      "process.env.BUILD_DISTRIBUTION": JSON.stringify("dev"),
+    },
   });
 
   if (!build.success) {
