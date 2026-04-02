@@ -77,12 +77,10 @@ export default function App() {
         setShowSettingsSidebar={setShowSettingsSidebar}
       />
 
-      <div className="main-content-layout" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
-        {showSettingsSidebar && (
-          <div className="ui-overlay">
-            <SettingsSidebar isSmallScreen={isSmallScreen} />
-          </div>
-        )}
+      <div className="main-content-layout" style={{ flex: 1, display: 'flex', flexDirection: isSmallScreen ? 'column' : 'row' }}>
+        <div className="ui-overlay" style={{ display: showSettingsSidebar ? 'flex' : 'none' }}>
+          <SettingsSidebar isSmallScreen={isSmallScreen} setIsSettingsDropdownOpen={setIsSettingsDropdownOpen} />
+        </div>
 
         <main
           ref={canvasContainerRef}
@@ -90,13 +88,13 @@ export default function App() {
           style={{
             flex: 1,
             height: '100%',
-            display: 'flex',
+            display: (isSmallScreen && showSettingsSidebar && isSettingsDropdownOpen) ? 'none' : 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'hidden',
           }}
         >
-          {/* Always render the canvas */}
+          {/* Always render the canvas, but its container might be hidden */}
           <div
             style={{
               width: canvasSize,
