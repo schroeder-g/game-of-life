@@ -994,7 +994,7 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
         className={`main-menu glass-panel  ${community.length > 0 && !viewMode ? "has-sidebar" : ""}`}
         style={{ border: "none" }}
       >
-        <div className="tests-panel">
+        <div className="drop-down-menu ">
           <header
             className="menu-header"
           >
@@ -1003,29 +1003,51 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
 
             </h3>
           </header>
-          <div className="menu-scrollable-content">
-            {viewMode && <CameraControlSection />}
+          <section className="menu-section">
+            <h3
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            >
+              Scene Management
+              <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+            </h3>
+            {!isCollapsed &&
+              { viewMode && <CameraControlSection />}
             {!viewMode && <SceneManagementSection />}
             {!viewMode && <EnvironmentSection />}
             {!viewMode && <SelectorPositionSection />}
             <RulesSection />
             {buildInfo.distribution !== "prod" && (
               <>
-                <ManualTestsPanel
-                  manualTests={MANUAL_TESTS}
-                  automatedTestIds={AUTOMATED_TEST_IDS}
-                />
-                <AutomatedTestsPanel
-                  manualTests={MANUAL_TESTS}
-                  automatedTestIds={AUTOMATED_TEST_IDS}
-                  documentation={DOCUMENTATION_CONTENT}
-                />
+                <div className="menu-section">
+                  <header
+                    className="menu-header"
+                  >
+                    <h3>
+                      Tests
+
+                    </h3>
+                  </header>
+                  <div className="menu-scrollable-content">
+                    <ManualTestsPanel
+                      manualTests={MANUAL_TESTS}
+                      automatedTestIds={AUTOMATED_TEST_IDS}
+                    />
+                    <AutomatedTestsPanel
+                      manualTests={MANUAL_TESTS}
+                      automatedTestIds={AUTOMATED_TEST_IDS}
+                      documentation={DOCUMENTATION_CONTENT}
+                    />
+                  </div>
+                </div>
+
               </>
             )}
-          </div>
         </div>
+      </section>
+    </div >
 
-      </aside>
+      </aside >
     </>
   );
 }
