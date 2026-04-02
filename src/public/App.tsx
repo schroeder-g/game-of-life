@@ -84,7 +84,7 @@ export default function App() {
         setShowSettingsSidebar={setShowSettingsSidebar}
       />
 
-      <div className="main-content-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="main-content-layout" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
         {showSettingsSidebar && (
           <div className="ui-overlay">
             <SettingsSidebar isSmallScreen={isSmallScreen} />
