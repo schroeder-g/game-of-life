@@ -1,6 +1,15 @@
 import React from 'react';
 
-export function AppFooterPanel(state: any) {
+interface AppFooterPanelProps {
+  userName: string;
+  buildInfo: {
+    version: string;
+    distribution: 'dev' | 'test' | 'prod';
+    buildTime?: string;
+  };
+}
+
+export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
   return (
     <footer
       style={{
@@ -18,12 +27,12 @@ export function AppFooterPanel(state: any) {
     >
       <p>Cube of Life Copyright (c) 2026 Alexander A. S. Gonçalves and David M. Gonçalves</p>
       <div className="version-info">
-        {state.userName && state.buildInfo.distribution !== "prod" && (
-          <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {state.userName}!</span>
+        {userName && buildInfo.distribution !== "prod" && (
+          <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
         )}
         <a>
-          Build: {state.buildInfo.version}
-          {state.buildInfo.distribution !== "prod" && state.buildInfo.buildTime
+          Build: {buildInfo.version}
+          {buildInfo.distribution !== "prod" && buildInfo.buildTime
             ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
             : ""} ({buildInfo.distribution})
         </a>
