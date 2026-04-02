@@ -120,7 +120,8 @@ export default function App() {
       </div>
 
       <AppFooterPanel
-        state={state}
+        userName={userName}
+        buildInfo={buildInfo}
       /> {/* New footer panel */}
 
       {showIntroduction && (userName || localStorage.getItem('userName') || buildInfo.distribution === 'prod' ? null : (
