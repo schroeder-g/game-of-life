@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Scene } from "../components/Grid";
 import { SettingsSidebar } from "../components/SettingsSidebar";
 import { AppHeaderPanel } from "../components/AppHeaderPanel";
+import { AppFooterPanel } from "../components/AppFooterPanel"; // New import
 import { WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
@@ -77,13 +78,13 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="app" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <AppHeaderPanel
         showSettingsSidebar={showSettingsSidebar}
         setShowSettingsSidebar={setShowSettingsSidebar}
       />
 
-      <div className="main-content-layout">
+      <div className="main-content-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {showSettingsSidebar && (
           <div className="ui-overlay">
             <SettingsSidebar isSmallScreen={isSmallScreen} />
@@ -117,6 +118,8 @@ export default function App() {
           ) : null}
         </main>
       </div>
+
+      <AppFooterPanel /> {/* New footer panel */}
 
       {showIntroduction && (userName || localStorage.getItem('userName') || buildInfo.distribution === 'prod' ? null : (
         <WelcomeModal setShowIntroduction={setShowIntroduction} setUserName={setUserName} />
