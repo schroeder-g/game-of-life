@@ -10,7 +10,7 @@ Read every commit, and make rational comparisons, and only report the last commi
 then
 * categorized into sections like "Features," "Bug Fixes," "Testing" "Documentation" ? Use your best judgement
 3. File Management
-Currently, release notes are stored in {file}
+Currently, release notes are stored in src/public/releasenotes.md
 * Update Strategy:   prepend new notes to the top of the existing historical log?
 * Manual Overrides:  file  should be treated as a fully automated build artifact.
 4. Versioning
