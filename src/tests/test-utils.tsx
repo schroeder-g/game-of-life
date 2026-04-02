@@ -1,8 +1,9 @@
+import './setup-browser-env'; // Establishment of global browser environment
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { SimulationProvider } from '../contexts/SimulationContext.tsx';
-import { BrushProvider } from '../contexts/BrushContext.tsx';
-import { GenesisConfigProvider } from '../contexts/GenesisConfigContext.tsx';
+import { SimulationProvider } from '../contexts/SimulationContext';
+import { BrushProvider } from '../contexts/BrushContext';
+import { GenesisConfigProvider } from '../contexts/GenesisConfigContext';
 
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (

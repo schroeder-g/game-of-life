@@ -1,0 +1,22 @@
+1. Automation Workflow
+How should this process be triggered?
+* I would like it to be an AI prompt. 
+2. Commit Filtering & Categorization
+ How should we select which commits to include?
+Read every commit, and make rational comparisons, and only report the last commit associated with mutliple commits trying to achieve the same goal. 
+ 
+* Grouping:  
+* GROUPED BY VERSION
+then
+* categorized into sections like "Features," "Bug Fixes," "Testing" "Documentation" ? Use your best judgement
+3. File Management
+Currently, release notes are stored in {file}
+* Update Strategy:   prepend new notes to the top of the existing historical log?
+* Manual Overrides:  file  should be treated as a fully automated build artifact.
+4. Versioning
+ 
+*   pull the current version from package.json
+*  
+5. Data Depth
+How much detail should each entry include?
+*  the commit subject  line

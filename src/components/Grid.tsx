@@ -6,7 +6,7 @@ import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
 import { generateShape } from "../core/shapes";
 import { Cells } from "./Cell";
-import { type CameraOrientation } from "../core/cameraUtils";
+import { type CameraOrientation } from "../core/faceOrientationKeyMapping";
 import { type CameraFace, type CameraRotation, KEY_MAP, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
 import { ClaimHint } from "./ClaimHint";
 

@@ -1,308 +1,104 @@
+import { JSDOM } from 'jsdom';
 import { vi, beforeAll } from 'vitest';
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
+/**
+ * Safe JSDOM environment initialization for Bun and Node test runners.
+ * Bridges Node/Bun globals and the browser environment for React/Testing Library.
+ */
 
-// Mock document
-const documentMock = (() => {
-  const elements: Record<string, any> = {};
-  return {
-    createElement: vi.fn((tagName) => {
-      const element = {
-        tagName: tagName.toUpperCase(),
-        style: {},
-        focus: vi.fn(),
-        blur: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-        setAttribute: vi.fn(),
-        getAttribute: vi.fn(),
-        hasAttribute: vi.fn(),
-        removeAttribute: vi.fn(),
-        classList: {
-          add: vi.fn(),
-          remove: vi.fn(),
-          contains: vi.fn(),
-          toggle: vi.fn(),
-        },
-        children: [],
-        appendChild: vi.fn(),
-        removeChild: vi.fn(),
-        querySelector: vi.fn(),
-        querySelectorAll: vi.fn(),
-        getBoundingClientRect: vi.fn(() => ({
-          x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0,
-          toJSON: () => ({})
-        })),
-        value: '',
-        type: '',
-        placeholder: '',
-        textContent: '',
-        name: '',
-        min: '',
-        max: '',
-        step: '',
-        closest: vi.fn(),
-        parentElement: null,
-        previousElementSibling: null,
-        getContext: vi.fn(() => ({
-          fillRect: vi.fn(),
-          clearRect: vi.fn(),
-          getImageData: vi.fn(),
-          putImageData: vi.fn(),
-          createImageData: vi.fn(),
-        })),
-      };
-      elements[tagName] = element;
-      return element;
-    }),
-    body: {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-      querySelector: vi.fn(),
-      querySelectorAll: vi.fn(),
-    },
-    head: {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-    },
-    activeElement: null,
-  };
-})();
-
-// Mock HTMLElement
-class MockHTMLElement {
-  style: Record<string, string> = {};
-  getBoundingClientRect = vi.fn(() => ({
-    x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0,
-    toJSON: () => ({})
-  }));
-  focus = vi.fn();
-  blur = vi.fn();
-  addEventListener = vi.fn();
-  removeEventListener = vi.fn();
-  dispatchEvent = vi.fn();
-  setAttribute = vi.fn();
-  getAttribute = vi.fn();
-  hasAttribute = vi.fn();
-  removeAttribute = vi.fn();
-  classList = {
-    add: vi.fn(),
-    remove: vi.fn(),
-    contains: vi.fn(),
-    toggle: vi.fn(),
-  };
-  children: MockHTMLElement[] = [];
-  appendChild = vi.fn();
-  removeChild = vi.fn();
-  querySelector = vi.fn();
-  querySelectorAll = vi.fn();
-  closest = vi.fn();
-  parentElement: MockHTMLElement | null = null;
-  previousElementSibling: MockHTMLElement | null = null;
-  textContent: string | null = null;
-  value = '';
-  type = '';
-  placeholder = '';
-  tagName = '';
-  name = '';
-  min = '';
-  max = '';
-  step = '';
-}
-
-beforeAll(() => {
-  Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
-  Object.defineProperty(global, 'document', { value: documentMock, writable: true });
-  Object.defineProperty(global, 'window', {
-    value: {
-      innerWidth: 1024,
-      innerHeight: 768,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      IntersectionObserver: vi.fn(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      })),
-      ResizeObserver: vi.fn(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      })),
-      __BUILD_INFO__: { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() },
-    },
-    writable: true,
-  });
-  Object.defineProperty(global, 'HTMLElement', { value: MockHTMLElement, writable: true });
+// 1. Initialize JSDOM
+const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+  url: 'http://localhost',
+  pretendToBeVisual: true,
 });
-import { vi, beforeAll } from 'vitest';
 
-// Mock localStorage
+const { window } = dom;
+
+// 2. Polyfill missing browser APIs on window first
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
+    setItem: (key: string, value: string) => { store[key] = value.toString(); },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
   };
 })();
 
-// Mock document
-const documentMock = (() => {
-  const elements: Record<string, any> = {};
+Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true, configurable: true });
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true, configurable: true });
+
+// Use regular functions (not arrow functions) so they can be used as constructors with 'new'
+const IntersectionObserverMock = vi.fn(function() {
   return {
-    createElement: vi.fn((tagName) => {
-      const element = {
-        tagName: tagName.toUpperCase(),
-        style: {},
-        focus: vi.fn(),
-        blur: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-        setAttribute: vi.fn(),
-        getAttribute: vi.fn(),
-        hasAttribute: vi.fn(),
-        removeAttribute: vi.fn(),
-        classList: {
-          add: vi.fn(),
-          remove: vi.fn(),
-          contains: vi.fn(),
-          toggle: vi.fn(),
-        },
-        children: [],
-        appendChild: vi.fn(),
-        removeChild: vi.fn(),
-        querySelector: vi.fn(),
-        querySelectorAll: vi.fn(),
-        getBoundingClientRect: vi.fn(() => ({
-          x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0,
-          toJSON: () => ({})
-        })),
-        value: '',
-        type: '',
-        placeholder: '',
-        textContent: '',
-        name: '',
-        min: '',
-        max: '',
-        step: '',
-        closest: vi.fn(),
-        parentElement: null,
-        previousElementSibling: null,
-        getContext: vi.fn(() => ({
-          fillRect: vi.fn(),
-          clearRect: vi.fn(),
-          getImageData: vi.fn(),
-          putImageData: vi.fn(),
-          createImageData: vi.fn(),
-        })),
-      };
-      elements[tagName] = element;
-      return element;
-    }),
-    body: {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-      querySelector: vi.fn(),
-      querySelectorAll: vi.fn(),
-    },
-    head: {
-      appendChild: vi.fn(),
-      removeChild: vi.fn(),
-    },
-    activeElement: null,
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
   };
-})();
+});
+(window as any).IntersectionObserver = IntersectionObserverMock;
 
-// Mock HTMLElement
-class MockHTMLElement {
-  style: Record<string, string> = {};
-  getBoundingClientRect = vi.fn(() => ({
-    x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0,
-    toJSON: () => ({})
-  }));
-  focus = vi.fn();
-  blur = vi.fn();
-  addEventListener = vi.fn();
-  removeEventListener = vi.fn();
-  dispatchEvent = vi.fn();
-  setAttribute = vi.fn();
-  getAttribute = vi.fn();
-  hasAttribute = vi.fn();
-  removeAttribute = vi.fn();
-  classList = {
-    add: vi.fn(),
-    remove: vi.fn(),
-    contains: vi.fn(),
-    toggle: vi.fn(),
+const ResizeObserverMock = vi.fn(function() {
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
   };
-  children: MockHTMLElement[] = [];
-  appendChild = vi.fn();
-  removeChild = vi.fn();
-  querySelector = vi.fn();
-  querySelectorAll = vi.fn();
-  closest = vi.fn();
-  parentElement: MockHTMLElement | null = null;
-  previousElementSibling: MockHTMLElement | null = null;
-  textContent: string | null = null;
-  value = '';
-  type = '';
-  placeholder = '';
-  tagName = '';
-  name = '';
-  min = '';
-  max = '';
-  step = '';
+});
+(window as any).ResizeObserver = ResizeObserverMock;
+
+// 3. Map window properties to global scope (if not already mapped)
+// Legacy React probe polyfill for Bun
+if (typeof (window as any).HTMLElement !== 'undefined') {
+  (window as any).HTMLElement.prototype.attachEvent = (window as any).HTMLElement.prototype.attachEvent || undefined;
 }
 
+const props = [
+  'window', 'document', 'navigator', 'location', 'history', 'screen',
+  'Node', 'HTMLElement', 'Event', 'CustomEvent', 'ResizeObserver', 'IntersectionObserver',
+  'localStorage', 'sessionStorage', 'requestAnimationFrame', 'cancelAnimationFrame',
+  'DOMParser', 'Blob', 'File', 'FormData', 'URL', 'URLSearchParams',
+  'getComputedStyle', 'KeyboardEvent', 'MouseEvent', 'TouchEvent', 'PointerEvent'
+];
+
+props.forEach(prop => {
+  if (prop === 'performance') return; // Recursive no-go
+
+  try {
+    // Forceful assignment to globalThis for Bun compatibility
+    (globalThis as any)[prop] = (window as any)[prop];
+    (global as any)[prop] = (window as any)[prop];
+  } catch (e) {
+    try {
+      Object.defineProperty(globalThis, prop, {
+        value: (window as any)[prop],
+        configurable: true,
+        writable: true
+      });
+      Object.defineProperty(global, prop, {
+        value: (window as any)[prop],
+        configurable: true,
+        writable: true
+      });
+    } catch (e2) { /* skip */ }
+  }
+});
+
+// 4. Define build info globals
+const buildInfo = {
+  version: '2.3.0',
+  distribution: 'test',
+  buildTime: new Date().toISOString()
+};
+
+(window as any).__BUILD_INFO__ = buildInfo;
+(globalThis as any).__BUILD_INFO__ = buildInfo;
+(global as any).__BUILD_INFO__ = buildInfo;
+
+// 5. Layout properties
+(window as any).innerWidth = 1024;
+(window as any).innerHeight = 768;
+
 beforeAll(() => {
-  Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true });
-  Object.defineProperty(global, 'document', { value: documentMock, writable: true });
-  Object.defineProperty(global, 'window', {
-    value: {
-      innerWidth: 1024,
-      innerHeight: 768,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      IntersectionObserver: vi.fn(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      })),
-      ResizeObserver: vi.fn(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      })),
-      __BUILD_INFO__: { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() },
-    },
-    writable: true,
-  });
-  Object.defineProperty(global, 'HTMLElement', { value: MockHTMLElement, writable: true });
+  // Runtime-only setup
 });

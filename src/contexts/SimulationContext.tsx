@@ -11,7 +11,7 @@ import * as THREE from "three";
 import { Emitter } from "../core/events";
 import { Grid3D } from "../core/Grid3D";
 import { loadSettings, saveSettings } from "../hooks/useSettings";
-import { CameraOrientation } from "../core/cameraUtils";
+import { CameraOrientation } from "../core/faceOrientationKeyMapping";
 
 const initialSettings = loadSettings();
 

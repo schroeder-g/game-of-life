@@ -9,9 +9,10 @@ This document outlines the process for managing the intertwined documentation an
 -   `src/data/documentation/_Documentation.ts` and related files shall be used to create the end-user `src/public/documentation.html` file.
 -   Ensure that    every individual control is appropriately documented in a human-friendly style, with each claim  followed by the supporting tests. 
 -   If a control has an icon, then include that icon in the control's documentation header.
--   Documentation claims should have a minimum of one corresponding test.
+-   Active (not Deprecated) Documentation claims should have a minimum of one corresponding test.
 
--   Documentaion should be written in a user-friendly style, with attractive Headers, Subheaders, Sub-Sub headers in bold.
+-   Documentaion should be written in a user-friendly style, with attractive Headers, Subheaders, Sub-Sub headers.
+Each sub header should be smaller than the previous.
 
 -   Documentation claims and corresponding tests should be cross-referenced. 
 
@@ -23,6 +24,10 @@ This document outlines the process for managing the intertwined documentation an
 
 -   If you encounter </span className="AiReminder"> then make a note of it in your action summary after finishing the current prompt.
 
+
+We don't need End-User documentation for some tsx files. Such as WelcomeModal, KeyMapPage, AutomatedTestsPanel, DocumentationModal,
+or ClaimHint. 
+When I tell you a file does not need end-user documentation, then update that file with a flag that tells you not to force it to be documented.
 
 ## System Overview
 

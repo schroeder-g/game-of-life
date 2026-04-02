@@ -10,6 +10,7 @@ declare global {
     __BUILD_INFO__: {
       version: string;
       distribution: 'dev' | 'test' | 'prod';
+      buildTime?: string;
     };
   }
 }

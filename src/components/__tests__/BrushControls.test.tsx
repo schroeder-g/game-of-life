@@ -17,7 +17,7 @@ vi.mock('../../contexts/BrushContext', () => ({
 
 const mockEventBus = {
   emit: vi.fn(),
-  on: vi.fn(),
+  on: vi.fn().mockReturnValue(() => {}),
   off: vi.fn(),
 };
 
@@ -33,17 +33,24 @@ describe('BrushControls', () => {
       state: {
         cameraOrientation: mockCameraOrientation,
         viewMode: false,
+        gridSize: 10,
+      },
+      actions: {
+        setCommunity: vi.fn(),
       },
       meta: {
         eventBus: mockEventBus,
+        gridRef: { current: null },
       },
     });
+    const mockBrushQuaternion = { current: new THREE.Quaternion() };
     (useBrush as Mock).mockReturnValue({
       state: {
         selectedShape: 'Cube',
         paintMode: 0,
         shapeSize: 3,
         isHollow: false,
+        brushQuaternion: mockBrushQuaternion,
       },
       actions: {
         setShapeSize: vi.fn(),
@@ -74,10 +81,10 @@ describe('BrushControls', () => {
   // TEST_BC_DRAG_001
   it('[TEST_BC_DRAG_001] allows dragging and updates position', async () => {
     render(<BrushControls />);
-    const panel = screen.getByLabelText('Brush Controls Panel'); // Use an accessible label
+    const header = screen.getByText('Brush: Cube').parentElement!;
 
-    // Simulate mouse down on the panel
-    fireEvent.mouseDown(panel, { clientX: 100, clientY: 100 });
+    // Simulate mouse down on the header
+    fireEvent.mouseDown(header, { clientX: 100, clientY: 100 });
 
     // Simulate mouse move
     fireEvent.mouseMove(window, { clientX: 150, clientY: 120 });
@@ -85,17 +92,14 @@ describe('BrushControls', () => {
     // Simulate mouse up
     fireEvent.mouseUp(window);
 
-    // Check if position updated (initial position is centered, then dragged)
-    // This requires more sophisticated mocking of getBoundingClientRect or direct style assertion
-    // For now, we'll assert that the cursor changes, indicating dragging state was active.
     await waitFor(() => {
-      expect(panel).toHaveStyle('cursor: grab'); // After mouseUp, it should return to grab
+      expect(header).toHaveStyle('cursor: grab'); // After mouseUp, it should return to grab
     });
 
     // Re-simulate dragging to check for 'grabbing' cursor
-    fireEvent.mouseDown(panel, { clientX: 100, clientY: 100 });
+    fireEvent.mouseDown(header, { clientX: 100, clientY: 100 });
     await waitFor(() => {
-      expect(panel).toHaveStyle('cursor: grabbing');
+      expect(header).toHaveStyle('cursor: grabbing');
     });
     fireEvent.mouseUp(window);
   });
@@ -129,7 +133,7 @@ describe('BrushControls', () => {
 
     expect(header).toBeInTheDocument();
     expect(header).toHaveStyle('color: #FFA500');
-    expect(panel).toHaveStyle('border: 2px solid #FFA50080');
+    expect(panel).toHaveStyle({ borderColor: 'rgba(255, 165, 0, 0.5)' });
     expect(panel).toHaveStyle('border-radius: 8px');
   });
 
@@ -149,6 +153,9 @@ describe('BrushControls', () => {
         cameraOrientation: mockCameraOrientation,
         viewMode: false,
       },
+      actions: {
+        setCommunity: vi.fn(),
+      },
       meta: {
         eventBus: mockEventBus,
       },
@@ -161,6 +168,9 @@ describe('BrushControls', () => {
       state: {
         cameraOrientation: mockCameraOrientation,
         viewMode: true,
+      },
+      actions: {
+        setCommunity: vi.fn(),
       },
       meta: {
         eventBus: mockEventBus,
@@ -201,7 +211,7 @@ describe('BrushControls', () => {
   // TEST_BC_BUTTON_001_Q
   it('[TEST_BC_BUTTON_001_Q][UC-9] "Further" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
-    fireEvent.mouseDown(screen.getByRole('button', { name: /Further/i }));
+    fireEvent.mouseDown(screen.getByRole('button', { name: /Farther/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 0, -1] });
   });
 

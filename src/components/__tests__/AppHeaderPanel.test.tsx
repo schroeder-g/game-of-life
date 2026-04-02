@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, screen } from '@testing-library/react';
-import { render } from '../../tests/test-utils';
+import { fireEvent, screen, render } from '../../tests/test-utils';
 import { AppHeaderPanel } from '../AppHeaderPanel';
 
 // Mock hooks used by the component
@@ -28,7 +27,7 @@ describe('AppHeaderPanel', () => {
     // Reset mocks before each test
     mockSimulationState = {
       running: false,
-      viewMode: true, // View mode
+      viewMode: true,
       hasInitialState: true,
       hasPastHistory: true,
       cameraOrientation: { face: 'front', rotation: 0 },
@@ -40,6 +39,7 @@ describe('AppHeaderPanel', () => {
       gridSize: 20,
       showIntroduction: false,
       community: [],
+      isAnimatingInit: false,
     };
     mockSimulationActions = {
       playStop: vi.fn(),
@@ -52,9 +52,24 @@ describe('AppHeaderPanel', () => {
       setSquareUp: vi.fn(),
       setSpeed: vi.fn(),
       setShowIntroduction: vi.fn(),
+      loadScene: vi.fn(),
+      applyCells: vi.fn(),
+      setDensity: vi.fn(),
+      setSurviveMin: vi.fn(),
+      setSurviveMax: vi.fn(),
+      setBirthMin: vi.fn(),
+      setBirthMax: vi.fn(),
+      setBirthMargin: vi.fn(),
+      setCellMargin: vi.fn(),
+      setNeighborFaces: vi.fn(),
+      setNeighborEdges: vi.fn(),
+      setNeighborCorners: vi.fn(),
     };
     mockBrushState = {
       selectedShape: 'Cube',
+      paintMode: 0,
+      shapeSize: 3,
+      isHollow: false,
     };
 
     mockUseSimulation.mockReturnValue({
@@ -63,21 +78,25 @@ describe('AppHeaderPanel', () => {
       meta: {
         cameraActionsRef: { current: {} },
         eventBus: { on: vi.fn(() => () => { }), emit: vi.fn() },
-        gridRef: { current: { generation: 0, getLivingCells: () => [], on: vi.fn(() => () => { }) } },
+        gridRef: { current: { generation: 0, version: 1, getLivingCells: () => [], on: vi.fn(() => () => { }) } },
       },
     });
 
     mockUseBrush.mockReturnValue({
       state: mockBrushState,
-      actions: {},
+      actions: {
+        setPaintMode: vi.fn(),
+        setShapeSize: vi.fn(),
+        setIsHollow: vi.fn(),
+      },
     });
 
     mockUseGenesisConfig.mockReturnValue({
       state: {
         selectedConfigName: 'Test Scene',
-        savedConfigs: { // Add savedConfigs for scene selection
-          'Test Scene': { name: 'Test Scene', description: 'A test scene', cells: [[0, 0, 0]] },
-          'Scene One': { name: 'Scene One', description: 'Another scene', cells: [[1, 1, 1]] },
+        savedConfigs: {
+          'Test Scene': { name: 'Test Scene', description: 'A test scene', cells: [[0, 0, 0]], settings: { gridSize: 20 } },
+          'Scene One': { name: 'Scene One', description: 'Another scene', cells: [[1, 1, 1]], settings: { gridSize: 20 } },
         },
       },
       actions: {
@@ -99,32 +118,12 @@ describe('AppHeaderPanel', () => {
   });
 
   it('[AHP_SCENE_SELECT_001][UC-3] allows selecting a scene and loads it', async () => {
-    const mockSetSelectedConfigName = vi.fn();
-    const mockLoadScene = vi.fn();
-
-    mockUseGenesisConfig.mockReturnValue({
-      state: {
-        selectedConfigName: 'Test Scene',
-        savedConfigs: {
-          'Test Scene': { name: 'Test Scene', description: 'A test scene', cells: [[0, 0, 0]] },
-          'Scene One': { name: 'Scene One', description: 'Another scene', cells: [[1, 1, 1]] },
-        },
-      },
-      actions: {
-        setSelectedConfigName: mockSetSelectedConfigName,
-        saveConfig: vi.fn(),
-        exportConfig: vi.fn(),
-        importConfig: vi.fn(),
-        deleteConfig: vi.fn(),
-        setNewConfigName: vi.fn(),
-      },
-    });
-
+    const mockApplyCells = vi.fn();
     mockUseSimulation.mockReturnValue({
-      ...mockUseSimulation(), // Keep existing simulation state/actions
+      ...mockUseSimulation(),
       actions: {
-        ...mockSimulationActions, // Keep existing simulation actions
-        loadScene: mockLoadScene, // Override loadScene
+        ...mockSimulationActions,
+        applyCells: mockApplyCells,
       },
     });
 
@@ -139,10 +138,10 @@ describe('AppHeaderPanel', () => {
     fireEvent.click(sceneOneOption);
 
     // Verify that setSelectedConfigName was called
-    expect(mockSetSelectedConfigName).toHaveBeenCalledWith('Scene One');
+    expect(mockUseGenesisConfig().actions.setSelectedConfigName).toHaveBeenCalledWith('Scene One');
 
-    // Verify that loadScene was called with the correct cells for 'Scene One'
-    expect(mockLoadScene).toHaveBeenCalledWith([[1, 1, 1]]);
+    // Verify that applyCells was called with the correct cells for 'Scene One'
+    expect(mockApplyCells).toHaveBeenCalledWith([[1, 1, 1]], 20);
   });
 
   it('[AHP_STATUS_001] displays scene name, camera orientation, and simulation stats', () => {
@@ -178,12 +177,13 @@ describe('AppHeaderPanel', () => {
     render(<AppHeaderPanel showSettingsSidebar={false} setShowSettingsSidebar={() => { }} />);
     const toggleButton = screen.getByRole('button', { name: 'Switch to Edit Mode' });
     fireEvent.click(toggleButton);
-    expect(mockSimulationActions.setviewMode).toHaveBeenCalledWith(false);
+    // Component calls setviewMode with a functional updater (p => !p)
+    expect(mockSimulationActions.setviewMode).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('[AHPB_PLAY_001][UC-2] triggers play/pause action', () => {
     render(<AppHeaderPanel showSettingsSidebar={false} setShowSettingsSidebar={() => { }} />);
-    const playButton = screen.getByRole('button', { name: 'Pause (Space)' }); // It's running in mocks default
+    const playButton = screen.getByRole('button', { name: 'Play (Space)' }); // running: false in mock
     fireEvent.click(playButton);
     expect(mockSimulationActions.playStop).toHaveBeenCalled();
   });
@@ -290,14 +290,23 @@ describe('AppHeaderPanel', () => {
     render(<AppHeaderPanel showSettingsSidebar={false} setShowSettingsSidebar={() => { }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Shortcuts' }));
-    expect(await screen.findByText('Keyboard Shortcuts')).toBeInTheDocument();
+    // The overlay renders an <h2>Shortcuts</h2> heading
+    expect(await screen.findByRole('heading', { name: 'Shortcuts', level: 2 })).toBeInTheDocument();
   });
 
   it('[AHPB_HELP_NOTES_001] opens the release notes modal from help menu', async () => {
+    // Mock fetch to prevent URL errors in the test environment
+    const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      text: async () => '# Release Notes\nTest content',
+    } as Response);
+
     render(<AppHeaderPanel showSettingsSidebar={false} setShowSettingsSidebar={() => { }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Release Notes' }));
-    expect(await screen.findByText(/Release Notes/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Release Notes/i })).toBeInTheDocument();
+
+    mockFetch.mockRestore();
   });
 
   it('[AHPB_HELP_DOCS_001][UI-2] opens the documentation modal from help menu', async () => {

@@ -8,15 +8,17 @@ import { useBrush } from '../../contexts/BrushContext';
 import * as THREE from 'three';
 import '../../tests/setup-browser-env'; // Import the browser environment setup
 
-vi.mock('../../core/faceOrientationKeyMapping', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../core/faceOrientationKeyMapping')>();
+vi.mock('../../core/faceOrientationKeyMapping', () => {
+  const KEY_MAP = {
+    "front": {
+      0: { w: [0, 1, 0], x: [0, -1, 0], a: [-1, 0, 0], d: [1, 0, 0], q: [0, 0, -1], z: [0, 0, 1] }
+    },
+    "right": {
+      90: { w: [0, 0, 1], x: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], q: [-1, 0, 0], z: [1, 0, 0] }
+    }
+  };
   return {
-    ...actual,
-    // Only mock values that are actually exported as values
-    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
-    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
-    getRotationAxis: actual.getRotationAxis,
-    getExplicitRotationAxis: actual.getExplicitRotationAxis,
+    KEY_MAP,
   };
 });
 

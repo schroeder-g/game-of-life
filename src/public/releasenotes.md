@@ -1,5 +1,14 @@
 # Release Notes
 
+### **Wednesday, April 1, 2026**
+- **Features**: Extracted community selection into a movable **Community Panel** with 3D preview and stats. Enhanced **Brush Controls** with draggability, keyboard rotation, and dynamic positioning. Implemented a data-driven **Documentation System** with searchable claims and visual hints.
+- **Bug Fixes**: Resolved UI stability issues (hook/render errors), optimized z-index layering, and corrected brush selector overflow.
+- **Testing**: Added automated test coverage for header controls and established a **Data Integrity** check to ensure docs and tests stay in sync.
+- **Documentation**: Significantly expanded user manual content and added AI-driven audit workflows for project maintainability.
+- **Refactoring**: Renamed Main Menu to **Settings Sidebar** and unified camera navigation modes (view vs edit) for consistency.
+
+---
+
 Welcome to the latest updates for **Cube of Life**! Here are the changes from the past week (March 23 - March 29, 2026).
 
 ---

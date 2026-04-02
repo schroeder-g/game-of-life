@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation } from "../core/faceOrientationKeyMapping";
+import { KEY_MAP, type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { SHAPES, ShapeType, supportsHollow } from "../core/shapes";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
@@ -521,7 +521,7 @@ export function BrushControls() {
         display: 'flex',
         flexDirection: 'column', // Changed to column to stack header and controls
         touchAction: 'none', // Prevent default touch actions like scrolling
-        border: '2px solid #FFA50080', // Subtler orange outline (50% opacity)
+        border: '2px solid rgba(255, 165, 0, 0.5)', // Subtler orange outline
         borderRadius: '8px', // Small corner radius
       }}
       aria-label="Brush Controls Panel" // Added for accessibility in tests

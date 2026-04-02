@@ -1,5 +1,5 @@
 // @documentation-skip
-import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
+import { KEY_MAP, type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 
 const KeyDisplay = ({ k, v }: { k: string; v: readonly number[] }) => (
   <div className="key-map-row">

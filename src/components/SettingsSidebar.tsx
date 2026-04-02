@@ -311,37 +311,6 @@ function RulesSection() {
 }
 
 
-function TestsSection({ isProd }: { isProd: boolean }) {
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_tests", true);
-
-  return null;
-
-  return (
-    <section className="menu-section">
-      <h3
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-      >
-        Tests
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
-      </h3>
-      {!isCollapsed && (
-        <>
-          <ManualTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-          <AutomatedTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
-        </>
-      )}
-    </section>
-  );
-}
 
 
 function SelectorPositionSection() {
@@ -1040,10 +1009,17 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
             {!viewMode && <EnvironmentSection />}
             {!viewMode && <SelectorPositionSection />}
             <RulesSection />
-            <TestsSection isProd={buildInfo.distribution === "prod"} />
             {buildInfo.distribution !== "prod" && (
               <>
-
+                <ManualTestsPanel
+                  manualTests={MANUAL_TESTS}
+                  automatedTestIds={AUTOMATED_TEST_IDS}
+                />
+                <AutomatedTestsPanel
+                  manualTests={MANUAL_TESTS}
+                  automatedTestIds={AUTOMATED_TEST_IDS}
+                  documentation={DOCUMENTATION_CONTENT}
+                />
               </>
             )}
           </div>

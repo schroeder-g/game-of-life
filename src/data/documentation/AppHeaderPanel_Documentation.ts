@@ -57,8 +57,8 @@ export const appHeaderPanelDocumentation: DocItem[] = [
   {
     id: "AHP_MENU_001_CLAIM",
     type: "p",
-    text: `The header panel also controls the visibility of the main configuration menu (<span class="code-ref">MainMenu.tsx</span>). This menu provides access to simulation settings, rules, scene management, and other configuration options. The panel uses the <span class="code-ref">showMainMenu</span> and <span class="code-ref">setShowMainMenu</span> props to toggle its display.`,
-    references: ["src/components/AppHeaderPanel.tsx", "src/components/MainMenu.tsx"],
+    text: `The header panel also controls the visibility of the main configuration menu (<span class="code-ref">SettingsSidebar.tsx</span>). This menu provides access to simulation settings, rules, scene management, and other configuration options. The panel uses the <span class="code-ref">showSettingsSidebar</span> and <span class="code-ref">setShowSettingsSidebar</span> props to toggle its display.`,
+    references: ["src/components/AppHeaderPanel.tsx", "src/components/SettingsSidebar.tsx"],
     testIds: ["AHP_MENU_001"],
   },
 ];

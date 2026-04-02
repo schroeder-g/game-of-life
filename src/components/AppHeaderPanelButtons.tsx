@@ -164,6 +164,7 @@ function SceneSelectorDropdown() {
         className="glass-button"
         onClick={handleButtonClick}
         data-tooltip-bottom="Select Scene"
+        aria-label="Select Scene"
       >
         <ImageIcon />
       </button>
@@ -267,6 +268,7 @@ export function AppHeaderPanelButtons({
         className="glass-button mode-toggle-button"
         onClick={() => setviewMode((p) => !p)}
         data-tooltip-bottom={viewMode ? "Switch to Edit Mode" : "Switch to View Mode"}
+        aria-label={viewMode ? "Switch to Edit Mode" : "Switch to View Mode"}
       >
         {viewMode ? <PencilIcon /> : <ProjectorIcon />}
       </button>
@@ -276,6 +278,7 @@ export function AppHeaderPanelButtons({
         onClick={playStop}
         style={{ display: !viewMode ? "none" : "block" }}
         data-tooltip-bottom={!viewMode ? "Playback disabled in Edit mode" : running ? "Pause (Space)" : "Play (Space)"}
+        aria-label={!viewMode ? "Playback disabled in Edit mode" : running ? "Pause (Space)" : "Play (Space)"}
       >
         {running ? "⏸" : "▶"}
       </button>
@@ -309,6 +312,13 @@ export function AppHeaderPanelButtons({
                 ? "No history to step back to"
                 : "Step Backward (←)"
           }
+          aria-label={
+            running
+              ? "Pause simulation to step"
+              : !hasPastHistory
+                ? "No history to step back to"
+                : "Step Backward (←)"
+          }
         >
           ⏮
         </button>
@@ -324,6 +334,7 @@ export function AppHeaderPanelButtons({
           data-tooltip-bottom={
             running ? "Pause simulation to step" : "Step Forward (→)"
           }
+          aria-label={running ? "Pause simulation to step" : "Step Forward (→)"}
         >
           ⏭
         </button>
@@ -332,6 +343,7 @@ export function AppHeaderPanelButtons({
           onClick={reset}
           disabled={!hasInitialState}
           data-tooltip-bottom={!hasInitialState ? "No initial state to reset to" : "Reset (R)"}
+          aria-label={!hasInitialState ? "No initial state to reset to" : "Reset (R)"}
         >
           ↺
         </button>
@@ -340,7 +352,7 @@ export function AppHeaderPanelButtons({
         <button
           className="glass-button"
           onClick={fitDisplay}
-          aria-label="Fit"
+          aria-label="Fit (F)"
           data-tooltip-bottom="Fit (F)"
         >
           <FitIcon />
@@ -348,7 +360,7 @@ export function AppHeaderPanelButtons({
         <button
           className="glass-button"
           onClick={recenter}
-          aria-label="Recenter"
+          aria-label="Recenter (S)"
           data-tooltip-bottom="Recenter (S)"
         >
           <RecenterIcon />
@@ -358,6 +370,7 @@ export function AppHeaderPanelButtons({
           className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
           onClick={() => setSquareUp(!squareUp)}
           data-tooltip-bottom={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
+          aria-label={`Square Up View (${squareUp ? (isSquaredUp ? 'SQUARED' : 'ALIGNING') : 'OFF'})`}
         >
           {squareUp ? <SquareUpOnIcon /> : <SquareUpOffIcon />}
         </button>

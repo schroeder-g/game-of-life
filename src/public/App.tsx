@@ -118,7 +118,9 @@ export default function App() {
         </main>
       </div>
 
-      {showIntroduction && <WelcomeModal setShowIntroduction={setShowIntroduction} setUserName={setUserName} />}
+      {showIntroduction && (userName || localStorage.getItem('userName') || buildInfo.distribution === 'prod' ? null : (
+        <WelcomeModal setShowIntroduction={setShowIntroduction} setUserName={setUserName} />
+      ))}
     </div>
   );
 }

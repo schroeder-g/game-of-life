@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation } from "../core/cameraUtils";
+import { KEY_MAP, type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { generateShape } from "../core/shapes";
 
 // This function is used by ShapePreview in Grid.tsx and useKeyboardSelector.

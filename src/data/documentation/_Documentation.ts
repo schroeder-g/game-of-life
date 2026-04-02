@@ -216,6 +216,7 @@ const CURRENT_MANUAL: DocItem[] = [
     type: 'p',
     text: "This project adheres to a strict quality process. Every feature or claim documented in this manual is cross-referenced with one or more manual tests (e.g., UX-1, QA-1). This ensures all documented functionality is verifiable and that the documentation stays in sync with the application's behavior. (`src/data/documentation.ts`, `src/data/manual-tests.ts`)",
     testIds: [
+      "QA-3",
       "QA-3_CLAIMS_HAVE_TESTS",
       "QA-3_VALID_TEST_ID_REFERENCES",
       "QA-3_AUTOMATED_TEST_IDS_REFERENCED",

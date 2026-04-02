@@ -5,15 +5,35 @@ import { useSimulation } from '../contexts/SimulationContext';
 import { useBrush } from '../contexts/BrushContext';
 import '../tests/setup-browser-env'; // Import the browser environment setup
 
-vi.mock('../core/faceOrientationKeyMapping', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../core/faceOrientationKeyMapping')>();
+import * as THREE from 'three';
+
+vi.mock('../core/faceOrientationKeyMapping', () => {
+  const KEY_MAP = {
+    "front": {
+      0: { w: [0, 1, 0], x: [0, -1, 0], d: [1, 0, 0], a: [-1, 0, 0], q: [0, 0, 1], z: [0, 0, -1] }
+    }
+  };
+  const rotationLookup = {
+    "front": {
+      0: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, 1, 0], semicolon: [0, -1, 0], i: [0, 0, 1], p: [0, 0, -1] }
+    }
+  };
+
   return {
-    ...actual,
-    // Only mock values that are actually exported as values
-    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
-    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
-    getRotationAxis: actual.getRotationAxis,
-    getExplicitRotationAxis: actual.getExplicitRotationAxis,
+    KEY_MAP,
+    rotationLookup,
+    getRotationAxis: (face: any, rotation: any, type: 'horizontal' | 'vertical' | 'roll') => {
+      const mapping = (KEY_MAP as any)[face][rotation];
+      let axisArray;
+      if (type === 'vertical') axisArray = mapping.d;
+      else if (type === 'horizontal') axisArray = mapping.w;
+      else axisArray = mapping.q;
+      return new THREE.Vector3().fromArray(axisArray);
+    },
+    getExplicitRotationAxis: (face: any, rotation: any, key: string) => {
+      const axisArray = (rotationLookup as any)[face][rotation][key];
+      return new THREE.Vector3().fromArray(axisArray);
+    }
   };
 });
 

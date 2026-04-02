@@ -1,3 +1,4 @@
+import '../tests/setup-browser-env'; // Import the browser environment setup FIRST
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, screen } from '@testing-library/react';
 import { render } from './test-utils';
@@ -9,19 +10,8 @@ import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
 import { SettingsSidebar } from '../components/SettingsSidebar'; // Import SettingsSidebar directly
-import '../tests/setup-browser-env'; // Import the browser environment setup
 
-vi.mock('../core/faceOrientationKeyMapping', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../core/faceOrientationKeyMapping')>();
-  return {
-    ...actual,
-    // Only mock values that are actually exported as values
-    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
-    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
-    getRotationAxis: actual.getRotationAxis,
-    getExplicitRotationAxis: actual.getExplicitRotationAxis,
-  };
-});
+
 
 beforeEach(() => {
   // Clear localStorage mock before each test

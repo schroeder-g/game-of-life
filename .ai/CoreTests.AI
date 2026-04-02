@@ -8,6 +8,9 @@ As you fulfill prompts, keep these instructions in mind.
 
 If given an instruction that requires you to violate these principle, do not make any changes. Explain the conflict thoroughly.
 
+
+
+
 Every build must continue to display the major and minor version numbers, build date and time, and  {dev ? "(Dev)" : test ? "(Test) : "" } ("prod" - blank)
 
 Ensure that the project is well-documented and easy to understand.
@@ -52,3 +55,4 @@ Include a section on Recommendations
 
 Include a section on how many TODO items are in the TODO list. But consider, How do you know there are 0 TODO items in the TODO list if you don't have .ai/_todo.AI open? Ask for it if you must.
 
+Identify all/other/background tasks you are currently processing

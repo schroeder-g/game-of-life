@@ -44,11 +44,11 @@ function SimulationStats() {
 }
 
 interface AppHeaderPanelProps {
-  showMainMenu: boolean;
-  setShowMainMenu: (show: boolean) => void;
+  showSettingsSidebar: boolean;
+  setShowSettingsSidebar: (show: boolean) => void;
 }
 
-export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanelProps) {
+export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: AppHeaderPanelProps) {
   const {
     state: { running, viewMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction, community }, // Added community
     actions: { playStop, step, stepBackward, reset, setviewMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
@@ -182,8 +182,8 @@ export function AppHeaderPanel({ showMainMenu, setShowMainMenu }: AppHeaderPanel
         handleOpenIntroduction={handleOpenIntroduction}
         handleOpenShortcuts={handleOpenShortcuts}
         handleOpenReleaseNotes={handleOpenReleaseNotes}
-        showMainMenu={showMainMenu}
-        setShowMainMenu={setShowMainMenu}
+        showSettingsSidebar={showSettingsSidebar}
+        setShowSettingsSidebar={setShowSettingsSidebar}
         showCommunityPanel={showCommunityPanel} // Pass new prop
         toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
       />

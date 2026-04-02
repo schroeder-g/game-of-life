@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, CameraFace, CameraRotation, getExplicitRotationAxis } from "../core/faceOrientationKeyMapping";
+import { KEY_MAP, getExplicitRotationAxis, type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { useBrush } from "../contexts/BrushContext";
 import * as THREE from "three";
 // import { getNextOrientation } from "../components/Grid"; // Removed broken helper
