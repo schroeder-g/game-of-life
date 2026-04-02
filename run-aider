@@ -1,3 +1,2 @@
 #!/bin/bash
-source aider.venv/bin/activate
-aider
+./aider.venv/bin/aider
