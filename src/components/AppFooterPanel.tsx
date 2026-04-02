@@ -36,7 +36,7 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
           <a>
             Build: {buildInfo.version}
             {buildInfo.distribution !== "prod" && buildInfo.buildTime
-              ? ` @ ${new Date(buildInfo.buildTime).toLocaleString()}`
+              ? `.${new Date(buildInfo.buildTime).toLocaleString()}`
               : ""} ({buildInfo.distribution})
           </a>
         </div>
