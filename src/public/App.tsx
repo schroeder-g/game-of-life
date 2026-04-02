@@ -88,13 +88,13 @@ export default function App() {
           style={{
             flex: 1,
             height: '100%',
-            display: (isSmallScreen && showSettingsSidebar && isSettingsDropdownOpen) ? 'none' : 'flex',
+            display: 'flex', // Always display the canvas container
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'hidden',
           }}
         >
-          {/* Always render the canvas, but its container might be hidden */}
+          {/* Always render the canvas */}
           <div
             style={{
               width: canvasSize,
