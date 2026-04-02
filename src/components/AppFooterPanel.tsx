@@ -4,12 +4,12 @@ export function AppFooterPanel() {
   return (
     <footer
       style={{
-        height: '50px',
+        height: '100px', // Changed from 50px to 100px
         backgroundColor: '#1a1a1a', // Dark background
         color: '#ffffff', // White text
-        margin: '2vh',
+        // Removed margin: '2vh' to prevent pushing content
         display: 'flex',
-        justifyContent: 'left',
+        justifyContent: 'center', // Changed from 'left' to 'center'
         alignItems: 'center',
         fontSize: '0.9rem',
         borderTop: '1px solid #333', // Subtle border at the top
