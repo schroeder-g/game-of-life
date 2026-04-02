@@ -119,7 +119,9 @@ export default function App() {
         </main>
       </div>
 
-      <AppFooterPanel /> {/* New footer panel */}
+      <AppFooterPanel
+        state={state}
+      /> {/* New footer panel */}
 
       {showIntroduction && (userName || localStorage.getItem('userName') || buildInfo.distribution === 'prod' ? null : (
         <WelcomeModal setShowIntroduction={setShowIntroduction} setUserName={setUserName} />

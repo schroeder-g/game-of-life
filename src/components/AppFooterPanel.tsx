@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function AppFooterPanel() {
+export function AppFooterPanel(state: any) {
   return (
     <footer
       style={{
@@ -17,6 +17,17 @@ export function AppFooterPanel() {
       }}
     >
       <p>Cube of Life Copyright (c) 2026 Alexander A. S. Gonçalves and David M. Gonçalves</p>
+      <div className="version-info">
+        {state.userName && state.buildInfo.distribution !== "prod" && (
+          <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {state.userName}!</span>
+        )}
+        <a>
+          Build: {state.buildInfo.version}
+          {state.buildInfo.distribution !== "prod" && state.buildInfo.buildTime
+            ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
+            : ""} ({buildInfo.distribution})
+        </a>
+      </div>
     </footer>
   );
 }
