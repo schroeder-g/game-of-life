@@ -36,7 +36,7 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
         flexShrink: 0, // Prevent shrinking
       }}
     >
-      <p>Cube of Life © 2026 <br /> Alexander A. S. Gonçalves <br /> and David M. Gonçalves</p>
+      <p>Cube of Life © 2026 <br /> Alexander and David Gonçalves</p>
 
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>

@@ -16,7 +16,7 @@ export function AutomatedTestsPanel({
   automatedTestIds,
   documentation,
 }: AutomatedTestsPanelProps) {
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_automated_tests", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_automated_tests", false);
   const { allTests, summary, testDate, isLoading, error } = useAutomatedTestResults(); // Use the new hook
 
   if (isLoading) {

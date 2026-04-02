@@ -120,17 +120,7 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
     <div className="app-header-panel">
       <div className="title-section">
         <h1>Cube of Life</h1>
-        <div className="version-info">
-          {userName && buildInfo.distribution !== "prod" && (
-            <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
-          )}
-          <a>
-            Build: {buildInfo.version}
-            {buildInfo.distribution !== "prod" && buildInfo.buildTime
-              ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
-              : ""} ({buildInfo.distribution})
-          </a>
-        </div>
+
       </div>
 
       <div className="cube-status-panel">
