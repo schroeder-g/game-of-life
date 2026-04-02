@@ -69,7 +69,6 @@ const DEPRECATED_CONTENT: DocItem[] = [
     id: "deprecated-dev-welcome",
     type: 'p',
     text: "[DEPRECATED as of 2024-03-15: Content merged into claim 'dev-welcome'] For development and test builds, the application provides a personalized experience. Your name is requested on first launch and remembered across sessions, with a welcome message displayed in the header.",
-    testIds: ["UX-4", "UX-5"],
   },
   {
     id: "deprecated-dev-testing-panel",
@@ -177,13 +176,6 @@ const CURRENT_MANUAL: DocItem[] = [
 
 
   { id: 'heading-dev', type: 'h3', text: 'Developer & Testing Features' },
-  {
-    id: "dev-welcome",
-    type: 'p',
-    text: "A welcome message with your name and build info is shown in the header. Your name is remembered between sessions.",
-    testIds: ["UX-4", "UX-5"],
-    references: ["src/hooks/useSettings.ts", "src/contexts/SimulationContext.tsx"],
-  },
   {
     id: "dev-testing-panel",
     type: 'p',
