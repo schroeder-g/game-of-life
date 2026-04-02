@@ -1,5 +1,20 @@
 # Release Notes
 
+### **Thursday, April 2, 2026 (Version 1.9.0)**
+- **Features**:
+    - Implemented custom build datetime format (YYYY.MM.DD.HH.NN).
+    - Aligned user and build information to the right side of the footer.
+    - Enhanced visual distinction for active tab buttons in the shortcut overlay.
+- **Bug Fixes**:
+    - Fixed issues with build information display in AppHeaderPanel and AppFooterPanel, ensuring accurate version, build time, and distribution are shown in both production and development modes, and refactored prop passing for type safety.
+- **Documentation**:
+    - Removed deprecated `dev-welcome` claim and associated test IDs.
+    - Updated internal AI instructions for release notes file path.
+- **Internal**:
+    - Updated package version to 1.9.0.
+
+---
+
 ### **Wednesday, April 1, 2026**
 - **Features**: Extracted community selection into a movable **Community Panel** with 3D preview and stats. Enhanced **Brush Controls** with draggability, keyboard rotation, and dynamic positioning. Implemented a data-driven **Documentation System** with searchable claims and visual hints.
 - **Bug Fixes**: Resolved UI stability issues (hook/render errors), optimized z-index layering, and corrected brush selector overflow.
