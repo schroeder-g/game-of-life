@@ -955,7 +955,7 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
           </header>
           {!collapsed && (
             <>
-              {viewMode && <CameraControlSection />}
+              {viewMode && !isSmallScreen && <CameraControlSection />}
               {!viewMode && <SceneManagementSection />}
               {!viewMode && <EnvironmentSection />}
               {!viewMode && <SelectorPositionSection />}
