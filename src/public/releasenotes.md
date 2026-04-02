@@ -6,12 +6,17 @@
     - Aligned user and build information to the right side of the footer.
     - Enhanced visual distinction for active tab buttons in the shortcut overlay.
 - **Bug Fixes**:
-    - Fixed issues with build information display in AppHeaderPanel and AppFooterPanel, ensuring accurate version, build time, and distribution are shown in both production and development modes, and refactored prop passing for type safety.
-- **Documentation**:
-    - Removed deprecated `dev-welcome` claim and associated test IDs.
-    - Updated internal AI instructions for release notes file path.
+    - Ensured accurate version, build time, and distribution display in AppHeaderPanel and AppFooterPanel across all build modes (dev, test, prod).
+    - Resolved `process is not defined` errors in development builds by correctly defining environment variables.
+    - Fixed build time not showing in development mode.
+    - Corrected prop passing to `AppFooterPanel` to resolve `state is not defined` error.
+    - Removed deprecated `dev-welcome` claim and associated test IDs for documentation consistency.
+- **Refactoring**:
+    - Refactored `AppFooterPanel` props for improved type safety.
+    - Unified tab button background and text color in the shortcut overlay.
 - **Internal**:
     - Updated package version to 1.9.0.
+    - Updated internal AI instructions for release notes file path.
 
 ---
 
