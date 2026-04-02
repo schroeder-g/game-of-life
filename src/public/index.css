@@ -10,8 +10,7 @@ body.view-mode .community-sidebar {
 }
 
 /* Main container for the brush selector button wrapper */
-.scene-selector-dropdown {
-}
+.scene-selector-dropdown {}
 
 /* The dropdown menu panel */
 .dropdown-menu {
@@ -474,16 +473,17 @@ input[type="range"] {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 20px;
+  padding-top: 10px;
 }
 
 .menu-section h3 {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #888;
+  color: #ffa500;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 4px;
-  margin-bottom: 4px;
+
 }
 
 .button-group {
@@ -712,7 +712,8 @@ input[type="range"]::-webkit-slider-runnable-track {
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   color: #c9d1d9;
-  margin: auto; /* Center the modal content within the flex backdrop */
+  margin: auto;
+  /* Center the modal content within the flex backdrop */
 }
 
 .shortcuts-header {
@@ -1081,11 +1082,13 @@ kbd {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(13, 17, 23, 0.6); /* Slightly darker background */
+  background: rgba(13, 17, 23, 0.6);
+  /* Slightly darker background */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000000000; /* Extremely high z-index to block all interactions */
+  z-index: 2000000000;
+  /* Extremely high z-index to block all interactions */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: fadeIn 0.2s ease-out;
@@ -1102,7 +1105,8 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin: 10% auto auto auto; /* Add 10% top margin, keep horizontal auto-centering */
+  margin: 10% auto auto auto;
+  /* Add 10% top margin, keep horizontal auto-centering */
 }
 
 .modal-content h3 {
@@ -1179,7 +1183,8 @@ kbd {
   top: 15px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 999; /* Ensure it's below Brush Controls (z-index: 1000) */
+  z-index: 999;
+  /* Ensure it's below Brush Controls (z-index: 1000) */
 
   background: rgba(22, 27, 34, 0.7);
   backdrop-filter: blur(10px);
@@ -1429,20 +1434,28 @@ kbd {
 }
 
 .glass-button.settings-theme {
-  background: rgba(255, 165, 0, 0.1); /* Light orange background */
-  border-color: rgba(255, 165, 0, 0.3); /* Orange border */
-  color: #ffa500; /* Orange text/icon color */
+  background: rgba(255, 165, 0, 0.1);
+  /* Light orange background */
+  border-color: rgba(255, 165, 0, 0.3);
+  /* Orange border */
+  color: #ffa500;
+  /* Orange text/icon color */
 }
 
 .glass-button.settings-theme:hover {
-  background: rgba(255, 165, 0, 0.2); /* Slightly darker orange on hover */
-  border-color: rgba(255, 165, 0, 0.5); /* Darker orange border on hover */
+  background: rgba(255, 165, 0, 0.2);
+  /* Slightly darker orange on hover */
+  border-color: rgba(255, 165, 0, 0.5);
+  /* Darker orange border on hover */
 }
 
 .glass-button.settings-theme.active {
-  background: #ffa500; /* Solid orange when active */
-  border-color: #ffa500; /* Solid orange border when active */
-  color: #0d1117; /* Dark text/icon for contrast */
+  background: #ffa500;
+  /* Solid orange when active */
+  border-color: #ffa500;
+  /* Solid orange border when active */
+  color: #0d1117;
+  /* Dark text/icon for contrast */
 }
 
 .glass-button.danger.active {
@@ -1695,8 +1708,13 @@ div.automated-tests-panel.glass-panel>div>div.tests-list>details>summary>span.te
 }
 
 @keyframes highlightFlash {
-  0% { background-color: rgba(138, 180, 248, 0.4); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(138, 180, 248, 0.4);
+  }
+
+  100% {
+    background-color: transparent;
+  }
 }
 
 .highlight-flash {
@@ -1708,4 +1726,3 @@ div.automated-tests-panel.glass-panel>div>div.tests-list>details>summary>span.te
 .index-overlay {
   z-index: 2000000001 !important;
 }
-
