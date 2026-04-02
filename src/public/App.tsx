@@ -55,14 +55,6 @@ export default function App() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Effect for logging canvas render conditions
-  useEffect(() => {
-    console.log(`App: Canvas render conditions - canvasSize: ${canvasSize}, userName: ${userName}, distribution: ${buildInfo.distribution}, showIntroduction: ${showIntroduction}`);
-    if (!(canvasSize > 0 && (userName || buildInfo.distribution === 'prod') && !showIntroduction)) {
-      console.log("App: Canvas not rendered due to conditions.");
-    }
-  }, [canvasSize, userName, buildInfo.distribution, showIntroduction]);
-
   // Effect to check screen size for small screens
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -103,19 +95,18 @@ export default function App() {
             overflow: 'hidden',
           }}
         >
-          {canvasSize > 0 && !showIntroduction ? ( // Simplified condition
-            <div
-              style={{
-                width: canvasSize,
-                height: canvasSize,
-                position: 'relative',
-              }}
-            >
-              <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
-                <Scene />
-              </Canvas>
-            </div>
-          ) : null}
+          {/* Always render the canvas */}
+          <div
+            style={{
+              width: canvasSize,
+              height: canvasSize,
+              position: 'relative',
+            }}
+          >
+            <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
+              <Scene />
+            </Canvas>
+          </div>
         </main>
       </div>
 
