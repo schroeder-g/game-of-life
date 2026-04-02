@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David M. Gonçalves - Portfolio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .introduction {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .introduction h1 {
+            color: #0056b3;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .introduction p {
+            font-size: 1.1em;
+            max-width: 800px;
+            margin: 0 auto;
+            color: #555;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .content-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .content-box img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            border-bottom: 1px solid #eee;
+        }
+        .content-box-text {
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .content-box h3 {
+            color: #0056b3;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+        .content-box p {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 0;
+        }
+        .content-box a {
+            display: block;
+            text-align: center;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 0 0 8px 8px;
+            transition: background-color 0.2s ease-in-out;
+            margin-top: auto; /* Pushes the button to the bottom */
+        }
+        .content-box a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="introduction">
+            <h1>Welcome to My Digital Space</h1>
+            <p>Explore a curated collection of my professional endeavors, creative projects, and personal reflections. From innovative software solutions to artistic expressions, this site serves as a comprehensive portfolio showcasing my journey and passions.</p>
+        </section>
+
+        <section class="content-grid">
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/007bff/ffffff?text=Consulting" alt="Consulting Services">
+                <div class="content-box-text">
+                    <h3>Consulting & Advisory</h3>
+                    <p>Strategic guidance and technical expertise for your business challenges.</p>
+                </div>
+                <a href="/work/consulting">Learn More</a>
+            </div>
+
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/28a745/ffffff?text=Career+Path" alt="Career Path">
+                <div class="content-box-text">
+                    <h3>Career Journey</h3>
+                    <p>A detailed look at my professional experience and growth.</p>
+                </div>
+                <a href="/work/career">View Details</a>
+            </div>
+
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/ffc107/333333?text=Creative+Projects" alt="Creative Projects">
+                <div class="content-box-text">
+                    <h3>Creative Pursuits</h3>
+                    <p>Showcasing personal projects in art, music, and more.</p>
+                </div>
+                <a href="/play">Explore Creativity</a>
+            </div>
+
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/dc3545/ffffff?text=Technical+Skills" alt="Technical Skills">
+                <div class="content-box-text">
+                    <h3>Technical Expertise</h3>
+                    <p>Deep dives into my skills in software development and engineering.</p>
+                </div>
+                <a href="/work/résumé">See Résumé</a>
+            </div>
+
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/6f42c1/ffffff?text=Music+Portfolio" alt="Music Portfolio">
+                <div class="content-box-text">
+                    <h3>Music & Sound Design</h3>
+                    <p>My compositions, soundscapes, and audio projects.</p>
+                </div>
+                <a href="/play/music">Listen Now</a>
+            </div>
+
+            <div class="content-box">
+                <img src="https://via.placeholder.com/400x200/17a2b8/ffffff?text=Social+Media" alt="Social Media">
+                <div class="content-box-text">
+                    <h3>Connect Online</h3>
+                    <p>Find me on various social media platforms.</p>
+                </div>
+                <a href="/social-media">Connect</a>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
