@@ -3,7 +3,7 @@
   "version": "1.9.0",
   "scripts": {
     "dev": "bun --hot src/server.ts",
-    "build": "BUILD_DISTRIBUTION=${BUILD_DISTRIBUTION:-prod} bun build src/public/index.tsx --outdir dist --define \"process.env.BUILD_DISTRIBUTION='\\\"'$BUILD_DISTRIBUTION'\\\"'\"",
+    "build": "BUILD_DISTRIBUTION=${BUILD_DISTRIBUTION:-prod} BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) bun build src/public/index.tsx --outdir dist --define process.env.BUILD_DISTRIBUTION=\"\\\"$BUILD_DISTRIBUTION\\\"\" --define process.env.APP_VERSION=\"\\\"$(node -p 'require(\"./package.json\").version')\\\"\" --define process.env.BUILD_TIME=\"\\\"$BUILD_TIME\\\"\"",
     "test": "vitest run --reporter=json --outputFile=src/public/automated-test-results.json || true",
     "deploy": "./deploy.sh prod",
     "deploy:test": "./deploy.sh test"
