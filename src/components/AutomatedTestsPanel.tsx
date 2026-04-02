@@ -49,7 +49,7 @@ export function AutomatedTestsPanel({
                     <div className="test-title" style={{ flexGrow: 1 }}>{test.title}</div>
                     {test.claimIds.length > 0 && (
                       <span className="claim-id-tags" style={{ flexShrink: 0, marginLeft: 'auto' }}>
-                        {test.claimIds.map(id => <Fragment key={id}><ClaimHint claimId={id} /></Fragment>)}
+                        {test.claimIds.map(id => <Fragment key={`${test.id}-${id}`}><ClaimHint claimId={id} /></Fragment>)}
                       </span>
                     )}
                   </summary>
