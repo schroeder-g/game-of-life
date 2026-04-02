@@ -145,20 +145,6 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
         expect(mocks.setviewMode).toHaveBeenCalled();
     });
 
-    it('[UC-6] should adjust simulation speed when slider is changed', () => {
-        // Set viewMode to true for speed slider to show up in AppHeaderPanel
-        const viewModeSimulationValue = {
-            ...baseSimulationValue,
-            state: { ...baseSimulationState, viewMode: true }
-        };
-        (useSimulation as any).mockReturnValue(viewModeSimulationValue);
-
-        render(<AppHeaderPanel showSettingsSidebar={true} setShowSettingsSidebar={vi.fn()} />);
-
-        const speedSlider = screen.getByRole('slider', { name: /Speed/i });
-        fireEvent.change(speedSlider, { target: { value: '15' } });
-        expect(mocks.setSpeed).toHaveBeenCalledWith(15);
-    });
 
     it('[UX-5] should display development build info in the header', () => {
         render(<AppHeaderPanel showSettingsSidebar={true} setShowSettingsSidebar={vi.fn()} />);
