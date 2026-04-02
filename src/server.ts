@@ -30,6 +30,7 @@ async function buildMainJs() {
   // Update the version timestamp to the current build time
   // Update the build time on each rebuild
   buildTime = new Date().toISOString();
+  console.log(`Injected BUILD_TIME for dev build: ${buildTime}`); // Diagnostic log
 
   const build = await Bun.build({
     entrypoints: [mainJsEntrypoint],
