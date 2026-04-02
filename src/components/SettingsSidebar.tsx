@@ -937,63 +937,28 @@ export function SettingsSidebar({ isSmallScreen }: SettingsSidebarProps) {
   return (
     <>
       <aside
-        className={`main-menu glass-panel  ${community.length > 0 && !viewMode ? "has-sidebar" : ""}`}
+        className={`main-menu glass-panel ${community.length > 0 && !viewMode ? "has-sidebar" : ""} ${collapsed ? "collapsed" : ""}`}
         style={{ border: "none" }}
       >
-        <div className="drop-down-menu ">
-          <header
-            className="menu-header"
-          >
+        <div className="drop-down-menu">
+          <header className="menu-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer" }}>
             <h3>
               Settings
-
+              <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: '8px' }}>{collapsed ? "▼" : "▲"}</span>
             </h3>
           </header>
-          <section className="menu-section">
-            <h3
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-            >
-              Scene Management
-              <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
-            </h3>
-            {!isCollapsed &&
-              { viewMode && <CameraControlSection />}
-            {!viewMode && <SceneManagementSection />}
-            {!viewMode && <EnvironmentSection />}
-            {!viewMode && <SelectorPositionSection />}
-            <RulesSection />
-            {buildInfo.distribution !== "prod" && (
-              <>
-                <div className="menu-section">
-                  <header
-                    className="menu-header"
-                  >
-                    <h3>
-                      Tests
-
-                    </h3>
-                  </header>
-                  <div className="menu-scrollable-content">
-                    <ManualTestsPanel
-                      manualTests={MANUAL_TESTS}
-                      automatedTestIds={AUTOMATED_TEST_IDS}
-                    />
-                    <AutomatedTestsPanel
-                      manualTests={MANUAL_TESTS}
-                      automatedTestIds={AUTOMATED_TEST_IDS}
-                      documentation={DOCUMENTATION_CONTENT}
-                    />
-                  </div>
-                </div>
-
-              </>
-            )}
+          {!collapsed && (
+            <>
+              {viewMode && <CameraControlSection />}
+              {!viewMode && <SceneManagementSection />}
+              {!viewMode && <EnvironmentSection />}
+              {!viewMode && <SelectorPositionSection />}
+              <RulesSection />
+              <TestsSection />
+            </>
+          )}
         </div>
-      </section>
-    </div >
-
-      </aside >
+      </aside>
     </>
   );
 }
