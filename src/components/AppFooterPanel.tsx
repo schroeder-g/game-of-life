@@ -43,7 +43,7 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
         {userName && buildInfo.distribution !== "prod" && (
           <div className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</div>
         )}
-        <div id="user-and-build" style={{ display: 'flex', alignItems: 'center' }}>
+        <div id="user-and-build" className="version-info" style={{ display: 'flex', alignItems: 'center' }}>
           <a>
             Build: {buildInfo.version}
             {buildInfo.distribution !== "prod" && buildInfo.buildTime
