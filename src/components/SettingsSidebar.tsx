@@ -870,13 +870,7 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
     state: { savedConfigs, selectedConfigName },
     actions: { setSelectedConfigName },
   } = useGenesisConfig();
-  const [collapsed, setCollapsed] = useState(() => {
-    // Default to collapsed if starting on small screen
-    if (typeof window !== "undefined") {
-      return window.innerWidth <= 768;
-    }
-    return false;
-  });
+  const [collapsed, setCollapsed] = useState(false); // Default to open (not collapsed)
 
   // Effect to communicate the collapsed state of the Settings dropdown to App.tsx
   useEffect(() => {
