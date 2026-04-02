@@ -31,7 +31,7 @@ export function AutomatedTestsPanel({
     <section className="menu-section">
       <div className={`${isCollapsed ? "collapsed" : ""}`}>
         <h3 onClick={() => setIsCollapsed(!isCollapsed)} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          Automated Test Results
+          Automated Tests
           <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
         </h3>
         {!isCollapsed && (
