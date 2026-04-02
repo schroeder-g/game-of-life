@@ -28,17 +28,19 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
       <p>Cube of Life © 2026 <br /> Alexander A. S. Gonçalves <br /> and David M. Gonçalves</p>
 
 
-      <div>   {userName && buildInfo.distribution !== "prod" && (
-        <div className="user-welcome" style={{ display: 'block', marginRight: '8px', justifyContent: 'left' }}>Welcome, {userName}!</div>
-      )}
-        <div id="user-and-build" style={{ display: 'flex', justifyContent: 'right', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        {userName && buildInfo.distribution !== "prod" && (
+          <div className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</div>
+        )}
+        <div id="user-and-build" style={{ display: 'flex', alignItems: 'center' }}>
           <a>
             Build: {buildInfo.version}
             {buildInfo.distribution !== "prod" && buildInfo.buildTime
-              ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
+              ? ` @ ${new Date(buildInfo.buildTime).toLocaleString()}`
               : ""} ({buildInfo.distribution})
           </a>
-        </div></div>
+        </div>
+      </div>
     </footer>
   );
 }
