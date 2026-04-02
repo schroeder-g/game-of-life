@@ -97,15 +97,10 @@ describe('SettingsSidebar', () => {
       actions: { setSelectorPos: vi.fn() },
     });
 
-    // Mock window and localStorage for the test environment
-    Object.defineProperty(global, 'window', { value: { innerWidth: 1024 } });
-    Object.defineProperty(global, 'localStorage', {
-      value: {
-        getItem: vi.fn(() => null),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-      },
-    });
+    // Mock window.innerWidth for SettingsSidebar's initial collapsed state
+    // This is already handled by setup-browser-env.ts, but we can override if needed.
+    // For this test, we'll ensure it's set to a desktop width.
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
   });
 
   afterEach(() => {

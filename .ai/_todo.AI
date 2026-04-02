@@ -58,7 +58,7 @@
 *   **TODO-052:** [COMPLETED] `BrushContext.test.tsx` tagging
 *   **TODO-053:** [COMPLETED] `Grid.test.tsx` tagging
 *   **TODO-054:** [COMPLETED] Address `SettingsSidebar_Documentation.ts` inconsistency.
-*   **TODO-055:** [COMPLETED] Full audit of `src/data/documentation/`
+*   **TODO-055:** [COMPLETED] Removed incomplete draggable footer from `src/public/App.tsx`.
 *   **TODO-057:** [COMPLETED] Perform a tagging pass on remaining files in `src/__tests__`.
 
 **GENERAL RULES**
