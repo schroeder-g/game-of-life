@@ -142,10 +142,6 @@ export const settingsSidebarDocumentation: DocItem[] = [
     references: ["src/components/SettingsSidebar.tsx"],
     testIds: ["UC-11"],
   },
-];
-import { DocItem } from './_Documentation';
-
-export const settingsSidebarDocumentation: DocItem[] = [
   {
     id: 'SS_SCENE_NAME_INPUT_001',
     type: 'p',
