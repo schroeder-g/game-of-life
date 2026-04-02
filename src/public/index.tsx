@@ -3,7 +3,6 @@ import { BrushProvider } from "../contexts/BrushContext";
 import { GenesisConfigProvider } from "../contexts/GenesisConfigContext";
 import { SimulationProvider } from "../contexts/SimulationContext";
 import App from "./App";
-import pkg from "../../package.json";
 
 declare global {
   interface Window {
@@ -15,14 +14,13 @@ declare global {
   }
 }
 
-if (typeof window !== "undefined" && !window.__BUILD_INFO__) {
-  // Fallback for environments where __BUILD_INFO__ is not injected (e.g., some test setups)
-  window.__BUILD_INFO__ = {
-    version: pkg.version,
-    buildTime: new Date().toISOString(),
-    distribution: "dev", // Default to 'dev' if not explicitly set
-  };
-}
+// Initialize window.__BUILD_INFO__ directly using injected environment variables
+// These variables are defined by the bun build command using --define
+window.__BUILD_INFO__ = {
+  version: process.env.APP_VERSION || "unknown", // Fallback for non-build environments
+  buildTime: process.env.BUILD_TIME,
+  distribution: (process.env.BUILD_DISTRIBUTION as 'dev' | 'test' | 'prod') || "dev", // Fallback
+};
 
 const root = createRoot(document.getElementById("root")!);
 root.render(
