@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSimulation } from "../contexts/SimulationContext"; // Keep useSimulation for buildInfo
 
@@ -14,6 +14,15 @@ export function WelcomeModal({ setShowIntroduction, setUserName }: WelcomeModalP
   } = useSimulation();
 
   const [inputName, setInputName] = useState("");
+  const [hasSeen] = useState(() => localStorage.getItem("hasSeenWelcomeModal"));
+
+  useEffect(() => {
+    if (hasSeen) {
+      setShowIntroduction(false);
+    } else {
+      localStorage.setItem("hasSeenWelcomeModal", "true");
+    }
+  }, [hasSeen, setShowIntroduction]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +40,10 @@ export function WelcomeModal({ setShowIntroduction, setUserName }: WelcomeModalP
   const handleClose = () => {
     setShowIntroduction(false); // Hide modal on close
   };
+
+  if (hasSeen) {
+    return null;
+  }
 
   return createPortal(
     <div className="modal-overlay welcome-modal" onClick={handleClose}>
