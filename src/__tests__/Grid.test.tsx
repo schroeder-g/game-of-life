@@ -4,6 +4,7 @@ import { Scene } from '../components/Grid';
 import { SimulationProvider } from '../contexts/SimulationContext';
 import { BrushProvider } from '../contexts/BrushContext';
 import React from 'react';
+import '../tests/setup-browser-env'; // Import the browser environment setup
 
 // Mock Three.js and Fiber
 vi.mock('@react-three/fiber', () => ({

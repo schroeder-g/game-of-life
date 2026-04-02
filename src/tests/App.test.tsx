@@ -9,46 +9,25 @@ import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
 import { SettingsSidebar } from '../components/SettingsSidebar'; // Import SettingsSidebar directly
+import '../tests/setup-browser-env'; // Import the browser environment setup
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+vi.mock('../core/faceOrientationKeyMapping', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../core/faceOrientationKeyMapping')>();
   return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
+    ...actual,
+    // Only mock values that are actually exported as values
+    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
+    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
+    getRotationAxis: actual.getRotationAxis,
+    getExplicitRotationAxis: actual.getExplicitRotationAxis,
   };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+});
 
-// Mock window.__BUILD_INFO__
-window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
-
-// Mock IntersectionObserver
 beforeEach(() => {
-  localStorageMock.clear();
-  const mockIntersectionObserver = vi.fn();
-  mockIntersectionObserver.mockReturnValue({
-    observe: () => null,
-    unobserve: () => null,
-    disconnect: () => null
-  });
-  window.IntersectionObserver = mockIntersectionObserver;
-  // Mock ResizeObserver as well, since App.tsx uses it
-  const mockResizeObserver = vi.fn();
-  mockResizeObserver.mockReturnValue({
-    observe: () => null,
-    unobserve: () => null,
-    disconnect: () => null
-  });
-  window.ResizeObserver = mockResizeObserver;
+  // Clear localStorage mock before each test
+  (localStorage as any).clear();
+  // Reset window.__BUILD_INFO__ for specific test cases if needed
+  window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
 });
 
 // Mock the three.js canvas for App.tsx rendering

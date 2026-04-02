@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { BrushProvider, useBrush } from '../contexts/BrushContext';
 import React from 'react';
+import '../tests/setup-browser-env'; // Import the browser environment setup
 
 // Wrapper for the context
 const wrapper = ({ children }: { children: React.ReactNode }) => (

@@ -6,6 +6,19 @@ import { useSimulation } from '../../contexts/SimulationContext';
 import { useGenesisConfig } from '../../contexts/GenesisConfigContext';
 import { useBrush } from '../../contexts/BrushContext';
 import * as THREE from 'three';
+import '../../tests/setup-browser-env'; // Import the browser environment setup
+
+vi.mock('../../core/faceOrientationKeyMapping', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../core/faceOrientationKeyMapping')>();
+  return {
+    ...actual,
+    // Only mock values that are actually exported as values
+    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
+    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
+    getRotationAxis: actual.getRotationAxis,
+    getExplicitRotationAxis: actual.getExplicitRotationAxis,
+  };
+});
 
 // Mock hooks
 const mockUseSimulation = vi.fn();
@@ -100,7 +113,7 @@ describe('SettingsSidebar', () => {
     // Mock window.innerWidth for SettingsSidebar's initial collapsed state
     // This is already handled by setup-browser-env.ts, but we can override if needed.
     // For this test, we'll ensure it's set to a desktop width.
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    // Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 }); // Removed as it's handled by setup-browser-env
   });
 
   afterEach(() => {

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+// @vitest-environment jsdom
 // AGENT INSTRUCTION:
 // This file is the single source of truth for keyboard controls related to orientation.
 // Do not add orientation-based keyboard logic elsewhere. Modify this file instead.

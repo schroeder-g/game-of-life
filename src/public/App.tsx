@@ -21,10 +21,6 @@ export default function App() {
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(true); // New state, defaults to true
 
   // State for draggable footer poTODO-055sition
-  const [footerPosition, setFooterPosition] = useState({ x: 10, y: 10 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-  const footerRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null); // Ref for the canvas container
   const [canvasSize, setCanvasSize] = useState(0); // State for the square canvas size
 
@@ -80,59 +76,6 @@ export default function App() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Dragging logic
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    if (footerRef.current) {
-      const rect = footerRef.current.getBoundingClientRect();
-      dragOffset.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-      setIsDragging(true);
-    }
-  }, []);
-
-  const onMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging) {
-      const newX = e.clientX - dragOffset.current.x;
-      const newY = e.clientY - dragOffset.current.y;
-
-      // Keep within canvas bounds
-      const canvas = document.querySelector('.canvas-container');
-      if (canvas) {
-        const canvasRect = canvas.getBoundingClientRect();
-        const footerRect = footerRef.current?.getBoundingClientRect();
-
-        const maxX = canvasRect.width - (footerRect?.width || 0);
-        const maxY = canvasRect.height - (footerRect?.height || 0);
-
-        setFooterPosition({
-          x: Math.max(0, Math.min(newX - canvasRect.left, maxX)),
-          y: Math.max(0, Math.min(newY - canvasRect.top, maxY)),
-        });
-      }
-    }
-  }, [isDragging]);
-
-  const onMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    } else {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [isDragging, onMouseMove, onMouseUp]);
-
-
   return (
     <div className="app">
       <AppHeaderPanel
@@ -170,34 +113,6 @@ export default function App() {
               <Canvas style={{ width: '100%', height: '100%', touchAction: 'none' }}>
                 <Scene />
               </Canvas>
-              {!viewMode && (
-                <div
-                  ref={footerRef}
-                  style={{
-                    position: 'absolute',
-                    left: footerPosition.x,
-                    top: footerPosition.y,
-                    zIndex: 999,
-                    cursor: isDragging ? 'grabbing' : 'grab',
-                    touchAction: 'none',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '10px',
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      cursor: 'grab',
-                      position: 'absolute',
-                      top: '-10px',
-                      left: 0,
-                      borderRadius: '5px 5px 0 0',
-                    }}
-                    onMouseDown={onMouseDown}
-                    onTouchStart={(e) => onMouseDown(e as any)}
-                  />
-                </div>
-              )}
             </div>
           ) : null}
         </main>

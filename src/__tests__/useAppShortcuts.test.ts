@@ -3,6 +3,19 @@ import { renderHook } from '@testing-library/react';
 import { useAppShortcuts } from '../hooks/useAppShortcuts';
 import { useSimulation } from '../contexts/SimulationContext';
 import { useBrush } from '../contexts/BrushContext';
+import '../tests/setup-browser-env'; // Import the browser environment setup
+
+vi.mock('../core/faceOrientationKeyMapping', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../core/faceOrientationKeyMapping')>();
+  return {
+    ...actual,
+    // Only mock values that are actually exported as values
+    KEY_MAP: actual.KEY_MAP, // Use actual KEY_MAP or provide a full mock if needed
+    rotationLookup: actual.rotationLookup, // Use actual rotationLookup or provide a full mock if needed
+    getRotationAxis: actual.getRotationAxis,
+    getExplicitRotationAxis: actual.getExplicitRotationAxis,
+  };
+});
 
 // Mock the contexts
 vi.mock('../contexts/SimulationContext', () => ({
