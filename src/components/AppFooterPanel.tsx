@@ -18,25 +18,27 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
         color: '#ffffff', // White text
         // Removed margin: '2vh' to prevent pushing content
         display: 'flex',
-        justifyContent: 'center', // Changed from 'left' to 'center'
+        justifyContent: 'space-between', // Changed from 'left' to 'center'
         alignItems: 'center',
         fontSize: '0.9rem',
         borderTop: '1px solid #333', // Subtle border at the top
         flexShrink: 0, // Prevent shrinking
       }}
     >
-      <p>Cube of Life Copyright (c) 2026 Alexander A. S. Gonçalves and David M. Gonçalves</p>
-      <div className="version-info">
-        {userName && buildInfo.distribution !== "prod" && (
-          <span className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</span>
-        )}
-        <a>
-          Build: {buildInfo.version}
-          {buildInfo.distribution !== "prod" && buildInfo.buildTime
-            ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
-            : ""} ({buildInfo.distribution})
-        </a>
-      </div>
+      <p>Cube of Life © 2026 <br /> Alexander A. S. Gonçalves <br /> and David M. Gonçalves</p>
+
+
+      <div>   {userName && buildInfo.distribution !== "prod" && (
+        <div className="user-welcome" style={{ display: 'block', marginRight: '8px', justifyContent: 'left' }}>Welcome, {userName}!</div>
+      )}
+        <div id="user-and-build" style={{ display: 'flex', justifyContent: 'right', alignItems: 'center' }}>
+          <a>
+            Build: {buildInfo.version}
+            {buildInfo.distribution !== "prod" && buildInfo.buildTime
+              ? ` @ ${new Date(buildInfo.buildTime).toLocaleTimeString()}`
+              : ""} ({buildInfo.distribution})
+          </a>
+        </div></div>
     </footer>
   );
 }
