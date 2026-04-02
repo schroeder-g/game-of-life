@@ -171,7 +171,7 @@ const CURRENT_MANUAL: DocItem[] = [
     id: "edit-brush-selector",
     type: 'p',
     text: "<b>Select Brush (🖌️):</b> Opens a dropdown to choose a brush shape, such as Cube or Sphere. You can also select a 'Community' of cells from the grid to use as a custom brush.",
-    testIds: ["UC-5"],
+    testIds: ["UC-5", "UC-6"], // Added UC-6 here
     references: ["src/contexts/BrushContext.tsx", "src/core/Grid3D.ts"],
   },
 
@@ -215,7 +215,13 @@ const CURRENT_MANUAL: DocItem[] = [
     id: "quality-doc-test-process",
     type: 'p',
     text: "This project adheres to a strict quality process. Every feature or claim documented in this manual is cross-referenced with one or more manual tests (e.g., UX-1, QA-1). This ensures all documented functionality is verifiable and that the documentation stays in sync with the application's behavior. (`src/data/documentation.ts`, `src/data/manual-tests.ts`)",
-    testIds: ["QA-3"],
+    testIds: [
+      "QA-3_CLAIMS_HAVE_TESTS",
+      "QA-3_VALID_TEST_ID_REFERENCES",
+      "QA-3_AUTOMATED_TEST_IDS_REFERENCED",
+      "QA-3_MANUAL_TEST_IDS_REFERENCED",
+      "QA-2_KEY_MAPPING_WARNING",
+    ],
   },
   {
     id: 'DS-1',

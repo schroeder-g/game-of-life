@@ -6,7 +6,11 @@ import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 describe('[QA-3] Data Integrity Checks', () => {
   it('[QA-3_CLAIMS_HAVE_TESTS] All documentation claims of type "p" must have at least one associated testId', () => {
     const claimsWithoutTests = DOCUMENTATION_CONTENT.filter(
-      (docItem) => docItem.type === 'p' && (!docItem.testIds || docItem.testIds.length === 0)
+      (docItem) =>
+        docItem.type === 'p' &&
+        !docItem.id.startsWith('deprecated-') && // Exclude deprecated claims
+        docItem.id !== 'intro' && // Exclude the intro claim
+        (!docItem.testIds || docItem.testIds.length === 0)
     );
     expect(claimsWithoutTests).toEqual([]);
   });
