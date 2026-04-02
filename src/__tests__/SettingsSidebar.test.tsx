@@ -11,7 +11,9 @@ vi.mock('../contexts/SimulationContext', () => ({ useSimulation: vi.fn() }));
 vi.mock('../contexts/BrushContext', () => ({ useBrush: vi.fn() }));
 vi.mock('../contexts/GenesisConfigContext', () => ({ useGenesisConfig: vi.fn() }));
 vi.mock('../hooks/useClickOutside', () => ({ useClickOutside: vi.fn() }));
-
+vi.mock('../components/AutomatedTestsPanel', () => ({
+    AutomatedTestsPanel: () => <div data-testid="automated-tests-panel">Mock Tests Panel</div>
+}));
 describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
     // Shared mocks
     const mocks = {
