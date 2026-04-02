@@ -11,8 +11,7 @@ import { ManualTestsPanel } from "./ManualTestsPanel";
 import { MANUAL_TESTS } from "../data/manual-tests";
 import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 import { DOCUMENTATION_CONTENT } from "../data/documentation/_Documentation";
-import { type CameraFace, type CameraRotation, KEY_MAP } from "../core/faceOrientationKeyMapping"; // Added
-
+import { type CameraFace, type CameraRotation, getWASDMapping } from "../core/faceOrientationKeyMapping"; // Added
 import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
 import { ClaimHint } from "./ClaimHint";
 
@@ -43,7 +42,7 @@ function EnvironmentSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
       >
         Environment
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
@@ -154,7 +153,7 @@ function RulesSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
       >
         Rules
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
@@ -284,7 +283,7 @@ function SelectorPositionSection() {
 
     const face = cameraOrientation.face as CameraFace;
     const rotation = cameraOrientation.rotation as CameraRotation;
-    const mapping = KEY_MAP[face][rotation];
+    const mapping = getWASDMapping(face, rotation);
 
     const keys: Record<string, string> = {};
     for (const key in mapping) {
@@ -422,7 +421,7 @@ function SelectorPositionSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        style={{ cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 0, paddingBottom: 8, marginBottom: isCollapsed ? 0 : 16 }}
       >
         <span>
           Cursor Position
@@ -486,12 +485,7 @@ function CameraControlSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{
-          cursor: "pointer",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
       >
         Camera Controls
         <span style={{ fontSize: "12px", opacity: 0.6 }}>
@@ -747,7 +741,7 @@ function SceneManagementSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
       >
         Scene Management
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
@@ -947,11 +941,9 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
         style={{ border: "none" }}
       >
         <div className="drop-down-menu">
-          <header className="menu-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer" }}>
-            <h3>
-              Settings
-              <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: '8px' }}>{collapsed ? "▼" : "▲"}</span>
-            </h3>
+          <header className="menu-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer", borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.1)', paddingBottom: collapsed ? 0 : '16px', marginBottom: collapsed ? 0 : '16px' }}>
+            <h2 style={{ margin: 0 }}>Settings</h2>
+            <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: '8px' }}>{collapsed ? "▼" : "▲"}</span>
           </header>
           {!collapsed && (
             <>
@@ -983,7 +975,7 @@ function TestsSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
       >
         Tests
         <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
