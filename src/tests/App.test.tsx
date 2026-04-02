@@ -8,7 +8,7 @@ import { DOCUMENTATION_CONTENT } from '../data/documentation/_Documentation';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AppHeaderPanel } from '../components/AppHeaderPanel'; // Import AppHeaderPanel directly
-import { MainMenu } from '../components/MainMenu'; // Import MainMenu directly
+import { SettingsSidebar } from '../components/SettingsSidebar'; // Import SettingsSidebar directly
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -66,7 +66,7 @@ vi.mock('@react-three/drei', () => ({
 describe('Automated UI & Feature Tests', () => {
 
   describe('[UX-4, UX-7, QA-1] Welcome Modal & Input Focus', () => {
-    it('shows on first visit, saves name, and ignores global shortcuts', () => {
+    it('[UX-4][UX-7][QA-1] shows on first visit, saves name, and ignores global shortcuts', () => {
       // Render App to ensure all contexts are available
       render(<App />);
       const input = screen.getByPlaceholderText('Your Name');
@@ -83,7 +83,7 @@ describe('Automated UI & Feature Tests', () => {
   });
 
   describe('[UX-5, UI-1] Build/Environment Specific UI', () => {
-    it('shows build info and Manual Tests panel in a test build', () => {
+    it('[UX-5][UI-1] shows build info and Manual Tests panel in a test build', () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester'); // prevent welcome modal
       render(<App />); // Render App
@@ -92,7 +92,7 @@ describe('Automated UI & Feature Tests', () => {
       expect(screen.getByText('Manual Tests')).toBeInTheDocument();
     });
 
-    it('hides Manual Tests panel in a prod build', () => {
+    it('[UI-1] hides Manual Tests panel in a prod build', () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'prod', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester');
       render(<App />); // Render App
@@ -103,7 +103,7 @@ describe('Automated UI & Feature Tests', () => {
 
 
   describe('[UX-6] Test Panel Persistence', () => {
-    it('saves and loads test statuses from localStorage', async () => {
+    it('[UX-6] saves and loads test statuses from localStorage', async () => {
       window.__BUILD_INFO__ = { version: '2.1.0', distribution: 'test', buildTime: new Date().toISOString() };
       localStorage.setItem('userName', 'Tester');
       render(<App />); // Render App

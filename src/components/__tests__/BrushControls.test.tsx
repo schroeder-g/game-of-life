@@ -171,42 +171,42 @@ describe('BrushControls', () => {
   });
 
   // TEST_BC_BUTTON_001_W
-  it('[TEST_BC_BUTTON_001_W] "Up" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_W][UC-9] "Up" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowUpIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 1, 0] });
   });
 
   // TEST_BC_BUTTON_001_X
-  it('[TEST_BC_BUTTON_001_X] "Down" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_X][UC-9] "Down" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowDownIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, -1, 0] });
   });
 
   // TEST_BC_BUTTON_001_A
-  it('[TEST_BC_BUTTON_001_A] "Left" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_A][UC-9] "Left" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowLeftIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [-1, 0, 0] });
   });
 
   // TEST_BC_BUTTON_001_D
-  it('[TEST_BC_BUTTON_001_D] "Right" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_D][UC-9] "Right" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /ArrowRightIcon/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [1, 0, 0] });
   });
 
   // TEST_BC_BUTTON_001_Q
-  it('[TEST_BC_BUTTON_001_Q] "Further" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_Q][UC-9] "Further" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /Further/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 0, -1] });
   });
 
   // TEST_BC_BUTTON_001_Z
-  it('[TEST_BC_BUTTON_001_Z] "Closer" button emits moveSelector with correct delta', () => {
+  it('[TEST_BC_BUTTON_001_Z][UC-9] "Closer" button emits moveSelector with correct delta', () => {
     render(<BrushControls />);
     fireEvent.mouseDown(screen.getByRole('button', { name: /Closer/i }));
     expect(mockEventBus.emit).toHaveBeenCalledWith('moveSelector', { delta: [0, 0, 1] });

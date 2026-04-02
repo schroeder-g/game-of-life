@@ -1,7 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Scene } from "../components/Grid";
-import { MainMenu } from "../components/MainMenu";
+import { SettingsSidebar } from "../components/SettingsSidebar";
 import { AppHeaderPanel } from "../components/AppHeaderPanel";
 import { WelcomeModal } from "../components/WelcomeModal";
 import { useBrush } from "../contexts/BrushContext";
@@ -17,10 +17,10 @@ export default function App() {
   const {
     state: { selectorPos, selectedShape, shapeSize, isHollow },
   } = useBrush();
-  const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from MainMenu
-  const [showMainMenu, setShowMainMenu] = useState(true); // New state, defaults to true
+  const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from SettingsSidebar
+  const [showSettingsSidebar, setShowSettingsSidebar] = useState(true); // New state, defaults to true
 
-  // State for draggable footer position
+  // State for draggable footer poTODO-055sition
   const [footerPosition, setFooterPosition] = useState({ x: 10, y: 10 });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -136,14 +136,14 @@ export default function App() {
   return (
     <div className="app">
       <AppHeaderPanel
-        showMainMenu={showMainMenu}
-        setShowMainMenu={setShowMainMenu}
+        showSettingsSidebar={showSettingsSidebar}
+        setShowSettingsSidebar={setShowSettingsSidebar}
       />
 
       <div className="main-content-layout">
-        {showMainMenu && (
+        {showSettingsSidebar && (
           <div className="ui-overlay">
-            <MainMenu isSmallScreen={isSmallScreen} />
+            <SettingsSidebar isSmallScreen={isSmallScreen} />
           </div>
         )}
 
