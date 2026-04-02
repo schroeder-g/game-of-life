@@ -24,12 +24,14 @@ export function ShortcutOverlay({ isOpen, onClose }: ShortcutOverlayProps) {
             <button
               className={`tab-btn ${activeTab === "view" ? "active" : ""}`}
               onClick={() => setActiveTab("view")}
+              style={activeTab === "view" ? { backgroundColor: '#2a2a2a', color: '#fff', borderBottom: '2px solid #007bff' } : {}}
             >
               View Mode
             </button>
             <button
               className={`tab-btn ${activeTab === "edit" ? "active" : ""}`}
               onClick={() => setActiveTab("edit")}
+              style={activeTab === "edit" ? { backgroundColor: '#2a2a2a', color: '#fff', borderBottom: '2px solid #007bff' } : {}}
             >
               Edit Mode
             </button>
