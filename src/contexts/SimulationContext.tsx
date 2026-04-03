@@ -563,6 +563,7 @@ export function SimulationProvider({
 				newOrganisms.set(organism.id, {
 					...organism,
 					livingCells: newLivingCells,
+					initialLivingCells: newLivingCells,
 					cytoplasm: newCytoplasm,
 					skinColor: newSkinColor,
 				});
