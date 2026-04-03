@@ -9,6 +9,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import chroma from 'chroma-js';
 import { useSimulation } from '../contexts/SimulationContext';
+import { makeKey } from '../core/Organism';
 import { useBrush } from '../contexts/BrushContext';
 import { ClaimHint } from './ClaimHint';
 
@@ -120,13 +121,32 @@ export function SelectedCommunityPanel({
 	onClose,
 }: SelectedCommunityPanelProps) {
 	const {
-		state: { gridSize, community, viewMode },
-		actions: { setCommunity },
+		state: { gridSize, community, viewMode, birthMargin, organisms, organismsVersion },
+		actions: { setCommunity, convertCommunityToOrganism },
 	} = useSimulation();
 	const {
 		actions: { setCustomBrush, setSelectedShape, setPaintMode },
 	} = useBrush();
 	const [isCollapsed, setIsCollapsed] = useState(false);
+
+	const matchingOrganism = useMemo(() => {
+		if (community.length === 0) return null;
+		const communityKeys = new Set(
+			community.map(([x, y, z]) => makeKey(x, y, z)),
+		);
+		for (const org of organisms.values()) {
+			if (org.livingCells.size !== communityKeys.size) continue;
+			let match = true;
+			for (const key of communityKeys) {
+				if (!org.livingCells.has(key)) {
+					match = false;
+					break;
+				}
+			}
+			if (match) return org;
+		}
+		return null;
+	}, [community, organisms, organismsVersion]);
 
 	const [position, setPosition] = useState({ x: 10, y: 10 }); // Initial position
 	const [isDragging, setIsDragging] = useState(false);
@@ -380,7 +400,9 @@ export function SelectedCommunityPanel({
 					>
 						{isCollapsed ? '▼' : '▲'}
 					</span>
-					<h3 style={{ margin: 0 }}>Community Selection</h3>
+					<h3 style={{ margin: 0 }}>
+						{matchingOrganism ? matchingOrganism.name : 'Community Selection'}
+					</h3>
 				</div>
 
 				{community.length > 0 && (
@@ -388,6 +410,32 @@ export function SelectedCommunityPanel({
 						className='header-actions'
 						style={{ display: 'flex', gap: '8px' }}
 					>
+						<button
+							className={`icon-button ${matchingOrganism ? 'active' : ''}`}
+							title='Magic Wand: Convert to Organism'
+							disabled={birthMargin < 1 || !!matchingOrganism}
+							onClick={e => {
+								e.stopPropagation();
+								convertCommunityToOrganism(community);
+							}}
+						>
+							<svg
+								width='14'
+								height='14'
+								viewBox='0 0 24 24'
+								fill='none'
+								stroke='currentColor'
+								strokeWidth='2'
+								strokeLinecap='round'
+								strokeLinejoin='round'
+							>
+								<path d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z' />
+								<path d='m5 3 3 3' />
+								<path d='m19 17 3 3' />
+								<path d='m3 5 3-3' />
+								<path d='m17 19 3 3' />
+							</svg>
+						</button>
 						<button
 							className='icon-button'
 							title='Activate Brush'
@@ -453,6 +501,11 @@ export function SelectedCommunityPanel({
 						<>
 							<div className='community-stats'>
 								<span>Cells: {community.length}</span>
+								{matchingOrganism && (
+									<span style={{ marginLeft: '12px' }}>
+										Cytoplasm: {matchingOrganism.cytoplasm.size}
+									</span>
+								)}
 							</div>
 							<div className='community-3d-wrapper'>
 								<Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
