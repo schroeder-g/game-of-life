@@ -13,7 +13,6 @@ import { Grid3D } from '../core/Grid3D';
 import { loadSettings, saveSettings } from '../hooks/useSettings';
 import { CameraOrientation } from '../core/faceOrientationKeyMapping';
 import { Organism, makeKey, computeCytoplasm, computeSkinColor } from '../core/Organism';
-import { processOrganisms } from '../core/organism-processing';
 import { ORGANISM_NAMES } from '../data/organism-names';
 
 const initialSettings = loadSettings();
@@ -564,22 +563,7 @@ export function SimulationProvider({
 				birthMax,
 				birthMargin,
 			);
-			const { updatedOrganisms, gridMutations } = processOrganisms(
-				gridRef.current,
-				organismsRef.current,
-				gridSize,
-				neighborFaces,
-				neighborEdges,
-				neighborCorners,
-			);
-			if (gridMutations.length > 0) {
-				for (const [x, y, z, alive] of gridMutations) {
-					gridRef.current.set(x, y, z, alive);
-				}
-				gridRef.current.version++;
-			}
-			organismsRef.current = updatedOrganisms;
-			setOrganismsVersion(v => v + 1);
+			updateOrganismsAfterTick();
 		}
 	}, [
 		running,
@@ -591,7 +575,7 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
-		gridSize,
+		updateOrganismsAfterTick,
 	]);
 
 	const randomize = useCallback(() => {
@@ -630,22 +614,7 @@ export function SimulationProvider({
 			birthMargin,
 		);
 
-		const { updatedOrganisms, gridMutations } = processOrganisms(
-			gridRef.current,
-			organismsRef.current,
-			gridSize,
-			neighborFaces,
-			neighborEdges,
-			neighborCorners,
-		);
-		if (gridMutations.length > 0) {
-			for (const [x, y, z, alive] of gridMutations) {
-				gridRef.current.set(x, y, z, alive);
-			}
-			gridRef.current.version++;
-		}
-		organismsRef.current = updatedOrganisms;
-		setOrganismsVersion(v => v + 1);
+		updateOrganismsAfterTick();
 
 		if (gridRef.current.getLivingCells().length === 0) {
 			setRunning(false);
@@ -659,7 +628,7 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
-		gridSize,
+		updateOrganismsAfterTick,
 	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
@@ -759,6 +728,46 @@ export function SimulationProvider({
 		() => cameraActionsRef.current?.recenter(),
 		[],
 	);
+
+	const updateOrganismsAfterTick = useCallback(() => {
+		const newOrganisms = new Map<string, Organism>();
+
+		for (const organism of organismsRef.current.values()) {
+			// The boundary is the original shape plus its cytoplasm.
+			const boundary = new Set([
+				...organism.initialLivingCells,
+				...organism.cytoplasm,
+			]);
+			const newLivingCells = new Set<string>();
+
+			for (const key of boundary) {
+				const [x, y, z] = key.split(',').map(Number);
+				if (gridRef.current.get(x, y, z)) {
+					newLivingCells.add(key);
+				}
+			}
+
+			if (newLivingCells.size > 0) {
+				const newCytoplasm = computeCytoplasm(
+					newLivingCells,
+					gridSize,
+					neighborFaces,
+					neighborEdges,
+					neighborCorners,
+				);
+				const newSkinColor = computeSkinColor(newLivingCells, gridSize);
+
+				newOrganisms.set(organism.id, {
+					...organism,
+					livingCells: newLivingCells,
+					cytoplasm: newCytoplasm,
+					skinColor: newSkinColor,
+				});
+			}
+		}
+		organismsRef.current = newOrganisms;
+		setOrganismsVersion(v => v + 1);
+	}, [gridSize, neighborFaces, neighborEdges, neighborCorners]);
 
 	const convertCommunityToOrganism = useCallback(
 		(communityCells: Array<[number, number, number]>) => {
