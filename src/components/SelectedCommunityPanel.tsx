@@ -420,10 +420,13 @@ export function SelectedCommunityPanel({
 							}}
 						>
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							  {/* Wand body */}
-							  <rect x="2" y="10" width="16" height="4" rx="1" fill="#333333"/>
-							  {/* Star tip */}
-							  <path d="M20 7.5L21.5 10L24 10.5L21.5 11L20 13.5L19 11L16.5 10.5L19 10L20 7.5Z" fill="#FFFFFF"/>
+							  {/* Outer circle */}
+							  <circle cx="12" cy="12" r="10" stroke="#333333" strokeWidth="2" fill="none"/>
+							  {/* Clump of smaller circles */}
+							  <circle cx="10" cy="10" r="3" fill="#333333"/>
+							  <circle cx="15" cy="11" r="2.5" fill="#333333"/>
+							  <circle cx="12" cy="15" r="2" fill="#333333"/>
+							  <circle cx="8" cy="14" r="1.5" fill="#333333"/>
 							</svg>
 						</button>
 						<button
