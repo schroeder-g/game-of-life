@@ -11,6 +11,7 @@ import {
 } from '../core/faceOrientationKeyMapping';
 import { generateShape } from '../core/shapes';
 import { Cells } from './Cell';
+import { OrganismSkins } from './OrganismSkins';
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -1940,6 +1941,12 @@ export function Scene() {
 							}
 						}
 					}}
+				/>
+				<OrganismSkins
+					organisms={organisms}
+					organismsVersion={organismsVersion}
+					gridSize={gridRef.current.size}
+					cellMargin={cellMargin}
 				/>
 				<BoundingBox size={gridRef.current.size} />
 				{!viewMode && (
