@@ -9,7 +9,6 @@ Obey GENERAL RULES, at end.
 *   **TODO-062:** Create `src/data/organism-names.ts` with 100 unique names and implement unique name assignment logic. (Related to Organisms.AI: Naming)
 *   **TODO-063:** Implement organism restoration on `reset()` and dissolution on `clear()` and `grid size changed`. (Related to Organisms.AI: Organism Lifecycle)
 *   **TODO-064:** Create `src/components/OrganismSkins.tsx` and mount it in `Grid.tsx` to render organism skins. (Related to Organisms.AI: Skin Rendering)
-*   **TODO-065:** [COMPLETED] Add "Organism" label and skin color swatch to `SelectedCommunityPanel.tsx` when a community is an organism. (Related to Organisms.AI: Community Panel Integration)
 *   **TODO-066:** Add tooltip to Magic Wand button in `SelectedCommunityPanel.tsx` when `birthMargin < 1`. (Related to Organisms.AI: Creating an Organism - UI Trigger)
 *   **TODO-068:** Review and update `SimulationContext` to handle `organismsRef` persistence/reset as per `Organisms.AI` data model.
 *   **TODO-069:** Add `AiReminder` spans for documentation and testing of new organism features.
