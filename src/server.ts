@@ -28,9 +28,13 @@ watch(srcDir, { recursive: true }, async (event, filename) => {
 async function buildMainJs() {
 	console.log('Building index.tsx for development...');
 
+	// Read version from package.json for dev mode display on each rebuild
+	const packageJson = await Bun.file(join(process.cwd(), "package.json")).json();
+	const baseVersion = packageJson.version;
+
 	// Update the version timestamp to the current build time
 	// Update the build time on each rebuild
-	buildTime = new Date().toISOString();
+	const buildTime = new Date().toISOString();
 	console.log(`Injected BUILD_TIME for dev build: ${buildTime}`); // Diagnostic log
 
 	const build = await Bun.build({
@@ -146,7 +150,7 @@ const server = Bun.serve({
 				hotReloadClients.size,
 			);
 		},
-		message() {},
+		message() { },
 	},
 });
 
