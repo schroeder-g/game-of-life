@@ -30,11 +30,12 @@ async function buildMainJs() {
 
 	// Read version from package.json for dev mode display on each rebuild
 	const packageJson = await Bun.file(join(process.cwd(), "package.json")).json();
-	const baseVersion = packageJson.version;
+	baseVersion = packageJson.version; // Assign to global variable
+	console.log(`Injected APP_VERSION for dev build: ${baseVersion}`); // Diagnostic log
 
 	// Update the version timestamp to the current build time
 	// Update the build time on each rebuild
-	const buildTime = new Date().toISOString();
+	buildTime = new Date().toISOString(); // Assign to global variable
 	console.log(`Injected BUILD_TIME for dev build: ${buildTime}`); // Diagnostic log
 
 	const build = await Bun.build({
