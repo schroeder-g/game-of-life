@@ -16,6 +16,7 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
+*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
 *   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
 *   **TODO-060:** [COMPLETED] Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3)
 *   **TODO-058:** [COMPLETED] Implement full juking logic for organisms, including finding valid offsets and applying grid mutations. (Related to Organisms.AI: Post-Tick Organism Processing - Step 4) - **Preference for rotation in juke selection implemented.**
@@ -74,6 +75,7 @@ Obey GENERAL RULES, at end.
 *   **TODO-054:** [COMPLETED] Address `SettingsSidebar_Documentation.ts` inconsistency.
 *   **TODO-055:** [COMPLETED] Removed incomplete draggable footer from `src/public/App.tsx`.
 *   **TODO-057:** [COMPLETED] Perform a tagging pass on remaining files in `src/__tests__`.
+*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
 
 **GENERAL RULES**
 Use this file to store all TODO's as requested.
