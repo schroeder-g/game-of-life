@@ -556,7 +556,7 @@ export function SelectedCommunityPanel({
 					)}
 				</>
 			)}
-		</div> {/* This is the closing div for #community-sidebar */}
+		</div>
 
 		{/* Add the tooltip rendering here */}
 		{showTooltip && matchingOrganism && (
