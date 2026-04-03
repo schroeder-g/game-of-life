@@ -8,182 +8,252 @@ import '../tests/setup-browser-env'; // Import the browser environment setup
 import * as THREE from 'three';
 
 vi.mock('../core/faceOrientationKeyMapping', () => {
-  const getWASDMapping = (face: any, rotation: any) => {
-    return { w: [0, 1, 0], x: [0, -1, 0], d: [1, 0, 0], a: [-1, 0, 0], q: [0, 0, 1], z: [0, 0, -1] };
-  };
-  const rotationLookup = {
-    "front": {
-      0: { o: [1, 0, 0], period: [-1, 0, 0], k: [0, 1, 0], semicolon: [0, -1, 0], i: [0, 0, 1], p: [0, 0, -1] }
-    }
-  };
+	const getWASDMapping = (face: any, rotation: any) => {
+		return {
+			w: [0, 1, 0],
+			x: [0, -1, 0],
+			d: [1, 0, 0],
+			a: [-1, 0, 0],
+			q: [0, 0, 1],
+			z: [0, 0, -1],
+		};
+	};
+	const rotationLookup = {
+		front: {
+			0: {
+				o: [1, 0, 0],
+				period: [-1, 0, 0],
+				k: [0, 1, 0],
+				semicolon: [0, -1, 0],
+				i: [0, 0, 1],
+				p: [0, 0, -1],
+			},
+		},
+	};
 
-  return {
-    getWASDMapping,
-    getRotationAxis: (face: any, rotation: any, type: 'horizontal' | 'vertical' | 'roll') => {
-      const mapping = getWASDMapping(face, rotation);
-      let axisArray;
-      if (type === 'vertical') axisArray = mapping.d;
-      else if (type === 'horizontal') axisArray = mapping.w;
-      else axisArray = mapping.q;
-      return new THREE.Vector3().fromArray(axisArray);
-    },
-    getExplicitRotationAxis: (face: any, rotation: any, key: string) => {
-      const axisArray = (rotationLookup as any)[face][rotation][key];
-      return new THREE.Vector3().fromArray(axisArray);
-    }
-  };
+	return {
+		getWASDMapping,
+		getRotationAxis: (
+			face: any,
+			rotation: any,
+			type: 'horizontal' | 'vertical' | 'roll',
+		) => {
+			const mapping = getWASDMapping(face, rotation);
+			let axisArray;
+			if (type === 'vertical') axisArray = mapping.d;
+			else if (type === 'horizontal') axisArray = mapping.w;
+			else axisArray = mapping.q;
+			return new THREE.Vector3().fromArray(axisArray);
+		},
+		getExplicitRotationAxis: (
+			face: any,
+			rotation: any,
+			key: string,
+		) => {
+			const axisArray = (rotationLookup as any)[face][rotation][key];
+			return new THREE.Vector3().fromArray(axisArray);
+		},
+	};
 });
 
 // Mock the contexts
 vi.mock('../contexts/SimulationContext', () => ({
-  useSimulation: vi.fn()
+	useSimulation: vi.fn(),
 }));
 
 vi.mock('../contexts/BrushContext', () => ({
-  useBrush: vi.fn()
+	useBrush: vi.fn(),
 }));
 
 describe('useAppShortcuts - UX Claims', () => {
-  const mockRotateBrush = vi.fn();
-  const mockSnapRotateWithAxis = vi.fn();
+	const mockRotateBrush = vi.fn();
+	const mockSnapRotateWithAxis = vi.fn();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useBrush as any).mockReturnValue({
-      state: { selectorPos: [0, 0, 0], selectedShape: 'Cube', paintMode: 0, shapeSize: 1 },
-      actions: { setSelectorPos: vi.fn() }
-    });
-    (useSimulation as any).mockReturnValue({
-      state: {
-        viewMode: false,
-        cameraOrientation: { face: 'front', rotation: 0 },
-        invertYaw: false, invertPitch: false, invertRoll: false
-      },
-      actions: {},
-      meta: {
-        movement: { current: {} },
-        eventBus: { emit: vi.fn() },
-        cameraActionsRef: { current: { rotateBrush: mockRotateBrush, snapRotateWithAxis: mockSnapRotateWithAxis } }
-      }
-    });
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+		(useBrush as any).mockReturnValue({
+			state: {
+				selectorPos: [0, 0, 0],
+				selectedShape: 'Cube',
+				paintMode: 0,
+				shapeSize: 1,
+			},
+			actions: { setSelectorPos: vi.fn() },
+		});
+		(useSimulation as any).mockReturnValue({
+			state: {
+				viewMode: false,
+				cameraOrientation: { face: 'front', rotation: 0 },
+				invertYaw: false,
+				invertPitch: false,
+				invertRoll: false,
+			},
+			actions: {},
+			meta: {
+				movement: { current: {} },
+				eventBus: { emit: vi.fn() },
+				cameraActionsRef: {
+					current: {
+						rotateBrush: mockRotateBrush,
+						snapRotateWithAxis: mockSnapRotateWithAxis,
+					},
+				},
+			},
+		});
+	});
 
-  it('[UX-1] should reverse brush rotation for i and p keys when Clear brush tool is active', () => {
-    // Set paintMode to -1 (Clear)
-    (useBrush as any).mockReturnValue({
-      state: { selectedShape: 'Cube', paintMode: -1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
-      actions: { setSelectorPos: vi.fn() }
-    });
+	it('[UX-1] should reverse brush rotation for i and p keys when Clear brush tool is active', () => {
+		// Set paintMode to -1 (Clear)
+		(useBrush as any).mockReturnValue({
+			state: { selectedShape: 'Cube', paintMode: -1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
+			actions: { setSelectorPos: vi.fn() },
+		});
 
-    renderHook(() => useAppShortcuts());
+		renderHook(() => useAppShortcuts());
 
-    // Test 'i' key (should be +Math.PI/2 for Clear mode)
-    const eventI = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
-    window.dispatchEvent(eventI);
-    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), Math.PI / 2);
-    vi.clearAllMocks(); // Clear mock calls for the next assertion
+		// Test 'i' key (should be +Math.PI/2 for Clear mode)
+		const eventI = new KeyboardEvent('keydown', {
+			code: 'KeyI',
+			key: 'i',
+		});
+		window.dispatchEvent(eventI);
+		expect(mockRotateBrush).toHaveBeenCalledWith(
+			expect.anything(),
+			Math.PI / 2,
+		);
+		vi.clearAllMocks(); // Clear mock calls for the next assertion
 
-    // Test 'p' key (should be -Math.PI/2 for Clear mode)
-    const eventP = new KeyboardEvent('keydown', { code: 'KeyP', key: 'p' });
-    window.dispatchEvent(eventP);
-    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), -Math.PI / 2);
-  });
+		// Test 'p' key (should be -Math.PI/2 for Clear mode)
+		const eventP = new KeyboardEvent('keydown', {
+			code: 'KeyP',
+			key: 'p',
+		});
+		window.dispatchEvent(eventP);
+		expect(mockRotateBrush).toHaveBeenCalledWith(
+			expect.anything(),
+			-Math.PI / 2,
+		);
+	});
 
-  it('[UX-1] should NOT reverse brush rotation for i and p keys when Birth brush tool is active', () => {
-    // Set paintMode to 1 (Birth)
-    (useBrush as any).mockReturnValue({
-      state: { selectedShape: 'Cube', paintMode: 1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
-      actions: { setSelectorPos: vi.fn() }
-    });
+	it('[UX-1] should NOT reverse brush rotation for i and p keys when Birth brush tool is active', () => {
+		// Set paintMode to 1 (Birth)
+		(useBrush as any).mockReturnValue({
+			state: { selectedShape: 'Cube', paintMode: 1, shapeSize: 2 }, // shapeSize > 1 for brush rotation
+			actions: { setSelectorPos: vi.fn() },
+		});
 
-    renderHook(() => useAppShortcuts());
+		renderHook(() => useAppShortcuts());
 
-    // Test 'i' key (should be -Math.PI/2 for Birth mode)
-    const eventI = new KeyboardEvent('keydown', { code: 'KeyI', key: 'i' });
-    window.dispatchEvent(eventI);
-    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), -Math.PI / 2);
-    vi.clearAllMocks();
+		// Test 'i' key (should be -Math.PI/2 for Birth mode)
+		const eventI = new KeyboardEvent('keydown', {
+			code: 'KeyI',
+			key: 'i',
+		});
+		window.dispatchEvent(eventI);
+		expect(mockRotateBrush).toHaveBeenCalledWith(
+			expect.anything(),
+			-Math.PI / 2,
+		);
+		vi.clearAllMocks();
 
-    // Test 'p' key (should be +Math.PI/2 for Birth mode)
-    const eventP = new KeyboardEvent('keydown', { code: 'KeyP', key: 'p' });
-    window.dispatchEvent(eventP);
-    expect(mockRotateBrush).toHaveBeenCalledWith(expect.anything(), Math.PI / 2);
-  });
+		// Test 'p' key (should be +Math.PI/2 for Birth mode)
+		const eventP = new KeyboardEvent('keydown', {
+			code: 'KeyP',
+			key: 'p',
+		});
+		window.dispatchEvent(eventP);
+		expect(mockRotateBrush).toHaveBeenCalledWith(
+			expect.anything(),
+			Math.PI / 2,
+		);
+	});
 
-  // Removed UX-3 test
+	// Removed UX-3 test
 });
 
 describe('useAppShortcuts - New Rotation Logic', () => {
-  const mockRotateBrush = vi.fn();
-  const mockStartSnapAnimation = vi.fn();
+	const mockRotateBrush = vi.fn();
+	const mockStartSnapAnimation = vi.fn();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useBrush as any).mockReturnValue({
-      state: { paintMode: 0, selectedShape: "None" },
-      actions: {}
-    });
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+		(useBrush as any).mockReturnValue({
+			state: { paintMode: 0, selectedShape: 'None' },
+			actions: {},
+		});
+	});
 
-  // Removed UX-4 test
+	// Removed UX-4 test
 
-  it('[UX-5] should perform continuous rotation when Ctrl+Shift is held', () => {
-    const movementRef = { current: {} };
-    (useSimulation as any).mockReturnValue({
-      state: {
-        cameraOrientation: { face: 'front', rotation: 0 },
-        invertYaw: false, invertPitch: false, invertRoll: false
-      },
-      actions: {},
-      meta: {
-        movement: movementRef,
-        cameraActionsRef: { current: { startSnapAnimation: mockStartSnapAnimation } }
-      }
-    });
+	it('[UX-5] should perform continuous rotation when Ctrl+Shift is held', () => {
+		const movementRef = { current: {} };
+		(useSimulation as any).mockReturnValue({
+			state: {
+				cameraOrientation: { face: 'front', rotation: 0 },
+				invertYaw: false,
+				invertPitch: false,
+				invertRoll: false,
+			},
+			actions: {},
+			meta: {
+				movement: movementRef,
+				cameraActionsRef: {
+					current: { startSnapAnimation: mockStartSnapAnimation },
+				},
+			},
+		});
 
-    renderHook(() => useAppShortcuts());
-    const event = new KeyboardEvent('keydown', { code: 'KeyO', key: 'o', ctrlKey: true, shiftKey: true });
-    window.dispatchEvent(event);
+		renderHook(() => useAppShortcuts());
+		const event = new KeyboardEvent('keydown', {
+			code: 'KeyO',
+			key: 'o',
+			ctrlKey: true,
+			shiftKey: true,
+		});
+		window.dispatchEvent(event);
 
-    expect((movementRef.current as any).rotateO).toBe(true);
-    expect(mockStartSnapAnimation).not.toHaveBeenCalled();
-  });
+		expect((movementRef.current as any).rotateO).toBe(true);
+		expect(mockStartSnapAnimation).not.toHaveBeenCalled();
+	});
 
-  // Removed UX-6 test
+	// Removed UX-6 test
 });
 
 describe('useAppShortcuts - Input Guarding', () => {
-  const mockPlayStop = vi.fn();
+	const mockPlayStop = vi.fn();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useBrush as any).mockReturnValue({
-      state: {},
-      actions: {}
-    });
-    (useSimulation as any).mockReturnValue({
-      state: { viewMode: true },
-      actions: { playStop: mockPlayStop },
-      meta: { movement: { current: {} } }
-    });
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+		(useBrush as any).mockReturnValue({
+			state: {},
+			actions: {},
+		});
+		(useSimulation as any).mockReturnValue({
+			state: { viewMode: true },
+			actions: { playStop: mockPlayStop },
+			meta: { movement: { current: {} } },
+		});
+	});
 
-  it('[QA-1] should not trigger shortcuts when a text input is focused', () => {
-    renderHook(() => useAppShortcuts());
+	it('[QA-1] should not trigger shortcuts when a text input is focused', () => {
+		renderHook(() => useAppShortcuts());
 
-    // Create and focus an input element
-    const input = document.createElement('input');
-    input.type = 'text';
-    document.body.appendChild(input);
-    input.focus();
+		// Create and focus an input element
+		const input = document.createElement('input');
+		input.type = 'text';
+		document.body.appendChild(input);
+		input.focus();
 
-    // Dispatch a keydown event that would normally trigger a shortcut
-    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
-    input.dispatchEvent(event);
+		// Dispatch a keydown event that would normally trigger a shortcut
+		const event = new KeyboardEvent('keydown', {
+			key: ' ',
+			bubbles: true,
+		});
+		input.dispatchEvent(event);
 
-    // Expect that the shortcut action was NOT called
-    expect(mockPlayStop).not.toHaveBeenCalled();
+		// Expect that the shortcut action was NOT called
+		expect(mockPlayStop).not.toHaveBeenCalled();
 
-    document.body.removeChild(input);
-  });
+		document.body.removeChild(input);
+	});
 });

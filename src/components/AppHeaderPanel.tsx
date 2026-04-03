@@ -1,235 +1,237 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useBrush } from "../contexts/BrushContext";
-import { useGenesisConfig } from "../contexts/GenesisConfigContext";
-import { useSimulation } from "../contexts/SimulationContext";
-import { useClickOutside } from "../hooks/useClickOutside";
-import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
-import { DocumentationModal } from "./DocumentationModal";
-import { IntroductionModal } from "./IntroductionModal";
-import { ReleaseNotesModal } from "./ReleaseNotesModal";
-import { SelectedCommunityPanel } from "./SelectedCommunityPanel"; // Import the new panel
-import { ShortcutOverlay } from "./ShortcutOverlay";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useBrush } from '../contexts/BrushContext';
+import { useGenesisConfig } from '../contexts/GenesisConfigContext';
+import { useSimulation } from '../contexts/SimulationContext';
+import { useClickOutside } from '../hooks/useClickOutside';
+import { AppHeaderPanelButtons } from './AppHeaderPanelButtons';
+import { DocumentationModal } from './DocumentationModal';
+import { IntroductionModal } from './IntroductionModal';
+import { ReleaseNotesModal } from './ReleaseNotesModal';
+import { SelectedCommunityPanel } from './SelectedCommunityPanel'; // Import the new panel
+import { ShortcutOverlay } from './ShortcutOverlay';
 
 function SimulationStats() {
-  const {
-    meta: { gridRef },
-    state: { running },
-  } = useSimulation();
-  const [stats, setStats] = useState({
-    generation: gridRef.current.generation,
-    cells: gridRef.current.getLivingCells().length,
-  });
+	const {
+		meta: { gridRef },
+		state: { running },
+	} = useSimulation();
+	const [stats, setStats] = useState({
+		generation: gridRef.current.generation,
+		cells: gridRef.current.getLivingCells().length,
+	});
 
-  const lastVersionRef = useRef(gridRef.current.version);
+	const lastVersionRef = useRef(gridRef.current.version);
 
-  useEffect(() => {
-    const updateStats = () => {
-      setStats({
-        generation: gridRef.current.generation,
-        cells: gridRef.current.getLivingCells().length,
-      });
-    };
+	useEffect(() => {
+		const updateStats = () => {
+			setStats({
+				generation: gridRef.current.generation,
+				cells: gridRef.current.getLivingCells().length,
+			});
+		};
 
-    const unsubscribe = gridRef.current.on("tick", updateStats);
-    return () => unsubscribe();
-  }, [gridRef.current]); // Depend on the current Grid3D instance
+		const unsubscribe = gridRef.current.on('tick', updateStats);
+		return () => unsubscribe();
+	}, [gridRef.current]); // Depend on the current Grid3D instance
 
-  return (
-    <div className="simulation-stats-display">
-      Generation: {stats.generation} Cells: {stats.cells}{" "}
-      {running ? "Running" : "Paused"}
-    </div>
-  );
+	return (
+		<div className='simulation-stats-display'>
+			Generation: {stats.generation} Cells: {stats.cells}{' '}
+			{running ? 'Running' : 'Paused'}
+		</div>
+	);
 }
 
 interface AppHeaderPanelProps {
-  showSettingsSidebar: boolean;
-  setShowSettingsSidebar: (show: boolean) => void;
+	showSettingsSidebar: boolean;
+	setShowSettingsSidebar: (show: boolean) => void;
 }
 
 export function AppHeaderPanel({
-  showSettingsSidebar,
-  setShowSettingsSidebar,
+	showSettingsSidebar,
+	setShowSettingsSidebar,
 }: AppHeaderPanelProps) {
-  const {
-    state: {
-      running,
-      viewMode,
-      hasInitialState,
-      hasPastHistory,
-      cameraOrientation,
-      userName,
-      buildInfo,
-      squareUp,
-      isSquaredUp,
-      speed,
-      gridSize,
-      showIntroduction,
-      community,
-    }, // Added community
-    actions: {
-      playStop,
-      step,
-      stepBackward,
-      reset,
-      setviewMode,
-      fitDisplay,
-      recenter,
-      setSquareUp,
-      setSpeed,
-      setShowIntroduction,
-    },
-    meta: { cameraActionsRef, eventBus }, // Added eventBus
-  } = useSimulation();
-  const {
-    state: brushState,
-    actions: { setPaintMode, setShapeSize, setIsHollow },
-  } = useBrush();
-  const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
-  const {
-    state: { selectedConfigName },
-  } = useGenesisConfig();
+	const {
+		state: {
+			running,
+			viewMode,
+			hasInitialState,
+			hasPastHistory,
+			cameraOrientation,
+			userName,
+			buildInfo,
+			squareUp,
+			isSquaredUp,
+			speed,
+			gridSize,
+			showIntroduction,
+			community,
+		}, // Added community
+		actions: {
+			playStop,
+			step,
+			stepBackward,
+			reset,
+			setviewMode,
+			fitDisplay,
+			recenter,
+			setSquareUp,
+			setSpeed,
+			setShowIntroduction,
+		},
+		meta: { cameraActionsRef, eventBus }, // Added eventBus
+	} = useSimulation();
+	const {
+		state: brushState,
+		actions: { setPaintMode, setShapeSize, setIsHollow },
+	} = useBrush();
+	const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
+	const {
+		state: { selectedConfigName },
+	} = useGenesisConfig();
 
-  const [showDocumentation, setShowDocumentation] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
-  const [showReleaseNotes, setShowReleaseNotes] = useState(false);
-  const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
-  const [showCommunityPanel, setShowCommunityPanel] = useState(false); // New state for Community Panel
-  const helpDropdownRef = useRef<HTMLDivElement>(null);
+	const [showDocumentation, setShowDocumentation] = useState(false);
+	const [showShortcuts, setShowShortcuts] = useState(false);
+	const [showReleaseNotes, setShowReleaseNotes] = useState(false);
+	const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
+	const [showCommunityPanel, setShowCommunityPanel] = useState(false); // New state for Community Panel
+	const helpDropdownRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
+	useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
 
-  const faceName =
-    cameraOrientation.face !== "unknown"
-      ? cameraOrientation.face.charAt(0).toUpperCase() +
-        cameraOrientation.face.slice(1)
-      : "Unknown";
-  const rotationDegrees =
-    cameraOrientation.rotation !== "unknown"
-      ? `${cameraOrientation.rotation}°`
-      : "0°";
+	const faceName =
+		cameraOrientation.face !== 'unknown'
+			? cameraOrientation.face.charAt(0).toUpperCase() +
+				cameraOrientation.face.slice(1)
+			: 'Unknown';
+	const rotationDegrees =
+		cameraOrientation.rotation !== 'unknown'
+			? `${cameraOrientation.rotation}°`
+			: '0°';
 
-  const handleOpenDocumentation = useCallback(() => {
-    setShowDocumentation(true);
-    setIsHelpDropdownOpen(false);
-  }, []);
+	const handleOpenDocumentation = useCallback(() => {
+		setShowDocumentation(true);
+		setIsHelpDropdownOpen(false);
+	}, []);
 
-  const handleOpenIntroduction = useCallback(() => {
-    setShowIntroduction(true);
-    setIsHelpDropdownOpen(false);
-  }, [setShowIntroduction]);
+	const handleOpenIntroduction = useCallback(() => {
+		setShowIntroduction(true);
+		setIsHelpDropdownOpen(false);
+	}, [setShowIntroduction]);
 
-  const handleOpenShortcuts = useCallback(() => {
-    // New handler for shortcuts
-    setShowShortcuts(true);
-    setIsHelpDropdownOpen(false);
-  }, []);
+	const handleOpenShortcuts = useCallback(() => {
+		// New handler for shortcuts
+		setShowShortcuts(true);
+		setIsHelpDropdownOpen(false);
+	}, []);
 
-  const handleOpenReleaseNotes = useCallback(() => {
-    setShowReleaseNotes(true);
-    setIsHelpDropdownOpen(false);
-  }, []);
+	const handleOpenReleaseNotes = useCallback(() => {
+		setShowReleaseNotes(true);
+		setIsHelpDropdownOpen(false);
+	}, []);
 
-  const toggleCommunityPanel = useCallback(() => {
-    setShowCommunityPanel((prev) => !prev);
-  }, []);
+	const toggleCommunityPanel = useCallback(() => {
+		setShowCommunityPanel(prev => !prev);
+	}, []);
 
-  // Listen for 'showCommunityPanel' event from BrushControls
-  useEffect(() => {
-    const unsubscribe = eventBus.on("showCommunityPanel", (show) => {
-      setShowCommunityPanel(show);
-    });
-    return () => unsubscribe();
-  }, [eventBus]);
+	// Listen for 'showCommunityPanel' event from BrushControls
+	useEffect(() => {
+		const unsubscribe = eventBus.on('showCommunityPanel', show => {
+			setShowCommunityPanel(show);
+		});
+		return () => unsubscribe();
+	}, [eventBus]);
 
-  // Ensure community panel is visible in edit mode if a community is selected
-  useEffect(() => {
-    if (!viewMode && community.length > 0) {
-      setShowCommunityPanel(true);
-    }
-  }, [viewMode, community.length]);
+	// Ensure community panel is visible in edit mode if a community is selected
+	useEffect(() => {
+		if (!viewMode && community.length > 0) {
+			setShowCommunityPanel(true);
+		}
+	}, [viewMode, community.length]);
 
-  return (
-    <div className="app-header-panel">
-      <div className="title-section">
-        <h1>Cube of Life</h1>
-      </div>
+	return (
+		<div className='app-header-panel'>
+			<div className='title-section'>
+				<h1>Cube of Life</h1>
+			</div>
 
-      <div className="cube-status-panel">
-        <div className="scene-status">
-          Scene: {selectedConfigName || "Unsaved"}
-        </div>
-        <div className="orientation-status">
-          Face: {faceName}, {rotationDegrees}
-        </div>
-        {!viewMode && (
-          <div className="shape-status">Shape: {selectedShape}</div>
-        )}
-        <SimulationStats />
-      </div>
+			<div className='cube-status-panel'>
+				<div className='scene-status'>
+					Scene: {selectedConfigName || 'Unsaved'}
+				</div>
+				<div className='orientation-status'>
+					Face: {faceName}, {rotationDegrees}
+				</div>
+				{!viewMode && (
+					<div className='shape-status'>Shape: {selectedShape}</div>
+				)}
+				<SimulationStats />
+			</div>
 
-      <AppHeaderPanelButtons
-        running={running}
-        viewMode={viewMode}
-        hasInitialState={hasInitialState}
-        hasPastHistory={hasPastHistory}
-        squareUp={squareUp}
-        isSquaredUp={isSquaredUp}
-        speed={speed}
-        gridSize={gridSize}
-        playStop={playStop}
-        step={step}
-        stepBackward={stepBackward}
-        reset={reset}
-        setviewMode={setviewMode}
-        fitDisplay={fitDisplay}
-        recenter={recenter}
-        setSquareUp={setSquareUp}
-        setSpeed={setSpeed}
-        selectedShape={selectedShape}
-        paintMode={paintMode}
-        shapeSize={shapeSize}
-        isHollow={isHollow}
-        setPaintMode={setPaintMode}
-        setShapeSize={setShapeSize}
-        setIsHollow={setIsHollow}
-        isHelpDropdownOpen={isHelpDropdownOpen}
-        setIsHelpDropdownOpen={setIsHelpDropdownOpen}
-        helpDropdownRef={helpDropdownRef}
-        handleOpenDocumentation={handleOpenDocumentation}
-        handleOpenIntroduction={handleOpenIntroduction}
-        handleOpenShortcuts={handleOpenShortcuts}
-        handleOpenReleaseNotes={handleOpenReleaseNotes}
-        showSettingsSidebar={showSettingsSidebar}
-        setShowSettingsSidebar={setShowSettingsSidebar}
-        showCommunityPanel={showCommunityPanel} // Pass new prop
-        toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
-      />
+			<AppHeaderPanelButtons
+				running={running}
+				viewMode={viewMode}
+				hasInitialState={hasInitialState}
+				hasPastHistory={hasPastHistory}
+				squareUp={squareUp}
+				isSquaredUp={isSquaredUp}
+				speed={speed}
+				gridSize={gridSize}
+				playStop={playStop}
+				step={step}
+				stepBackward={stepBackward}
+				reset={reset}
+				setviewMode={setviewMode}
+				fitDisplay={fitDisplay}
+				recenter={recenter}
+				setSquareUp={setSquareUp}
+				setSpeed={setSpeed}
+				selectedShape={selectedShape}
+				paintMode={paintMode}
+				shapeSize={shapeSize}
+				isHollow={isHollow}
+				setPaintMode={setPaintMode}
+				setShapeSize={setShapeSize}
+				setIsHollow={setIsHollow}
+				isHelpDropdownOpen={isHelpDropdownOpen}
+				setIsHelpDropdownOpen={setIsHelpDropdownOpen}
+				helpDropdownRef={helpDropdownRef}
+				handleOpenDocumentation={handleOpenDocumentation}
+				handleOpenIntroduction={handleOpenIntroduction}
+				handleOpenShortcuts={handleOpenShortcuts}
+				handleOpenReleaseNotes={handleOpenReleaseNotes}
+				showSettingsSidebar={showSettingsSidebar}
+				setShowSettingsSidebar={setShowSettingsSidebar}
+				showCommunityPanel={showCommunityPanel} // Pass new prop
+				toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
+			/>
 
-      <DocumentationModal
-        isOpen={showDocumentation}
-        onClose={() => setShowDocumentation(false)}
-      />
+			<DocumentationModal
+				isOpen={showDocumentation}
+				onClose={() => setShowDocumentation(false)}
+			/>
 
-      <IntroductionModal
-        isOpen={showIntroduction}
-        onClose={() => setShowIntroduction(false)}
-      />
+			<IntroductionModal
+				isOpen={showIntroduction}
+				onClose={() => setShowIntroduction(false)}
+			/>
 
-      <ShortcutOverlay
-        isOpen={showShortcuts}
-        onClose={() => setShowShortcuts(false)}
-      />
+			<ShortcutOverlay
+				isOpen={showShortcuts}
+				onClose={() => setShowShortcuts(false)}
+			/>
 
-      <ReleaseNotesModal
-        isOpen={showReleaseNotes}
-        onClose={() => setShowReleaseNotes(false)}
-      />
+			<ReleaseNotesModal
+				isOpen={showReleaseNotes}
+				onClose={() => setShowReleaseNotes(false)}
+			/>
 
-      <SelectedCommunityPanel
-        isVisible={showCommunityPanel && community.length > 0 && !viewMode}
-        onClose={() => setShowCommunityPanel(false)}
-      />
-    </div>
-  );
+			<SelectedCommunityPanel
+				isVisible={
+					showCommunityPanel && community.length > 0 && !viewMode
+				}
+				onClose={() => setShowCommunityPanel(false)}
+			/>
+		</div>
+	);
 }
