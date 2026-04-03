@@ -536,9 +536,9 @@ export function SimulationProvider({
 		const newOrganisms = new Map<string, Organism>();
 
 		for (const organism of organismsRef.current.values()) {
-			// The boundary is the original shape plus its cytoplasm.
+			// The boundary is the current shape plus its cytoplasm.
 			const boundary = new Set([
-				...organism.initialLivingCells,
+				...organism.livingCells,
 				...organism.cytoplasm,
 			]);
 			const newLivingCells = new Set<string>();
