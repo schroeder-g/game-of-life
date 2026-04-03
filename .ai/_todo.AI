@@ -6,22 +6,22 @@ Obey GENERAL RULES, at end.
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
-*   **TODO-058:** Implement full juking logic for organisms, including finding valid offsets and applying grid mutations. (Related to Organisms.AI: Post-Tick Organism Processing - Step 4) - **PARTIALLY DONE, needs preference for rotation**
-*   **TODO-059:** Implement random rotation logic for organisms. (Related to Organisms.AI: Post-Tick Organism Processing - Step 5)
-*   **TODO-060:** Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3) - **PARTIALLY DONE, initial breach check added**
-*   **TODO-061:** Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
 *   **TODO-062:** Create `src/data/organism-names.ts` with 100 unique names and implement unique name assignment logic. (Related to Organisms.AI: Naming)
 *   **TODO-063:** Implement organism restoration on `reset()` and dissolution on `clear()` and `grid size changed`. (Related to Organisms.AI: Organism Lifecycle)
 *   **TODO-064:** Create `src/components/OrganismSkins.tsx` and mount it in `Grid.tsx` to render organism skins. (Related to Organisms.AI: Skin Rendering)
 *   **TODO-065:** [COMPLETED] Add "Organism" label and skin color swatch to `SelectedCommunityPanel.tsx` when a community is an organism. (Related to Organisms.AI: Community Panel Integration)
 *   **TODO-066:** Add tooltip to Magic Wand button in `SelectedCommunityPanel.tsx` when `birthMargin < 1`. (Related to Organisms.AI: Creating an Organism - UI Trigger)
-*   **TODO-067:** Ensure `processOrganisms` returns grid mutations and apply them in `SimulationContext`. (Related to Organisms.AI: Post-Tick Organism Processing) - **DONE**
 *   **TODO-068:** Review and update `SimulationContext` to handle `organismsRef` persistence/reset as per `Organisms.AI` data model.
 *   **TODO-069:** Add `AiReminder` spans for documentation and testing of new organism features.
 *   **TODO-070:** Review `SelectedCommunityPanel.tsx` for any remaining `AiReminder` spans related to previous changes.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
+*   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
+*   **TODO-060:** [COMPLETED] Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3)
+*   **TODO-058:** [COMPLETED] Implement full juking logic for organisms, including finding valid offsets and applying grid mutations. (Related to Organisms.AI: Post-Tick Organism Processing - Step 4) - **Preference for rotation in juke selection implemented.**
+*   **TODO-059:** [COMPLETED] Implement random rotation logic for organisms. (Related to Organisms.AI: Post-Tick Organism Processing - Step 5)
+*   **TODO-071:** [COMPLETED] When clicking a community in the cube, if it is part of an Organism, then make it the current community in the Community Selection panel and update the display accordingly.
 *   **TODO-017:** [COMPLETED] `QA-3` (from `quality-doc-test-process`) - Missing automated test.
 *   **TODO-016:** [COMPLETED] `QA-2` (from `quality-key-mapping`) - Missing automated test.
 *   **TODO-015:** [COMPLETED] `UX-7` (from `quality-input-focus`) - Missing automated test.

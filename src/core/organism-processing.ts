@@ -165,7 +165,6 @@ function rotateCellsAroundCentroid(
 function floodFillConnected(
 	previousKeys: Set<string>,
 	allLivingKeys: Set<string>,
-	grid: Grid3D,
 	neighborFaces: boolean,
 	neighborEdges: boolean,
 	neighborCorners: boolean,
@@ -236,9 +235,8 @@ export function processOrganisms(
 	for (const [id, organism] of organisms) {
 		// Step 1: Sync living cells via flood fill from the organism's previous position
 		const newLivingCells = floodFillConnected(
-			organism.livingCells,
+			organism.previousLivingCells, // Changed from organism.livingCells
 			allLivingKeys,
-			grid,
 			neighborFaces,
 			neighborEdges,
 			neighborCorners,
