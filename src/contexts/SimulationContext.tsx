@@ -14,6 +14,7 @@ import { loadSettings, saveSettings } from '../hooks/useSettings';
 import { CameraOrientation } from '../core/faceOrientationKeyMapping';
 import { Organism, makeKey, computeCytoplasm, computeSkinColor } from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
+import { processOrganisms } from '../core/organism-processing';
 
 const initialSettings = loadSettings();
 
@@ -533,43 +534,25 @@ export function SimulationProvider({
 	);
 
 	const updateOrganismsAfterTick = useCallback(() => {
-		const newOrganisms = new Map<string, Organism>();
+		// Call the pure processing function
+		const { updatedOrganisms, gridMutations } = processOrganisms(
+			gridRef.current,
+			organismsRef.current,
+			gridSize,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		);
 
-		for (const organism of organismsRef.current.values()) {
-			// The boundary is the current shape plus its cytoplasm.
-			const boundary = new Set([
-				...organism.livingCells,
-				...organism.cytoplasm,
-			]);
-			const newLivingCells = new Set<string>();
-
-			for (const key of boundary) {
-				const [x, y, z] = key.split(',').map(Number);
-				if (gridRef.current.get(x, y, z)) {
-					newLivingCells.add(key);
-				}
-			}
-
-			if (newLivingCells.size > 0) {
-				const newCytoplasm = computeCytoplasm(
-					newLivingCells,
-					gridSize,
-					neighborFaces,
-					neighborEdges,
-					neighborCorners,
-				);
-				const newSkinColor = computeSkinColor(newLivingCells, gridSize);
-
-				newOrganisms.set(organism.id, {
-					...organism,
-					livingCells: newLivingCells,
-					previousLivingCells: organism.livingCells, // The old cells become the previous
-					cytoplasm: newCytoplasm,
-					skinColor: newSkinColor,
-				});
+		// Apply grid mutations
+		if (gridMutations.length > 0) {
+			gridRef.current.recordAction(); // Record this as a single action
+			for (const mutation of gridMutations) {
+				gridRef.current.set(mutation.x, mutation.y, mutation.z, mutation.alive);
 			}
 		}
-		organismsRef.current = newOrganisms;
+
+		organismsRef.current = updatedOrganisms;
 		setOrganismsVersion(v => v + 1);
 	}, [gridSize, neighborFaces, neighborEdges, neighborCorners]);
 
