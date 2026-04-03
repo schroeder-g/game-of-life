@@ -19,6 +19,7 @@ spec:
         run.googleapis.com/client-name: gcloud
         run.googleapis.com/client-version: 477.0.0
         run.googleapis.com/startup-cpu-boost: 'true'
+        run.googleapis.com/invoker-iam-disabled: 'true' # <--- ADD THIS HERE TOO
       labels:
         client.knative.dev/nonce: xhaiwzsxqg
         run.googleapis.com/startupProbeType: Default
@@ -39,6 +40,9 @@ spec:
           tcpSocket:
             port: 8080
           timeoutSeconds: 240
+        env:
+        - name: DISTRIBUTION
+          value: "prod"
       serviceAccountName: 111782748518-compute@developer.gserviceaccount.com
       timeoutSeconds: 300
   traffic:

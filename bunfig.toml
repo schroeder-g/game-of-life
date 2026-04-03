@@ -1,0 +1,6 @@
+[test]
+# Preload the browser environment before any test files run.
+# This ensures JSDOM globals (document, window, etc.) are available
+# before vi.mock() hoisting and @testing-library/dom screen initialization.
+# Also loads jest-dom matchers (toBeInTheDocument, etc.) for all test files.
+preload = ["./src/tests/setup-browser-env.ts", "./src/setupTests.ts"]

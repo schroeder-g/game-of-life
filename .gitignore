@@ -1,3 +1,11 @@
 node_modules/
 dist/
 .DS_Store
+.aider*
+.env
+aider-env/
+aider.venv/
+.bashrc
+.zshrc
+Google Cloud Run Deployment Synopsis.pdf
+.agent

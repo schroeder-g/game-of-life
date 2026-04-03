@@ -1,117 +1,171 @@
-import { Canvas } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
-import { CommunitySidebar } from "../components/Controls";
-import { Scene } from "../components/Grid";
-import { AppHeaderPanel, MainMenu } from "../components/MainMenu";
-import { ShortcutOverlay } from "../components/ShortcutOverlay";
-import { useBrush } from "../contexts/BrushContext";
-import { useSimulation } from "../contexts/SimulationContext";
-import { supportsHollow } from "../core/shapes";
-import { useAppShortcuts } from "../hooks/useAppShortcuts";
-
-function SimulationStats() {
-  const {
-    meta: { gridRef },
-    state: { running },
-  } = useSimulation();
-  const [stats, setStats] = useState({
-    generation: gridRef.current.generation,
-    cells: gridRef.current.getLivingCells().length,
-  });
-
-  const lastVersionRef = useRef(gridRef.current.version);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (gridRef.current.version !== lastVersionRef.current) {
-        lastVersionRef.current = gridRef.current.version;
-        setStats({
-          generation: gridRef.current.generation,
-          cells: gridRef.current.getLivingCells().length,
-        });
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [gridRef]);
-
-  return (
-    <div className="stats">
-      <span>Generation: {stats.generation}</span>
-      <span>Cells: {stats.cells}</span>
-      <span>{running ? "Running" : "Paused"}</span>
-    </div>
-  );
-}
+import { Canvas } from '@react-three/fiber';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Scene } from '../components/Grid';
+import { SettingsSidebar } from '../components/SettingsSidebar';
+import { AppHeaderPanel } from '../components/AppHeaderPanel';
+import { AppFooterPanel } from '../components/AppFooterPanel'; // New import
+import { WelcomeModal } from '../components/WelcomeModal';
+import { useBrush } from '../contexts/BrushContext';
+import { useSimulation } from '../contexts/SimulationContext';
+import { supportsHollow } from '../core/shapes';
+import { useAppShortcuts } from '../hooks/useAppShortcuts';
 
 export default function App() {
-  const {
-    state: { rotationMode, community, running },
-    actions: { setRotationMode },
-  } = useSimulation();
-  const {
-    state: { selectorPos, selectedShape, shapeSize, isHollow },
-  } = useBrush();
-  const [showShortcuts, setShowShortcuts] = useState(false);
+	const {
+		state: {
+			viewMode,
+			running,
+			squareUp,
+			userName,
+			buildInfo,
+			showIntroduction,
+		},
+		actions: {
+			setviewMode,
+			recenter,
+			fitDisplay,
+			setSquareUp,
+			setShowIntroduction,
+			setUserName,
+		},
+	} = useSimulation();
+	const {
+		state: { selectorPos, selectedShape, shapeSize, isHollow },
+	} = useBrush();
+	const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from SettingsSidebar
+	const [showSettingsSidebar, setShowSettingsSidebar] = useState(true); // New state, defaults to true
+	const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] =
+		useState(false); // New state to track internal dropdown
 
-  useAppShortcuts();
+	// State for draggable footer poTODO-055sition
+	const canvasContainerRef = useRef<HTMLDivElement>(null); // Ref for the canvas container
+	const [canvasSize, setCanvasSize] = useState(0); // State for the square canvas size
 
-  return (
-    <div className="app">
+	useAppShortcuts();
 
-      <AppHeaderPanel />
+	useEffect(() => {
+		console.log('App: viewMode changed to', viewMode);
+		if (viewMode === false) {
+			console.log('App: Calling recenter and fitDisplay in Edit mode.');
+			recenter();
+			fitDisplay();
+		}
+	}, [viewMode, recenter, fitDisplay]);
 
-      <div className="ui-overlay">
-        <p className="explainer">
-          Explore a 3D adaptation of{" "}
-          <a
-            href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Conway's Game of Life
-          </a>{" "}
-          by placing cells in the grid and watching them evolve.
-        </p>
-        <SimulationStats />
-        {!rotationMode && selectorPos && (
-          <div className="selector-pos">
-            Position: ({selectorPos[0]}, {selectorPos[1]}, {selectorPos[2]})
-          </div>
-        )}
-        {!rotationMode && selectedShape !== "None" && (
-          <div className="shape-info">
-            Shape: {selectedShape} ({shapeSize}x{shapeSize}
-            {supportsHollow(selectedShape) ? `x${shapeSize}` : ""})
-            {isHollow && supportsHollow(selectedShape) && " (hollow)"}
-          </div>
-        )}
-        <button
-          className="glass-button shortcuts-toggle"
-          onClick={() => setShowShortcuts(true)}
-        >
-          ⌘ Shortcuts
-        </button>
+	// Effect to set and update canvas size to be square using ResizeObserver
+	useEffect(() => {
+		if (!canvasContainerRef.current) return;
 
-        {/* community panel only in edit mode, below shortcuts */}
-        {!rotationMode && !running && (
-          <CommunitySidebar community={community} />
-        )}
-        
-        <MainMenu />
-      </div>
+		const resizeObserver = new ResizeObserver(entries => {
+			for (const entry of entries) {
+				if (entry.target === canvasContainerRef.current) {
+					const { width, height } = entry.contentRect;
+					const newSize = Math.min(width, height);
+					console.log(
+						`App: Canvas container resized. Width: ${width}, Height: ${height}, Calculated canvasSize: ${newSize}`,
+					);
+					setCanvasSize(newSize);
+				}
+			}
+		});
 
-      <ShortcutOverlay
-        isOpen={showShortcuts}
-        onClose={() => setShowShortcuts(false)}
-      />
+		resizeObserver.observe(canvasContainerRef.current);
+		return () => resizeObserver.disconnect();
+	}, []);
 
-      {/* bottom-right panel removed; now handled inside overlay */}
-      
-      <div className="canvas-container">
-        <Canvas>
-          <Scene />
-        </Canvas>
-      </div>
-    </div>
-  );
+	// Effect to check screen size for small screens
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+
+		const checkScreenSize = () => {
+			setIsSmallScreen(window.innerWidth <= 768);
+		};
+
+		checkScreenSize();
+		window.addEventListener('resize', checkScreenSize);
+
+		return () => window.removeEventListener('resize', checkScreenSize);
+	}, []);
+
+	return (
+		<div
+			className='app'
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+				height: '100vh',
+			}}
+		>
+			<AppHeaderPanel
+				showSettingsSidebar={showSettingsSidebar}
+				setShowSettingsSidebar={setShowSettingsSidebar}
+			/>
+			<div
+				className='main-content-layout'
+				style={{
+					flex: 1,
+					display: 'flex',
+					flexDirection: isSmallScreen ? 'column' : 'row',
+				}}
+			>
+				<div
+					className='ui-overlay'
+					style={{ display: showSettingsSidebar ? 'flex' : 'none' }}
+				>
+					<SettingsSidebar
+						isSmallScreen={isSmallScreen}
+						setIsSettingsDropdownOpen={setIsSettingsDropdownOpen}
+					/>
+				</div>
+
+				<main
+					ref={canvasContainerRef}
+					className='canvas-container'
+					style={{
+						flex: 1,
+						height: '100%',
+						display:
+							isSmallScreen &&
+							showSettingsSidebar &&
+							isSettingsDropdownOpen
+								? 'none'
+								: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						overflow: 'hidden',
+					}}
+				>
+					{/* Always render the canvas, but its container might be hidden */}
+					<div
+						style={{
+							width: canvasSize,
+							height: canvasSize,
+							position: 'relative',
+						}}
+					>
+						<Canvas
+							style={{
+								width: '100%',
+								height: '100%',
+								touchAction: 'none',
+							}}
+						>
+							<Scene />
+						</Canvas>
+					</div>
+				</main>
+			</div>
+			<AppFooterPanel userName={userName} buildInfo={buildInfo} />{' '}
+			{/* New footer panel */}
+			{showIntroduction &&
+				(userName ||
+				localStorage.getItem('userName') ||
+				buildInfo.distribution === 'prod' ? null : (
+					<WelcomeModal
+						setShowIntroduction={setShowIntroduction}
+						setUserName={setUserName}
+					/>
+				))}
+		</div>
+	);
 }
