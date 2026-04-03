@@ -938,9 +938,9 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
     <>
       <aside
         className={`main-menu glass-panel ${community.length > 0 && !viewMode ? "has-sidebar" : ""} ${collapsed ? "collapsed" : ""}`}
-        style={{ border: "none" }}
+        style={{ border: "none", padding: "20px" }}
       >
-        <div className="drop-down-menu">
+        <div className="drop-down-menu" style={{ padding: '.6rem 1.2rem'}}>
           <header className="menu-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer", borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.1)', paddingBottom: collapsed ? 0 : '16px', marginBottom: collapsed ? 0 : '16px' }}>
             <h2 style={{ margin: 0 }}>Settings</h2>
             <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: '8px' }}>{collapsed ? "▼" : "▲"}</span>
