@@ -690,6 +690,8 @@ export function Scene() {
 		squareUp,
 		isSquaredUp,
 		cameraOrientation,
+		organisms,
+		organismsVersion,
 	} = state;
 	const {
 		state: brushState,
