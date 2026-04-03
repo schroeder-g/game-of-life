@@ -532,6 +532,46 @@ export function SimulationProvider({
 		[neighborFaces, neighborEdges, neighborCorners],
 	);
 
+	const updateOrganismsAfterTick = useCallback(() => {
+		const newOrganisms = new Map<string, Organism>();
+
+		for (const organism of organismsRef.current.values()) {
+			// The boundary is the original shape plus its cytoplasm.
+			const boundary = new Set([
+				...organism.initialLivingCells,
+				...organism.cytoplasm,
+			]);
+			const newLivingCells = new Set<string>();
+
+			for (const key of boundary) {
+				const [x, y, z] = key.split(',').map(Number);
+				if (gridRef.current.get(x, y, z)) {
+					newLivingCells.add(key);
+				}
+			}
+
+			if (newLivingCells.size > 0) {
+				const newCytoplasm = computeCytoplasm(
+					newLivingCells,
+					gridSize,
+					neighborFaces,
+					neighborEdges,
+					neighborCorners,
+				);
+				const newSkinColor = computeSkinColor(newLivingCells, gridSize);
+
+				newOrganisms.set(organism.id, {
+					...organism,
+					livingCells: newLivingCells,
+					cytoplasm: newCytoplasm,
+					skinColor: newSkinColor,
+				});
+			}
+		}
+		organismsRef.current = newOrganisms;
+		setOrganismsVersion(v => v + 1);
+	}, [gridSize, neighborFaces, neighborEdges, neighborCorners]);
+
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
 			initialStateRef.current = gridRef.current.saveState();
@@ -728,46 +768,6 @@ export function SimulationProvider({
 		() => cameraActionsRef.current?.recenter(),
 		[],
 	);
-
-	const updateOrganismsAfterTick = useCallback(() => {
-		const newOrganisms = new Map<string, Organism>();
-
-		for (const organism of organismsRef.current.values()) {
-			// The boundary is the original shape plus its cytoplasm.
-			const boundary = new Set([
-				...organism.initialLivingCells,
-				...organism.cytoplasm,
-			]);
-			const newLivingCells = new Set<string>();
-
-			for (const key of boundary) {
-				const [x, y, z] = key.split(',').map(Number);
-				if (gridRef.current.get(x, y, z)) {
-					newLivingCells.add(key);
-				}
-			}
-
-			if (newLivingCells.size > 0) {
-				const newCytoplasm = computeCytoplasm(
-					newLivingCells,
-					gridSize,
-					neighborFaces,
-					neighborEdges,
-					neighborCorners,
-				);
-				const newSkinColor = computeSkinColor(newLivingCells, gridSize);
-
-				newOrganisms.set(organism.id, {
-					...organism,
-					livingCells: newLivingCells,
-					cytoplasm: newCytoplasm,
-					skinColor: newSkinColor,
-				});
-			}
-		}
-		organismsRef.current = newOrganisms;
-		setOrganismsVersion(v => v + 1);
-	}, [gridSize, neighborFaces, neighborEdges, neighborCorners]);
 
 	const convertCommunityToOrganism = useCallback(
 		(communityCells: Array<[number, number, number]>) => {
