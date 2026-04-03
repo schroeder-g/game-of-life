@@ -128,6 +128,8 @@ export function SelectedCommunityPanel({
 		actions: { setCustomBrush, setSelectedShape, setPaintMode },
 	} = useBrush();
 	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [showTooltip, setShowTooltip] = useState(false); // Add this line
+	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 }); // Add this line
 
 	const matchingOrganism = useMemo(() => {
 		if (community.length === 0) return null;
@@ -305,6 +307,21 @@ export function SelectedCommunityPanel({
 	const handleTouchEnd = useCallback(() => {
 		setIsDragging(false);
 	}, []);
+
+	const handleMouseEnterPreview = useCallback(() => {
+        if (matchingOrganism) { // Only show tooltip if it's an organism
+            setShowTooltip(true);
+        }
+    }, [matchingOrganism]); // Dependency on matchingOrganism
+
+    const handleMouseLeavePreview = useCallback(() => {
+        setShowTooltip(false);
+    }, []);
+
+    const handleMouseMovePreview = useCallback((e: React.MouseEvent) => {
+        // Position the tooltip slightly offset from the cursor
+        setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+    }, []);
 
 	useEffect(() => {
 		if (isDragging) {
@@ -512,7 +529,11 @@ export function SelectedCommunityPanel({
 									</span>
 								)}
 							</div>
-							<div className='community-3d-wrapper'>
+							<div className='community-3d-wrapper'
+								onMouseEnter={handleMouseEnterPreview} // Add this line
+								onMouseLeave={handleMouseLeavePreview} // Add this line
+								onMouseMove={handleMouseMovePreview} // Add this line
+							>
 								<Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
 									<ambientLight intensity={0.5} />
 									<pointLight position={[10, 10, 10]} intensity={1} />
@@ -535,6 +556,27 @@ export function SelectedCommunityPanel({
 					)}
 				</>
 			)}
-		</div>
+		</div> {/* This is the closing div for #community-sidebar */}
+
+		{/* Add the tooltip rendering here */}
+		{showTooltip && matchingOrganism && (
+			<div
+				style={{
+					position: 'fixed',
+					top: tooltipPosition.y,
+					left: tooltipPosition.x,
+					backgroundColor: 'rgba(0, 0, 0, 0.7)', // Dark semi-transparent background
+					color: 'white', // White text
+					padding: '4px 8px',
+					borderRadius: '4px',
+					fontSize: '12px',
+					pointerEvents: 'none', // Important: allows mouse events to pass through to elements below
+					zIndex: 1001, // Ensure it's above other UI elements
+				}}
+			>
+				{matchingOrganism.name}
+			</div>
+		)}
+	</> // This is the closing fragment for the main return
 	);
 }
