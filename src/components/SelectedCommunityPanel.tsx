@@ -550,7 +550,6 @@ export function SelectedCommunityPanel({
 										right: '8px',
 									}}
 								>
-									{/* Claim hint removed from here as per request */}
 								</div>
 							</div>
 						</>
@@ -559,7 +558,6 @@ export function SelectedCommunityPanel({
 			)}
 		</div>
 
-		{/* Add the tooltip rendering here */}
 		{showTooltip && matchingOrganism && (
 			<div
 				style={{
@@ -578,6 +576,6 @@ export function SelectedCommunityPanel({
 				{matchingOrganism.name}
 			</div>
 		)}
-	</> // This is the closing fragment for the main return
+	</>
 	);
 }
