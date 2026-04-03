@@ -12,6 +12,7 @@ import {
 import { generateShape } from '../core/shapes';
 import { Cells } from './Cell';
 import { OrganismSkins } from './OrganismSkins';
+import { makeKey } from '../core/Organism';
 
 const _toCamera = new THREE.Vector3();
 const _localToCamera = new THREE.Vector3();
@@ -1925,20 +1926,49 @@ export function Scene() {
 								const [x, y, z] = cell;
 								setSelectorPos([x, y, z]);
 								if (!viewMode) {
-									const community = gridRef.current.getCommunity(
-										x,
-										y,
-										z,
-									);
-									setCommunity(community);
-									console.log(
-										'Clicked cell at',
-										x,
-										y,
-										z,
-										'Community:',
-										community.length,
-									);
+									// Check if the clicked cell belongs to an organism
+									const clickedCellKey = makeKey(x, y, z);
+									let foundOrganism = null;
+									for (const org of organismsRef.current.values()) {
+										if (org.livingCells.has(clickedCellKey)) {
+											foundOrganism = org;
+											break;
+										}
+									}
+
+									if (foundOrganism) {
+										// If it's part of an organism, set the community to the organism's living cells
+										const organismCommunity = Array.from(foundOrganism.livingCells).map(key =>
+											key.split(',').map(Number) as [number, number, number]
+										);
+										setCommunity(organismCommunity);
+										console.log(
+											'Clicked cell at',
+											x,
+											y,
+											z,
+											'Organism Community:',
+											organismCommunity.length,
+											'Name:',
+											foundOrganism.name
+										);
+									} else {
+										// Otherwise, get the community as usual
+										const community = gridRef.current.getCommunity(
+											x,
+											y,
+											z,
+										);
+										setCommunity(community);
+										console.log(
+											'Clicked cell at',
+											x,
+											y,
+											z,
+											'Community:',
+											community.length,
+										);
+									}
 								}
 							}
 						}
