@@ -12,6 +12,9 @@ import { Emitter } from '../core/events';
 import { Grid3D } from '../core/Grid3D';
 import { loadSettings, saveSettings } from '../hooks/useSettings';
 import { CameraOrientation } from '../core/faceOrientationKeyMapping';
+import { Organism, makeKey, computeCytoplasm, computeSkinColor } from '../core/Organism';
+import { processOrganisms } from '../core/organism-processing';
+import { ORGANISM_NAMES } from '../data/organism-names';
 
 const initialSettings = loadSettings();
 
@@ -78,6 +81,8 @@ export interface SimulationState {
 		distribution: 'dev' | 'test' | 'prod';
 	};
 	showIntroduction: boolean;
+	organisms: Map<string, Organism>;
+	organismsVersion: number;
 }
 
 export interface SimulationActions {
@@ -108,6 +113,7 @@ export interface SimulationActions {
 	setCameraOrientation: (orientation: CameraOrientation) => void;
 	setUserName: (name: string) => void;
 	setShowIntroduction: (show: boolean) => void;
+	convertCommunityToOrganism: (community: Array<[number, number, number]>) => void;
 
 	playStop: () => void;
 	step: () => void;
@@ -153,6 +159,7 @@ export interface SimulationMeta {
 	eventBus: Emitter<AppEvents>;
 	movement: React.MutableRefObject<Record<string, boolean>>;
 	velocity: React.MutableRefObject<Record<string, number>>;
+	organismsRef: React.MutableRefObject<Map<string, Organism>>;
 }
 
 export interface SimulationContextValue {
@@ -193,13 +200,12 @@ export function SimulationProvider({
 		delete: false,
 	});
 	const velocity = useRef<Record<string, number>>({
-		panX: 0,
-		panY: 0,
-		dolly: 0,
-		rotatePitch: 0,
 		rotateYaw: 0,
 		rotateRoll: 0,
 	});
+	const organismsRef = useRef<Map<string, Organism>>(new Map());
+	const [organismsVersion, setOrganismsVersion] = useState(0);
+	const initialOrganismsRef = useRef<Map<string, Organism>>(new Map());
 	const isFirstLoadRef = useRef(true);
 	const [hasInitialState, setHasInitialState] = useState(false);
 	const [hasPastHistory, setHasPastHistory] = useState(false);
@@ -521,6 +527,8 @@ export function SimulationProvider({
 			setHasInitialState(false);
 			setGridSize(newSize);
 			setCommunity([]);
+			organismsRef.current.clear();
+			setOrganismsVersion(v => v + 1);
 		},
 		[neighborFaces, neighborEdges, neighborCorners],
 	);
@@ -528,6 +536,7 @@ export function SimulationProvider({
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
 			initialStateRef.current = gridRef.current.saveState();
+			initialOrganismsRef.current = new Map(organismsRef.current);
 			setHasInitialState(initialStateRef.current.length > 0);
 		}
 		setRunning(r => !r);
@@ -542,6 +551,7 @@ export function SimulationProvider({
 		if (!running) {
 			if (gridRef.current.generation === 0) {
 				initialStateRef.current = gridRef.current.saveState();
+				initialOrganismsRef.current = new Map(organismsRef.current);
 				setHasInitialState(initialStateRef.current.length > 0);
 			}
 			gridRef.current.neighborFaces = neighborFaces;
@@ -554,6 +564,22 @@ export function SimulationProvider({
 				birthMax,
 				birthMargin,
 			);
+			const { updatedOrganisms, gridMutations } = processOrganisms(
+				gridRef.current,
+				organismsRef.current,
+				gridSize,
+				neighborFaces,
+				neighborEdges,
+				neighborCorners,
+			);
+			if (gridMutations.length > 0) {
+				for (const [x, y, z, alive] of gridMutations) {
+					gridRef.current.set(x, y, z, alive);
+				}
+				gridRef.current.version++;
+			}
+			organismsRef.current = updatedOrganisms;
+			setOrganismsVersion(v => v + 1);
 		}
 	}, [
 		running,
@@ -565,23 +591,30 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
+		gridSize,
 	]);
 
 	const randomize = useCallback(() => {
 		gridRef.current.randomize(density);
 		initialStateRef.current = gridRef.current.saveState();
+		initialOrganismsRef.current = new Map();
 		setHasInitialState(initialStateRef.current.length > 0);
 	}, [density]);
 
 	const reset = useCallback(() => {
 		setRunning(false);
 		gridRef.current.restoreState(initialStateRef.current);
+		organismsRef.current = new Map(initialOrganismsRef.current);
+		setOrganismsVersion(v => v + 1);
 	}, []);
 
 	const clear = useCallback(() => {
 		setRunning(false);
 		gridRef.current.clear();
 		initialStateRef.current = [];
+		initialOrganismsRef.current = new Map();
+		organismsRef.current = new Map();
+		setOrganismsVersion(v => v + 1);
 		setHasInitialState(false);
 	}, []);
 
@@ -596,6 +629,24 @@ export function SimulationProvider({
 			birthMax,
 			birthMargin,
 		);
+
+		const { updatedOrganisms, gridMutations } = processOrganisms(
+			gridRef.current,
+			organismsRef.current,
+			gridSize,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		);
+		if (gridMutations.length > 0) {
+			for (const [x, y, z, alive] of gridMutations) {
+				gridRef.current.set(x, y, z, alive);
+			}
+			gridRef.current.version++;
+		}
+		organismsRef.current = updatedOrganisms;
+		setOrganismsVersion(v => v + 1);
+
 		if (gridRef.current.getLivingCells().length === 0) {
 			setRunning(false);
 		}
@@ -608,6 +659,7 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
+		gridSize,
 	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
@@ -702,9 +754,54 @@ export function SimulationProvider({
 		() => cameraActionsRef.current?.fitDisplay(),
 		[],
 	);
+
 	const recenter = useCallback(
 		() => cameraActionsRef.current?.recenter(),
 		[],
+	);
+
+	const convertCommunityToOrganism = useCallback(
+		(communityCells: Array<[number, number, number]>) => {
+			if (communityCells.length === 0) return;
+
+			// Generate a unique name
+			let baseName =
+				ORGANISM_NAMES[Math.floor(Math.random() * ORGANISM_NAMES.length)];
+			let name = baseName;
+			let counter = 1;
+			const existingNames = new Set(
+				Array.from(organismsRef.current.values()).map(o => o.name),
+			);
+			while (existingNames.has(name)) {
+				counter++;
+				name = `${baseName} ${counter}`;
+			}
+
+			const livingCells = new Set(
+				communityCells.map(([x, y, z]) => makeKey(x, y, z)),
+			);
+			const cytoplasm = computeCytoplasm(
+				livingCells,
+				gridSize,
+				neighborFaces,
+				neighborEdges,
+				neighborCorners,
+			);
+			const skinColor = computeSkinColor(livingCells, gridSize);
+
+			const newOrganism: Organism = {
+				id: crypto.randomUUID(),
+				name,
+				livingCells,
+				cytoplasm,
+				skinColor,
+				initialLivingCells: new Set(livingCells),
+			};
+
+			organismsRef.current.set(newOrganism.id, newOrganism);
+			setOrganismsVersion(v => v + 1);
+		},
+		[gridSize, neighborFaces, neighborEdges, neighborCorners],
 	);
 
 	// Removed autoSquare leveling effect
@@ -743,6 +840,8 @@ export function SimulationProvider({
 			userName,
 			buildInfo,
 			showIntroduction,
+			organisms: organismsRef.current,
+			organismsVersion,
 		},
 		actions: {
 			setSpeed,
@@ -769,6 +868,7 @@ export function SimulationProvider({
 			setRollSpeed,
 			setUserName,
 			setShowIntroduction,
+			convertCommunityToOrganism,
 			playStop,
 			step,
 			stepBackward,
@@ -795,6 +895,7 @@ export function SimulationProvider({
 			eventBus: eventBusRef.current,
 			movement,
 			velocity,
+			organismsRef,
 		},
 	};
 
