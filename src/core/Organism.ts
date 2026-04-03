@@ -19,6 +19,11 @@ export interface Organism {
 	 * like "fluttering" between states.
 	 */
 	previousLivingCells: Set<string>;
+	/**
+	 * The living cells from the previous generation. Used for animations
+	 * like "fluttering" between states.
+	 */
+	previousLivingCells: Set<string>;
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
