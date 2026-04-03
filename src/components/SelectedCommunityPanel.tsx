@@ -419,21 +419,11 @@ export function SelectedCommunityPanel({
 								convertCommunityToOrganism(community);
 							}}
 						>
-							<svg
-								width='14'
-								height='14'
-								viewBox='0 0 24 24'
-								fill='none'
-								stroke='currentColor'
-								strokeWidth='2'
-								strokeLinecap='round'
-								strokeLinejoin='round'
-							>
-								<path d='m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z' />
-								<path d='m5 3 3 3' />
-								<path d='m19 17 3 3' />
-								<path d='m3 5 3-3' />
-								<path d='m17 19 3 3' />
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							  {/* Wand body */}
+							  <rect x="2" y="10" width="16" height="4" rx="1" fill="#333333"/>
+							  {/* Star tip */}
+							  <path d="M20 7.5L21.5 10L24 10.5L21.5 11L20 13.5L19 11L16.5 10.5L19 10L20 7.5Z" fill="#FFFFFF"/>
 							</svg>
 						</button>
 						<button
