@@ -372,21 +372,22 @@ export function SelectedCommunityPanel({
 	if (!isVisible) return null;
 
 	return (
-		<div
-			id='community-sidebar'
-			ref={panelRef}
-			className={`community-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}
-			style={{
-				position: 'fixed',
-				top: position.y,
-				left: position.x,
-				width: isCollapsed ? 'fit-content' : '25vw', // Set width based on collapsed state
-				minWidth: isCollapsed ? 'unset' : '220px', // Consistent min-width with BrushControls
-				maxWidth: isCollapsed ? 'unset' : '400px', // Optional: Add a max-width to prevent it from getting too wide
-				touchAction: 'none',
-				zIndex: 1000,
-			}}
-		>
+		<>
+			<div
+				id='community-sidebar'
+				ref={panelRef}
+				className={`community-sidebar glass-panel ${isCollapsed ? 'collapsed' : ''}`}
+				style={{
+					position: 'fixed',
+					top: position.y,
+					left: position.x,
+					width: isCollapsed ? 'fit-content' : '25vw', // Set width based on collapsed state
+					minWidth: isCollapsed ? 'unset' : '220px', // Consistent min-width with BrushControls
+					maxWidth: isCollapsed ? 'unset' : '400px', // Optional: Add a max-width to prevent it from getting too wide
+					touchAction: 'none',
+					zIndex: 1000,
+				}}
+			>
 			<header
 				className='sidebar-header'
 				style={{
@@ -426,7 +427,7 @@ export function SelectedCommunityPanel({
 
 			{!isCollapsed && (
 				<>
-					{community.length > 0 && ( // Add this conditional wrapper for the toolbar
+					{community.length > 0 && (
 						<div
 							className='community-toolbar' // New class for styling
 							style={{
