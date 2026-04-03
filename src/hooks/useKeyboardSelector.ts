@@ -1,9 +1,8 @@
+import { useThree } from "@react-three/fiber";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
 import { useBrush } from "../contexts/BrushContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { KEY_MAP, type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
 import { generateShape } from "../core/shapes";
 
 // This function is used by ShapePreview in Grid.tsx and useKeyboardSelector.
@@ -107,38 +106,93 @@ export function useKeyboardSelector(
     } else {
       // Shape painting logic (Space is already handled in handleKeyDown for single click)
       // but let's allow it to repainting during movement if held
-      const pos = new THREE.Vector3().subVectors(camera.position, cameraTargetRef.current);
+      const pos = new THREE.Vector3().subVectors(
+        camera.position,
+        cameraTargetRef.current,
+      );
       const radius = pos.length();
       const polar = radius === 0 ? 0 : Math.acos(pos.y / radius);
       const azimuth = radius === 0 ? 0 : Math.atan2(pos.x, pos.z);
       const offsets = generateShape(selectedShape, shapeSize, isHollow);
       const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
       const cells = rotatedOffsets
-        .map(([dx, dy, dz]) => [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [number, number, number])
-        .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        .map(
+          ([dx, dy, dz]) =>
+            [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [
+              number,
+              number,
+              number,
+            ],
+        )
+        .filter(
+          ([x, y, z]) =>
+            x >= 0 &&
+            x < gridSize &&
+            y >= 0 &&
+            y < gridSize &&
+            z >= 0 &&
+            z < gridSize,
+        );
       setCells(cells);
     }
-  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, setCells, setCell, camera, cameraTargetRef]);
+  }, [
+    selectorPos,
+    selectedShape,
+    shapeSize,
+    isHollow,
+    gridSize,
+    setCells,
+    setCell,
+    camera,
+    cameraTargetRef,
+  ]);
 
   // Handle continuous deleting with delete key held
   useEffect(() => {
     if (!selectorPos || !movement.current.delete) return;
 
     if (selectedShape !== "None") {
-      const pos = new THREE.Vector3().subVectors(camera.position, cameraTargetRef.current);
+      const pos = new THREE.Vector3().subVectors(
+        camera.position,
+        cameraTargetRef.current,
+      );
       const radius = pos.length();
       const polar = radius === 0 ? 0 : Math.acos(pos.y / radius);
       const azimuth = radius === 0 ? 0 : Math.atan2(pos.x, pos.z);
       const offsets = generateShape(selectedShape, shapeSize, isHollow);
       const rotatedOffsets = rotateOffsets(offsets, azimuth, polar);
       const cells = rotatedOffsets
-        .map(([dx, dy, dz]) => [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [number, number, number])
-        .filter(([x, y, z]) => x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize);
+        .map(
+          ([dx, dy, dz]) =>
+            [selectorPos[0] + dx, selectorPos[1] + dy, selectorPos[2] + dz] as [
+              number,
+              number,
+              number,
+            ],
+        )
+        .filter(
+          ([x, y, z]) =>
+            x >= 0 &&
+            x < gridSize &&
+            y >= 0 &&
+            y < gridSize &&
+            z >= 0 &&
+            z < gridSize,
+        );
       deleteCells(cells);
     } else {
       deleteCells([[selectorPos[0], selectorPos[1], selectorPos[2]]]);
     }
-  }, [selectorPos, selectedShape, shapeSize, isHollow, gridSize, deleteCells, camera, cameraTargetRef]);
+  }, [
+    selectorPos,
+    selectedShape,
+    shapeSize,
+    isHollow,
+    gridSize,
+    deleteCells,
+    camera,
+    cameraTargetRef,
+  ]);
 
   return { rotateOffsets };
 }

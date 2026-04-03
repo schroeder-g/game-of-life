@@ -9,16 +9,17 @@ import * as THREE from 'three';
 import '../../tests/setup-browser-env'; // Import the browser environment setup
 
 vi.mock('../../core/faceOrientationKeyMapping', () => {
-  const KEY_MAP = {
-    "front": {
-      0: { w: [0, 1, 0], x: [0, -1, 0], a: [-1, 0, 0], d: [1, 0, 0], q: [0, 0, -1], z: [0, 0, 1] }
-    },
-    "right": {
-      90: { w: [0, 0, 1], x: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], q: [-1, 0, 0], z: [1, 0, 0] }
+  const getWASDMapping = (face: string, rotation: number) => {
+    if (face === 'front' && rotation === 0) {
+      return { w: [0, 1, 0], x: [0, -1, 0], a: [-1, 0, 0], d: [1, 0, 0], q: [0, 0, -1], z: [0, 0, 1] };
     }
+    if (face === 'right' && rotation === 90) {
+      return { w: [0, 0, 1], x: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], q: [-1, 0, 0], z: [1, 0, 0] };
+    }
+    return { w: [0, 1, 0], x: [0, -1, 0], a: [-1, 0, 0], d: [1, 0, 0], q: [0, 0, -1], z: [0, 0, 1] };
   };
   return {
-    KEY_MAP,
+    getWASDMapping,
   };
 });
 

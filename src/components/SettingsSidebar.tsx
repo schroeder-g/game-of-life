@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePersistentState } from "../hooks/usePersistentState";
 
+import { useBrush } from "../contexts/BrushContext"; // Added
 import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { useBrush } from "../contexts/BrushContext"; // Added
 
+import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
+import {
+  type CameraFace,
+  type CameraRotation,
+  getWASDMapping,
+} from "../core/faceOrientationKeyMapping"; // Added
+import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
 import { DEFAULT_CONFIGS } from "../data/default-configs";
+import { MANUAL_TESTS } from "../data/manual-tests";
 import { AutomatedTestsPanel } from "./AutomatedTestsPanel";
 import { ManualTestsPanel } from "./ManualTestsPanel";
-import { MANUAL_TESTS } from "../data/manual-tests";
-import { AUTOMATED_TEST_IDS } from "../data/automated-tests";
-import { DOCUMENTATION_CONTENT } from "../data/documentation/_Documentation";
-import { type CameraFace, type CameraRotation, getWASDMapping } from "../core/faceOrientationKeyMapping"; // Added
-import { isAnyBrushCellInside } from "../core/brushUtils"; // Added
-import { ClaimHint } from "./ClaimHint";
-
 
 interface SettingsSidebarProps {
   isSmallScreen: boolean;
@@ -24,11 +25,21 @@ interface SettingsSidebarProps {
 function EnvironmentSection() {
   const {
     state: { gridSize, running, viewMode, density, cellMargin },
-    actions: { setGridSize, reset, clear, randomize, setDensity, setCellMargin },
+    actions: {
+      setGridSize,
+      reset,
+      clear,
+      randomize,
+      setDensity,
+      setCellMargin,
+    },
     meta: { gridRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_env", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_env",
+    true,
+  );
   const [hasLiveCells, setHasLiveCells] = useState(false);
 
   useEffect(() => {
@@ -42,10 +53,20 @@ function EnvironmentSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: 0,
+          paddingBottom: "8px",
+          marginBottom: isCollapsed ? 0 : "16px",
+        }}
       >
         Environment
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
       </h3>
       {!isCollapsed && (
         <>
@@ -72,7 +93,14 @@ function EnvironmentSection() {
             />
           </label>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              marginTop: "8px",
+            }}
+          >
             <div style={{ display: "flex", gap: "10px" }}>
               <button
                 className="glass-button"
@@ -88,25 +116,41 @@ function EnvironmentSection() {
                 style={{ flex: 1 }}
                 onClick={clear}
                 disabled={viewMode || !hasLiveCells}
-                title={viewMode ? "Switch to Edit mode to clear" : !hasLiveCells ? "No live cells to clear" : undefined}
+                title={
+                  viewMode
+                    ? "Switch to Edit mode to clear"
+                    : !hasLiveCells
+                      ? "No live cells to clear"
+                      : undefined
+                }
               >
                 Clear
               </button>
             </div>
 
             {!viewMode && (
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <div
+                style={{ display: "flex", gap: "10px", alignItems: "center" }}
+              >
                 <button
                   className="glass-button"
                   onClick={randomize}
                   disabled={viewMode || hasLiveCells}
-                  title={viewMode ? "Switch to Edit mode to randomize" : hasLiveCells ? "Clear board to randomize" : undefined}
+                  title={
+                    viewMode
+                      ? "Switch to Edit mode to randomize"
+                      : hasLiveCells
+                        ? "Clear board to randomize"
+                        : undefined
+                  }
                   style={{ flexShrink: 0 }}
                 >
                   Random
                 </button>
                 <label className="control-label" style={{ margin: 0, flex: 1 }}>
-                  <span style={{ fontSize: "12px" }}>Density: {density.toFixed(2)}</span>
+                  <span style={{ fontSize: "12px" }}>
+                    Density: {density.toFixed(2)}
+                  </span>
                   <input
                     type="range"
                     min={0.01}
@@ -125,12 +169,22 @@ function EnvironmentSection() {
   );
 }
 
-
 function RulesSection() {
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_rules", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_rules",
+    true,
+  );
   const {
-    state: { surviveMin, surviveMax, birthMin, birthMax, birthMargin,
-      neighborFaces, neighborEdges, neighborCorners },
+    state: {
+      surviveMin,
+      surviveMax,
+      birthMin,
+      birthMax,
+      birthMargin,
+      neighborFaces,
+      neighborEdges,
+      neighborCorners,
+    },
     actions: {
       setSurviveMin,
       setSurviveMax,
@@ -153,16 +207,45 @@ function RulesSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: 0,
+          paddingBottom: "8px",
+          marginBottom: isCollapsed ? 0 : "16px",
+        }}
       >
         Rules
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
       </h3>
       {!isCollapsed && (
         <>
-          <div className="neighbor-controls" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "#8b949e", flexWrap: "wrap", marginBottom: "8px" }}>
+          <div
+            className="neighbor-controls"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "13px",
+              color: "#8b949e",
+              flexWrap: "wrap",
+              marginBottom: "8px",
+            }}
+          >
             <span>Neighbors:</span>
-            <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                cursor: "pointer",
+                flexDirection: "row",
+              }}
+            >
               <input
                 type="checkbox"
                 className="glass-checkbox"
@@ -172,7 +255,15 @@ function RulesSection() {
               />
               Faces
             </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                cursor: "pointer",
+                flexDirection: "row",
+              }}
+            >
               <input
                 type="checkbox"
                 className="glass-checkbox"
@@ -182,7 +273,15 @@ function RulesSection() {
               />
               Edges
             </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", flexDirection: "row" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                cursor: "pointer",
+                flexDirection: "row",
+              }}
+            >
               <input
                 type="checkbox"
                 className="glass-checkbox"
@@ -256,9 +355,6 @@ function RulesSection() {
   );
 }
 
-
-
-
 function SelectorPositionSection() {
   const {
     state: { gridSize, cameraOrientation },
@@ -270,10 +366,16 @@ function SelectorPositionSection() {
   } = useBrush();
   const { selectorPos } = brushState;
 
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_cursor", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_cursor",
+    true,
+  );
 
   const deriveKeyMap = useCallback(() => {
-    if (cameraOrientation.face === 'unknown' || cameraOrientation.rotation === 'unknown') {
+    if (
+      cameraOrientation.face === "unknown" ||
+      cameraOrientation.rotation === "unknown"
+    ) {
       return {
         X: { inc: "D", dec: "A" },
         Y: { inc: "W", dec: "X" },
@@ -305,76 +407,88 @@ function SelectorPositionSection() {
 
   const keyMap = deriveKeyMap();
 
-  const getTopFace = (face: 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right', rotation: 0 | 90 | 180 | 270): string => {
+  const getTopFace = (
+    face: "front" | "back" | "top" | "bottom" | "left" | "right",
+    rotation: 0 | 90 | 180 | 270,
+  ): string => {
     switch (face) {
-      case 'front':
-      case 'back':
-        if (rotation === 0) return 'Top';
-        if (rotation === 90) return 'Left';
-        if (rotation === 180) return 'Bottom';
-        if (rotation === 270) return 'Right';
+      case "front":
+      case "back":
+        if (rotation === 0) return "Top";
+        if (rotation === 90) return "Left";
+        if (rotation === 180) return "Bottom";
+        if (rotation === 270) return "Right";
         break;
-      case 'right':
-        if (rotation === 0) return 'Top';
-        if (rotation === 90) return 'Back';
-        if (rotation === 180) return 'Bottom';
-        if (rotation === 270) return 'Front';
+      case "right":
+        if (rotation === 0) return "Top";
+        if (rotation === 90) return "Back";
+        if (rotation === 180) return "Bottom";
+        if (rotation === 270) return "Front";
         break;
-      case 'left':
-        if (rotation === 0) return 'Top';
-        if (rotation === 90) return 'Front';
-        if (rotation === 180) return 'Bottom';
-        if (rotation === 270) return 'Back';
+      case "left":
+        if (rotation === 0) return "Top";
+        if (rotation === 90) return "Front";
+        if (rotation === 180) return "Bottom";
+        if (rotation === 270) return "Back";
         break;
-      case 'top':
-        if (rotation === 0) return 'Back';
-        if (rotation === 90) return 'Left';
-        if (rotation === 180) return 'Front';
-        if (rotation === 270) return 'Right';
+      case "top":
+        if (rotation === 0) return "Back";
+        if (rotation === 90) return "Left";
+        if (rotation === 180) return "Front";
+        if (rotation === 270) return "Right";
         break;
-      case 'bottom':
-        if (rotation === 0) return 'Front';
-        if (rotation === 90) return 'Left';
-        if (rotation === 180) return 'Back';
-        if (rotation === 270) return 'Right';
+      case "bottom":
+        if (rotation === 0) return "Front";
+        if (rotation === 90) return "Left";
+        if (rotation === 180) return "Back";
+        if (rotation === 270) return "Right";
         break;
     }
-    return '';
+    return "";
   };
 
-  const handleCoordinateChange = useCallback((axis: "X" | "Y" | "Z", value: string) => {
-    if (!selectorPos) return;
-    const numValue = parseInt(value, 10);
-    if (isNaN(numValue) || numValue < 0 || numValue >= gridSize) {
-      return;
-    }
+  const handleCoordinateChange = useCallback(
+    (axis: "X" | "Y" | "Z", value: string) => {
+      if (!selectorPos) return;
+      const numValue = parseInt(value, 10);
+      if (isNaN(numValue) || numValue < 0 || numValue >= gridSize) {
+        return;
+      }
 
-    const newPos: [number, number, number] = [...selectorPos];
-    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
-    newPos[axisIndex] = numValue;
-    setSelectorPos(newPos);
-  }, [selectorPos, gridSize, setSelectorPos]);
+      const newPos: [number, number, number] = [...selectorPos];
+      const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
+      newPos[axisIndex] = numValue;
+      setSelectorPos(newPos);
+    },
+    [selectorPos, gridSize, setSelectorPos],
+  );
 
-  const increment = useCallback((axis: "X" | "Y" | "Z") => {
-    if (!selectorPos) return;
-    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
-    const currentValue = selectorPos[axisIndex];
-    if (currentValue < gridSize - 1) {
-      handleCoordinateChange(axis, String(currentValue + 1));
-    }
-  }, [selectorPos, gridSize, handleCoordinateChange]);
+  const increment = useCallback(
+    (axis: "X" | "Y" | "Z") => {
+      if (!selectorPos) return;
+      const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
+      const currentValue = selectorPos[axisIndex];
+      if (currentValue < gridSize - 1) {
+        handleCoordinateChange(axis, String(currentValue + 1));
+      }
+    },
+    [selectorPos, gridSize, handleCoordinateChange],
+  );
 
-  const decrement = useCallback((axis: "X" | "Y" | "Z") => {
-    if (!selectorPos) return;
-    const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
-    const currentValue = selectorPos[axisIndex];
-    if (currentValue > 0) {
-      handleCoordinateChange(axis, String(currentValue - 1));
-    }
-  }, [selectorPos, gridSize, handleCoordinateChange]);
+  const decrement = useCallback(
+    (axis: "X" | "Y" | "Z") => {
+      if (!selectorPos) return;
+      const axisIndex = { X: 0, Y: 1, Z: 2 }[axis];
+      const currentValue = selectorPos[axisIndex];
+      if (currentValue > 0) {
+        handleCoordinateChange(axis, String(currentValue - 1));
+      }
+    },
+    [selectorPos, gridSize, handleCoordinateChange],
+  );
 
   useEffect(() => {
-    const unsubscribe = eventBus.on('moveSelector', (payload) => {
+    const unsubscribe = eventBus.on("moveSelector", (payload) => {
       const { delta } = payload as { delta: [number, number, number] };
 
       // Get current selector position from brushState
@@ -387,13 +501,29 @@ function SelectorPositionSection() {
         currentPos[2] + delta[2],
       ];
 
-      const { selectedShape, shapeSize, isHollow, brushQuaternion, customOffsets } = brushState;
+      const {
+        selectedShape,
+        shapeSize,
+        isHollow,
+        brushQuaternion,
+        customOffsets,
+      } = brushState;
 
       let finalPos: [number, number, number];
       let moved = false;
 
       // Determine the final, allowed position for the cursor
-      if (isAnyBrushCellInside(nextPos, selectedShape, shapeSize, isHollow, brushQuaternion.current, gridSize, customOffsets)) {
+      if (
+        isAnyBrushCellInside(
+          nextPos,
+          selectedShape,
+          shapeSize,
+          isHollow,
+          brushQuaternion.current,
+          gridSize,
+          customOffsets,
+        )
+      ) {
         finalPos = nextPos;
         moved = true;
       } else {
@@ -421,17 +551,38 @@ function SelectorPositionSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 0, paddingBottom: 8, marginBottom: isCollapsed ? 0 : 16 }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          margin: 0,
+          paddingBottom: 8,
+          marginBottom: isCollapsed ? 0 : 16,
+        }}
       >
         <span>
           Cursor Position
-          {cameraOrientation.face !== 'unknown' && cameraOrientation.rotation !== 'unknown' && (
-            <span style={{ color: '#aaa', marginLeft: '8px', fontSize: '0.8em', fontWeight: 'normal' }}>
-              ({cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)}, {cameraOrientation.rotation}°)
-            </span>
-          )}
+          {cameraOrientation.face !== "unknown" &&
+            cameraOrientation.rotation !== "unknown" && (
+              <span
+                style={{
+                  color: "#aaa",
+                  marginLeft: "8px",
+                  fontSize: "0.8em",
+                  fontWeight: "normal",
+                }}
+              >
+                (
+                {cameraOrientation.face.charAt(0).toUpperCase() +
+                  cameraOrientation.face.slice(1)}
+                , {cameraOrientation.rotation}°)
+              </span>
+            )}
         </span>
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
       </h3>
       {!isCollapsed && (
         <div className="selector-position-section">
@@ -442,22 +593,16 @@ function SelectorPositionSection() {
                 <input
                   type="number"
                   className="coordinate-input"
-                  value={selectorPos ? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]] : ''}
+                  value={
+                    selectorPos ? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]] : ""
+                  }
                   onChange={(e) => handleCoordinateChange(axis, e.target.value)}
                   min={0}
                   max={gridSize - 1}
                 />
                 <div className="coord-buttons">
-                  <button
-                    onClick={() => increment(axis)}
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => decrement(axis)}
-                  >
-                    ▼
-                  </button>
+                  <button onClick={() => increment(axis)}>▲</button>
+                  <button onClick={() => decrement(axis)}>▼</button>
                 </div>
               </div>
               <div className="coord-hints">
@@ -472,20 +617,48 @@ function SelectorPositionSection() {
   );
 }
 
-
 function CameraControlSection() {
   const {
-    state: { panSpeed, rotationSpeed, rollSpeed, invertYaw, invertPitch, invertRoll, easeIn, easeOut },
-    actions: { setPanSpeed, setRotationSpeed, setRollSpeed, setInvertYaw, setInvertPitch, setInvertRoll, setEaseIn, setEaseOut },
+    state: {
+      panSpeed,
+      rotationSpeed,
+      rollSpeed,
+      invertYaw,
+      invertPitch,
+      invertRoll,
+      easeIn,
+      easeOut,
+    },
+    actions: {
+      setPanSpeed,
+      setRotationSpeed,
+      setRollSpeed,
+      setInvertYaw,
+      setInvertPitch,
+      setInvertRoll,
+      setEaseIn,
+      setEaseOut,
+    },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_camera", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_camera",
+    true,
+  );
 
   return (
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: 0,
+          paddingBottom: "8px",
+          marginBottom: isCollapsed ? 0 : "16px",
+        }}
       >
         Camera Controls
         <span style={{ fontSize: "12px", opacity: 0.6 }}>
@@ -625,7 +798,10 @@ function SceneManagementSection() {
     meta: { gridRef, initialStateRef },
   } = useSimulation();
 
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_scenes", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_scenes",
+    true,
+  );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sceneToDelete, setSceneToDelete] = useState<string | null>(null);
 
@@ -741,10 +917,20 @@ function SceneManagementSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: 0,
+          paddingBottom: "8px",
+          marginBottom: isCollapsed ? 0 : "16px",
+        }}
       >
         Scene Management
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
       </h3>
       {!isCollapsed && (
         <>
@@ -771,7 +957,11 @@ function SceneManagementSection() {
               className="glass-button"
               onClick={handleExportConfig}
               disabled={!newConfigName.trim() && !selectedConfigName}
-              title={!newConfigName.trim() && !selectedConfigName ? "Enter a Scene Name or select a scene to export" : ""}
+              title={
+                !newConfigName.trim() && !selectedConfigName
+                  ? "Enter a Scene Name or select a scene to export"
+                  : ""
+              }
             >
               Export
             </button>
@@ -800,14 +990,19 @@ function SceneManagementSection() {
                       onClick={() => setSceneToDelete(name)}
                     >
                       {name}
-                      {!!DEFAULT_CONFIGS[name] && <span style={{ fontSize: "10px", opacity: 0.5 }}>(Built-in)</span>}
+                      {!!DEFAULT_CONFIGS[name] && (
+                        <span style={{ fontSize: "10px", opacity: 0.5 }}>
+                          (Built-in)
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
 
                 {isBuiltIn && (
                   <div className="warning-text">
-                    You have selected a pre-installed scene. It will reappear the next time you refresh this app.
+                    You have selected a pre-installed scene. It will reappear
+                    the next time you refresh this app.
                   </div>
                 )}
 
@@ -844,7 +1039,10 @@ function SceneManagementSection() {
   );
 }
 
-export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: SettingsSidebarProps) {
+export function SettingsSidebar({
+  isSmallScreen,
+  setIsSettingsDropdownOpen,
+}: SettingsSidebarProps) {
   const {
     state: { running, viewMode, community, buildInfo },
     actions: {
@@ -854,10 +1052,20 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
       reset,
       randomize,
       clear,
-      setviewMode, applyCells, setSpeed, setDensity, setSurviveMin, setSurviveMax,
-      setBirthMin, setBirthMax, setBirthMargin, setCellMargin,
-      setNeighborFaces, setNeighborEdges, setNeighborCorners,
-      fitDisplay
+      setviewMode,
+      applyCells,
+      setSpeed,
+      setDensity,
+      setSurviveMin,
+      setSurviveMax,
+      setBirthMin,
+      setBirthMax,
+      setBirthMargin,
+      setCellMargin,
+      setNeighborFaces,
+      setNeighborEdges,
+      setNeighborCorners,
+      fitDisplay,
     },
   } = useSimulation();
   const {
@@ -877,41 +1085,54 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
     setIsSettingsDropdownOpen(!collapsed);
   }, [collapsed, setIsSettingsDropdownOpen]);
 
-
   // Ensure savedConfigs is an object before calling Object.keys
   const configOptions = savedConfigs ? Object.keys(savedConfigs) : [];
 
-  const handleSelectConfig = useCallback((name: string) => {
-    setSelectedConfigName(name);
-    if (name && savedConfigs[name]) {
-      const config = savedConfigs[name];
-      applyCells(config.cells, config.settings.gridSize);
-      // apply saved settings as well
-      setSpeed(config.settings.speed);
-      setDensity(config.settings.density);
-      setSurviveMin(config.settings.surviveMin);
-      setSurviveMax(config.settings.surviveMax);
-      setBirthMin(config.settings.birthMin);
-      setBirthMax(config.settings.birthMax);
-      setBirthMargin(config.settings.birthMargin);
-      setCellMargin(config.settings.cellMargin);
-      if (config.settings.neighborFaces !== undefined) {
-        setNeighborFaces(config.settings.neighborFaces);
+  const handleSelectConfig = useCallback(
+    (name: string) => {
+      setSelectedConfigName(name);
+      if (name && savedConfigs[name]) {
+        const config = savedConfigs[name];
+        applyCells(config.cells, config.settings.gridSize);
+        // apply saved settings as well
+        setSpeed(config.settings.speed);
+        setDensity(config.settings.density);
+        setSurviveMin(config.settings.surviveMin);
+        setSurviveMax(config.settings.surviveMax);
+        setBirthMin(config.settings.birthMin);
+        setBirthMax(config.settings.birthMax);
+        setBirthMargin(config.settings.birthMargin);
+        setCellMargin(config.settings.cellMargin);
+        if (config.settings.neighborFaces !== undefined) {
+          setNeighborFaces(config.settings.neighborFaces);
+        }
+        if (config.settings.neighborEdges !== undefined) {
+          setNeighborEdges(config.settings.neighborEdges);
+        }
+        if (config.settings.neighborCorners !== undefined) {
+          setNeighborCorners(config.settings.neighborCorners);
+        }
+        fitDisplay();
       }
-      if (config.settings.neighborEdges !== undefined) {
-        setNeighborEdges(config.settings.neighborEdges);
-      }
-      if (config.settings.neighborCorners !== undefined) {
-        setNeighborCorners(config.settings.neighborCorners);
-      }
-      fitDisplay();
-    }
-  }, [
-    setSelectedConfigName, savedConfigs, applyCells, setSpeed, setDensity,
-    setSurviveMin, setSurviveMax, setBirthMin, setBirthMax, setBirthMargin,
-    setCellMargin, setNeighborFaces, setNeighborEdges, setNeighborCorners,
-    fitDisplay
-  ]);
+    },
+    [
+      setSelectedConfigName,
+      savedConfigs,
+      applyCells,
+      setSpeed,
+      setDensity,
+      setSurviveMin,
+      setSurviveMax,
+      setBirthMin,
+      setBirthMax,
+      setBirthMargin,
+      setCellMargin,
+      setNeighborFaces,
+      setNeighborEdges,
+      setNeighborCorners,
+      fitDisplay,
+    ],
+  );
 
   useEffect(() => {
     if (!selectedConfigName && configOptions.length > 0) {
@@ -919,7 +1140,6 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
       handleSelectConfig(configOptions[1]);
     }
   }, [selectedConfigName, configOptions, handleSelectConfig]);
-
 
   // Add this new useEffect block:
   useEffect(() => {
@@ -932,18 +1152,29 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
     }
   }, [viewMode]);
 
-
-
   return (
     <>
       <aside
         className={`main-menu glass-panel ${community.length > 0 && !viewMode ? "has-sidebar" : ""} ${collapsed ? "collapsed" : ""}`}
         style={{ border: "none", padding: "20px" }}
       >
-        <div className="drop-down-menu" style={{ padding: '.6rem 1.2rem'}}>
-          <header className="menu-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: "pointer", borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.1)', paddingBottom: collapsed ? 0 : '16px', marginBottom: collapsed ? 0 : '16px' }}>
+        <div className="drop-down-menu" style={{ padding: ".6rem 1.2rem" }}>
+          <header
+            className="menu-header"
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              cursor: "pointer",
+              borderBottom: collapsed
+                ? "none"
+                : "1px solid rgba(255,255,255,0.1)",
+              paddingBottom: collapsed ? 0 : "16px",
+              marginBottom: collapsed ? 0 : "16px",
+            }}
+          >
             <h2 style={{ margin: 0 }}>Settings</h2>
-            <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: '8px' }}>{collapsed ? "▼" : "▲"}</span>
+            <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: "8px" }}>
+              {collapsed ? "▼" : "▲"}
+            </span>
           </header>
           {!collapsed && (
             <>
@@ -962,7 +1193,10 @@ export function SettingsSidebar({ isSmallScreen, setIsSettingsDropdownOpen }: Se
 }
 
 function TestsSection() {
-  const [isCollapsed, setIsCollapsed] = usePersistentState("gol_collapse_tests", true);
+  const [isCollapsed, setIsCollapsed] = usePersistentState(
+    "gol_collapse_tests",
+    true,
+  );
   const {
     state: { buildInfo },
   } = useSimulation();
@@ -975,10 +1209,20 @@ function TestsSection() {
     <section className="menu-section">
       <h3
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", margin: 0, paddingBottom: "8px", marginBottom: isCollapsed ? 0 : "16px" }}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          margin: 0,
+          paddingBottom: "8px",
+          marginBottom: isCollapsed ? 0 : "16px",
+        }}
       >
         Tests
-        <span style={{ fontSize: "12px", opacity: 0.6 }}>{isCollapsed ? "▼" : "▲"}</span>
+        <span style={{ fontSize: "12px", opacity: 0.6 }}>
+          {isCollapsed ? "▼" : "▲"}
+        </span>
       </h3>
       {!isCollapsed && (
         <div className="menu-scrollable-content">
@@ -986,11 +1230,7 @@ function TestsSection() {
             manualTests={MANUAL_TESTS}
             automatedTestIds={AUTOMATED_TEST_IDS}
           />
-          <AutomatedTestsPanel
-            manualTests={MANUAL_TESTS}
-            automatedTestIds={AUTOMATED_TEST_IDS}
-            documentation={DOCUMENTATION_CONTENT}
-          />
+          <AutomatedTestsPanel />
         </div>
       )}
     </section>

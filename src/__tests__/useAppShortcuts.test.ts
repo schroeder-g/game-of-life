@@ -8,10 +8,8 @@ import '../tests/setup-browser-env'; // Import the browser environment setup
 import * as THREE from 'three';
 
 vi.mock('../core/faceOrientationKeyMapping', () => {
-  const KEY_MAP = {
-    "front": {
-      0: { w: [0, 1, 0], x: [0, -1, 0], d: [1, 0, 0], a: [-1, 0, 0], q: [0, 0, 1], z: [0, 0, -1] }
-    }
+  const getWASDMapping = (face: any, rotation: any) => {
+    return { w: [0, 1, 0], x: [0, -1, 0], d: [1, 0, 0], a: [-1, 0, 0], q: [0, 0, 1], z: [0, 0, -1] };
   };
   const rotationLookup = {
     "front": {
@@ -20,10 +18,9 @@ vi.mock('../core/faceOrientationKeyMapping', () => {
   };
 
   return {
-    KEY_MAP,
-    rotationLookup,
+    getWASDMapping,
     getRotationAxis: (face: any, rotation: any, type: 'horizontal' | 'vertical' | 'roll') => {
-      const mapping = (KEY_MAP as any)[face][rotation];
+      const mapping = getWASDMapping(face, rotation);
       let axisArray;
       if (type === 'vertical') axisArray = mapping.d;
       else if (type === 'horizontal') axisArray = mapping.w;
