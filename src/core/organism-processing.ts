@@ -112,8 +112,8 @@ function isPositionValid(
 
 	for (const cytoKey of proposedCyto) {
 		const [cx, cy, cz] = parseKey(cytoKey);
-		// Boundary avoidance: cytoplasm must stay within grid
-		if (cx < 0 || cx >= gridSize || cy < 0 || cy >= gridSize || cz < 0 || cz >= gridSize)
+		// Boundary avoidance: cytoplasm must stay strictly within [1, gridSize-2]
+		if (cx <= 0 || cx >= gridSize - 1 || cy <= 0 || cy >= gridSize - 1 || cz <= 0 || cz >= gridSize - 1)
 			return false;
 		// Cytoplasm must not overlap any living cell outside this organism
 		if (grid.get(cx, cy, cz) && !proposedLivingSet.has(cytoKey)) return false;
