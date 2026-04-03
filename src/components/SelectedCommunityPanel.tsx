@@ -413,7 +413,6 @@ export function SelectedCommunityPanel({
 						<button
 							className={`icon-button ${matchingOrganism ? 'active' : ''}`}
 							title='Magic Wand: Convert to Organism'
-							disabled={birthMargin < 1 || !!matchingOrganism}
 							onClick={e => {
 								e.stopPropagation();
 								convertCommunityToOrganism(community);
