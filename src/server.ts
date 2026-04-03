@@ -5,7 +5,7 @@ import { watch } from 'fs';
 const packageJson = await Bun.file(
 	join(process.cwd(), 'package.json'),
 ).json();
-const baseVersion = packageJson.version;
+let baseVersion = packageJson.version;
 let buildTime = new Date().toISOString();
 
 let buildOutput: any;
