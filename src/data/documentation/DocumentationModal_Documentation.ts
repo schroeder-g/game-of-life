@@ -1,5 +1,5 @@
-import { DocItem } from "./_Documentation";
+import { DocItem } from './_Documentation';
 
 export const documentationModalDocumentation: DocItem[] = [
-  // documentation items will go here
+	// documentation items will go here
 ];

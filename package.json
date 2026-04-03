@@ -1,35 +1,38 @@
 {
-  "name": "game-of-life",
-  "version": "1.9.3",
-  "scripts": {
-    "dev": "bun --hot src/server.ts",
-    "build": "BUILD_DISTRIBUTION=${BUILD_DISTRIBUTION:-prod} BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) bun build src/public/index.tsx --outdir dist --define process.env.BUILD_DISTRIBUTION=\"\\\"$BUILD_DISTRIBUTION\\\"\" --define process.env.APP_VERSION=\"\\\"$(node -p 'require(\"./package.json\").version')\\\"\" --define process.env.BUILD_TIME=\"\\\"$BUILD_TIME\\\"\"",
-    "test": "vitest run --reporter=json --outputFile=src/public/automated-test-results.json || true",
-    "deploy": "./deploy.sh prod",
-    "deploy:test": "./deploy.sh test"
-  },
-  "dependencies": {
-    "@react-three/drei": "^9.88.0",
-    "@react-three/fiber": "^8.15.0",
-    "chroma-js": "^2.4.2",
-    "game-of-life": ".",
-    "lucide-react": "^1.6.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "three": "^0.159.0"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@types/bun": "latest",
-    "@types/chroma-js": "^2.4.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/three": "^0.159.0",
-    "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/ui": "^4.1.2",
-    "jsdom": "^29.0.1",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.1"
-  }
+	"name": "game-of-life",
+	"version": "1.9.3",
+	"scripts": {
+		"dev": "bun --hot src/server.ts",
+		"build": "BUILD_DISTRIBUTION=${BUILD_DISTRIBUTION:-prod} BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) bun build src/public/index.tsx --outdir dist --define process.env.BUILD_DISTRIBUTION=\"\\\"$BUILD_DISTRIBUTION\\\"\" --define process.env.APP_VERSION=\"\\\"$(node -p 'require(\"./package.json\").version')\\\"\" --define process.env.BUILD_TIME=\"\\\"$BUILD_TIME\\\"\"",
+		"test": "vitest run --reporter=json --outputFile=src/public/automated-test-results.json || true",
+		"lint": "biome lint --diagnostic-level=error .",
+		"format": "biome format --write .",
+		"deploy": "./deploy.sh prod",
+		"deploy:test": "./deploy.sh test"
+	},
+	"dependencies": {
+		"@react-three/drei": "^9.88.0",
+		"@react-three/fiber": "^8.15.0",
+		"chroma-js": "^2.4.2",
+		"game-of-life": ".",
+		"lucide-react": "^1.6.0",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"three": "^0.159.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.10",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@types/bun": "latest",
+		"@types/chroma-js": "^2.4.0",
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"@types/three": "^0.159.0",
+		"@vitejs/plugin-react": "^6.0.1",
+		"@vitest/ui": "^4.1.2",
+		"jsdom": "^29.0.1",
+		"typescript": "^5.0.0",
+		"vitest": "^4.1.1"
+	}
 }
