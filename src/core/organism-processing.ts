@@ -159,35 +159,30 @@ function rotateCellsAroundCentroid(
 }
 
 /**
- * Finds the flood-fill connected living cells starting from any seed cell
- * that was previously in the organism.
+ * Finds a single flood-fill connected component of living cells starting from a seed.
+ * Only considers cells present in `searchSpace`.
  */
-function floodFillConnected(
-	previousKeys: Set<string>,
-	allLivingKeys: Set<string>,
+function getConnectedComponent(
+	seedKey: string,
+	searchSpace: Set<string>, // The set of keys to search within (e.g., potentialNewLivingCells)
 	neighborFaces: boolean,
 	neighborEdges: boolean,
 	neighborCorners: boolean,
 ): Set<string> {
-	// Find seed: any previous cell still alive in grid
-	let seed: string | null = null;
-	for (const k of previousKeys) {
-		if (allLivingKeys.has(k)) {
-			seed = k;
-			break;
-		}
-	}
-	if (!seed) return new Set();
-
 	const result = new Set<string>();
-	const queue: string[] = [seed];
+	const queue: string[] = [seedKey];
+	const visited = new Set<string>(); // Track visited keys to prevent infinite loops and redundant processing
+
+	visited.add(seedKey);
+
 	while (queue.length > 0) {
-		const key = queue.pop()!;
-		if (result.has(key)) continue;
-		if (!allLivingKeys.has(key)) continue;
+		const key = queue.shift()!; // Use shift for BFS, pop for DFS. BFS is generally better for shortest path/component finding.
+		if (!searchSpace.has(key)) continue; // Only process if it's in the search space
+
 		result.add(key);
 
 		const [x, y, z] = parseKey(key);
+		// Iterate through neighbors
 		for (let dz = -1; dz <= 1; dz++) {
 			for (let dy = -1; dy <= 1; dy++) {
 				for (let dx = -1; dx <= 1; dx++) {
@@ -196,8 +191,10 @@ function floodFillConnected(
 					if (sum === 1 && !neighborFaces) continue;
 					if (sum === 2 && !neighborEdges) continue;
 					if (sum === 3 && !neighborCorners) continue;
+
 					const nk = makeKey(x + dx, y + dy, z + dz);
-					if (!result.has(nk) && allLivingKeys.has(nk)) {
+					if (searchSpace.has(nk) && !visited.has(nk)) {
+						visited.add(nk);
 						queue.push(nk);
 					}
 				}
@@ -233,17 +230,47 @@ export function processOrganisms(
 	}
 
 	for (const [id, organism] of organisms) {
-		// Step 1: Sync living cells via flood fill from the organism's previous position
-		const newLivingCells = floodFillConnected(
-			organism.previousLivingCells, // Changed from organism.livingCells
-			allLivingKeys,
-			neighborFaces,
-			neighborEdges,
-			neighborCorners,
-		);
+		// Define the organism's "territory" from the previous generation
+		// This includes its previous living cells AND its previous cytoplasm
+		const organismTerritory = new Set<string>([
+			...organism.livingCells, // These are the living cells from the *previous* tick
+			...organism.cytoplasm,   // This is the cytoplasm from the *previous* tick
+		]);
+
+		// Filter `allLivingKeys` (all live cells in the grid after the tick)
+		// to only include cells that are within the organism's previous territory.
+		const potentialNewLivingCells = new Set<string>();
+		for (const key of allLivingKeys) {
+			if (organismTerritory.has(key)) {
+				potentialNewLivingCells.add(key);
+			}
+		}
+
+		let largestComponent: Set<string> = new Set();
+		let visitedForComponents = new Set<string>(); // To track cells already processed into a component
+
+		// Find all connected components within potentialNewLivingCells and pick the largest
+		for (const seedKey of potentialNewLivingCells) {
+			if (!visitedForComponents.has(seedKey)) { // If this cell hasn't been part of a component yet
+				const component = getConnectedComponent(
+					seedKey,
+					potentialNewLivingCells, // Pass potentialNewLivingCells as the set to search within
+					neighborFaces,
+					neighborEdges,
+					neighborCorners,
+				);
+				if (component.size > largestComponent.size) {
+					largestComponent = component;
+				}
+				// Mark all cells in this component as visited to avoid re-processing
+				component.forEach(k => visitedForComponents.add(k));
+			}
+		}
+
+		const newLivingCells = largestComponent; // This is the new set of living cells for the organism
 
 		if (newLivingCells.size === 0) {
-			// Organism has no surviving cells — dissolve
+			// Organism has no surviving cells within its territory — dissolve
 			continue;
 		}
 
