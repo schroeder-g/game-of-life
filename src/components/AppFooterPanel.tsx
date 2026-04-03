@@ -24,26 +24,36 @@ export function AppFooterPanel({ userName, buildInfo }: AppFooterPanelProps) {
   return (
     <footer
       style={{
-        height: '100px', // Changed from 50px to 100px
-        backgroundColor: '#1a1a1a', // Dark background
-        color: '#ffffff', // White text
-        // Removed margin: '2vh' to prevent pushing content
+        position: 'sticky',
+        bottom: 0,
+        marginTop: '-100px', // Pulls the footer up over the scene
+        zIndex: 101,
+        height: '100px',
+        backgroundColor: 'rgba(26, 26, 26, 0.4)', // Translucent
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        color: '#ffffff',
         display: 'flex',
-        justifyContent: 'space-between', // Changed from 'left' to 'center'
+        justifyContent: 'space-between',
         alignItems: 'center',
-        fontSize: '0.9rem',
-        borderTop: '1px solid #333', // Subtle border at the top
-        flexShrink: 0, // Prevent shrinking
+        padding: '0 24px',
+        fontSize: '0.8rem',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Subtle border
+        flexShrink: 0,
+
       }}
     >
-      <p>Cube of Life © 2026 <br /> Alexander and David Gonçalves</p>
+      <div style={{ color: '#4f5b66', lineHeight: '1.8' }}>
+        Cube of Life © 2026<br />
+        <span style={{ display: 'inline-block', marginTop: '6px' }}>Alexander and David Gonçalves</span>
+      </div>
 
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
         {userName && buildInfo.distribution !== "prod" && (
           <div className="user-welcome" style={{ marginRight: '8px' }}>Welcome, {userName}!</div>
         )}
-        <div id="user-and-build" className="version-info" style={{ display: 'flex', alignItems: 'center' }}>
+        <div id="user-and-build" className="version-info" style={{ display: 'flex', alignItems: 'center',  fontSize: '0.8rem'}}>
           <a>
             Build: {buildInfo.version}
             {buildInfo.distribution !== "prod" && buildInfo.buildTime

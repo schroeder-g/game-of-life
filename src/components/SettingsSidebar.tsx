@@ -1072,18 +1072,11 @@ export function SettingsSidebar({
     state: { savedConfigs, selectedConfigName },
     actions: { setSelectedConfigName },
   } = useGenesisConfig();
-  const [collapsed, setCollapsed] = useState(() => {
-    // Default to collapsed if starting on small screen
-    if (typeof window !== "undefined") {
-      return window.innerWidth <= 768;
-    }
-    return false;
-  });
 
-  // Effect to communicate the collapsed state of the Settings dropdown to App.tsx
+  // Effect to communicate the open state of the Settings dropdown to App.tsx
   useEffect(() => {
-    setIsSettingsDropdownOpen(!collapsed);
-  }, [collapsed, setIsSettingsDropdownOpen]);
+    setIsSettingsDropdownOpen(true);
+  }, [setIsSettingsDropdownOpen]);
 
   // Ensure savedConfigs is an object before calling Object.keys
   const configOptions = savedConfigs ? Object.keys(savedConfigs) : [];
@@ -1155,37 +1148,28 @@ export function SettingsSidebar({
   return (
     <>
       <aside
-        className={`main-menu glass-panel ${community.length > 0 && !viewMode ? "has-sidebar" : ""} ${collapsed ? "collapsed" : ""}`}
+        className={`main-menu glass-panel ${community.length > 0 && !viewMode ? "has-sidebar" : ""}`}
         style={{ border: "none", padding: "20px" }}
       >
         <div className="drop-down-menu" style={{ padding: ".6rem 1.2rem" }}>
           <header
             className="menu-header"
-            onClick={() => setCollapsed(!collapsed)}
             style={{
-              cursor: "pointer",
-              borderBottom: collapsed
-                ? "none"
-                : "1px solid rgba(255,255,255,0.1)",
-              paddingBottom: collapsed ? 0 : "16px",
-              marginBottom: collapsed ? 0 : "16px",
+              borderBottom: "1px solid rgba(255,255,255,0.1)",
+              paddingBottom: "16px",
+              marginBottom: "16px",
             }}
           >
             <h2 style={{ margin: 0 }}>Settings</h2>
-            <span style={{ fontSize: "12px", opacity: 0.6, marginLeft: "8px" }}>
-              {collapsed ? "▼" : "▲"}
-            </span>
           </header>
-          {!collapsed && (
-            <>
-              {viewMode && <CameraControlSection />}
-              {!viewMode && <SceneManagementSection />}
-              {!viewMode && <EnvironmentSection />}
-              {!viewMode && <SelectorPositionSection />}
-              <RulesSection />
-              <TestsSection />
-            </>
-          )}
+          <>
+            {viewMode && <CameraControlSection />}
+            {!viewMode && <SceneManagementSection />}
+            {!viewMode && <EnvironmentSection />}
+            {!viewMode && <SelectorPositionSection />}
+            <RulesSection />
+            <TestsSection />
+          </>
         </div>
       </aside>
     </>

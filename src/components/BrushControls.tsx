@@ -129,30 +129,6 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-const ArrowFartherIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="5 -2 14 14"
-    fill="currentColor"
-    aria-label="ArrowFartherIcon"
-  >
-    <path d="M12 0 L5 14 L19 14 Z" />
-  </svg>
-);
-
-const ArrowCloserIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="5 -2 14 14"
-    fill="currentColor"
-    aria-label="ArrowCloserIcon"
-  >
-    <path d="M12 14 L5 0 L19 0 Z" />
-  </svg>
-);
-
 const AwayIcon = () => (
   <svg
     width="10"
@@ -376,7 +352,14 @@ export function BrushControls() {
     [cameraOrientation, eventBus],
   );
 
-  const [position, setPosition] = useState({ x: 10, y: 10 }); // Initial position
+  const [position, setPosition] = useState(() => {
+    if (typeof window !== "undefined") {
+      // Rough initial estimate for bottom-right to avoid top-left flicker
+      // assuming panel is roughly ~400px by ~200px
+      return { x: window.innerWidth - 420, y: window.innerHeight - 300 };
+    }
+    return { x: 10, y: 10 };
+  }); // Initial position
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
@@ -402,11 +385,12 @@ export function BrushControls() {
   useEffect(() => {
     if (panelRef.current) {
       const panelRect = panelRef.current.getBoundingClientRect();
-      const margin = 10; // 10px margin from edges
+      const marginX = 10; // 10px margin from side edge
+      const marginY = 110; // 10px margin + 100px height for the AppFooterPanel
 
-      // Calculate initial position to be bottom-right with a margin
-      const initialX = window.innerWidth - panelRect.width - margin;
-      const initialY = window.innerHeight - panelRect.height - margin;
+      // Calculate initial position to be bottom-right with margins
+      const initialX = window.innerWidth - panelRect.width - marginX;
+      const initialY = window.innerHeight - panelRect.height - marginY;
 
       setPosition({ x: initialX, y: initialY });
     }
@@ -421,7 +405,7 @@ export function BrushControls() {
         const minX = 10;
         const minY = 10;
         const maxX = window.innerWidth - panelRect.width - 10;
-        const maxY = window.innerHeight - panelRect.height - 10;
+        const maxY = window.innerHeight - panelRect.height - 110; // keep above footer
 
         // Use functional update to get the latest position state
         setPosition((prevPosition) => {
@@ -440,8 +424,21 @@ export function BrushControls() {
     };
 
     window.addEventListener("resize", handleResize);
+
+    // Watch for dynamic size changes (e.g., fonts loading or content expanding)
+    let resizeObserver: ResizeObserver | null = null;
+    if (panelRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(panelRef.current);
+    }
+
     return () => {
       window.removeEventListener("resize", handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
     };
   }, []); // Empty dependency array: listener is set up once and uses functional update for state
 
@@ -493,7 +490,7 @@ export function BrushControls() {
       const minX = 10;
       const minY = 10;
       const maxX = window.innerWidth - panelRect.width - 10;
-      const maxY = window.innerHeight - panelRect.height - 10;
+      const maxY = window.innerHeight - panelRect.height - 110; // keep above footer
 
       // Clamp the position relative to the viewport
       const clampedX = Math.max(minX, Math.min(newPanelLeft_viewport, maxX));
@@ -558,7 +555,7 @@ export function BrushControls() {
       const minX = 10;
       const minY = 10;
       const maxX = window.innerWidth - panelRect.width - 10;
-      const maxY = window.innerHeight - panelRect.height - 10;
+      const maxY = window.innerHeight - panelRect.height - 110; // keep above footer
 
       const clampedX = Math.max(minX, Math.min(newPanelLeft_viewport, maxX));
       const clampedY = Math.max(minY, Math.min(newPanelTop_viewport, maxY));
@@ -684,7 +681,7 @@ export function BrushControls() {
         width: "fit-content",
         minWidth: "220px",
         backgroundColor: "rgba(13, 17, 23, 0.8)", // Using a specific color with transparency
-        padding: "5px", // Reduced padding to make space for the header
+        padding: "16px", // Increased padding for better aesthetics
         boxShadow: "0 -2px 10px rgba(0,0,0,0.2)",
         zIndex: 1000,
         display: "flex",
@@ -701,8 +698,9 @@ export function BrushControls() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          paddingBottom: "5px",
+          paddingBottom: "12px",
           cursor: isDragging ? "grabbing" : "grab", // Cursor for dragging header
+          userSelect: "none", // Prevent highlighting when dragging
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -721,6 +719,7 @@ export function BrushControls() {
           id="brush-effect-label"
           style={{
             marginRight: "17px",
+            marginLeft: "4px", // Add space between shape and effect
             fontWeight: "bold",
             color: "#FFA500", // Subtler orange color for text
             cursor: "inherit", // Inherit cursor from parent for dragging
@@ -750,13 +749,13 @@ export function BrushControls() {
       {isContentVisible && (
         <>
           <div
-            className="dropdown-item dropup"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat7, 1fr)", // Reduced to 6 columns
+              gridTemplateColumns: "auto auto auto auto 15px auto", // Columns size to content, with a 15px spacer in column 5
               gridTemplateRows: "repeat(4, auto)", // Adjusted rows for compactness
-              gap: "5px",
+              gap: "8px", // Slightly increased gap between controls
               alignItems: "center",
+              userSelect: "none", // Prevent highlighting buttons
             }}
             aria-label="Brush Controls Grid" // Added for accessibility in tests
           >
@@ -776,7 +775,7 @@ export function BrushControls() {
                   <div
                     className="brush-size-control"
                     style={{
-                      gridColumn: "2/5",
+                      gridColumn: "2 / 5",
                       gridRow: "1 / 2",
                       width: "unset",
                       visibility: showSizeControls ? "visible" : "hidden",
@@ -800,8 +799,8 @@ export function BrushControls() {
                   <label
                     className="control-label row"
                     style={{
-                      gridColumn: "1  / 1",
-                      gridRow: "2 / 2",
+                      gridColumn: "1 / 5",
+                      gridRow: "2 / 3",
                       margin: 0,
                       display: "flex",
                       alignItems: "center",
@@ -827,7 +826,7 @@ export function BrushControls() {
 
             <div
               style={{
-                gridColumn: "6/7",
+                gridColumn: "6 / 7",
                 gridRow: "1 / 2",
                 display: "flex",
                 gap: "5px",
@@ -854,7 +853,7 @@ export function BrushControls() {
             {/* UP */}
             <div
               style={{
-                gridColumn: "3 / 3",
+                gridColumn: "3 / 4",
                 gridRow: "2 / 3",
                 display: "flex",
                 justifyContent: "center",
@@ -878,7 +877,7 @@ export function BrushControls() {
             {/* DOWN */}
             <div
               style={{
-                gridColumn: "3 / 3",
+                gridColumn: "3 / 4",
                 gridRow: "4 / 5",
                 display: "flex",
                 justifyContent: "center",
@@ -902,7 +901,7 @@ export function BrushControls() {
             {/* LEFT */}
             <div
               style={{
-                gridColumn: "2/2",
+                gridColumn: "2 / 3",
                 gridRow: "3 / 4",
                 display: "flex",
                 justifyContent: "center",
@@ -926,7 +925,7 @@ export function BrushControls() {
             {/* RIGHT */}
             <div
               style={{
-                gridColumn: "4 / 4",
+                gridColumn: "4 / 5",
                 gridRow: "3 / 4",
                 display: "flex",
                 justifyContent: "center",

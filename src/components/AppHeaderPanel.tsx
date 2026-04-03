@@ -1,16 +1,14 @@
-import React, { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBrush } from "../contexts/BrushContext";
+import { useGenesisConfig } from "../contexts/GenesisConfigContext";
 import { useSimulation } from "../contexts/SimulationContext";
-import { type CameraFace, type CameraRotation } from "../core/faceOrientationKeyMapping";
-import { type ShapeType } from "../core/shapes";
+import { useClickOutside } from "../hooks/useClickOutside";
+import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 import { DocumentationModal } from "./DocumentationModal";
 import { IntroductionModal } from "./IntroductionModal";
-import { ShortcutOverlay } from "./ShortcutOverlay";
-import { useClickOutside } from "../hooks/useClickOutside";
-import { useGenesisConfig } from "../contexts/GenesisConfigContext";
-import { AppHeaderPanelButtons } from "./AppHeaderPanelButtons";
 import { ReleaseNotesModal } from "./ReleaseNotesModal";
 import { SelectedCommunityPanel } from "./SelectedCommunityPanel"; // Import the new panel
+import { ShortcutOverlay } from "./ShortcutOverlay";
 
 function SimulationStats() {
   const {
@@ -32,13 +30,14 @@ function SimulationStats() {
       });
     };
 
-    const unsubscribe = gridRef.current.on('tick', updateStats);
+    const unsubscribe = gridRef.current.on("tick", updateStats);
     return () => unsubscribe();
   }, [gridRef.current]); // Depend on the current Grid3D instance
 
   return (
     <div className="simulation-stats-display">
-      Generation: {stats.generation} Cells: {stats.cells} {running ? 'Running' : 'Paused'}
+      Generation: {stats.generation} Cells: {stats.cells}{" "}
+      {running ? "Running" : "Paused"}
     </div>
   );
 }
@@ -48,10 +47,38 @@ interface AppHeaderPanelProps {
   setShowSettingsSidebar: (show: boolean) => void;
 }
 
-export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: AppHeaderPanelProps) {
+export function AppHeaderPanel({
+  showSettingsSidebar,
+  setShowSettingsSidebar,
+}: AppHeaderPanelProps) {
   const {
-    state: { running, viewMode, hasInitialState, hasPastHistory, cameraOrientation, userName, buildInfo, squareUp, isSquaredUp, speed, gridSize, showIntroduction, community }, // Added community
-    actions: { playStop, step, stepBackward, reset, setviewMode, fitDisplay, recenter, setSquareUp, setSpeed, setShowIntroduction },
+    state: {
+      running,
+      viewMode,
+      hasInitialState,
+      hasPastHistory,
+      cameraOrientation,
+      userName,
+      buildInfo,
+      squareUp,
+      isSquaredUp,
+      speed,
+      gridSize,
+      showIntroduction,
+      community,
+    }, // Added community
+    actions: {
+      playStop,
+      step,
+      stepBackward,
+      reset,
+      setviewMode,
+      fitDisplay,
+      recenter,
+      setSquareUp,
+      setSpeed,
+      setShowIntroduction,
+    },
     meta: { cameraActionsRef, eventBus }, // Added eventBus
   } = useSimulation();
   const {
@@ -59,7 +86,9 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
     actions: { setPaintMode, setShapeSize, setIsHollow },
   } = useBrush();
   const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
-  const { state: { selectedConfigName } } = useGenesisConfig();
+  const {
+    state: { selectedConfigName },
+  } = useGenesisConfig();
 
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -70,12 +99,15 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
 
   useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
 
-  const faceName = cameraOrientation.face !== 'unknown'
-    ? cameraOrientation.face.charAt(0).toUpperCase() + cameraOrientation.face.slice(1)
-    : 'Unknown';
-  const rotationDegrees = cameraOrientation.rotation !== 'unknown'
-    ? `${cameraOrientation.rotation}°`
-    : '0°';
+  const faceName =
+    cameraOrientation.face !== "unknown"
+      ? cameraOrientation.face.charAt(0).toUpperCase() +
+        cameraOrientation.face.slice(1)
+      : "Unknown";
+  const rotationDegrees =
+    cameraOrientation.rotation !== "unknown"
+      ? `${cameraOrientation.rotation}°`
+      : "0°";
 
   const handleOpenDocumentation = useCallback(() => {
     setShowDocumentation(true);
@@ -87,7 +119,8 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
     setIsHelpDropdownOpen(false);
   }, [setShowIntroduction]);
 
-  const handleOpenShortcuts = useCallback(() => { // New handler for shortcuts
+  const handleOpenShortcuts = useCallback(() => {
+    // New handler for shortcuts
     setShowShortcuts(true);
     setIsHelpDropdownOpen(false);
   }, []);
@@ -98,12 +131,12 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
   }, []);
 
   const toggleCommunityPanel = useCallback(() => {
-    setShowCommunityPanel(prev => !prev);
+    setShowCommunityPanel((prev) => !prev);
   }, []);
 
   // Listen for 'showCommunityPanel' event from BrushControls
   useEffect(() => {
-    const unsubscribe = eventBus.on('showCommunityPanel', (show) => {
+    const unsubscribe = eventBus.on("showCommunityPanel", (show) => {
       setShowCommunityPanel(show);
     });
     return () => unsubscribe();
@@ -120,7 +153,6 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
     <div className="app-header-panel">
       <div className="title-section">
         <h1>Cube of Life</h1>
-
       </div>
 
       <div className="cube-status-panel">
@@ -131,9 +163,7 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
           Face: {faceName}, {rotationDegrees}
         </div>
         {!viewMode && (
-          <div className="shape-status">
-            Shape: {selectedShape}
-          </div>
+          <div className="shape-status">Shape: {selectedShape}</div>
         )}
         <SimulationStats />
       </div>
@@ -156,7 +186,6 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
         recenter={recenter}
         setSquareUp={setSquareUp}
         setSpeed={setSpeed}
-
         selectedShape={selectedShape}
         paintMode={paintMode}
         shapeSize={shapeSize}
@@ -164,7 +193,6 @@ export function AppHeaderPanel({ showSettingsSidebar, setShowSettingsSidebar }: 
         setPaintMode={setPaintMode}
         setShapeSize={setShapeSize}
         setIsHollow={setIsHollow}
-
         isHelpDropdownOpen={isHelpDropdownOpen}
         setIsHelpDropdownOpen={setIsHelpDropdownOpen}
         helpDropdownRef={helpDropdownRef}
