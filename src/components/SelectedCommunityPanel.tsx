@@ -421,12 +421,12 @@ export function SelectedCommunityPanel({
 						>
 							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 							  {/* Outer circle */}
-							  <circle cx="12" cy="12" r="10" stroke="#333333" strokeWidth="2" fill="none"/>
+							  <circle cx="12" cy="12" r="10" stroke="silver" strokeWidth="2" fill="none"/>
 							  {/* Clump of smaller circles */}
-							  <circle cx="10" cy="10" r="3" fill="#333333"/>
-							  <circle cx="15" cy="11" r="2.5" fill="#333333"/>
-							  <circle cx="12" cy="15" r="2" fill="#333333"/>
-							  <circle cx="8" cy="14" r="1.5" fill="#333333"/>
+							  <circle cx="10" cy="10" r="3" fill="silver"/>
+							  <circle cx="15" cy="11" r="2.5" fill="silver"/>
+							  <circle cx="12" cy="15" r="2" fill="silver"/>
+							  <circle cx="8" cy="14" r="1.5" fill="silver"/>
 							</svg>
 						</button>
 						<button
