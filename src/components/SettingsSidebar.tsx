@@ -799,6 +799,8 @@ function SceneManagementSection() {
 			birthMargin,
 			cellMargin,
 			gridSize,
+			organisms, // ADD THIS LINE
+			organismsVersion, // ADD THIS LINE
 		},
 		actions: {
 			applyCells,
@@ -842,6 +844,7 @@ function SceneManagementSection() {
 					initialStateRef.current.length > 0
 						? initialStateRef.current
 						: gridRef.current.getLivingCells(),
+				organisms: Array.from(organisms.values()), // ADD THIS LINE
 				settings: {
 					speed,
 					density,
@@ -859,6 +862,8 @@ function SceneManagementSection() {
 		[
 			initialStateRef,
 			gridRef,
+			organisms, // ADD THIS DEPENDENCY
+			organismsVersion, // ADD THIS DEPENDENCY
 			speed,
 			density,
 			surviveMin,
