@@ -563,7 +563,7 @@ export function SimulationProvider({
 				newOrganisms.set(organism.id, {
 					...organism,
 					livingCells: newLivingCells,
-					initialLivingCells: newLivingCells,
+					previousLivingCells: organism.livingCells, // The old cells become the previous
 					cytoplasm: newCytoplasm,
 					skinColor: newSkinColor,
 				});
@@ -805,7 +805,7 @@ export function SimulationProvider({
 				livingCells,
 				cytoplasm,
 				skinColor,
-				initialLivingCells: new Set(livingCells),
+				previousLivingCells: new Set(livingCells),
 			};
 
 			organismsRef.current.set(newOrganism.id, newOrganism);

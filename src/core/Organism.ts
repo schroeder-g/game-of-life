@@ -15,10 +15,10 @@ export interface Organism {
 	/** Hex color string, average of living cell colors. */
 	skinColor: string;
 	/**
-	 * The living cells as of generation 0 (when the organism was created or
-	 * when the simulation was at gen 0). Used to restore after grid.reset().
+	 * The living cells from the previous generation. Used for animations
+	 * like "fluttering" between states.
 	 */
-	initialLivingCells: Set<string>;
+	previousLivingCells: Set<string>;
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
