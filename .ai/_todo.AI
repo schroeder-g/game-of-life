@@ -6,7 +6,6 @@ Obey GENERAL RULES, at end.
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
-*   **TODO-062:** Create `src/data/organism-names.ts` with 100 unique names and implement unique name assignment logic. (Related to Organisms.AI: Naming)
 *   **TODO-063:** Implement organism restoration on `reset()` and dissolution on `clear()` and `grid size changed`. (Related to Organisms.AI: Organism Lifecycle)
 *   **TODO-064:** Create `src/components/OrganismSkins.tsx` and mount it in `Grid.tsx` to render organism skins. (Related to Organisms.AI: Skin Rendering)
 *   **TODO-066:** Add tooltip to Magic Wand button in `SelectedCommunityPanel.tsx` when `birthMargin < 1`. (Related to Organisms.AI: Creating an Organism - UI Trigger)
@@ -16,6 +15,7 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
 
 ********COMPLETED ITEMS ************
+*   **TODO-062:** [COMPLETED] Create `src/data/organism-names.ts` with 100 unique names and implement unique name assignment logic. (Related to Organisms.AI: Naming)
 *   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
 *   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
 *   **TODO-060:** [COMPLETED] Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3)
