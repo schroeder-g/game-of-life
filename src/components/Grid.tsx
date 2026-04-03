@@ -669,7 +669,7 @@ export function Scene() {
 	const {
 		state,
 		actions,
-		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef },
+		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef, organismsRef },
 	} = useSimulation();
 	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp } =
 		actions;
