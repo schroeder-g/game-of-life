@@ -1,4 +1,6 @@
-(See GENERAL RULES )
+Obey GENERAL RULES, at end.
+
+
 
 
 **RECOMMENDED SEQUENCE**
@@ -77,4 +79,4 @@ or ClaimHint.
 
 When I tell you a file does not need end-user documentation, then update that file with a flag that tells you not to force it to be documented. 
 
-COMPLETED items should be moved to the COMPLETED ITEMS section
+COMPLETED items should be moved to the COMPLETED ITEMS section (PREPEND)
