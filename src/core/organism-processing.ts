@@ -66,6 +66,15 @@ function translateCells(cells: Array<[number, number, number]>, dx: number, dy: 
 	return cells.map(([x, y, z]) => [Math.round(x + dx), Math.round(y + dy), Math.round(z + dz)]);
 }
 
+function isCellsOutOfBounds(cells: Array<[number, number, number]>, gridSize: number): boolean {
+    for (const [x, y, z] of cells) {
+        if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function getConnectedComponent(seedKey: string, searchSpace: Set<string>): Set<string> {
 	const result = new Set<string>();
 	const queue: string[] = [seedKey];
@@ -206,93 +215,105 @@ export function processOrganisms(
 			// 1. POINTING AT WALL (dot > 0.15)
 			if (dot > 0.15) {
 				const previousCells = Array.from(organism.previousLivingCells).map(parseKey);
-					// --- RETREAT: Move back from the wall by 1/2 of its largest dimension ---
-					const { largestDim } = getBoundingBoxDimensions(currentCells);
-					const retreatDistance = Math.ceil(largestDim / 2); // Round up to ensure sufficient retreat
+				
+				// Step 1: Start with the organism's previous valid position (or current if no previous)
+				// This ensures we revert to a known good state before attempting complex maneuvers.
+				let cellsForProcessing = previousCells.length > 0 ? previousCells : currentCells;
+				let centroidForRotation = getCentroid(cellsForProcessing);
+				let currentTravelVector = [...travelVector]; // Use the current travel vector for rotation
 
-					// Calculate retreat vector opposite to overlapNormal
-					const retreatVector: [number, number, number] = [
-						-Math.sign(overlapNormal[0]) * retreatDistance,
-						-Math.sign(overlapNormal[1]) * retreatDistance,
-						-Math.sign(overlapNormal[2]) * retreatDistance,
-					];
-
-					const retreatedCells = translateCells(currentCells, retreatVector[0], retreatVector[1], retreatVector[2]);
-
-					// Check if the retreated position is valid (within bounds and no collisions with other organisms)
-					// Note: We don't check for self-collision here, as the organism is moving its entire body.
-					// We also don't check for cytoplasm collision yet, as this is just a temporary retreat for pivoting.
-					// The full validity check will happen after rotation and forward step.
-					let retreatValid = true;
-					for (const [x, y, z] of retreatedCells) {
-						if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
-							retreatValid = false;
-							break;
-						}
-						// No need to check collision with other organisms here, as the organism is just moving itself.
-						// The main `isPositionValid` check later will handle this for the final proposed position.
-					}
-
-					if (retreatValid) {
-						nextCells = retreatedCells;
-						currentCentroid = getCentroid(nextCells); // Update centroid for rotation
-						console.log(`[NAV] ID:${id} retreated by ${retreatDistance} units. New centroid: [${currentCentroid.map(c => c.toFixed(1)).join(',')}]`);
-					} else {
-						// If retreat is not valid (e.g., pushes it out of bounds on the other side),
-						// fall back to previous cells or current cells if no previous.
-						const previousCells = Array.from(organism.previousLivingCells).map(parseKey);
-						if (previousCells.length > 0) {
-							nextCells = previousCells;
-							currentCentroid = getCentroid(nextCells);
-							console.log(`[NAV] ID:${id} retreat failed, falling back to previous cells.`);
-						} else {
-							nextCells = currentCells; // Stay put if no previous and retreat fails
-							console.log(`[NAV] ID:${id} retreat failed, staying put.`);
-						}
-					}
-
+				// Step 2: Determine the rotation needed to point towards the furthest adjacent wall
 				const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
 				const absNorm = [Math.abs(overlapNormal[0]), Math.abs(overlapNormal[1]), Math.abs(overlapNormal[2])];
-				const wallAxisIdx = absNorm.indexOf(Math.max(...absNorm));
+				const wallAxisIdx = absNorm.indexOf(Math.max(...absNorm)); // Identify the primary axis of the wall
 				const wallAxis = axes[wallAxisIdx];
-				const parallelAxes = axes.filter(a => a !== wallAxis);
-				
-				let bestParallel: [number, number, number] = [0, 0, 0];
+				const parallelAxes = axes.filter(a => a !== wallAxis); // Axes parallel to the wall
+
+				let bestParallelDirection: [number, number, number] = [0, 0, 0];
 				let maxDist = -1;
 
+				// Find the parallel direction that points towards the largest open space
 				for (const axis of parallelAxes) {
 					const idx = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
-					const distPos = (gridSize - 1) - currentCentroid[idx];
-					const distNeg = currentCentroid[idx];
+					const distPos = (gridSize - 1) - centroidForRotation[idx]; // Distance to positive boundary
+					const distNeg = centroidForRotation[idx]; // Distance to negative boundary
 					const currentMax = Math.max(distPos, distNeg);
 					
-					// PRIORITIZE Y-AXIS (Top) for equal or near-equal distances
+					// Prioritize Y-axis (up) for equal or near-equal distances to encourage upward movement
 					const weight = (axis === 'y') ? 1.2 : 1.0;
 					if (currentMax * weight > maxDist) {
 						maxDist = currentMax * weight;
-						bestParallel = [0, 0, 0];
-						bestParallel[idx] = distPos > distNeg ? 1 : -1;
+						bestParallelDirection = [0, 0, 0];
+						bestParallelDirection[idx] = distPos > distNeg ? 1 : -1; // Set direction (1 or -1)
 					}
 				}
 
-				console.log(`[NAV] ID:${id} pivoting towards: [${bestParallel.join(',')}] (Dist: ${maxDist.toFixed(1)})`);
+				console.log(`[NAV] ID:${id} pivoting towards: [${bestParallelDirection.join(',')}] (Dist: ${maxDist.toFixed(1)})`);
 
+				let rotatedCellsCandidate = [...cellsForProcessing];
+				let rotatedTravelVectorCandidate = [...currentTravelVector];
+				let rotationApplied = false;
+
+				// Attempt to rotate the organism's cells and travel vector
 				for (const axis of (['x', 'y', 'z'] as const)) {
 					for (const angle of ([90, 270] as const)) { // Only consider 90-degree rotations
-						const rv = rotateVector(travelVector as [number, number, number], axis, angle);
+						const rv = rotateVector(currentTravelVector as [number, number, number], axis, angle);
 						const rvVec = new THREE.Vector3(...rv);
-						if (rvVec.dot(new THREE.Vector3(...bestParallel)) > 0.6) {
-							nextCells = rotateCells(nextCells, axis, angle, getCentroid(nextCells));
-							nextVector = rv;
+						// Check if the rotated vector aligns with the best parallel direction
+						if (rvVec.dot(new THREE.Vector3(...bestParallelDirection)) > 0.6) {
+							rotatedCellsCandidate = rotateCells(cellsForProcessing, axis, angle, centroidForRotation);
+							rotatedTravelVectorCandidate = rv;
+							rotationApplied = true;
 							break;
 						}
 					}
+					if (rotationApplied) break;
 				}
 
-				const proposed = translateCells(nextCells, nextVector[0], nextVector[1], nextVector[2]);
-				if (isPositionValid(proposed, otherOrgCells, gridSize)) {
-					nextCells = proposed;
+				// Step 3: Determine if retreat is needed after rotation
+				let finalProposedCells = rotatedCellsCandidate;
+				let retreatNeeded = isCellsOutOfBounds(rotatedCellsCandidate, gridSize);
+
+				if (retreatNeeded) {
+					console.log(`[NAV] ID:${id} rotated cells are out of bounds, calculating retreat.`);
+					// Calculate the precise retreat distance so cytoplasm grazes the wall
+					const rotatedCytoplasm = computeCytoplasm(new Set(rotatedCellsCandidate.map(c => makeKey(...c))), gridSize);
+					const { minX, maxX, minY, maxY, minZ, maxZ } = getBoundingBoxDimensions(Array.from(rotatedCytoplasm).map(parseKey));
+
+					let retreat_dx = 0, retreat_dy = 0, retreat_dz = 0;
+
+					// Determine the translation needed for each axis based on the overlap normal
+					// If overlapNormal[0] > 0, it means the organism was hitting the positive X wall (gridSize-1).
+					// We want the maximum X coordinate of its cytoplasm to be exactly (gridSize-1).
+					if (overlapNormal[0] > 0) retreat_dx = (gridSize - 1) - maxX;
+					// If overlapNormal[0] < 0, it means the organism was hitting the negative X wall (0).
+					// We want the minimum X coordinate of its cytoplasm to be exactly 0.
+					if (overlapNormal[0] < 0) retreat_dx = 0 - minX;
+
+					if (overlapNormal[1] > 0) retreat_dy = (gridSize - 1) - maxY;
+					if (overlapNormal[1] < 0) retreat_dy = 0 - minY;
+
+					if (overlapNormal[2] > 0) retreat_dz = (gridSize - 1) - maxZ;
+					if (overlapNormal[2] < 0) retreat_dz = 0 - minZ;
+
+					// Apply the calculated retreat translation
+					finalProposedCells = translateCells(rotatedCellsCandidate, retreat_dx, retreat_dy, retreat_dz);
+				} else {
+					console.log(`[NAV] ID:${id} rotated cells are in bounds, no retreat needed.`);
+				}
+
+				// Step 4: Validate the final proposed position (after rotation and potential retreat)
+				if (isPositionValid(finalProposedCells, otherOrgCells, gridSize)) {
+					nextCells = finalProposedCells;
+					travelVector = rotatedTravelVectorCandidate; // Update travelVector to the newly rotated one
 					moveChosen = true;
+					currentCentroid = getCentroid(nextCells); // Update centroid for the final position
+					console.log(`[NAV] ID:${id} rotated and potentially retreated. Final centroid: [${currentCentroid.map(c => c.toFixed(1)).join(',')}]`);
+				} else {
+					console.log(`[NAV] ID:${id} rotation/retreat failed, staying put.`);
+					// If the final position is not valid (e.g., pushed into another organism),
+					// the organism effectively stays in its original position for this tick.
+					// `nextCells` and `travelVector` will retain their values from before this wall avoidance attempt.
 				}
 			}
 			// 2. PARALLEL TO WALL (Math.abs(dot) <= 0.15)
