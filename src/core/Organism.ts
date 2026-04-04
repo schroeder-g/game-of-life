@@ -36,29 +36,17 @@ export function makeKey(x: number, y: number, z: number): string {
 
 /**
  * Computes the Cytoplasm (1-cell-deep buffer) for a set of living cells.
- * Uses the provided neighbor rules.
+ * Always uses all 26 neighbor directions (Faces, Edges, and Corners).
  */
 export function computeCytoplasm(
 	livingCells: Set<string>,
 	gridSize: number,
-	neighborFaces: boolean,
-	neighborEdges: boolean,
-	neighborCorners: boolean,
 ): Set<string> {
 	const cytoplasm = new Set<string>();
 	const livingCellsArray = Array.from(livingCells).map(parseKey);
 
-	// Create a temporary grid to easily check for living cells
-	const tempGrid = Array.from({ length: gridSize }, () =>
-		Array.from({ length: gridSize }, () =>
-			Array.from({ length: gridSize }, () => false),
-		),
-	);
-	livingCellsArray.forEach(([x, y, z]) => {
-		if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize) {
-			tempGrid[z][y][x] = true;
-		}
-	});
+	// Create a temporary grid for O(1) lookups
+	const tempGrid = new Set(livingCells);
 
 	for (const key of livingCells) {
 		const [x, y, z] = parseKey(key);
@@ -66,10 +54,6 @@ export function computeCytoplasm(
 			for (let dy = -1; dy <= 1; dy++) {
 				for (let dx = -1; dx <= 1; dx++) {
 					if (dx === 0 && dy === 0 && dz === 0) continue;
-					const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
-					if (sum === 1 && !neighborFaces) continue;
-					if (sum === 2 && !neighborEdges) continue;
-					if (sum === 3 && !neighborCorners) continue;
 
 					const nx = x + dx;
 					const ny = y + dy;
@@ -86,7 +70,7 @@ export function computeCytoplasm(
 
 					const nk = makeKey(nx, ny, nz);
 					// If the neighbor is not a living cell of this organism, it's cytoplasm
-					if (!tempGrid[nz][ny][nx]) {
+					if (!tempGrid.has(nk)) {
 						cytoplasm.add(nk);
 					}
 				}

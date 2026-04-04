@@ -119,7 +119,7 @@ export function Cells({
 
 		lastVersion.current = grid.version;
 		lastSelectorPos.current = selectorPosStr;
-		lastviewMode.current = viewMode;
+		lastviewMode.current = viewMode ?? null;
 		lastOrganismsVersion.current = organismsVersion; // ADD THIS LINE
 
 		const livingCells = grid.getLivingCells();
@@ -128,13 +128,12 @@ export function Cells({
 		const cellsToRender: Array<[number, number, number]> = []; // NEW ARRAY
 		const cellsToRenderKeys: string[] = []; // NEW ARRAY for keys
 
-		// Filter out cells that belong to an organism
+		// Do NOT filter out cells that belong to an organism anymore.
+		// We want to render them differently instead.
 		livingCells.forEach(pos => {
 			const key = makeKey(pos[0], pos[1], pos[2]);
-			if (!organismCellKeys.has(key)) {
-				cellsToRender.push(pos);
-				cellsToRenderKeys.push(key);
-			}
+			cellsToRender.push(pos);
+			cellsToRenderKeys.push(key);
 		});
 
 		const count = cellsToRender.length; // Use filtered count
@@ -177,7 +176,14 @@ export function Cells({
 				z === selectorPos[2];
 
 			if (organismCellKeys.has(key)) {
-				color = chroma('orange'); // Make organism cells orange
+				// Find the specific organism to get its skinColor
+				let orgColor = 'orange';
+				organisms.forEach((org) => {
+					if (org.livingCells.has(key)) {
+						orgColor = org.skinColor;
+					}
+				});
+				color = chroma(orgColor);
 			} else if (isSelected) {
 				color = chroma('white');
 			} else if (onAxis) {
@@ -217,6 +223,9 @@ export function Cells({
 			// Opacity
 			if (isSelected) {
 				opacities[i] = 1.0;
+			} else if (organismCellKeys.has(key)) {
+				// Organism cells are "ghostly" so we can see the core visuals inside
+				opacities[i] = 0.1;
 			} else {
 				const dx = x - center,
 					dy = y - center,

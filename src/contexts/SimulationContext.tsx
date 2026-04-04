@@ -555,9 +555,8 @@ export function SimulationProvider({
 
 		// Apply grid mutations
 		if (gridMutations.length > 0) {
-			gridRef.current.recordAction(); // Record this as a single action
-			for (const mutation of gridMutations) {
-				gridRef.current.set(mutation.x, mutation.y, mutation.z, mutation.alive);
+			for (const [x, y, z, alive] of gridMutations) {
+				gridRef.current.set(x, y, z, alive);
 			}
 		}
 
@@ -795,9 +794,6 @@ export function SimulationProvider({
 			const cytoplasm = computeCytoplasm(
 				livingCells,
 				gridSize,
-				neighborFaces,
-				neighborEdges,
-				neighborCorners,
 			);
 			const skinColor = computeSkinColor(livingCells, gridSize);
 

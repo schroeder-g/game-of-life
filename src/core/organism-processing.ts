@@ -105,9 +105,6 @@ function isPositionValid(
 	const proposedCyto = computeCytoplasm(
 		proposedLivingSet,
 		gridSize,
-		neighborFaces,
-		neighborEdges,
-		neighborCorners,
 	);
 
 	for (const cytoKey of proposedCyto) {
@@ -165,32 +162,25 @@ function rotateCellsAroundCentroid(
 function getConnectedComponent(
 	seedKey: string,
 	searchSpace: Set<string>, // The set of keys to search within (e.g., potentialNewLivingCells)
-	neighborFaces: boolean,
-	neighborEdges: boolean,
-	neighborCorners: boolean,
 ): Set<string> {
 	const result = new Set<string>();
 	const queue: string[] = [seedKey];
-	const visited = new Set<string>(); // Track visited keys to prevent infinite loops and redundant processing
+	const visited = new Set<string>();
 
 	visited.add(seedKey);
 
 	while (queue.length > 0) {
-		const key = queue.shift()!; // Use shift for BFS, pop for DFS. BFS is generally better for shortest path/component finding.
-		if (!searchSpace.has(key)) continue; // Only process if it's in the search space
+		const key = queue.shift()!;
+		if (!searchSpace.has(key)) continue;
 
 		result.add(key);
 
 		const [x, y, z] = parseKey(key);
-		// Iterate through neighbors
+		// Iterate through all 26 neighbors
 		for (let dz = -1; dz <= 1; dz++) {
 			for (let dy = -1; dy <= 1; dy++) {
 				for (let dx = -1; dx <= 1; dx++) {
 					if (dx === 0 && dy === 0 && dz === 0) continue;
-					const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
-					if (sum === 1 && !neighborFaces) continue;
-					if (sum === 2 && !neighborEdges) continue;
-					if (sum === 3 && !neighborCorners) continue;
 
 					const nk = makeKey(x + dx, y + dy, z + dz);
 					if (searchSpace.has(nk) && !visited.has(nk)) {
@@ -254,10 +244,7 @@ export function processOrganisms(
 			if (!visitedForComponents.has(seedKey)) { // If this cell hasn't been part of a component yet
 				const component = getConnectedComponent(
 					seedKey,
-					potentialNewLivingCells, // Pass potentialNewLivingCells as the set to search within
-					neighborFaces,
-					neighborEdges,
-					neighborCorners,
+					potentialNewLivingCells,
 				);
 				if (component.size > largestComponent.size) {
 					largestComponent = component;
@@ -278,9 +265,6 @@ export function processOrganisms(
 		const newCytoplasm = computeCytoplasm(
 			newLivingCells,
 			gridSize,
-			neighborFaces,
-			neighborEdges,
-			neighborCorners,
 		);
 
 		// Step 3: Check for skin breach
@@ -391,9 +375,6 @@ export function processOrganisms(
 			currentCytoplasm = computeCytoplasm(
 				currentLivingSet,
 				gridSize,
-				neighborFaces,
-				neighborEdges,
-				neighborCorners,
 			);
 			didJuke = true;
 		}
@@ -429,9 +410,6 @@ export function processOrganisms(
 				currentCytoplasm = computeCytoplasm(
 					currentLivingSet,
 					gridSize,
-					neighborFaces,
-					neighborEdges,
-					neighborCorners,
 				);
 				break;
 			}

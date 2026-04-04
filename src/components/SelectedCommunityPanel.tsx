@@ -469,16 +469,12 @@ export function SelectedCommunityPanel({
 						>
 							<button
 								className={`icon-button ${matchingOrganism ? 'active' : ''}`}
-								title={
-									birthMargin < 1
-										? 'Organisms require Birth Margin ≥ 1'
-										: 'Magic Wand: Convert to Organism'
-								}
+								title='Organize: Convert to Organism'
 								onClick={e => {
 									e.stopPropagation();
 									convertCommunityToOrganism(community);
 								}}
-								disabled={birthMargin < 1 || !!matchingOrganism}
+								disabled={!!matchingOrganism}
 							>
 								<svg
 									width='14'
@@ -487,35 +483,11 @@ export function SelectedCommunityPanel({
 									fill='none'
 									xmlns='http://www.w3.org/2000/svg'
 								>
-									{/* Magic Wand SVG */}
-									<path
-										d='M5 12l-2 2l5 5l2-2l-5-5z'
-										fill='currentColor'
-									/>
-									<path
-										d='M15 3l2 2l-10 10l-2-2l10-10z'
-										fill='currentColor'
-									/>
-									<path
-										d='M19 5l-2 2l4 4l2-2l-4-4z'
-										fill='currentColor'
-									/>
-									<path
-										d='M17 15l-2 2l4 4l2-2l-4-4z'
-										fill='currentColor'
-									/>
-									<path
-										d='M12 2l1 1l-1 1l-1-1l1-1z'
-										fill='currentColor'
-									/>
-									<path
-										d='M20 10l1 1l-1 1l-1-1l1-1z'
-										fill='currentColor'
-									/>
-									<path
-										d='M10 20l1 1l-1 1l-1-1l1-1z'
-										fill='currentColor'
-									/>
+									{/* Organize SVG */}
+									<circle cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='2' />
+									<rect x='7.5' y='7.5' width='3.5' height='3.5' fill='currentColor' />
+									<rect x='13' y='7.5' width='3.5' height='3.5' fill='currentColor' />
+									<rect x='10.25' y='13' width='3.5' height='3.5' fill='currentColor' />
 								</svg>
 							</button>
 							<button

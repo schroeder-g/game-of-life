@@ -1917,6 +1917,8 @@ export function Scene() {
 					margin={cellMargin}
 					selectorPos={viewMode ? null : selectorPos}
 					viewMode={viewMode}
+					organisms={organisms}
+					organismsVersion={organismsVersion}
 					onClick={e => {
 						if (running || viewMode || wasRotating.current) return;
 						e.stopPropagation();

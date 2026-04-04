@@ -14,7 +14,7 @@ An **Organism** is a special subclass of a Community. It is a group of connected
 - Has a persistent **name** and entry in the **Organisms list** for the duration of the session.
 - Is subject to special post-tick behavior (Juking and Rotation) to maintain its integrity.
 
-**Prerequisite:** Organisms are only supported when `birthMargin >= 1`. The Magic Wand button in the Community Panel must be disabled (with a tooltip explaining why) when `birthMargin < 1`.
+**Prerequisite:** There should be no Birth Margin Guard on Organism features.
 
 ---
 
@@ -52,18 +52,16 @@ It is NOT persisted to localStorage. It resets on `clear()`. On `reset()`, organ
 
 ---
 
-## Creating an Organism (Magic Wand)
+## Creating an Organism (Organize)
 
 ### UI Trigger
-- In `SelectedCommunityPanel`, add a **Magic Wand button** to the left of the existing "Activate Brush" button in the header actions row.
+- In `SelectedCommunityPanel`, add an **Organize button** to the left of the existing "Activate Brush" button in the header actions row.
 - The button is only enabled when:
   - A community is selected (`community.length > 0`)
-  - `birthMargin >= 1`
-- When `birthMargin < 1`, the button is visible but disabled, with tooltip: `"Organisms require Birth Margin ≥ 1"`.
 - Icon: use a wand/sparkle SVG (inline, consistent with existing icon style).
 
 ### Creation Logic
-When the Magic Wand is clicked:
+When the Organize button is clicked:
 1. Take the currently selected `community` cells (from `SimulationContext.state.community`).
 2. Compute the **Cytoplasm**: all inactive cells that are neighbors (using current face/edge/corner settings) of any living cell in the community, and are not themselves living. Exclude cells outside grid bounds.
 3. Compute the **skin color**: average the RGB values of the colors that `Cell.tsx` would assign to each living cell (using the same `chroma.hsl(240 - hue, saturation, 0.55)` formula, where `hue = (x / gridSize) * 300` and `saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6`). Convert the average RGB to a hex string.
@@ -94,7 +92,7 @@ The Skin is rendered as an **alpha-transparent instanced mesh** placed at each C
   - Material: `MeshBasicMaterial` with:
     - `color` = organism's `skinColor`
     - `transparent = true`
-    - `opacity = 0.15`
+    - `opacity = 0.02`
     - `depthWrite = false`
   - Position each instance at the same coordinate transform used for living cells in `Cell.tsx`:
     `position = (x - offset, y - offset, gridSize - 1 - z - offset)`
@@ -107,7 +105,7 @@ The Skin is rendered as an **alpha-transparent instanced mesh** placed at each C
 
 The `SelectedCommunityPanel` displays whichever community the user has clicked on. When that community belongs to an organism, it should additionally show:
 
-- The organism's **name** prominently (e.g., `h4` with an organism icon 🧬 or wand emoji).
+- The organism's **name** prominently (e.g., `h4` with an organism icon 🧬 or Organize emoji).
 - A label: `"Organism"` to distinguish it from a plain community.
 - The Cytoplasm cell count (e.g., `"Cytoplasm: 42 cells"`).
 - The skin color as a small color swatch.
@@ -180,7 +178,7 @@ In both Juking and Rotation, the organism must avoid abutting the cube's boundar
 
 | Event | Outcome |
 |---|---|
-| Magic Wand clicked | Organism created from current community |
+| Organize button clicked | Organism created from current community |
 | Tick completes | Living cells synced; Cytoplasm recalculated; breach/juke/rotation run |
 | Skin breached | Organism dissolved (removed from list) |
 | No valid juke | Organism dissolved |
@@ -217,7 +215,7 @@ In both Juking and Rotation, the organism must avoid abutting the cube's boundar
 | File | Change |
 |---|---|
 | `src/contexts/SimulationContext.tsx` | Add `organismsRef`, `organisms` state/version, `convertCommunityToOrganism` action, `processOrganisms` call in tick |
-| `src/components/SelectedCommunityPanel.tsx` | Add Magic Wand button; show organism info when selected community is an organism |
+| `src/components/SelectedCommunityPanel.tsx` | Add Organize button; show organism info when selected community is an organism |
 | `src/components/Grid.tsx` | Mount `<OrganismSkins>` inside the Canvas scene |
 
 ---
@@ -225,8 +223,8 @@ In both Juking and Rotation, the organism must avoid abutting the cube's boundar
 ## Implementation Notes for AI Agent
 
 - **Do not** use React state for the organisms map itself — use a ref (`organismsRef`) for the data and a separate `organismsVersion` integer state to trigger re-renders when the map changes (same pattern as `grid.version` / `hasPastHistory`).
-- **Do not** modify `Grid3D.ts` — all organism logic is a post-processing layer external to the grid.
+- 
 - The `processOrganisms` function in `organism-processing.ts` must be a **pure function** (takes grid, organisms map, and settings; returns a new organisms map and the set of grid mutations to apply). This allows unit testing.
 - Use `crypto.randomUUID()` for organism IDs.
 - All existing tests must continue to pass.
-- The `birthMargin` guard on the Magic Wand button must read from `SimulationContext.state.birthMargin`.
+- There should be no Birth Margin Guard on Organism features. 

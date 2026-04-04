@@ -58,7 +58,7 @@ function OrganismCoreMesh({
 	const offset = (gridSize - 1) / 2;
 	// CHANGE: Make spheres tinier (e.g., 1/8th of cell width instead of 1/4)
 	const sphereRadius = (1 - cellMargin) / 4; // Make spheres larger for better visibility
-	const beamRadius = sphereRadius / 2; // Adjust beam radius to be relative to new sphere size
+	const beamRadius = sphereRadius / 4; // 50% smaller (was /2)
 	const beamLength = (1 - cellMargin) - (2 * sphereRadius); // Distance between sphere surfaces
 
 	// Memoize data for spheres and beams
@@ -79,9 +79,21 @@ function OrganismCoreMesh({
 
 			// Check neighbors for beams (only direct face neighbors)
 			const neighbors = [
+				// Face neighbors (6)
 				makeKey(x + 1, y, z), makeKey(x - 1, y, z),
 				makeKey(x, y + 1, z), makeKey(x, y - 1, z),
-				makeKey(x, y, z + 1), makeKey(x, y, z - 1),
+				// Edge neighbors (12)
+				makeKey(x + 1, y + 1, z), makeKey(x + 1, y - 1, z),
+				makeKey(x - 1, y + 1, z), makeKey(x - 1, y - 1, z),
+				makeKey(x + 1, y, z + 1), makeKey(x + 1, y, z - 1),
+				makeKey(x - 1, y, z + 1), makeKey(x - 1, y, z - 1),
+				makeKey(x, y + 1, z + 1), makeKey(x, y + 1, z - 1),
+				makeKey(x, y - 1, z + 1), makeKey(x, y - 1, z - 1),
+				// Corner neighbors (8)
+				makeKey(x + 1, y + 1, z + 1), makeKey(x + 1, y + 1, z - 1),
+				makeKey(x + 1, y - 1, z + 1), makeKey(x + 1, y - 1, z - 1),
+				makeKey(x - 1, y + 1, z + 1), makeKey(x - 1, y + 1, z - 1),
+				makeKey(x - 1, y - 1, z + 1), makeKey(x - 1, y - 1, z - 1),
 			];
 
 			neighbors.forEach(neighborKey => {
@@ -153,16 +165,20 @@ function OrganismCoreMesh({
 
 	// Pulsing effect for spheres
 	const sphereColor = useMemo(() => new THREE.Color(organism.skinColor), [organism.skinColor]);
-	const emissiveColor = useMemo(() => new THREE.Color(0xffffff), []); // White for pulsing
+	const emissiveColor = useMemo(() => new THREE.Color(0xffffff), []); // White for pulsing brightness
 
 	useFrame(({ clock }) => {
+		const time = clock.getElapsedTime();
+		// Sine wave from 0 to 1 over 2 seconds (Math.PI * time / 2)
+		const pulseFactor = (Math.sin(time * Math.PI) + 1) / 2;
+		// Increase base and peak emissive intensity for a stronger glow
+		const intensity = 2.0 + (pulseFactor * 3.0); // Pulse from 2.0 to 5.0 intensity
+
 		if (sphereMeshRef.current && sphereMeshRef.current.material) {
-			const time = clock.getElapsedTime();
-			// Sine wave from 0 to 1 over 2 seconds (Math.PI * time / 2)
-			const pulseFactor = (Math.sin(time * Math.PI) + 1) / 2;
-			// Increase base and peak emissive intensity for a stronger glow
-			const intensity = 2.0 + (pulseFactor * 3.0); // Pulse from 2.0 to 5.0 intensity
 			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
+		}
+		if (beamMeshRef.current && beamMeshRef.current.material) {
+			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
 		}
 	});
 
@@ -181,8 +197,12 @@ function OrganismCoreMesh({
 
 			{/* Beams for connections */}
 			<instancedMesh ref={beamMeshRef} args={[undefined, undefined, MAX_BEAM_INSTANCES]}>
-				<cylinderGeometry args={[beamRadius, beamRadius, 1, 4]} /> {/* Thin cylinder, length 1 */}
-				<meshStandardMaterial color={organism.skinColor} />
+				<cylinderGeometry args={[beamRadius, beamRadius, 1, 8]} /> {/* 8 segments for smoother cylinders */}
+				<meshStandardMaterial 
+					color={sphereColor} 
+					emissive={emissiveColor}
+					emissiveIntensity={2.0}
+				/>
 			</instancedMesh>
 		</group>
 	);

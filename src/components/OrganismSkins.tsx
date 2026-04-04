@@ -97,7 +97,7 @@ function OrganismSkinMesh({
 			<meshBasicMaterial
 				color={organism.skinColor}
 				transparent
-				opacity={0.15}
+				opacity={0.02}
 				depthWrite={false}
 			/>
 		</instancedMesh>

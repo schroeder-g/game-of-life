@@ -1,19 +1,23 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'; // Import for merging geometries
-import { Organism } from '../core/Organism';
-import { parseKey, makeKey } from '../core/Organism';
+import { useFrame } from '@react-three/fiber';
+import { Organism, parseKey, makeKey } from '../core/Organism';
 
-// AiReminder: Test OrganismNucleusSupersuit component renders a merged mesh that clings to the organism's core.
+const MAX_SUPERSUIT_INSTANCES = 1000;
+const MAX_SUPERSUIT_BEAM_INSTANCES = 3000;
 
 interface OrganismNucleusSupersuitProps {
 	organisms: Map<string, Organism>;
-	organismsVersion: number; // To trigger re-render when organisms change
+	organismsVersion: number;
 	gridSize: number;
 	cellMargin: number;
 }
 
+/**
+ * OrganismNucleusSupersuit renders a "supersuit" around the organism's core.
+ * It uses InstancedMesh for performance and to avoid the memory leaks of geometry merging.
+ */
 export function OrganismNucleusSupersuit({
 	organisms,
 	organismsVersion,
@@ -37,33 +41,33 @@ export function OrganismNucleusSupersuit({
 	);
 }
 
-interface OrganismSupersuitMeshProps {
-	organism: Organism;
-	organismsVersion: number;
-	gridSize: number;
-	cellMargin: number;
-}
-
 function OrganismSupersuitMesh({
 	organism,
 	organismsVersion,
 	gridSize,
 	cellMargin,
-}: OrganismSupersuitMeshProps) {
-	const meshRef = useRef<THREE.Mesh>(null);
+}: {
+	organism: Organism;
+	organismsVersion: number;
+	gridSize: number;
+	cellMargin: number;
+}) {
+	const sphereMeshRef = useRef<THREE.InstancedMesh>(null);
+	const beamMeshRef = useRef<THREE.InstancedMesh>(null);
 
 	const offset = (gridSize - 1) / 2;
+	// Core dimensions for reference
 	const sphereRadiusCore = (1 - cellMargin) / 4;
-	const beamRadiusCore = sphereRadiusCore / 3;
+	const beamRadiusCore = sphereRadiusCore / 2;
 
 	// Supersuit dimensions (slightly larger than core visuals)
-	const sphereRadiusSupersuit = sphereRadiusCore * 1.2;
-	const beamRadiusSupersuit = beamRadiusCore * 1.5;
-	const beamLengthSupersuit = (1 - cellMargin) - (2 * sphereRadiusSupersuit);
+	const sphereRadiusSupersuit = sphereRadiusCore * 1.35;
+	const beamRadiusSupersuit = beamRadiusCore * 0.9; // 50% smaller (was 1.8)
 
-	const mergedGeometry = useMemo(() => {
-		const geometries: THREE.BufferGeometry[] = [];
+	const { sphereData, beamData } = useMemo(() => {
 		const currentLivingCells = organism.livingCells;
+		const spherePositions: Array<[number, number, number]> = [];
+		const beamTransforms: Array<{ position: THREE.Vector3; quaternion: THREE.Quaternion; length: number }> = [];
 
 		const tempVec1 = new THREE.Vector3();
 		const tempVec2 = new THREE.Vector3();
@@ -71,71 +75,125 @@ function OrganismSupersuitMesh({
 
 		currentLivingCells.forEach(key => {
 			const [x, y, z] = parseKey(key);
-			const spherePos = new THREE.Vector3(x - offset, y - offset, gridSize - 1 - z - offset);
+			const pos = [x - offset, y - offset, gridSize - 1 - z - offset] as [number, number, number];
+			spherePositions.push(pos);
 
-			// Create sphere geometry for each living cell
-			const sphereGeom = new THREE.SphereGeometry(sphereRadiusSupersuit, 8, 8);
-			sphereGeom.translate(spherePos.x, spherePos.y, spherePos.z);
-			geometries.push(sphereGeom);
-
-			// Check neighbors for beams (only direct face neighbors)
+			// Neighbors for beams
 			const neighbors = [
+				// Face neighbors
 				makeKey(x + 1, y, z), makeKey(x - 1, y, z),
 				makeKey(x, y + 1, z), makeKey(x, y - 1, z),
-				makeKey(x, y, z + 1), makeKey(x, y, z - 1),
+				// Edge neighbors
+				makeKey(x + 1, y + 1, z), makeKey(x + 1, y - 1, z),
+				makeKey(x - 1, y + 1, z), makeKey(x - 1, y - 1, z),
+				makeKey(x + 1, y, z + 1), makeKey(x + 1, y, z - 1),
+				makeKey(x - 1, y, z + 1), makeKey(x - 1, y, z - 1),
+				makeKey(x, y + 1, z + 1), makeKey(x, y + 1, z - 1),
+				makeKey(x, y - 1, z + 1), makeKey(x, y - 1, z - 1),
+				// Corner neighbors
+				makeKey(x + 1, y + 1, z + 1), makeKey(x + 1, y + 1, z - 1),
+				makeKey(x + 1, y - 1, z + 1), makeKey(x + 1, y - 1, z - 1),
+				makeKey(x - 1, y + 1, z + 1), makeKey(x - 1, y + 1, z - 1),
+				makeKey(x - 1, y - 1, z + 1), makeKey(x - 1, y - 1, z - 1),
 			];
 
 			neighbors.forEach(neighborKey => {
 				if (currentLivingCells.has(neighborKey)) {
-					const [nx, ny, nz] = parseKey(neighborKey);
-
-					// Ensure each beam is only added once (e.g., from lower-coord cell to higher-coord cell)
 					if (key < neighborKey) {
+						const [nx, ny, nz] = parseKey(neighborKey);
 						tempVec1.set(x - offset, y - offset, gridSize - 1 - z - offset);
 						tempVec2.set(nx - offset, ny - offset, gridSize - 1 - nz - offset);
 
 						const direction = new THREE.Vector3().subVectors(tempVec2, tempVec1).normalize();
+						const beamStart = tempVec1.clone().add(direction.clone().multiplyScalar(sphereRadiusSupersuit));
+						const beamEnd = tempVec2.clone().sub(direction.clone().multiplyScalar(sphereRadiusSupersuit));
+						const midPoint = new THREE.Vector3().addVectors(beamStart, beamEnd).multiplyScalar(0.5);
+						const length = beamStart.distanceTo(beamEnd);
 
-						// Adjust beam start/end to connect to the surface of the supersuit spheres
-						const beamStart = new THREE.Vector3().copy(tempVec1).add(direction.clone().multiplyScalar(sphereRadiusSupersuit));
-						const beamEnd = new THREE.Vector3().copy(tempVec2).sub(direction.clone().multiplyScalar(sphereRadiusSupersuit));
-						const actualBeamMidPoint = new THREE.Vector3().addVectors(beamStart, beamEnd).multiplyScalar(0.5);
-						const actualBeamLength = beamStart.distanceTo(beamEnd);
+						const quat = new THREE.Quaternion().setFromUnitVectors(upVector, direction);
 
-						// Create cylinder geometry for the beam
-						const cylinderGeom = new THREE.CylinderGeometry(beamRadiusSupersuit, beamRadiusSupersuit, actualBeamLength, 4);
-						cylinderGeom.applyMatrix4(new THREE.Matrix4().makeRotationX(Math.PI / 2)); // Align cylinder along X axis initially
-
-						const beamQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, direction);
-						cylinderGeom.applyQuaternion(beamQuaternion);
-						cylinderGeom.translate(actualBeamMidPoint.x, actualBeamMidPoint.y, actualBeamMidPoint.z);
-						geometries.push(cylinderGeom);
+						beamTransforms.push({
+							position: midPoint,
+							quaternion: quat,
+							length: length,
+						});
 					}
 				}
 			});
 		});
 
-		if (geometries.length === 0) return null;
+		return { sphereData: spherePositions, beamData: beamTransforms };
+	}, [organism.livingCells, organismsVersion, gridSize, offset, sphereRadiusSupersuit]);
 
-		// Merge all geometries into a single BufferGeometry
-		const merged = mergeBufferGeometries(geometries);
-		return merged;
+	useEffect(() => {
+		if (!sphereMeshRef.current) return;
+		const tempObject = new THREE.Object3D();
+		sphereData.forEach((pos, i) => {
+			tempObject.position.set(pos[0], pos[1], pos[2]);
+			tempObject.updateMatrix();
+			sphereMeshRef.current!.setMatrixAt(i, tempObject.matrix);
+		});
+		sphereMeshRef.current.count = sphereData.length;
+		sphereMeshRef.current.instanceMatrix.needsUpdate = true;
+	}, [sphereData]);
 
-	}, [organism.livingCells, organismsVersion, gridSize, offset, sphereRadiusSupersuit, beamRadiusSupersuit, beamLengthSupersuit]);
+	useEffect(() => {
+		if (!beamMeshRef.current) return;
+		const tempObject = new THREE.Object3D();
+		beamData.forEach((transform, i) => {
+			tempObject.position.copy(transform.position);
+			tempObject.quaternion.copy(transform.quaternion);
+			tempObject.scale.set(1, transform.length, 1);
+			tempObject.updateMatrix();
+			beamMeshRef.current!.setMatrixAt(i, tempObject.matrix);
+		});
+		beamMeshRef.current.count = beamData.length;
+		beamMeshRef.current.instanceMatrix.needsUpdate = true;
+	}, [beamData]);
 
-
-	if (!mergedGeometry) return null;
+	useFrame(({ clock }) => {
+		const time = clock.getElapsedTime();
+		if (sphereMeshRef.current && sphereMeshRef.current.material) {
+			const pulse = (Math.sin(time * 3) + 1) / 2;
+			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5 + pulse * 2.5;
+			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).opacity = 0.15 + pulse * 0.15;
+		}
+		if (beamMeshRef.current && beamMeshRef.current.material) {
+			const pulse = (Math.sin(time * 3) + 1) / 2; // Sync with spheres
+			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.0 + pulse * 3.0;
+			(beamMeshRef.current.material as THREE.MeshStandardMaterial).opacity = 0.1 + pulse * 0.2;
+		}
+	});
 
 	return (
-		<mesh ref={meshRef} geometry={mergedGeometry}>
-			<meshStandardMaterial
-				color={organism.skinColor}
-				transparent
-				opacity={0.15} // Increased transparency for better visibility
-				depthWrite={false}
-				roughness={0.5}
-				metalness={0.5}
-			/>
-		</mesh>
+		<group>
+			<instancedMesh ref={sphereMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_INSTANCES]}>
+				<sphereGeometry args={[sphereRadiusSupersuit, 12, 12]} />
+				<meshStandardMaterial
+					color={organism.skinColor}
+					transparent
+					opacity={0.15}
+					depthWrite={false}
+					emissive={organism.skinColor}
+					emissiveIntensity={1}
+					roughness={0.2}
+					metalness={0.8}
+				/>
+			</instancedMesh>
+			<instancedMesh ref={beamMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_BEAM_INSTANCES]}>
+				<cylinderGeometry args={[beamRadiusSupersuit, beamRadiusSupersuit, 1, 8]} /> {/* 8 segments for smoother cylinders */}
+				<meshStandardMaterial
+					color={organism.skinColor}
+					transparent
+					opacity={0.1}
+					depthWrite={false}
+					emissive={organism.skinColor}
+					emissiveIntensity={0.5}
+					roughness={0.2}
+					metalness={0.8}
+				/>
+			</instancedMesh>
+		</group>
 	);
 }
+
