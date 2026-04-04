@@ -15,6 +15,8 @@ import {
 	rotateCells,
 } from './Organism';
 
+const AVOIDANCE_LOOK_AHEAD_DISTANCE = 4; // Cells
+
 
 interface ProcessOrganismsResult {
 	updatedOrganisms: Map<string, Organism>;
@@ -95,17 +97,115 @@ function getConnectedComponent(seedKey: string, searchSpace: Set<string>): Set<s
 	return result;
 }
 
-function getOverlapNormal(cytoplasm: Set<string>, gridSize: number): [number, number, number] {
-	let nx = 0, ny = 0, nz = 0;
-	for (const key of cytoplasm) {
-		const [x, y, z] = parseKey(key);
-		if (x <= 0) nx -= 1; else if (x >= gridSize - 1) nx += 1;
-		if (y <= 0) ny -= 1; else if (y >= gridSize - 1) ny += 1;
-		if (z <= 0) nz -= 1; else if (z >= gridSize - 1) nz += 1;
-	}
-	const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
-	if (len === 0) return [0, 0, 0];
-	return [nx/len, ny/len, nz/len];
+// Replaces the old getOverlapNormal function
+function getAvoidanceNormal(
+    livingCells: Array<[number, number, number]>,
+    cytoplasm: Set<string>, // current cytoplasm
+    travelVector: [number, number, number],
+    gridSize: number,
+    otherOrgExclusionZone: Set<string>,
+    lookAheadDistance: number,
+): [number, number, number] {
+    let totalNormal: [number, number, number] = [0, 0, 0];
+    let collisionDetected = false;
+
+    // Helper to add to totalNormal and set collisionDetected
+    const addNormalComponent = (component: [number, number, number]) => {
+        totalNormal[0] += component[0];
+        totalNormal[1] += component[1];
+        totalNormal[2] += component[2];
+        collisionDetected = true;
+    };
+
+    // --- Reactive Collision Detection (Current Position) ---
+
+    // 1. Immediate Wall Overlap
+    let currentWallOverlapTempNormal: [number, number, number] = [0, 0, 0];
+    let currentWallOverlap = false;
+    for (const key of cytoplasm) {
+        const [x, y, z] = parseKey(key);
+        if (x <= 0) { currentWallOverlapTempNormal[0] -= 1; currentWallOverlap = true; }
+        if (x >= gridSize - 1) { currentWallOverlapTempNormal[0] += 1; currentWallOverlap = true; }
+        if (y <= 0) { currentWallOverlapTempNormal[1] -= 1; currentWallOverlap = true; }
+        if (y >= gridSize - 1) { currentWallOverlapTempNormal[1] += 1; currentWallOverlap = true; }
+        if (z <= 0) { currentWallOverlapTempNormal[2] -= 1; currentWallOverlap = true; }
+        if (z >= gridSize - 1) { currentWallOverlapTempNormal[2] += 1; currentWallOverlap = true; }
+    }
+    if (currentWallOverlap) {
+        const len = Math.sqrt(currentWallOverlapTempNormal[0]*currentWallOverlapTempNormal[0] + currentWallOverlapTempNormal[1]*currentWallOverlapTempNormal[1] + currentWallOverlapTempNormal[2]*currentWallOverlapTempNormal[2]);
+        if (len > 0) {
+            addNormalComponent([currentWallOverlapTempNormal[0]/len, currentWallOverlapTempNormal[1]/len, currentWallOverlapTempNormal[2]/len]);
+        }
+    }
+
+    // 2. Immediate Other Organism Overlap
+    const currentExtendedBody = new Set<string>(livingCells.map(c => makeKey(...c)));
+    cytoplasm.forEach(k => currentExtendedBody.add(k));
+    for (const key of currentExtendedBody) {
+        if (otherOrgExclusionZone.has(key)) {
+            // Immediate collision with another organism. Repel strongly.
+            // A simple repulsion: away from the grid center, or opposite to travel vector if at center.
+            const [x, y, z] = parseKey(key);
+            const center = gridSize / 2;
+            const repelX = x - center;
+            const repelY = y - center;
+            const repelZ = z - center;
+            const len = Math.sqrt(repelX*repelX + repelY*repelY + repelZ*repelZ);
+            if (len > 0) {
+                addNormalComponent([-repelX/len, -repelY/len, -repelZ/len]);
+            } else { // If at center, just push back along travel vector
+                addNormalComponent([-travelVector[0], -travelVector[1], -travelVector[2]]);
+            }
+            // No break here, as multiple points of contact might contribute to the total normal
+        }
+    }
+
+    // --- Proactive Collision Detection (Look Ahead) ---
+    for (let i = 1; i <= lookAheadDistance; i++) {
+        const proposedDx = travelVector[0] * i;
+        const proposedDy = travelVector[1] * i;
+        const proposedDz = travelVector[2] * i;
+
+        const translatedCells = translateCells(livingCells, proposedDx, proposedDy, proposedDz);
+        const translatedCytoplasm = computeCytoplasm(new Set(translatedCells.map(c => makeKey(...c))), gridSize);
+
+        // Proactive Wall Collision
+        let proactiveWallTempNormal: [number, number, number] = [0, 0, 0];
+        let proactiveWallHit = false;
+        for (const key of translatedCytoplasm) {
+            const [x, y, z] = parseKey(key);
+            if (x < 0) { proactiveWallTempNormal[0] -= 1; proactiveWallHit = true; }
+            if (x >= gridSize) { proactiveWallTempNormal[0] += 1; proactiveWallHit = true; }
+            if (y < 0) { proactiveWallTempNormal[1] -= 1; proactiveWallHit = true; }
+            if (y >= gridSize) { proactiveWallTempNormal[1] += 1; proactiveWallHit = true; }
+            if (z < 0) { proactiveWallTempNormal[2] -= 1; proactiveWallHit = true; }
+            if (z >= gridSize) { proactiveWallTempNormal[2] += 1; proactiveWallHit = true; }
+        }
+        if (proactiveWallHit) {
+            const len = Math.sqrt(proactiveWallTempNormal[0]*proactiveWallTempNormal[0] + proactiveWallTempNormal[1]*proactiveWallTempNormal[1] + proactiveWallTempNormal[2]*proactiveWallTempNormal[2]);
+            if (len > 0) {
+                addNormalComponent([proactiveWallTempNormal[0]/len, proactiveWallTempNormal[1]/len, proactiveWallTempNormal[2]/len]);
+            }
+        }
+
+        // Proactive Other Organism Collision
+        for (const key of translatedCytoplasm) {
+            if (otherOrgExclusionZone.has(key)) {
+                // Proactive collision with another organism.
+                // Repel in the opposite direction of travel.
+                addNormalComponent([-travelVector[0], -travelVector[1], -travelVector[2]]);
+                // No break here, as multiple points of contact might contribute to the total normal
+            }
+        }
+    }
+
+    if (collisionDetected) {
+        const len = Math.sqrt(totalNormal[0]*totalNormal[0] + totalNormal[1]*totalNormal[1] + totalNormal[2]*totalNormal[2]);
+        if (len > 0) {
+            return [totalNormal[0]/len, totalNormal[1]/len, totalNormal[2]/len];
+        }
+    }
+    return [0, 0, 0];
 }
 
 // Helper to get bounding box dimensions
@@ -213,13 +313,22 @@ export function processOrganisms(
 		}
 
 		// --- RULE-BASED NAVIGATION ---
-		const overlapNormal = getOverlapNormal(currentCytoplasm, gridSize);
-		if (overlapNormal[0] !== 0 || overlapNormal[1] !== 0 || overlapNormal[2] !== 0) {
+		// Use the new combined avoidance normal function for both reactive and proactive detection
+		const avoidanceNormal = getAvoidanceNormal(
+			currentCells, // Pass current living cells
+			currentCytoplasm,
+			travelVector,
+			gridSize,
+			otherOrgExclusionZone,
+			AVOIDANCE_LOOK_AHEAD_DISTANCE,
+		);
+
+		if (avoidanceNormal[0] !== 0 || avoidanceNormal[1] !== 0 || avoidanceNormal[2] !== 0) {
 			// Diagnostic logs on Wall Encounter
 			const v = new THREE.Vector3(...travelVector);
-			const n = new THREE.Vector3(...overlapNormal);
+			const n = new THREE.Vector3(...avoidanceNormal);
 			const dot = v.dot(n);
-			console.log(`[NAV] ID:${id} wall: ${overlapNormal.map(x=>x.toFixed(2)).join(',')} at Z:[${currentCentroid[2].toFixed(1)}] dot:${dot.toFixed(2)}`);
+			console.log(`[NAV] ID:${id} avoidance: ${avoidanceNormal.map(x=>x.toFixed(2)).join(',')} at Z:[${currentCentroid[2].toFixed(1)}] dot:${dot.toFixed(2)}`);
 
 			let nextCells: Array<[number, number, number]> = [...currentCells];
 			let nextVector: [number, number, number] = [...travelVector];
@@ -331,8 +440,8 @@ export function processOrganisms(
 			}
 			// 2. PARALLEL TO WALL (Math.abs(dot) <= 0.15)
 			else if (Math.abs(dot) <= 0.15) {
-				const awayVector: [number, number, number] = [-overlapNormal[0], -overlapNormal[1], -overlapNormal[2]];
-				console.log(`[NAV] ID:${id} parallel slide. Normal:[${overlapNormal.map(x=>x.toFixed(2)).join(',')}] dot:${dot.toFixed(2)}. Repelling towards center.`);
+				const awayVector: [number, number, number] = [-avoidanceNormal[0], -avoidanceNormal[1], -avoidanceNormal[2]]; // Use avoidanceNormal
+				console.log(`[NAV] ID:${id} parallel slide. Normal:[${avoidanceNormal.map(x=>x.toFixed(2)).join(',')}] dot:${dot.toFixed(2)}. Repelling towards center.`); // Use avoidanceNormal
 				
 				let bestCandidateCells = [...currentCells];
 				let bestCandidateVector = [...travelVector];
