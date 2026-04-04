@@ -840,10 +840,7 @@ function SceneManagementSection() {
 		(name: string) => {
 			return {
 				name,
-				cells:
-					initialStateRef.current.length > 0
-						? initialStateRef.current
-						: gridRef.current.getLivingCells(),
+				cells: gridRef.current.getLivingCells(),
 				organisms: Array.from(organisms.values()), // ADD THIS LINE
 				settings: {
 					speed,
