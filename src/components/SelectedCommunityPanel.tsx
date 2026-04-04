@@ -419,10 +419,38 @@ export function SelectedCommunityPanel({
 						{isCollapsed ? '▼' : '▲'}
 					</span>
 					<h3 style={{ margin: 0 }}>
-						{matchingOrganism ? matchingOrganism.name : 'Community Selection'}
+						{matchingOrganism ? (
+							<>
+								<span role='img' aria-label='organism'>
+									🧬
+								</span>{' '}
+								{matchingOrganism.name}
+							</>
+						) : (
+							'Community Selection'
+						)}
 					</h3>
 				</div>
-
+				<button
+					className='icon-button'
+					onClick={onClose}
+					title='Close Panel'
+					style={{ flexShrink: 0 }}
+				>
+					<svg
+						width='14'
+						height='14'
+						viewBox='0 0 24 24'
+						fill='none'
+						stroke='currentColor'
+						strokeWidth='2'
+						strokeLinecap='round'
+						strokeLinejoin='round'
+					>
+						<path d='M18 6 6 18' />
+						<path d='m6 6 12 12' />
+					</svg>
+				</button>
 			</header>
 
 			{!isCollapsed && (
@@ -441,11 +469,16 @@ export function SelectedCommunityPanel({
 						>
 							<button
 								className={`icon-button ${matchingOrganism ? 'active' : ''}`}
-								title='Magic Wand: Convert to Organism'
+								title={
+									birthMargin < 1
+										? 'Organisms require Birth Margin ≥ 1'
+										: 'Magic Wand: Convert to Organism'
+								}
 								onClick={e => {
 									e.stopPropagation();
 									convertCommunityToOrganism(community);
 								}}
+								disabled={birthMargin < 1 || !!matchingOrganism}
 							>
 								<svg
 									width='14'
@@ -454,13 +487,35 @@ export function SelectedCommunityPanel({
 									fill='none'
 									xmlns='http://www.w3.org/2000/svg'
 								>
-								  {/* Outer circle */}
-								  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-								  {/* Clump of smaller circles */}
-								  <circle cx="10" cy="10" r="3" fill="currentColor"/>
-								  <circle cx="15" cy="11" r="2.5" fill="currentColor"/>
-								  <circle cx="12" cy="15" r="2" fill="currentColor"/>
-								  <circle cx="8" cy="14" r="1.5" fill="currentColor"/>
+									{/* Magic Wand SVG */}
+									<path
+										d='M5 12l-2 2l5 5l2-2l-5-5z'
+										fill='currentColor'
+									/>
+									<path
+										d='M15 3l2 2l-10 10l-2-2l10-10z'
+										fill='currentColor'
+									/>
+									<path
+										d='M19 5l-2 2l4 4l2-2l-4-4z'
+										fill='currentColor'
+									/>
+									<path
+										d='M17 15l-2 2l4 4l2-2l-4-4z'
+										fill='currentColor'
+									/>
+									<path
+										d='M12 2l1 1l-1 1l-1-1l1-1z'
+										fill='currentColor'
+									/>
+									<path
+										d='M20 10l1 1l-1 1l-1-1l1-1z'
+										fill='currentColor'
+									/>
+									<path
+										d='M10 20l1 1l-1 1l-1-1l1-1z'
+										fill='currentColor'
+									/>
 								</svg>
 							</button>
 							<button
@@ -525,12 +580,26 @@ export function SelectedCommunityPanel({
 							<div className='community-stats'>
 								<span>Cells: {community.length}</span>
 								{matchingOrganism && (
-									<span style={{ marginLeft: '12px' }}>
-										Cytoplasm: {matchingOrganism.cytoplasm.size}
-									</span>
+									<>
+										<span style={{ marginLeft: '12px' }}>
+											Cytoplasm: {matchingOrganism.cytoplasm.size}
+										</span>
+										<div
+											style={{
+												width: '16px',
+												height: '16px',
+												borderRadius: '50%',
+												backgroundColor: matchingOrganism.skinColor,
+												border: '1px solid rgba(255,255,255,0.3)',
+												marginLeft: '8px',
+											}}
+											title={`Skin Color: ${matchingOrganism.skinColor}`}
+										></div>
+									</>
 								)}
 							</div>
-							<div className='community-3d-wrapper'
+							<div
+								className='community-3d-wrapper'
 								onMouseEnter={handleMouseEnterPreview} // Add this line
 								onMouseLeave={handleMouseLeavePreview} // Add this line
 								onMouseMove={handleMouseMovePreview} // Add this line
@@ -549,8 +618,7 @@ export function SelectedCommunityPanel({
 										top: '8px',
 										right: '8px',
 									}}
-								>
-								</div>
+								></div>
 							</div>
 						</>
 					)}

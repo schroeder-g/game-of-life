@@ -9,6 +9,9 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-073:** [COMPLETED] Fix `Cell.tsx` shader to correctly use `instanceOpacity` for cell visibility.
+
+********COMPLETED ITEMS ************
 *   **TODO-071:** [COMPLETED] When clicking a community in the cube, if it is part of an Organism, then make it the current community in the Community Selection panel and update the display accordingly.
 *   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm for organisms to be strictly within [1, gridSize-2].
 *   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)

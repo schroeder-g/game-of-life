@@ -19,7 +19,7 @@ const cellShaderMaterial = {
 
     void main() {
       vColor = instanceColor;
-      vOpacity = instanceHighlight;
+      vOpacity = instanceOpacity; // Corrected: Use instanceOpacity for vOpacity
       vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
       gl_Position = projectionMatrix * mvPosition;
     }
