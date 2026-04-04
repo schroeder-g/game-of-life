@@ -306,19 +306,19 @@ export function SelectedCommunityPanel({
 	}, []);
 
 	const handleMouseEnterPreview = useCallback(() => {
-        if (matchingOrganism) { // Only show tooltip if it's an organism
-            setShowTooltip(true);
-        }
-    }, [matchingOrganism]); // Dependency on matchingOrganism
+		if (matchingOrganism) { // Only show tooltip if it's an organism
+			setShowTooltip(true);
+		}
+	}, [matchingOrganism]); // Dependency on matchingOrganism
 
-    const handleMouseLeavePreview = useCallback(() => {
-        setShowTooltip(false);
-    }, []);
+	const handleMouseLeavePreview = useCallback(() => {
+		setShowTooltip(false);
+	}, []);
 
-    const handleMouseMovePreview = useCallback((e: React.MouseEvent) => {
-        // Position the tooltip slightly offset from the cursor
-        setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
-    }, []);
+	const handleMouseMovePreview = useCallback((e: React.MouseEvent) => {
+		// Position the tooltip slightly offset from the cursor
+		setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+	}, []);
 
 	useEffect(() => {
 		if (isDragging) {
@@ -553,9 +553,11 @@ export function SelectedCommunityPanel({
 										<span style={{ marginLeft: '12px' }}>
 											Cytoplasm: {matchingOrganism.cytoplasm.size}
 										</span>
-										<span style={{ marginLeft: '12px', color: matchingOrganism.minWallDistance < 4 ? '#ff4d4d' : 'inherit' }}>
-											Wall Dist: {matchingOrganism.minWallDistance}
-										</span>
+										{matchingOrganism.travelVector && (
+											<span style={{ marginLeft: '12px', opacity: 0.6 }}>
+												Heading: [{matchingOrganism.travelVector.map(v => v.toFixed(2)).join(', ')}]
+											</span>
+										)}
 										<div
 											style={{
 												width: '16px',

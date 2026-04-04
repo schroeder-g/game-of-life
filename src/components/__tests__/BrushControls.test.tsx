@@ -114,7 +114,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_DRAG_001
 	it('[TEST_BC_DRAG_001] allows dragging and updates position', async () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		const header = screen.getByText('Brush: Cube').parentElement!;
 
 		// Simulate mouse down on the header
@@ -156,7 +156,7 @@ describe('BrushControls', () => {
 			toJSON: () => ({}),
 		});
 
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		const panel = screen.getByLabelText('Brush Controls Panel');
 
 		// Calculate expected bottom-right position
@@ -171,7 +171,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_APPEAR_001
 	it('[TEST_BC_APPEAR_001] displays dynamic header, orange outline, and rounded corners', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		const panel = screen.getByLabelText('Brush Controls Panel');
 		const header = screen.getByText('Brush: Cube');
 
@@ -185,7 +185,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_APPEAR_002
 	it('[TEST_BC_APPEAR_002] has a minimum width to fit controls', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		const panel = screen.getByLabelText('Brush Controls Panel');
 
 		expect(panel).toHaveStyle('min-width: 220px');
@@ -206,7 +206,7 @@ describe('BrushControls', () => {
 				eventBus: mockEventBus,
 			},
 		});
-		const { rerender } = render(<BrushControls />);
+		const { rerender } = render(<BrushControls selectedOrganismId={null} />);
 		expect(
 			screen.getByLabelText('Brush Controls Panel'),
 		).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe('BrushControls', () => {
 				eventBus: mockEventBus,
 			},
 		});
-		rerender(<BrushControls />);
+		rerender(<BrushControls selectedOrganismId={null} />);
 		expect(
 			screen.queryByLabelText('Brush Controls Panel'),
 		).not.toBeInTheDocument();
@@ -232,7 +232,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_W
 	it('[TEST_BC_BUTTON_001_W][UC-9] "Up" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /ArrowUpIcon/i }),
 		);
@@ -243,7 +243,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_X
 	it('[TEST_BC_BUTTON_001_X][UC-9] "Down" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /ArrowDownIcon/i }),
 		);
@@ -254,7 +254,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_A
 	it('[TEST_BC_BUTTON_001_A][UC-9] "Left" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /ArrowLeftIcon/i }),
 		);
@@ -265,7 +265,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_D
 	it('[TEST_BC_BUTTON_001_D][UC-9] "Right" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /ArrowRightIcon/i }),
 		);
@@ -276,7 +276,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_Q
 	it('[TEST_BC_BUTTON_001_Q][UC-9] "Further" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /Farther/i }),
 		);
@@ -287,7 +287,7 @@ describe('BrushControls', () => {
 
 	// TEST_BC_BUTTON_001_Z
 	it('[TEST_BC_BUTTON_001_Z][UC-9] "Closer" button emits moveSelector with correct delta', () => {
-		render(<BrushControls />);
+		render(<BrushControls selectedOrganismId={null} />);
 		fireEvent.mouseDown(
 			screen.getByRole('button', { name: /Closer/i }),
 		);

@@ -146,18 +146,9 @@ export function Cells({
 			const [x, y, z] = pos;
 			const key = cellsToRenderKeys[i]; // Get key for current cell
 
-			// Position & Scale
 			// Apply position and initial scale
-			const isOrgCell = organismCellKeys.has(key);
 			tempObject.position.set(x - offset, y - offset, gridSize - 1 - z - offset);
-			
-			// Always hide both the mesh and the edges for organism cells
-			if (isOrgCell) {
-				tempObject.scale.set(0, 0, 0);
-			} else {
-				tempObject.scale.set(1.0, 1.0, 1.0);
-			}
-			
+			tempObject.scale.set(1.0, 1.0, 1.0);
 			tempObject.updateMatrix();
 			meshRef.current!.setMatrixAt(i, tempObject.matrix);
 			edgesRef.current!.setMatrixAt(i, tempObject.matrix);
@@ -230,7 +221,7 @@ export function Cells({
 				opacities[i] = 1.0;
 			} else if (organismCellKeys.has(key)) {
 				// Organism cells are "ghostly" so we can see the core visuals inside
-				opacities[i] = 0.1;
+				opacities[i] = 0.0;
 			} else {
 				const dx = x - center,
 					dy = y - center,
@@ -405,6 +396,7 @@ export function Cells({
 			<instancedMesh
 				ref={ghostMeshRef}
 				args={[undefined, undefined, 1000]}
+				raycast={() => null}
 			>
 				<boxGeometry args={[cellSize, cellSize, cellSize]} />
 				<meshBasicMaterial

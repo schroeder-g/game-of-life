@@ -202,7 +202,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 	it('[UC-7] should handle Environment controls', () => {
 		// Ensure viewMode is false for Environment section to render in SettingsSidebar
 		(useSimulation as any).mockReturnValue(baseSimulationValue);
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		// Headers are h3 which act as buttons for expansion
 		fireEvent.click(screen.getByText(/Environment/i));
@@ -226,7 +231,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 	});
 
 	it('[UC-8] should handle Rules controls', () => {
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Rules/i));
 
@@ -245,7 +255,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 
 	it('[UC-9] should handle Cursor Position controls', () => {
 		(useSimulation as any).mockReturnValue(baseSimulationValue);
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Cursor Position/i));
 
@@ -269,7 +284,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 		};
 		(useGenesisConfig as any).mockReturnValue(genesisValue);
 
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Scene Management/i));
 
@@ -294,7 +314,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 		};
 		(useSimulation as any).mockReturnValue(viewModeSimulationValue);
 
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Camera Controls/i));
 

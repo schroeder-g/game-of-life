@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface AppFooterPanelProps {
-	userName: string;
+	userName?: string;
 	buildInfo: {
 		version: string;
 		distribution: 'dev' | 'test' | 'prod';

@@ -66,6 +66,7 @@ export function AppHeaderPanel({
 			gridSize,
 			showIntroduction,
 			community,
+			selectedOrganismId,
 		}, // Added community
 		actions: {
 			playStop,
@@ -162,7 +163,7 @@ export function AppHeaderPanel({
 				<div className='orientation-status'>
 					Face: {faceName}, {rotationDegrees}
 				</div>
-				{!viewMode && (
+				{!viewMode && !selectedOrganismId && (
 					<div className='shape-status'>Shape: {selectedShape}</div>
 				)}
 				<SimulationStats />
@@ -204,6 +205,7 @@ export function AppHeaderPanel({
 				setShowSettingsSidebar={setShowSettingsSidebar}
 				showCommunityPanel={showCommunityPanel} // Pass new prop
 				toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
+				selectedOrganismId={selectedOrganismId}
 			/>
 
 			<DocumentationModal

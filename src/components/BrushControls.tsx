@@ -271,7 +271,11 @@ function BrushSelectorDrop() {
 	);
 }
 
-export function BrushControls() {
+export function BrushControls({
+	selectedOrganismId,
+}: {
+	selectedOrganismId: string | null;
+}) {
 	const {
 		state: { selectedShape, shapeSize, isHollow, paintMode },
 		actions: {
@@ -452,7 +456,7 @@ export function BrushControls() {
 	const handleMouseDown = useCallback((e: React.MouseEvent) => {
 		// Prevent dragging if the event originated from the size slider or the header toggle button
 		if (
-			(e.target as HTMLElement).type === 'range' ||
+			((e.target as HTMLElement) instanceof HTMLInputElement && (e.target as HTMLInputElement).type === 'range') ||
 			(e.target as HTMLElement).closest('#brush-controls-toggle-button')
 		) {
 			return;
@@ -534,7 +538,7 @@ export function BrushControls() {
 	const handleTouchStart = useCallback((e: React.TouchEvent) => {
 		// Prevent dragging if the event originated from the size slider or the header toggle button
 		if (
-			(e.target as HTMLElement).type === 'range' ||
+			((e.target as HTMLElement) instanceof HTMLInputElement && (e.target as HTMLInputElement).type === 'range') ||
 			(e.target as HTMLElement).closest('#brush-controls-toggle-button')
 		) {
 			return;
@@ -604,18 +608,14 @@ export function BrushControls() {
 		} else {
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
-			window.removeEventListener('touchmove', handleTouchMove, {
-				passive: false,
-			}); // Specify passive: false here too
+			window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener); 
 			window.removeEventListener('touchend', handleTouchEnd);
 		}
 
 		return () => {
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
-			window.removeEventListener('touchmove', handleTouchMove, {
-				passive: false,
-			}); // Specify passive: false here too
+			window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener);
 			window.removeEventListener('touchend', handleTouchEnd);
 		};
 	}, [
@@ -635,7 +635,7 @@ export function BrushControls() {
 			const { x, y, z } = payload;
 
 			// Only respond to clicks in edit mode
-			if (viewMode) {
+			if (viewMode || selectedOrganismId) {
 				return;
 			}
 
@@ -646,7 +646,7 @@ export function BrushControls() {
 			}
 
 			// Check if the clicked cell is alive
-			if (grid.cells[z][y][x]) {
+			if (grid.get(x, y, z)) {
 				const communityMap = grid.getAllCommunities();
 				const clickedCellKey = `${x},${y},${z}`;
 				const clickedCommunityId = communityMap.get(clickedCellKey);
@@ -695,13 +695,14 @@ export function BrushControls() {
 		setCustomBrush,
 		setSelectedShape,
 		setPaintMode,
+		selectedOrganismId,
 	]);
 
 	const toggleContentVisibility = useCallback(() => {
 		setIsContentVisible(prev => !prev);
 	}, []);
 
-	if (viewMode) return null;
+	if (viewMode || selectedOrganismId) return null;
 
 	return (
 		<div

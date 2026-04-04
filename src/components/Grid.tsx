@@ -656,7 +656,7 @@ function KeyboardSelector({
 				return (
 					<React.Fragment key={i}>
 						{/* Primary Cell Mesh */}
-						<mesh position={position}>
+						<mesh position={position} raycast={() => null}>
 							<boxGeometry args={[0.9, 0.9, 0.9]} />
 							<meshBasicMaterial
 								color={cellColor}
@@ -707,6 +707,7 @@ export function Scene() {
 		cameraOrientation,
 		organisms,
 		organismsVersion,
+		selectedOrganismId,
 	} = state;
 	const {
 		state: brushState,
@@ -1964,16 +1965,7 @@ export function Scene() {
 											key.split(',').map(Number) as [number, number, number]
 										);
 										setCommunity(organismCommunity);
-										console.log(
-											'Clicked cell at',
-											x,
-											y,
-											z,
-											'Organism Community:',
-											organismCommunity.length,
-											'Name:',
-											foundOrganism.name
-										);
+										eventBus.emit('showCommunityPanel', true);
 									} else {
 										// Otherwise, get the community as usual
 										const community = gridRef.current.getCommunity(
@@ -1982,14 +1974,7 @@ export function Scene() {
 											z,
 										);
 										setCommunity(community);
-										console.log(
-											'Clicked cell at',
-											x,
-											y,
-											z,
-											'Community:',
-											community.length,
-										);
+										eventBus.emit('showCommunityPanel', true);
 									}
 								}
 							}
@@ -2007,15 +1992,33 @@ export function Scene() {
 					organismsVersion={organismsVersion}
 					gridSize={gridRef.current.size}
 					cellMargin={cellMargin}
+					onClick={(e, organism) => {
+						if (running || viewMode || wasRotating.current) return;
+						e.stopPropagation();
+						const organismCommunity = Array.from(organism.livingCells).map(key =>
+							key.split(',').map(Number) as [number, number, number]
+						);
+						setCommunity(organismCommunity);
+						eventBus.emit('showCommunityPanel', true);
+					}}
 				/>
 				<OrganismNucleusSupersuit
 					organisms={organisms}
 					organismsVersion={organismsVersion}
 					gridSize={gridRef.current.size}
 					cellMargin={cellMargin}
+					onClick={(e, organism) => {
+						if (running || viewMode || wasRotating.current) return;
+						e.stopPropagation();
+						const organismCommunity = Array.from(organism.livingCells).map(key =>
+							key.split(',').map(Number) as [number, number, number]
+						);
+						setCommunity(organismCommunity);
+						eventBus.emit('showCommunityPanel', true);
+					}}
 				/>
 				<BoundingBox size={gridRef.current.size} />
-				{!viewMode && (
+				{!viewMode && !selectedOrganismId && (
 					<>
 						<FaceLabels size={gridRef.current.size} />
 						<KeyboardSelector

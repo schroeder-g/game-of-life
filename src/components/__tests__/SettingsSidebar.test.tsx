@@ -206,7 +206,12 @@ describe('SettingsSidebar', () => {
 	});
 
 	it('[SS_SCENE_NAME_INPUT_001_TEST][UX-7] focused input suppresses global shortcuts', async () => {
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		// Ensure Scene Management section is expanded (default for non-small screen)
 		const sceneManagementHeader = screen.getByRole('heading', {
@@ -254,7 +259,7 @@ describe('SettingsSidebar', () => {
 			},
 		});
 		const { rerender } = render(
-			<SettingsSidebar isSmallScreen={false} />,
+			<SettingsSidebar isSmallScreen={false} setIsSettingsDropdownOpen={vi.fn()} />,
 		);
 
 		// Ensure Selector Position section is expanded
@@ -307,7 +312,7 @@ describe('SettingsSidebar', () => {
 			},
 		});
 		// Re-render to apply new mock state
-		rerender(<SettingsSidebar isSmallScreen={false} />);
+		rerender(<SettingsSidebar isSmallScreen={false} setIsSettingsDropdownOpen={vi.fn()} />);
 
 		// For 'right' face, '90' rotation:
 		// KEY_MAP['right'][90] = { w: [0, 0, 1], x: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], q: [-1, 0, 0], z: [1, 0, 0] }

@@ -108,7 +108,6 @@ export const MANUAL_TESTS: ManualTest[] = [
 			'Automated test verifies toggling between View and Edit modes.',
 		],
 		claimIds: ['header-mode-toggle'],
-		testIds: ['UC-1'], // [AUTOMATED]
 	},
 	{
 		id: 'UC-2',
@@ -117,7 +116,6 @@ export const MANUAL_TESTS: ManualTest[] = [
 			'Automated test verifies play/pause, step forward/backward, and reset functionality.',
 		],
 		claimIds: ['header-playback'],
-		testIds: ['UC-2'], // [AUTOMATED]
 	},
 	{
 		id: 'UC-3',

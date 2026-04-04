@@ -14,6 +14,7 @@ interface OrganismCoreVisualsProps {
 	organismsVersion: number; // To trigger re-render when organisms change
 	gridSize: number;
 	cellMargin: number;
+	onClick?: (e: any, organism: Organism) => void;
 }
 
 export function OrganismCoreVisuals({
@@ -21,6 +22,7 @@ export function OrganismCoreVisuals({
 	organismsVersion,
 	gridSize,
 	cellMargin,
+	onClick,
 }: OrganismCoreVisualsProps) {
 	const orgList = Array.from(organisms.values());
 
@@ -33,6 +35,7 @@ export function OrganismCoreVisuals({
 					organismsVersion={organismsVersion}
 					gridSize={gridSize}
 					cellMargin={cellMargin}
+					onClick={onClick}
 				/>
 			))}
 		</>
@@ -44,6 +47,7 @@ interface OrganismCoreMeshProps {
 	organismsVersion: number;
 	gridSize: number;
 	cellMargin: number;
+	onClick?: (e: any, organism: Organism) => void;
 }
 
 function OrganismCoreMesh({
@@ -51,6 +55,7 @@ function OrganismCoreMesh({
 	organismsVersion,
 	gridSize,
 	cellMargin,
+	onClick,
 }: OrganismCoreMeshProps) {
 	const sphereMeshRef = useRef<THREE.InstancedMesh>(null);
 	const beamMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -182,7 +187,11 @@ function OrganismCoreMesh({
 	return (
 		<group>
 			{/* Spheres for living cells */}
-			<instancedMesh ref={sphereMeshRef} args={[undefined, undefined, MAX_CORE_INSTANCES]}>
+			<instancedMesh 
+				ref={sphereMeshRef} 
+				args={[undefined, undefined, MAX_CORE_INSTANCES]}
+				onClick={(e) => onClick?.(e, organism)}
+			>
 				<sphereGeometry args={[sphereRadius, 8, 8]} /> {/* Low poly sphere for performance */}
 				<meshStandardMaterial
 					color={sphereColor}

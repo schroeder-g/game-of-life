@@ -1131,7 +1131,7 @@ export function SettingsSidebar({
 			setSelectedConfigName(name);
 			if (name && savedConfigs[name]) {
 				const config = savedConfigs[name];
-				applyCells(config.cells, config.settings.gridSize);
+				applyCells(config, config.settings.gridSize);
 				// apply saved settings as well
 				setSpeed(config.settings.speed);
 				setDensity(config.settings.density);

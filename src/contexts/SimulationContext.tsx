@@ -21,10 +21,14 @@ import {
 	serializeOrganism,
 	deserializeOrganism,
 	cloneOrganisms,
+	getCentroid,
+	rotateCells,
+	rotateVector,
 } from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
-import { processOrganisms, getShellSafetyScore } from '../core/organism-processing';
+import { processOrganisms } from '../core/organism-processing';
 import { exportGenesisConfig, importGenesisConfig } from '../hooks/useGenesisConfigs';
+import { DEFAULT_CONFIGS } from '../data/default-configs';
 
 const initialSettings = loadSettings();
 
@@ -93,6 +97,7 @@ export interface SimulationState {
 	showIntroduction: boolean;
 	organisms: Map<string, Organism>; // Map of organism ID to Organism object
 	organismsVersion: number; // To trigger re-renders when organisms change
+	selectedOrganismId: string | null;
 }
 
 export interface SimulationActions {
@@ -141,16 +146,22 @@ export interface SimulationActions {
 	applyCells: (
 		config: any, // Accepts Array<[number, number, number]> or GenesisConfig
 		updateGridSize?: number,
-	) => void;
+	) => Promise<void>;
 
 	// Camera Actions
 	fitDisplay: () => void;
 	recenter: () => void;
+
+	// Manipulation Actions
+	moveSelectedOrganism: (delta: [number, number, number]) => void;
+	rotateSelectedOrganism: (axis: THREE.Vector3, angle: number) => void;
 }
 
 export type AppEvents = {
 	moveSelector: { delta: [number, number, number] };
 	rotateBrush: { axis: THREE.Vector3; angle: number };
+	showCommunityPanel: boolean;
+	cellClick: { x: number; y: number; z: number };
 };
 
 export interface SimulationMeta {
@@ -241,9 +252,11 @@ export function SimulationProvider({
 
 	const [running, setRunning] = useState(false);
 	const [viewMode, setviewMode] = useState(true);
-	const [community, setCommunity] = useState<
+	const [community, _setCommunityInternal] = useState<
 		Array<[number, number, number]>
 	>([]);
+	const [selectedOrganismId, setSelectedOrganismId] =
+		useState<string | null>(null);
 	const [cameraOrientation, setCameraOrientation] =
 		useState<CameraOrientation>({ face: 'front', rotation: 0 });
 	const [isAnimatingInit, setIsAnimatingInit] = useState(false);
@@ -439,18 +452,32 @@ export function SimulationProvider({
 		if (!cellsInitializedRef.current) {
 			cellsInitializedRef.current = true;
 			if (Object.keys(initialSettings).length === 0) {
-				const mid = Math.floor(storedSettings.gridSize / 2);
-				const cells: Array<[number, number, number]> = [];
-				for (let x = mid - 1; x <= mid; x++) {
-					for (let y = mid - 1; y <= mid; y++) {
-						for (let z = mid - 1; z <= mid; z++) {
-							// Do NOT set cells in gridRef yet, just record them
-							cells.push([x, y, z]);
+				const defaultConfig = DEFAULT_CONFIGS['Persistent Jelly Organism'];
+				if (defaultConfig) {
+					initialStateRef.current = defaultConfig.cells;
+					setHasInitialState(defaultConfig.cells.length > 0);
+					
+					// Hydrate default organisms
+					if (defaultConfig.organisms) {
+						for (const orgData of defaultConfig.organisms) {
+							organismsRef.current.set(orgData.id, deserializeOrganism(orgData, defaultConfig.settings.gridSize));
 						}
+						setOrganismsVersion(v => v + 1);
 					}
+					
+					// Apply default settings
+					setSpeed(defaultConfig.settings.speed);
+					setDensity(defaultConfig.settings.density);
+					setSurviveMin(defaultConfig.settings.surviveMin);
+					setSurviveMax(defaultConfig.settings.surviveMax);
+					setBirthMin(defaultConfig.settings.birthMin);
+					setBirthMax(defaultConfig.settings.birthMax);
+					setBirthMargin(defaultConfig.settings.birthMargin);
+					setGridSize(defaultConfig.settings.gridSize);
+					setNeighborFaces(!!defaultConfig.settings.neighborFaces);
+					setNeighborEdges(!!defaultConfig.settings.neighborEdges);
+					setNeighborCorners(!!defaultConfig.settings.neighborCorners);
 				}
-				initialStateRef.current = cells;
-				setHasInitialState(cells.length > 0);
 			} else {
 				// Capture initial state from settings but clear the grid for animation
 				const cells = gridRef.current.getLivingCells();
@@ -735,14 +762,14 @@ export function SimulationProvider({
 		},
 		[recordOrganismAction],
 	);
-
 	const applyCells = useCallback(
-		(
+		async (
 			config: any,
 			updateGridSize?: number,
 		) => {
 			const cells = Array.isArray(config) ? config : config.cells;
 			const savedOrgs = config.organisms;
+			const finalGridSize = updateGridSize ?? gridSize;
 
 			setRunning(false);
 			if (updateGridSize !== undefined && updateGridSize !== gridSize) {
@@ -755,7 +782,9 @@ export function SimulationProvider({
 				gridRef.current.clear();
 			}
 
-			runInitAnimation(cells);
+			// Await the animation to ensure physical cells are on the grid before hydration
+			await runInitAnimation(cells);
+			
 			setCommunity([]);
 			
 			// Hydration Logic: Re-instantiate organisms from saved state
@@ -765,7 +794,7 @@ export function SimulationProvider({
 			
 			if (savedOrgs && Array.isArray(savedOrgs)) {
 				for (const orgData of savedOrgs) {
-					organismsRef.current.set(orgData.id, deserializeOrganism(orgData, gridSize));
+					organismsRef.current.set(orgData.id, deserializeOrganism(orgData, finalGridSize));
 				}
 			}
 			
@@ -848,13 +877,183 @@ export function SimulationProvider({
 				livingCells,
 				cytoplasm,
 				skinColor,
-				previousLivingCells: new Set(livingCells), // Initialize previousLivingCells
+				previousLivingCells: new Set(livingCells),
+				straightSteps: 0,
+				avoidanceSteps: 0,
+				parallelSteps: 0,
+				stuckTicks: 0,
+				travelVector: [0, 0, 1], // Initial direction for new organisms
+				centroid: getCentroid(livingCells),
 			};
 
 			organismsRef.current.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
 		},
 		[gridSize, neighborFaces, neighborEdges, neighborCorners],
+	);
+
+	const setCommunity = useCallback(
+		(newCommunity: Array<[number, number, number]>) => {
+			_setCommunityInternal(newCommunity);
+			if (newCommunity.length === 0) {
+				setSelectedOrganismId(null);
+			} else {
+				const communityKeys = new Set(
+					newCommunity.map(([x, y, z]) => makeKey(x, y, z)),
+				);
+				let foundId: string | null = null;
+				for (const [id, org] of organismsRef.current.entries()) {
+					for (const key of communityKeys) {
+						if (org.livingCells.has(key)) {
+							foundId = id;
+							break;
+						}
+					}
+					if (foundId) break;
+				}
+				setSelectedOrganismId(foundId);
+			}
+		},
+		[],
+	);
+
+	const moveSelectedOrganism = useCallback(
+		(delta: [number, number, number]) => {
+			if (!selectedOrganismId) return;
+			const org = organismsRef.current.get(selectedOrganismId);
+			if (!org) return;
+
+			// Snapshot for undo
+			recordOrganismAction();
+
+			const [dx, dy, dz] = delta;
+			const oldCells = Array.from(org.livingCells);
+			const newCells: Array<[number, number, number]> = [];
+
+			for (const key of oldCells) {
+				const [x, y, z] = parseKey(key);
+				const nx = x + dx;
+				const ny = y + dy;
+				const nz = z + dz;
+
+				if (
+					nx < 0 ||
+					nx >= gridSize ||
+					ny < 0 ||
+					ny >= gridSize ||
+					nz < 0 ||
+					nz >= gridSize
+				) {
+					// Out of bounds, abort move
+					return;
+				}
+				newCells.push([nx, ny, nz]);
+			}
+
+			// Clear old cells from grid
+			for (const key of oldCells) {
+				const [x, y, z] = parseKey(key);
+				gridRef.current.set(x, y, z, false);
+			}
+
+			// Set new cells in grid
+			for (const [nx, ny, nz] of newCells) {
+				gridRef.current.set(nx, ny, nz, true);
+			}
+
+			// Update Organism
+			org.livingCells = new Set(
+				newCells.map(([x, y, z]) => makeKey(x, y, z)),
+			);
+			org.cytoplasm = computeCytoplasm(org.livingCells, gridSize);
+			org.centroid = getCentroid(org.livingCells);
+
+			// Keep community in sync
+			_setCommunityInternal(newCells);
+			setOrganismsVersion(v => v + 1);
+		},
+		[
+			selectedOrganismId,
+			gridSize,
+			recordOrganismAction,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		],
+	);
+
+	const rotateSelectedOrganism = useCallback(
+		(axis: THREE.Vector3, angle: number) => {
+			if (!selectedOrganismId) return;
+			const org = organismsRef.current.get(selectedOrganismId);
+			if (!org || !org.centroid) return;
+
+			// Snapshot for undo
+			recordOrganismAction();
+
+			// Map THREE axis and angle to our rotateCells signature
+			const axisKey = axis.x !== 0 ? 'x' : axis.y !== 0 ? 'y' : 'z';
+			// THREE.js angles are in radians. Our utility expects 90, 180, 270 degrees.
+			const degrees = Math.round((angle * 180) / Math.PI);
+			// Normalize to 0, 90, 180, 270
+			const normalizedDegrees = (((degrees % 360) + 360) % 360);
+
+			if (normalizedDegrees === 0 || normalizedDegrees === 360) return;
+			const validAngle = normalizedDegrees as 90 | 180 | 270;
+
+			const oldCells = Array.from(org.livingCells).map(parseKey);
+			const rotatedCells = rotateCells(
+				oldCells,
+				axisKey,
+				validAngle,
+				org.centroid,
+			);
+
+			// Bounds check
+			for (const [nx, ny, nz] of rotatedCells) {
+				if (
+					nx < 0 ||
+					nx >= gridSize ||
+					ny < 0 ||
+					ny >= gridSize ||
+					nz < 0 ||
+					nz >= gridSize
+				) {
+					return; // Out of bounds, abort
+				}
+			}
+
+			// Clear old cells
+			for (const cell of oldCells) {
+				const [x, y, z] = cell;
+				gridRef.current.set(x, y, z, false);
+			}
+
+			// Set new cells
+			for (const cell of rotatedCells) {
+				const [nx, ny, nz] = cell;
+				gridRef.current.set(nx, ny, nz, true);
+			}
+
+			// Update Organism
+			org.livingCells = new Set(
+				rotatedCells.map(([x, y, z]) => makeKey(x, y, z)),
+			);
+			org.cytoplasm = computeCytoplasm(org.livingCells, gridSize);
+			org.centroid = getCentroid(org.livingCells);
+
+			// Keep community in sync
+			_setCommunityInternal(rotatedCells);
+			setOrganismsVersion(v => v + 1);
+		},
+		[
+			selectedOrganismId,
+			gridSize,
+			recordOrganismAction,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		],
 	);
 
 	// Removed autoSquare leveling effect
@@ -895,6 +1094,7 @@ export function SimulationProvider({
 			showIntroduction,
 			organisms: organismsRef.current,
 			organismsVersion,
+			selectedOrganismId,
 		},
 		actions: {
 			setSpeed,
@@ -939,6 +1139,8 @@ export function SimulationProvider({
 			applyCells,
 			fitDisplay,
 			recenter,
+			moveSelectedOrganism,
+			rotateSelectedOrganism,
 		},
 		meta: {
 			gridRef,
@@ -951,6 +1153,33 @@ export function SimulationProvider({
 			organismsRef,
 		},
 	};
+
+	// --- DIAGNOSTIC ATTACHMENT ---
+	useEffect(() => {
+		(window as any).dumpSimulationState = () => {
+			const state = {
+				gridSize: value.state.gridSize,
+				organisms: Array.from(organismsRef.current.entries()).map(([id, org]) => ({
+					id,
+					centroid: org.centroid,
+					travelVector: org.travelVector,
+					livingCells: Array.from(org.livingCells),
+					outOfBounds: Array.from(org.livingCells).filter(key => {
+						const [x, y, z] = parseKey(key);
+						return x < 0 || x >= value.state.gridSize || y < 0 || y >= value.state.gridSize || z < 0 || z >= value.state.gridSize;
+					})
+				})),
+				gridInfo: {
+					size: gridRef.current.size,
+					generation: gridRef.current.generation,
+				}
+			};
+			console.log('--- SIMULATION DIAGNOSTIC DUMP ---');
+			console.log(JSON.stringify(state, null, 2));
+			console.log('---------------------------------');
+			return 'Simulation state dumped to console. Please copy and paste above JSON.';
+		};
+	}, [value.state.gridSize, organismsVersion]);
 
 	return (
 		<SimulationContext.Provider value={value}>

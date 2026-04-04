@@ -12,6 +12,7 @@ interface OrganismNucleusSupersuitProps {
 	organismsVersion: number;
 	gridSize: number;
 	cellMargin: number;
+	onClick?: (e: any, organism: Organism) => void;
 }
 
 /**
@@ -23,6 +24,7 @@ export function OrganismNucleusSupersuit({
 	organismsVersion,
 	gridSize,
 	cellMargin,
+	onClick,
 }: OrganismNucleusSupersuitProps) {
 	const orgList = Array.from(organisms.values());
 
@@ -35,6 +37,7 @@ export function OrganismNucleusSupersuit({
 					organismsVersion={organismsVersion}
 					gridSize={gridSize}
 					cellMargin={cellMargin}
+					onClick={onClick}
 				/>
 			))}
 		</>
@@ -46,11 +49,13 @@ function OrganismSupersuitMesh({
 	organismsVersion,
 	gridSize,
 	cellMargin,
+	onClick,
 }: {
 	organism: Organism;
 	organismsVersion: number;
 	gridSize: number;
 	cellMargin: number;
+	onClick?: (e: any, organism: Organism) => void;
 }) {
 	const sphereMeshRef = useRef<THREE.InstancedMesh>(null);
 	const beamMeshRef = useRef<THREE.InstancedMesh>(null);
@@ -161,7 +166,11 @@ function OrganismSupersuitMesh({
 	return (
 		<group>
 			{/* Smooth Organic Skeleton Nodes (Spheres) */}
-			<instancedMesh ref={sphereMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_INSTANCES]}>
+			<instancedMesh 
+				ref={sphereMeshRef} 
+				args={[undefined, undefined, MAX_SUPERSUIT_INSTANCES]}
+				onClick={(e) => onClick?.(e, organism)}
+			>
 				<sphereGeometry args={[sphereRadiusSupersuit, 16, 16]} />
 				<meshStandardMaterial
 					color={redColor}

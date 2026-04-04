@@ -1,12 +1,11 @@
 import type React from 'react';
 
-('react');
-
 import { useCallback, useRef, useState } from 'react';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { BrushControls } from './BrushControls';
+import { ShapeType } from '../core/shapes';
 
 const GearIcon = () => (
 	<svg
@@ -216,7 +215,7 @@ function SceneSelectorDropdown() {
 			setSelectedConfigName(name);
 			if (name && savedConfigs[name]) {
 				const config = savedConfigs[name];
-				applyCells(config.cells, config.settings.gridSize);
+				applyCells(config, config.settings.gridSize);
 				// apply saved settings as well
 				setSpeed(config.settings.speed);
 				setDensity(config.settings.density);
@@ -316,14 +315,15 @@ interface AppHeaderPanelButtonsProps {
 	squareUp: boolean;
 	isSquaredUp: boolean;
 	speed: number;
+	gridSize: number;
 	playStop: () => void;
 	step: () => void;
 	stepBackward: () => void;
 	reset: () => void;
-	setviewMode: React.Dispatch<React.SetStateAction<boolean>>;
+	setviewMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
 	fitDisplay: () => void;
 	recenter: () => void;
-	setSquareUp: (value: boolean) => void;
+	setSquareUp: (value: boolean | ((prev: boolean) => boolean)) => void;
 	setSpeed: (speed: number) => void;
 
 	// Help dropdown state and handlers
@@ -338,6 +338,16 @@ interface AppHeaderPanelButtonsProps {
 	setShowSettingsSidebar: (show: boolean) => void;
 	showCommunityPanel: boolean; // New prop for community panel visibility
 	toggleCommunityPanel: () => void; // New prop to toggle community panel
+
+	// Brush related props
+	selectedShape: ShapeType;
+	paintMode: 1 | 0 | -1;
+	shapeSize: number;
+	isHollow: boolean;
+	setPaintMode: (mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1)) => void;
+	setShapeSize: (size: number) => void;
+	setIsHollow: (hollow: boolean) => void;
+	selectedOrganismId: string | null;
 }
 
 export function AppHeaderPanelButtons({
@@ -348,6 +358,7 @@ export function AppHeaderPanelButtons({
 	squareUp,
 	isSquaredUp,
 	speed,
+	gridSize,
 	playStop,
 	step,
 	stepBackward,
@@ -369,6 +380,15 @@ export function AppHeaderPanelButtons({
 	setShowSettingsSidebar,
 	showCommunityPanel, // Destructure new prop
 	toggleCommunityPanel, // Destructure new prop
+
+	selectedShape,
+	paintMode,
+	shapeSize,
+	isHollow,
+	setPaintMode,
+	setShapeSize,
+	setIsHollow,
+	selectedOrganismId,
 }: AppHeaderPanelButtonsProps) {
 	return (
 		<div className='button-group panel-actions'>
@@ -386,7 +406,7 @@ export function AppHeaderPanelButtons({
 			>
 				{viewMode ? <PencilIcon /> : <ProjectorIcon />}
 			</button>
-			<BrushControls />
+			<BrushControls selectedOrganismId={selectedOrganismId} />
 			<button
 				type='button'
 				className='glass-button primary'

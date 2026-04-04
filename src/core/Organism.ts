@@ -10,6 +10,10 @@ export interface OrganismData {
 	skinColor: string;
 	centroid?: [number, number, number];
 	travelVector?: [number, number, number];
+	straightSteps?: number;
+	avoidanceSteps?: number;
+	parallelSteps?: number;
+	stuckTicks?: number;
 }
 
 /**
@@ -37,6 +41,14 @@ export interface Organism {
 	centroid?: [number, number, number];
 	/** Unit vector of movement since last tick. */
 	travelVector?: [number, number, number];
+	/** Consecutive steps moved in the current travelVector. */
+	straightSteps: number;
+	/** Remaining steps in a wall-avoidance dash. */
+	avoidanceSteps: number;
+	/** Steps moved parallel to a wall within the danger zone. */
+	parallelSteps: number;
+	/** Consecutive steps where the organism failed to move (blocked). */
+	stuckTicks: number;
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
@@ -189,6 +201,10 @@ export function serializeOrganism(org: Organism): OrganismData {
 		skinColor: org.skinColor,
 		centroid: org.centroid,
 		travelVector: org.travelVector,
+		straightSteps: org.straightSteps,
+		avoidanceSteps: org.avoidanceSteps,
+		parallelSteps: org.parallelSteps,
+		stuckTicks: org.stuckTicks,
 	};
 }
 
@@ -204,6 +220,10 @@ export function deserializeOrganism(data: OrganismData, gridSize: number): Organ
 		skinColor: data.skinColor,
 		centroid: data.centroid,
 		travelVector: data.travelVector,
+		straightSteps: data.straightSteps || 0,
+		avoidanceSteps: data.avoidanceSteps || 0,
+		parallelSteps: data.parallelSteps || 0,
+		stuckTicks: data.stuckTicks || 0,
 	};
 }
 
@@ -216,7 +236,69 @@ export function cloneOrganisms(orgs: Map<string, Organism>): Map<string, Organis
 			livingCells: new Set(org.livingCells),
 			cytoplasm: new Set(org.cytoplasm),
 			previousLivingCells: new Set(org.previousLivingCells),
+			straightSteps: org.straightSteps,
+			avoidanceSteps: org.avoidanceSteps,
+			parallelSteps: org.parallelSteps,
+			stuckTicks: org.stuckTicks,
+			travelVector: org.travelVector ? [...org.travelVector] : undefined,
 		});
 	}
 	return newMap;
+}
+
+/**
+ * Rotates a 3D vector by 90-degree increments around a principal axis.
+ */
+export function rotateVector(v: [number, number, number], axis: 'x' | 'y' | 'z', angle: 90 | 180 | 270): [number, number, number] {
+	const [x, y, z] = v;
+	if (angle === 180) {
+		if (axis === 'x') return [x, -y, -z];
+		if (axis === 'y') return [-x, y, -z];
+		if (axis === 'z') return [-x, -y, z];
+	}
+	if (angle === 90) {
+		if (axis === 'x') return [x, -z, y];
+		if (axis === 'y') return [z, y, -x];
+		if (axis === 'z') return [-y, x, z];
+	}
+	if (angle === 270) {
+		if (axis === 'x') return [x, z, -y];
+		if (axis === 'y') return [-z, y, x];
+		if (axis === 'z') return [y, -x, z];
+	}
+	return v;
+}
+
+/**
+ * Rotates a set of coordinates by 90-degree increments around their centroid.
+ */
+export function rotateCells(
+	cells: Array<[number, number, number]>,
+	axis: 'x' | 'y' | 'z',
+	angle: 90 | 180 | 270,
+	centroid: [number, number, number]
+): Array<[number, number, number]> {
+	const [cx, cy, cz] = centroid.map(Math.round);
+	return cells.map(([x, y, z]) => {
+		const dx = x - cx;
+		const dy = y - cy;
+		const dz = z - cz;
+		
+		let rx = dx, ry = dy, rz = dz;
+		if (angle === 180) {
+			if (axis === 'x') { ry = -dy; rz = -dz; }
+			else if (axis === 'y') { rx = -dx; rz = -dz; }
+			else if (axis === 'z') { rx = -dx; ry = -dy; }
+		} else if (angle === 90) {
+			if (axis === 'x') { ry = -dz; rz = dy; }
+			else if (axis === 'y') { rx = rz; rz = -dx; }
+			else if (axis === 'z') { rx = -dy; ry = dx; }
+		} else if (angle === 270) {
+			if (axis === 'x') { ry = rz; rz = -dy; }
+			else if (axis === 'y') { rx = -rz; rz = dx; }
+			else if (axis === 'z') { rx = dy; ry = -dx; }
+		}
+		
+		return [cx + rx, cy + ry, cz + rz];
+	});
 }

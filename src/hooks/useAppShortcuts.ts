@@ -28,7 +28,8 @@ export function useAppShortcuts() {
 			invertPitch,
 			invertRoll,
 			gridSize,
-			squareUp, // Added squareUp to state destructuring
+			squareUp,
+			selectedOrganismId,
 		},
 		actions: {
 			setviewMode,
@@ -39,7 +40,9 @@ export function useAppShortcuts() {
 			fitDisplay,
 			recenter,
 			setCell,
-			setSquareUp, // Added setSquareUp to actions destructuring
+			setSquareUp,
+			moveSelectedOrganism,
+			rotateSelectedOrganism,
 		},
 		meta: { movement, eventBus, cameraActionsRef },
 	} = useSimulation();
@@ -178,7 +181,11 @@ export function useAppShortcuts() {
 						axis.set(0, 0, 1);
 						angle = paintMode === -1 ? -Math.PI / 2 : Math.PI / 2;
 					}
-					cameraActionsRef.current?.rotateBrush(axis, angle);
+					if (selectedOrganismId) {
+						rotateSelectedOrganism(axis, angle);
+					} else {
+						cameraActionsRef.current?.rotateBrush(axis, angle);
+					}
 				} else {
 					// 2. Continuous Rotation (Standard OR Ctrl+Shift Override)
 					const action = getRotationAction(code);
@@ -207,7 +214,11 @@ export function useAppShortcuts() {
 								number,
 								number,
 							];
-							eventBus.emit('moveSelector', { delta });
+							if (selectedOrganismId) {
+								moveSelectedOrganism(delta);
+							} else {
+								eventBus.emit('moveSelector', { delta });
+							}
 						}
 					}
 				} else if (
@@ -230,7 +241,11 @@ export function useAppShortcuts() {
 							const delta = (keymapForOrientation as any)[
 								mappedKey
 							] as [number, number, number];
-							eventBus.emit('moveSelector', { delta });
+							if (selectedOrganismId) {
+								moveSelectedOrganism(delta);
+							} else {
+								eventBus.emit('moveSelector', { delta });
+							}
 						}
 					}
 				} else {
@@ -263,11 +278,15 @@ export function useAppShortcuts() {
 							if (hasInitialState) reset();
 							break;
 						case ' ':
-							setPaintMode(prev => (prev === 1 ? 0 : 1));
+							if (!selectedOrganismId) {
+								setPaintMode(prev => (prev === 1 ? 0 : 1));
+							}
 							break;
 						case 'delete':
 						case 'backspace':
-							setPaintMode(prev => (prev === -1 ? 0 : -1));
+							if (!selectedOrganismId) {
+								setPaintMode(prev => (prev === -1 ? 0 : -1));
+							}
 							break;
 						default:
 							handled = false;
