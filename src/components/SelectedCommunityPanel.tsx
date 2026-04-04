@@ -137,15 +137,12 @@ export function SelectedCommunityPanel({
 			community.map(([x, y, z]) => makeKey(x, y, z)),
 		);
 		for (const org of organisms.values()) {
-			if (org.livingCells.size !== communityKeys.size) continue;
-			let match = true;
+			// Sticky matching: If the selected community shares ANY cell with a known organism,
+			// we identify it as that organism. This ensures the UI remains stable even as
+			// the organism fluctuates in size or shape.
 			for (const key of communityKeys) {
-				if (!org.livingCells.has(key)) {
-					match = false;
-					break;
-				}
+				if (org.livingCells.has(key)) return org;
 			}
-			if (match) return org;
 		}
 		return null;
 	}, [community, organisms, organismsVersion]);
@@ -555,6 +552,9 @@ export function SelectedCommunityPanel({
 									<>
 										<span style={{ marginLeft: '12px' }}>
 											Cytoplasm: {matchingOrganism.cytoplasm.size}
+										</span>
+										<span style={{ marginLeft: '12px', color: matchingOrganism.minWallDistance < 4 ? '#ff4d4d' : 'inherit' }}>
+											Wall Dist: {matchingOrganism.minWallDistance}
 										</span>
 										<div
 											style={{

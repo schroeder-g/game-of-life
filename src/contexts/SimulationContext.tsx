@@ -15,11 +15,16 @@ import { CameraOrientation } from '../core/faceOrientationKeyMapping';
 import {
 	Organism,
 	makeKey,
+	parseKey,
 	computeCytoplasm,
 	computeSkinColor,
+	serializeOrganism,
+	deserializeOrganism,
+	cloneOrganisms,
 } from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
-import { processOrganisms } from '../core/organism-processing';
+import { processOrganisms, getShellSafetyScore } from '../core/organism-processing';
+import { exportGenesisConfig, importGenesisConfig } from '../hooks/useGenesisConfigs';
 
 const initialSettings = loadSettings();
 
@@ -134,7 +139,7 @@ export interface SimulationActions {
 	deleteCells: (cells: Array<[number, number, number]>) => void;
 
 	applyCells: (
-		cells: Array<[number, number, number]>,
+		config: any, // Accepts Array<[number, number, number]> or GenesisConfig
 		updateGridSize?: number,
 	) => void;
 
@@ -215,6 +220,12 @@ export function SimulationProvider({
 	const organismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize organismsRef
 	const [organismsVersion, setOrganismsVersion] = useState(0); // Initialize organismsVersion
 	const initialOrganismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize initialOrganismsRef
+	
+	// History stacks for organisms (parallel to Grid3D)
+	const pastOrganismsRef = useRef<Map<string, Organism>[]>([]);
+	const futureOrganismsRef = useRef<Map<string, Organism>[]>([]);
+	const historyLimit = 100;
+
 	const isFirstLoadRef = useRef(true);
 	const [hasInitialState, setHasInitialState] = useState(false);
 	const [hasPastHistory, setHasPastHistory] = useState(false);
@@ -542,7 +553,21 @@ export function SimulationProvider({
 		[neighborFaces, neighborEdges, neighborCorners],
 	);
 
-	const updateOrganismsAfterTick = useCallback(() => {
+	const recordOrganismAction = useCallback(() => {
+		// Snapshot current organisms to past history
+		pastOrganismsRef.current.push(cloneOrganisms(organismsRef.current));
+		if (pastOrganismsRef.current.length > historyLimit) {
+			pastOrganismsRef.current.shift();
+		}
+		// Clear future history when a new action is recorded
+		futureOrganismsRef.current = [];
+	}, []);
+
+	const updateOrganismsAfterTick = useCallback((skipSnapshot = false) => {
+		if (!skipSnapshot) {
+			recordOrganismAction();
+		}
+		
 		// Call the pure processing function
 		const { updatedOrganisms, gridMutations } = processOrganisms(
 			gridRef.current,
@@ -562,7 +587,7 @@ export function SimulationProvider({
 
 		organismsRef.current = updatedOrganisms;
 		setOrganismsVersion(v => v + 1);
-	}, [gridSize, neighborFaces, neighborEdges, neighborCorners]);
+	}, [gridSize, neighborFaces, neighborEdges, neighborCorners, recordOrganismAction]);
 
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
@@ -575,12 +600,15 @@ export function SimulationProvider({
 
 	const stepBackward = useCallback(() => {
 		setRunning(false);
-		gridRef.current.stepBackward();
-		// When stepping backward, organisms might also need to revert.
-		// This is a simplified approach; a full undo for organisms would be more complex.
-		// For now, we'll clear them or re-process them based on the reverted grid state.
-		organismsRef.current.clear(); // Clear organisms on step backward for simplicity
-		setOrganismsVersion(v => v + 1);
+		const success = gridRef.current.stepBackward();
+		if (success && pastOrganismsRef.current.length > 0) {
+			// Save current to future for "redo" consistency (if ever implemented)
+			futureOrganismsRef.current.push(cloneOrganisms(organismsRef.current));
+			
+			// Restore from past
+			organismsRef.current = pastOrganismsRef.current.pop()!;
+			setOrganismsVersion(v => v + 1);
+		}
 	}, []);
 
 	const step = useCallback(() => {
@@ -672,43 +700,50 @@ export function SimulationProvider({
 	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
+		recordOrganismAction();
 		gridRef.current.recordAction();
 		gridRef.current.toggle(x, y, z);
-	}, []);
+	}, [recordOrganismAction]);
 
 	const setCell = useCallback(
 		(x: number, y: number, z: number, alive: boolean) => {
+			recordOrganismAction();
 			gridRef.current.recordAction();
 			gridRef.current.set(x, y, z, alive);
 		},
-		[],
+		[recordOrganismAction],
 	);
 
 	const setCells = useCallback(
 		(cells: Array<[number, number, number]>) => {
+			recordOrganismAction();
 			gridRef.current.recordAction();
 			for (const [x, y, z] of cells) {
 				gridRef.current.set(x, y, z, true);
 			}
 		},
-		[],
+		[recordOrganismAction],
 	);
 
 	const deleteCells = useCallback(
 		(cells: Array<[number, number, number]>) => {
+			recordOrganismAction();
 			gridRef.current.recordAction();
 			for (const [x, y, z] of cells) {
 				gridRef.current.set(x, y, z, false);
 			}
 		},
-		[],
+		[recordOrganismAction],
 	);
 
 	const applyCells = useCallback(
 		(
-			cells: Array<[number, number, number]>,
+			config: any,
 			updateGridSize?: number,
 		) => {
+			const cells = Array.isArray(config) ? config : config.cells;
+			const savedOrgs = config.organisms;
+
 			setRunning(false);
 			if (updateGridSize !== undefined && updateGridSize !== gridSize) {
 				gridRef.current = new Grid3D(updateGridSize);
@@ -720,10 +755,20 @@ export function SimulationProvider({
 				gridRef.current.clear();
 			}
 
-			// We don't restore state immediately here because runInitAnimation handles it
 			runInitAnimation(cells);
 			setCommunity([]);
-			organismsRef.current.clear(); // Clear organisms when applying new cells
+			
+			// Hydration Logic: Re-instantiate organisms from saved state
+			organismsRef.current.clear();
+			pastOrganismsRef.current = [];
+			futureOrganismsRef.current = [];
+			
+			if (savedOrgs && Array.isArray(savedOrgs)) {
+				for (const orgData of savedOrgs) {
+					organismsRef.current.set(orgData.id, deserializeOrganism(orgData, gridSize));
+				}
+			}
+			
 			setOrganismsVersion(v => v + 1);
 		},
 		[

@@ -1,6 +1,16 @@
+export interface OrganismData {
+	id: string;
+	name: string;
+	livingCells: string[]; // keys
+	skinColor: string;
+	centroid?: [number, number, number];
+	travelVector?: [number, number, number];
+}
+
 export interface GenesisConfig {
 	name: string;
 	cells: Array<[number, number, number]>;
+	organisms?: OrganismData[]; // Serialized organisms
 	settings: {
 		speed: number;
 		density: number;

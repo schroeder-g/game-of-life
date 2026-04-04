@@ -181,6 +181,18 @@ export function BoundingBox({ size }: { size: number }) {
 					opacity={opacity}
 				/>
 			</lineSegments>
+			{/* "Smoky Glass" Interior Walls */}
+			<mesh raycast={() => null}>
+				<boxGeometry args={[size, size, size]} />
+				<meshStandardMaterial
+					color='#1a1a1a' // Dark grey, lighter than background
+					transparent
+					opacity={opacity * 0.4}
+					side={THREE.BackSide}
+					metalness={0.1}
+					roughness={0.8}
+				/>
+			</mesh>
 			<Html position={[size / 2, size / 2, size / 2]}>
 				{/* Claim hint removed from here as per request */}
 			</Html>
@@ -1908,9 +1920,15 @@ export function Scene() {
 
 	return (
 		<>
-			<ambientLight intensity={0.4} />
-			<pointLight position={[30, 30, 30]} intensity={1} />
-			<pointLight position={[-30, -30, -30]} intensity={0.5} />
+			<ambientLight intensity={1.2} />
+			<directionalLight 
+				position={[10, 20, 10]} 
+				intensity={2.5} 
+				castShadow 
+				shadow-mapSize={[1024, 1024]}
+			/>
+			<pointLight position={[50, 50, 50]} intensity={800} />
+			<pointLight position={[-50, -50, -50]} intensity={400} />
 			<group ref={cubeRef}>
 				<Cells
 					grid={gridRef.current}

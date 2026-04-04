@@ -156,18 +156,7 @@ function OrganismSupersuitMesh({
 	const redColor = useMemo(() => new THREE.Color('#ff0000'), []); // Brighter red
 	const crimsonEmissive = useMemo(() => new THREE.Color('#ff2222'), []); // Brighter red emissive
 
-	useFrame(({ clock }) => {
-		const time = clock.getElapsedTime();
-		if (sphereMeshRef.current && sphereMeshRef.current.material) {
-			const pulse = (Math.sin(time * 3) + 1) / 2;
-			// Brighter pulses (2.0 to 5.0 base intensity)
-			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.0 + pulse * 3.0;
-		}
-		if (beamMeshRef.current && beamMeshRef.current.material) {
-			const pulse = (Math.sin(time * 3) + 1) / 2;
-			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5 + pulse * 3.5;
-		}
-	});
+	// Removed pulsing effect as per TODO-076 (Reflectivity instead of glow)
 
 	return (
 		<group>
@@ -180,9 +169,9 @@ function OrganismSupersuitMesh({
 					opacity={1.0}
 					depthWrite={true}
 					emissive={crimsonEmissive}
-					emissiveIntensity={2.0}
-					roughness={0.15}
-					metalness={0.8}
+					emissiveIntensity={1.5}
+					roughness={0.4}
+					metalness={0.5}
 				/>
 			</instancedMesh>
 
@@ -195,9 +184,9 @@ function OrganismSupersuitMesh({
 					opacity={1.0}
 					depthWrite={true}
 					emissive={crimsonEmissive}
-					emissiveIntensity={1.5}
-					roughness={0.15}
-					metalness={0.8}
+					emissiveIntensity={1.0}
+					roughness={0.4}
+					metalness={0.5}
 				/>
 			</instancedMesh>
 		</group>

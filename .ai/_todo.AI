@@ -9,77 +9,17 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-076:** [COMPLETED] Stop the glowing of organisms. Just make them reflective.
+*   **TODO-077:** [COMPLETED] Make the inside of the cube walls dark grey (lighter than the background). You should still be able to see through them from the outside.
+*   **TODO-078:** [COMPLETED] During organism initialization, determine its travel vector, and display an arrow of the direction of impending travel. Reassess travel vector on every tick.
+*   **TODO-079:** [COMPLETED] Every organism should cast a light with 15 degree spread, pointing toward its travel vector. Illumination should affect walls and reflect/shine off other organisms.
+*   **TODO-080:** [REMOVED] Make organism cytoplasm completely transparent. (Decorations removed as per request)
+*   **TODO-081:** [REMOVED] The cytoplasm skin should be a rounded surface that curves through the centers of the cytoplasm cells. (Decorations removed as per request)
 *   **TODO-075:** [COMPLETED] Make living cells that are part of an Organism appear orange in `Cell.tsx`.
 
-********COMPLETED ITEMS ************
-*   **TODO-074:** [COMPLETED] Make organism living cells more visible by adjusting `OrganismCoreVisuals` and `OrganismNucleusSupersuit` rendering properties.
-
-********COMPLETED ITEMS ************
-*   **TODO-073:** [COMPLETED] Fix `Cell.tsx` shader to correctly use `instanceOpacity` for cell visibility.
-
-********COMPLETED ITEMS ************
-*   **TODO-071:** [COMPLETED] When clicking a community in the cube, if it is part of an Organism, then make it the current community in the Community Selection panel and update the display accordingly.
-*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm for organisms to be strictly within [1, gridSize-2].
-*   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
-*   **TODO-060:** [COMPLETED] Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3)
-*   **TODO-058:** [COMPLETED] Implement full juking logic for organisms, including finding valid offsets and applying grid mutations. (Related to Organisms.AI: Post-Tick Organism Processing - Step 4) - **Preference for rotation in juke selection implemented.**
-*   **TODO-059:** [COMPLETED] Implement random rotation logic for organisms. (Related to Organisms.AI: Post-Tick Organism Processing - Step 5)
-*   **TODO-017:** [COMPLETED] `QA-3` (from `quality-doc-test-process`) - Missing automated test.
-*   **TODO-016:** [COMPLETED] `QA-2` (from `quality-key-mapping`) - Missing automated test.
-*   **TODO-015:** [COMPLETED] `UX-7` (from `quality-input-focus`) - Missing automated test.
-*   **TODO-005:** [COMPLETED] `UC-12` (from `header-shortcuts`) - Missing automated test.
-*   **TODO-004:** [COMPLETED] `UI-2` (from `header-docs`, `deprecated-accessing-documentation`) - Missing automated test.
-*   **TODO-003:** [COMPLETED] `UC-3` (from `header-scene-selector`) - Missing automated test. You should be able to select a scene, and have it load.
-*   **TODO-011:** [COMPLETED] `UC-10` (from `config-scene-management`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-010:** [COMPLETED] `UC-9` (from `config-cursor`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-009:** [COMPLETED] `UC-8` (from `config-rules`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-008:** [COMPLETED] `UC-7` (from `config-environment`) - In progress in `SettingsSidebar.test.tsx`.
-*   **TODO-002:** [COMPLETED] `UC-11` (from `header-camera`, `rotation-free-form`, `config-camera-controls`, `deprecated-camera-control`) - Claim highlights removed.
-*   **TODO-059:** [COMPLETED] Update the ReleaseNotes based on Git commits before a build.
-*   **TODO-006:** [COMPLETED] `UC-4` (from `edit-paint-clear`)
-*   **TODO-007:** [COMPLETED] `UC-5` (from `edit-brush-selector`)
-*   **TODO-018:** [COMPLETED] `AHP_TITLE_001`
-*   **TODO-019:** [COMPLETED] `AHP_STATUS_001`
-*   **TODO-020:** [COMPLETED] `AHP_MODAL_001`
-*   **TODO-021:** [COMPLETED] `AHP_MENU_001`
-*   **TODO-022:** [COMPLETED] `TEST_BC_DRAG_001`
-*   **TODO-023:** [COMPLETED] `TEST_BC_INIT_001`
-*   **TODO-024:** [COMPLETED] `TEST_BC_APPEAR_001`
-*   **TODO-025:** [COMPLETED] `TEST_BC_APPEAR_002`
-*   **TODO-026:** [COMPLETED] `TEST_BC_VIS_001`
-*   **TODO-027:** [COMPLETED] `TEST_BC_BUTTON_001_W`
-*   **TODO-028:** [COMPLETED] `TEST_BC_BUTTON_001_X`
-*   **TODO-029:** [COMPLETED] `TEST_BC_BUTTON_001_A`
-*   **TODO-030:** [COMPLETED] `TEST_BC_BUTTON_001_D`
-*   **TODO-031:** [COMPLETED] `TEST_BC_BUTTON_001_Q`
-*   **TODO-032:** [COMPLETED] `TEST_BC_BUTTON_001_Z`
-*   **TODO-033:** [COMPLETED] `AHPB_SCENE_001`
-*   **TODO-034:** [COMPLETED] `AHPB_MODE_001`
-*   **TODO-035:** [COMPLETED] `AHPB_PLAY_001`
-*   **TODO-036:** [COMPLETED] `AHPB_SPEED_001`
-*   **TODO-037:** [COMPLETED] `AHPB_STEP_BACK_001`
-*   **TODO-038:** [COMPLETED] `AHPB_STEP_FWD_001`
-*   **TODO-039:** [COMPLETED] `AHPB_RESET_001`
-*   **TODO-040:** [COMPLETED] `AHPB_FIT_001`
-*   **TODO-041:** [COMPLETED] `AHPB_RECENTER_001`
-*   **TODO-042:** [COMPLETED] `AHPB_SQUARE_001`
-*   **TODO-043:** [COMPLETED] `AHPB_COMM_001`
-*   **TODO-044:** [COMPLETED] `AHPB_GEAR_001`
-*   **TODO-045:** [COMPLETED] `AHPB_HELP_001`
-*   **TODO-046:** [COMPLETED] `AHPB_HELP_INT_001`
-*   **TODO-047:** [COMPLETED] `AHPB_HELP_SHORT_001`
-*   **TODO-048:** [COMPLETED] `AHPB_HELP_NOTES_001`
-*   **TODO-049:** [COMPLETED] `AHPB_HELP_DOCS_001`
-*   **TODO-050:** [COMPLETED] `Controls_Documentation.ts`: `CONTROLS_DEPRECATED_001_CLAIM`
-*   **TODO-051:** [COMPLETED] `ManualTestsPanel_Documentation.ts`: `MTP_PANEL_001_CLAIM`
-*   **TODO-052:** [COMPLETED] `BrushContext.test.tsx` tagging
-*   **TODO-053:** [COMPLETED] `Grid.test.tsx` tagging
-*   **TODO-054:** [COMPLETED] Address `SettingsSidebar_Documentation.ts` inconsistency.
-*   **TODO-055:** [COMPLETED] Removed incomplete draggable footer from `src/public/App.tsx`.
-*   **TODO-057:** [COMPLETED] Perform a tagging pass on remaining files in `src/__tests__`.
 
 **GENERAL RULES**
-Use this file to store all TODO's as requested.
+Use this file to store TODO's as requested.
 
 Each item should be sufficiently articulated so that another AI with access to the project can perform the necessary actions.
 

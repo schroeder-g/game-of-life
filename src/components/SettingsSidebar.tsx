@@ -13,6 +13,7 @@ import {
 } from '../core/faceOrientationKeyMapping'; // Added
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
+import { serializeOrganism } from '../core/Organism'; // Added
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AutomatedTestsPanel } from './AutomatedTestsPanel';
 import { ManualTestsPanel } from './ManualTestsPanel';
@@ -799,8 +800,11 @@ function SceneManagementSection() {
 			birthMargin,
 			cellMargin,
 			gridSize,
-			organisms, // ADD THIS LINE
-			organismsVersion, // ADD THIS LINE
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+			organisms,
+			organismsVersion,
 		},
 		actions: {
 			applyCells,
@@ -841,7 +845,6 @@ function SceneManagementSection() {
 			return {
 				name,
 				cells: gridRef.current.getLivingCells(),
-				organisms: Array.from(organisms.values()), // ADD THIS LINE
 				settings: {
 					speed,
 					density,
@@ -852,15 +855,17 @@ function SceneManagementSection() {
 					birthMargin,
 					cellMargin,
 					gridSize,
+					neighborFaces,
+					neighborEdges,
+					neighborCorners,
 				},
+				organisms: Array.from(organisms.values()).map(serializeOrganism),
 				createdAt: new Date().toISOString(),
 			};
 		},
 		[
-			initialStateRef,
 			gridRef,
-			organisms, // ADD THIS DEPENDENCY
-			organismsVersion, // ADD THIS DEPENDENCY
+			organisms,
 			speed,
 			density,
 			surviveMin,
@@ -870,6 +875,9 @@ function SceneManagementSection() {
 			birthMargin,
 			cellMargin,
 			gridSize,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
 		],
 	);
 
@@ -890,7 +898,7 @@ function SceneManagementSection() {
 
 	const handleImportConfig = () => {
 		importConfig(config => {
-			applyCells(config.cells, config.settings.gridSize);
+			applyCells(config, config.settings.gridSize);
 			// also apply saved settings
 			setSpeed(config.settings.speed);
 			setDensity(config.settings.density);
@@ -917,7 +925,7 @@ function SceneManagementSection() {
 		setSelectedConfigName(name);
 		if (name && savedConfigs[name]) {
 			const config = savedConfigs[name];
-			applyCells(config.cells, config.settings.gridSize);
+			applyCells(config, config.settings.gridSize);
 			// apply saved settings as well
 			setSpeed(config.settings.speed);
 			setDensity(config.settings.density);

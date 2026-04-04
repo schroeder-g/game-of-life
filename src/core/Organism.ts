@@ -1,6 +1,18 @@
 import * as THREE from 'three';
 
 /**
+ * Serialized representation of an Organism for persistence and history.
+ */
+export interface OrganismData {
+	id: string;
+	name: string;
+	livingCells: string[]; // Set serialized to Array
+	skinColor: string;
+	centroid?: [number, number, number];
+	travelVector?: [number, number, number];
+}
+
+/**
  * Organism data model.
  * An Organism is a special Community with a Cytoplasm buffer, a skin color,
  * and a name. It is maintained in SimulationContext for the session.
@@ -21,6 +33,10 @@ export interface Organism {
 	 * like "fluttering" between states.
 	 */
 	previousLivingCells: Set<string>;
+	/** current center of mass of living cells. */
+	centroid?: [number, number, number];
+	/** Unit vector of movement since last tick. */
+	travelVector?: [number, number, number];
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
@@ -43,8 +59,7 @@ export function computeCytoplasm(
 	gridSize: number,
 ): Set<string> {
 	const cytoplasm = new Set<string>();
-	const livingCellsArray = Array.from(livingCells).map(parseKey);
-
+	
 	// Create a temporary grid for O(1) lookups
 	const tempGrid = new Set(livingCells);
 
@@ -99,13 +114,11 @@ export function computeSkinColor(
 		const [x, , z] = parseKey(key);
 		const hue = (x / gridSize) * 300;
 		const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
-		// Match Cell.tsx: chroma.hsl(240 - hue, saturation, 0.55)
-		// Compute manually without chroma dependency
-		const h = (240 - hue + 360) % 360; // Ensure hue is positive
+		
+		const h = (240 - hue + 360) % 360; 
 		const s = saturation;
-	const l = 0.55;
+		const l = 0.55;
 
-		// HSL to RGB conversion logic
 		const c = (1 - Math.abs(2 * l - 1)) * s;
 		const x2 = c * (1 - Math.abs(((h / 60) % 2) - 1));
 		const m = l - c / 2;
@@ -114,29 +127,17 @@ export function computeSkinColor(
 			g = 0,
 			b = 0;
 		if (0 <= h && h < 60) {
-			r = c;
-			g = x2;
-			b = 0;
+			r = c; g = x2; b = 0;
 		} else if (60 <= h && h < 120) {
-			r = x2;
-			g = c;
-			b = 0;
+			r = x2; g = c; b = 0;
 		} else if (120 <= h && h < 180) {
-			r = 0;
-			g = c;
-			b = x2;
+			r = 0; g = c; b = x2;
 		} else if (180 <= h && h < 240) {
-			r = 0;
-			g = x2;
-			b = c;
+			r = 0; g = x2; b = c;
 		} else if (240 <= h && h < 300) {
-			r = x2;
-			g = 0;
-			b = c;
+			r = x2; g = 0; b = c;
 		} else if (300 <= h && h < 360) {
-			r = c;
-			g = 0;
-			b = x2;
+			r = c; g = 0; b = x2;
 		}
 
 		rSum += r + m;
@@ -151,4 +152,71 @@ export function computeSkinColor(
 			.padStart(2, '0');
 
 	return `#${toHex(rSum / count)}${toHex(gSum / count)}${toHex(bSum / count)}`;
+}
+
+/**
+ * Calculates the center of mass (centroid) for a set of cells.
+ */
+export function getCentroid(cells: Set<string> | Array<[number, number, number]>): [number, number, number] {
+	const cellArray = Array.isArray(cells) ? cells : Array.from(cells).map(parseKey);
+	if (cellArray.length === 0) return [0, 0, 0];
+
+	let xSum = 0, ySum = 0, zSum = 0;
+	for (const [x, y, z] of cellArray) {
+		xSum += x;
+		ySum += y;
+		zSum += z;
+	}
+	const count = cellArray.length;
+	return [xSum / count, ySum / count, zSum / count];
+}
+
+/**
+ * Returns a union of living cells and cytoplasm. 
+ */
+export function getExtendedBody(organism: Organism): Set<string> {
+	const body = new Set(organism.livingCells);
+	organism.cytoplasm.forEach(k => body.add(k));
+	return body;
+}
+
+/** Converts an Organism instance to a plain data object for serialization. */
+export function serializeOrganism(org: Organism): OrganismData {
+	return {
+		id: org.id,
+		name: org.name,
+		livingCells: Array.from(org.livingCells),
+		skinColor: org.skinColor,
+		centroid: org.centroid,
+		travelVector: org.travelVector,
+	};
+}
+
+/** Reconstructs an Organism instance from serialized data. */
+export function deserializeOrganism(data: OrganismData, gridSize: number): Organism {
+	const livingCells = new Set(data.livingCells);
+	return {
+		id: data.id,
+		name: data.name,
+		livingCells,
+		previousLivingCells: new Set(livingCells),
+		cytoplasm: computeCytoplasm(livingCells, gridSize),
+		skinColor: data.skinColor,
+		centroid: data.centroid,
+		travelVector: data.travelVector,
+	};
+}
+
+/** Deep clones a map of organisms for history snapshots. */
+export function cloneOrganisms(orgs: Map<string, Organism>): Map<string, Organism> {
+	const newMap = new Map<string, Organism>();
+	for (const [id, org] of orgs) {
+		newMap.set(id, {
+			...org,
+			livingCells: new Set(org.livingCells),
+			cytoplasm: new Set(org.cytoplasm),
+			previousLivingCells: new Set(org.previousLivingCells),
+		});
+	}
+	return newMap;
 }

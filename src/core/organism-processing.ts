@@ -12,6 +12,7 @@ import {
 	computeSkinColor,
 	makeKey,
 	parseKey,
+	getCentroid,
 } from './Organism';
 
 interface ProcessOrganismsResult {
@@ -41,6 +42,7 @@ function unitOffsets(): Array<[number, number, number]> {
 }
 
 const UNIT_OFFSETS = unitOffsets();
+const WALL_REPULSION_RADIUS = 3; // Cells away from wall to start avoiding
 
 /** Shuffles an array in-place (Fisher-Yates). Returns the array. */
 function shuffle<T>(arr: T[]): T[] {
@@ -62,6 +64,9 @@ const ROTATIONS: Array<(x: number, y: number, z: number) => [number, number, num
 	(x, y, z) => [-z, y, x],   // -90° around Y
 	(x, y, z) => [-y, x, z],   // +90° around Z
 	(x, y, z) => [y, -x, z],   // -90° around Z
+	(x, y, z) => [x, -y, -z],  // 180° around X
+	(x, y, z) => [-x, y, -z],  // 180° around Y
+	(x, y, z) => [-x, -y, z],  // 180° around Z
 ];
 
 /**
@@ -80,6 +85,7 @@ function isPositionValid(
 	neighborFaces: boolean,
 	neighborEdges: boolean,
 	neighborCorners: boolean,
+	currentOrgCells: Set<string>, // The organism's current living cells in the grid
 ): boolean {
 	const proposedSet = new Set<string>(proposedCells.map(([x, y, z]) => makeKey(x, y, z)));
 
@@ -97,7 +103,7 @@ function isPositionValid(
 		const k = makeKey(x, y, z);
 		if (otherOrgCells.has(k)) return false;
 		// Also check against any living cell in the grid not owned by this organism
-		if (grid.get(x, y, z) && !proposedSet.has(k)) return false;
+		if (grid.get(x, y, z) && !proposedSet.has(k) && !currentOrgCells.has(k)) return false;
 	}
 
 	// Compute proposed cytoplasm and check it
@@ -113,7 +119,7 @@ function isPositionValid(
 		if (cx <= 0 || cx >= gridSize - 1 || cy <= 0 || cy >= gridSize - 1 || cz <= 0 || cz >= gridSize - 1)
 			return false;
 		// Cytoplasm must not overlap any living cell outside this organism
-		if (grid.get(cx, cy, cz) && !proposedLivingSet.has(cytoKey)) return false;
+		if (grid.get(cx, cy, cz) && !proposedLivingSet.has(cytoKey) && !currentOrgCells.has(cytoKey)) return false;
 		if (otherOrgCells.has(cytoKey)) return false;
 	}
 
@@ -194,6 +200,83 @@ function getConnectedComponent(
 	return result;
 }
 
+
+/**
+ * Calculates a score representing the minimum distance from ANY living cell to any wall.
+ * This is "shell-aware" avoidance because it notices when a limb is close to the boundary.
+ */
+export function getShellSafetyScore(cells: Array<[number, number, number]>, gridSize: number): number {
+	if (cells.length === 0) return gridSize;
+	let minX = gridSize, maxX = 0;
+	let minY = gridSize, maxY = 0;
+	let minZ = gridSize, maxZ = 0;
+	
+	for (const [x, y, z] of cells) {
+		if (x < minX) minX = x;
+		if (x > maxX) maxX = x;
+		if (y < minY) minY = y;
+		if (y > maxY) maxY = y;
+		if (z < minZ) minZ = z;
+		if (z > maxZ) maxZ = z;
+	}
+
+	return Math.min(
+		minX, gridSize - 1 - maxX,
+		minY, gridSize - 1 - maxY,
+		minZ, gridSize - 1 - maxZ
+	);
+}
+
+/**
+ * Calculates a high-precision score for a "Safe Lunge".
+ * Priority 1: Minimum body clearance (must not be 0).
+ * Priority 2: Centroid distance from nearest wall (pushing bulk inland).
+ */
+function getSafeLungeScore(cells: Array<[number, number, number]>, gridSize: number): number {
+	if (cells.length === 0) return 0;
+	
+	const minClearance = getShellSafetyScore(cells, gridSize);
+	const centroid = getCentroid(cells);
+	
+	// Distance of centroid to nearest wall
+	const centroidDist = Math.min(
+		centroid[0], gridSize - 1 - centroid[0],
+		centroid[1], gridSize - 1 - centroid[1],
+		centroid[2], gridSize - 1 - centroid[2]
+	);
+
+	// Priority 1: Shell clearance (x100)
+	// Priority 2: Centroid distance (tie-breaker)
+	return (minClearance * 100) + centroidDist;
+}
+
+/**
+ * Calculates a high-precision score for comparing two positions.
+ * Priority 1: Minimum body clearance (coarse).
+ * Priority 2: Average body distance from walls (fine-grained "torque").
+ * This ensures organisms pivot their bulk away from walls even during ties.
+ */
+function getWeightedSafetyScore(cells: Array<[number, number, number]>, gridSize: number): number {
+	if (cells.length === 0) return 0;
+	
+	const minDist = getShellSafetyScore(cells, gridSize);
+	
+	// Calculate average distance to nearest wall for all cells
+	let totalDist = 0;
+	for (const [x, y, z] of cells) {
+		const d = Math.min(
+			x, gridSize - 1 - x,
+			y, gridSize - 1 - y,
+			z, gridSize - 1 - z
+		);
+		totalDist += d;
+	}
+	const avgDist = totalDist / cells.length;
+
+	// Scale minDist by 100 to make it the primary sort key
+	return (minDist * 100) + avgDist;
+}
+
 /**
  * Main post-tick organism processing. Pure function — no side effects on grid.
  * Returns updated organism map and list of grid mutations to apply.
@@ -220,6 +303,8 @@ export function processOrganisms(
 	}
 
 	for (const [id, organism] of organisms) {
+		const previousCentroid = organism.centroid || getCentroid(organism.livingCells);
+
 		// Define the organism's "territory" from the previous generation
 		// This includes its previous living cells AND its previous cytoplasm
 		const organismTerritory = new Set<string>([
@@ -269,154 +354,111 @@ export function processOrganisms(
 
 		// Step 3: Check for skin breach
 		// A breach occurs if any cytoplasm cell is alive in the grid and
-		// not part of THIS organism's living cells.
+		// was NOT part of this organism's territory (foreigner).
+		// Internal splitting/shedding does NOT trigger a dissolve.
 		let breached = false;
 		for (const cytoKey of newCytoplasm) {
-			if (allLivingKeys.has(cytoKey) && !newLivingCells.has(cytoKey)) {
+			if (
+				allLivingKeys.has(cytoKey) && 
+				!newLivingCells.has(cytoKey) && 
+				!organismTerritory.has(cytoKey)
+			) {
 				breached = true;
 				break;
 			}
 		}
 
 		if (breached) {
-			// Dissolve organism, do not juke or rotate
+			// Dissolve organism if a true foreigner enters the moat
 			continue;
 		}
-
-		// Step 4: Check if juke is needed
-		// A juke is needed if cytoplasm overlaps any external living cell
-		const jukeNeeded = (() => {
-			for (const cytoKey of newCytoplasm) {
-				if (allLivingKeys.has(cytoKey) && !newLivingCells.has(cytoKey)) return true;
-			}
-			return false;
-		})();
 
 		let currentCells: Array<[number, number, number]> = Array.from(newLivingCells).map(parseKey);
 		let currentLivingSet = newLivingCells;
 		let currentCytoplasm = newCytoplasm;
-		let didJuke = false;
 
-		if (jukeNeeded) {
-			// Try all 26 unit offsets, prefer ones that also allow a rotation
-			const shuffledOffsets = shuffle([...UNIT_OFFSETS]);
+		// Unified Step 4 & 5: Safe Lunge (Combined Translation + Rotation)
+		// Triggered if too close to wall or if a breach is detected.
+		const currentShellScore = getShellSafetyScore(currentCells, gridSize);
+		const needsManoeuvre = (() => {
+			if (currentShellScore < WALL_REPULSION_RADIUS) return true;
+			for (const cytoKey of currentCytoplasm) {
+				if (allLivingKeys.has(cytoKey) && !newLivingCells.has(cytoKey)) return true;
+				const [cx, cy, cz] = parseKey(cytoKey);
+				if (cx <= 0 || cx >= gridSize - 1 || cy <= 0 || cy >= gridSize - 1 || cz <= 0 || cz >= gridSize - 1)
+					return true;
+			}
+			return false;
+		})();
 
-			// For each candidate juke, check if any rotation would also be valid
-			const validJukes: Array<{
-				offset: [number, number, number];
-				allowsRotation: boolean;
-				cells: Array<[number, number, number]>;
-			}> = [];
+		if (needsManoeuvre) {
+			const currentLungeScore = getSafeLungeScore(currentCells, gridSize);
+			const candidates: Array<{ cells: Array<[number, number, number]>, score: number }> = [];
 
-			for (const [dx, dy, dz] of shuffledOffsets) {
-				const proposed = translateCells(currentCells, dx, dy, dz);
-				if (
-					isPositionValid(
-						proposed,
-						id,
-						grid,
-						organisms,
-						gridSize,
-						neighborFaces,
-						neighborEdges,
-						neighborCorners,
-					)
-				) {
-					// Check if any rotation is valid from this juke position
-					const shuffledRots = shuffle([...ROTATIONS]);
-					let allowsRotation = false;
-					for (const rotFn of shuffledRots) {
-						const rotated = rotateCellsAroundCentroid(proposed, rotFn);
-						if (
-							isPositionValid(
-								rotated,
-								id,
-								grid,
-								organisms,
-								gridSize,
-								neighborFaces,
-								neighborEdges,
-								neighborCorners,
-							)
-						) {
-							allowsRotation = true;
-							break;
+			// Identity rotation function
+			const IDENTITY = (x: number, y: number, z: number) => [x, y, z] as [number, number, number];
+			const allRotFns = [IDENTITY, ...ROTATIONS];
+
+			// Evaluate all combinations of 7 rotations and 27 translations (189 total)
+			for (const rotFn of allRotFns) {
+				const rotatedBase = rotateCellsAroundCentroid(currentCells, rotFn);
+				for (const [dx, dy, dz] of [[0, 0, 0], ...UNIT_OFFSETS]) {
+					const lunged = translateCells(rotatedBase, dx as number, dy as number, dz as number);
+					
+					if (isPositionValid(lunged, id, grid, organisms, gridSize, neighborFaces, neighborEdges, neighborCorners, currentLivingSet)) {
+						let score = getSafeLungeScore(lunged, gridSize);
+						// Add a "Novelty Bonus" for any orientation change to break wall-fluttering ties
+						if (rotFn !== IDENTITY) {
+							score += 0.05;
 						}
+						candidates.push({ cells: lunged, score });
 					}
-					validJukes.push({ offset: [dx, dy, dz], allowsRotation, cells: proposed });
 				}
 			}
 
-			if (validJukes.length === 0) {
-				// No valid juke — dissolve
-				continue;
-			}
+			if (candidates.length > 0) {
+				candidates.sort((a, b) => b.score - a.score);
+				// High-intelligence choice: Pick the absolute best lunge-turn.
+				// If tied, pick randomly among best to allow fluid movement.
+				const bestScore = candidates[0].score;
+				if (bestScore > currentLungeScore || (Math.abs(bestScore - currentLungeScore) < 0.01)) {
+					const bestCandidates = candidates.filter(c => Math.abs(c.score - bestScore) < 0.01);
+					const chosen = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
 
-			// Prefer jukes that allow a rotation
-			const rotationAllowingJukes = validJukes.filter(j => j.allowsRotation);
-			const chosen =
-				rotationAllowingJukes.length > 0
-					? rotationAllowingJukes[Math.floor(Math.random() * rotationAllowingJukes.length)]
-					: validJukes[Math.floor(Math.random() * validJukes.length)];
+					// Apply the move
+					for (const k of currentLivingSet) {
+						const [x, y, z] = parseKey(k);
+						gridMutations.push([x, y, z, false]);
+						allLivingKeys.delete(k);
+					}
+					for (const [x, y, z] of chosen.cells) {
+						gridMutations.push([x, y, z, true]);
+						allLivingKeys.add(makeKey(x, y, z));
+					}
 
-			// Apply juke: queue mutations
-			for (const k of currentLivingSet) {
-				const [x, y, z] = parseKey(k);
-				gridMutations.push([x, y, z, false]);
-				allLivingKeys.delete(k);
-			}
-			for (const [x, y, z] of chosen.cells) {
-				gridMutations.push([x, y, z, true]);
-				allLivingKeys.add(makeKey(x, y, z));
-			}
-
-			currentCells = chosen.cells;
-			currentLivingSet = new Set(currentCells.map(([x, y, z]) => makeKey(x, y, z)));
-			currentCytoplasm = computeCytoplasm(
-				currentLivingSet,
-				gridSize,
-			);
-			didJuke = true;
-		}
-
-		// Step 5: Random rotation (attempted whether or not a juke occurred)
-		const shuffledRots = shuffle([...ROTATIONS]);
-		for (const rotFn of shuffledRots) {
-			const rotated = rotateCellsAroundCentroid(currentCells, rotFn);
-			if (
-				isPositionValid(
-					rotated,
-					id,
-					grid,
-					organisms,
-					gridSize,
-					neighborFaces,
-					neighborEdges,
-					neighborCorners,
-				)
-			) {
-				// Apply rotation
-				for (const k of currentLivingSet) {
-					const [x, y, z] = parseKey(k);
-					gridMutations.push([x, y, z, false]);
-					allLivingKeys.delete(k);
+					currentCells = chosen.cells;
+					currentLivingSet = new Set(currentCells.map(([x, y, z]) => makeKey(x, y, z)));
+					currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
 				}
-				for (const [x, y, z] of rotated) {
-					gridMutations.push([x, y, z, true]);
-					allLivingKeys.add(makeKey(x, y, z));
-				}
-				currentCells = rotated;
-				currentLivingSet = new Set(currentCells.map(([x, y, z]) => makeKey(x, y, z)));
-				currentCytoplasm = computeCytoplasm(
-					currentLivingSet,
-					gridSize,
-				);
-				break;
 			}
 		}
 
-		// Recompute skin color from updated cell positions
+		// Recompute skin color and wall distance from updated cell positions
 		const skinColor = computeSkinColor(currentLivingSet, gridSize);
+		const minWallDistance = getShellSafetyScore(currentCells, gridSize);
+		const currentCentroid = getCentroid(currentCells);
+
+		// Compute travel vector (normalized direction of movement)
+		let travelVector = organism.travelVector || [0, 0, 1]; // Default to Forward if never moved
+		const dx = currentCentroid[0] - previousCentroid[0];
+		const dy = currentCentroid[1] - previousCentroid[1];
+		const dz = currentCentroid[2] - previousCentroid[2];
+		const mag = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+		if (mag > 0.05) {
+			// Significant movement occurred
+			travelVector = [dx / mag, dy / mag, dz / mag];
+		}
 
 		updatedOrganisms.set(id, {
 			...organism,
@@ -424,6 +466,9 @@ export function processOrganisms(
 			cytoplasm: currentCytoplasm,
 			skinColor,
 			previousLivingCells: new Set(currentLivingSet), // Store the current livingCells for the next tick's processing
+			minWallDistance,
+			centroid: currentCentroid,
+			travelVector: travelVector as [number, number, number],
 		});
 	}
 

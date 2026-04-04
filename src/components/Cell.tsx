@@ -147,12 +147,17 @@ export function Cells({
 			const key = cellsToRenderKeys[i]; // Get key for current cell
 
 			// Position & Scale
-			tempObject.position.set(
-				x - offset,
-				y - offset,
-				gridSize - 1 - z - offset,
-			);
-			tempObject.scale.set(1.0, 1.0, 1.0);
+			// Apply position and initial scale
+			const isOrgCell = organismCellKeys.has(key);
+			tempObject.position.set(x - offset, y - offset, gridSize - 1 - z - offset);
+			
+			// Always hide both the mesh and the edges for organism cells
+			if (isOrgCell) {
+				tempObject.scale.set(0, 0, 0);
+			} else {
+				tempObject.scale.set(1.0, 1.0, 1.0);
+			}
+			
 			tempObject.updateMatrix();
 			meshRef.current!.setMatrixAt(i, tempObject.matrix);
 			edgesRef.current!.setMatrixAt(i, tempObject.matrix);

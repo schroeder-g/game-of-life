@@ -167,20 +167,16 @@ function OrganismCoreMesh({
 	const sphereColor = useMemo(() => new THREE.Color(organism.skinColor), [organism.skinColor]);
 	const emissiveColor = useMemo(() => new THREE.Color(0xffffff), []); // White for pulsing brightness
 
-	useFrame(({ clock }) => {
-		const time = clock.getElapsedTime();
-		// Sine wave from 0 to 1 over 2 seconds (Math.PI * time / 2)
-		const pulseFactor = (Math.sin(time * Math.PI) + 1) / 2;
-		// Increase base and peak emissive intensity for a stronger glow
-		const intensity = 2.0 + (pulseFactor * 3.0); // Pulse from 2.0 to 5.0 intensity
-
-		if (sphereMeshRef.current && sphereMeshRef.current.material) {
-			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
+	const targetObject = useMemo(() => new THREE.Object3D(), []);
+	useEffect(() => {
+		if (organism.travelVector) {
+			targetObject.position.set(
+				organism.travelVector[0] * 10,
+				organism.travelVector[1] * 10,
+				-organism.travelVector[2] * 10
+			);
 		}
-		if (beamMeshRef.current && beamMeshRef.current.material) {
-			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
-		}
-	});
+	}, [organism.travelVector, targetObject]);
 
 
 	return (
@@ -190,8 +186,8 @@ function OrganismCoreMesh({
 				<sphereGeometry args={[sphereRadius, 8, 8]} /> {/* Low poly sphere for performance */}
 				<meshStandardMaterial
 					color={sphereColor}
-					emissive={emissiveColor}
-					emissiveIntensity={2.0} // Base emissive intensity
+					metalness={0.5}
+					roughness={0.4}
 				/>
 			</instancedMesh>
 
@@ -200,10 +196,38 @@ function OrganismCoreMesh({
 				<cylinderGeometry args={[beamRadius, beamRadius, 1, 8]} /> {/* 8 segments for smoother cylinders */}
 				<meshStandardMaterial 
 					color={sphereColor} 
-					emissive={emissiveColor}
-					emissiveIntensity={2.0}
+					metalness={0.5}
+					roughness={0.4}
 				/>
 			</instancedMesh>
+
+			{/* Navigation Arrow and Spotlight */}
+			{organism.centroid && organism.travelVector && (
+				<group position={new THREE.Vector3(...organism.centroid).set(organism.centroid[0] - offset, organism.centroid[1] - offset, gridSize - 1 - organism.centroid[2] - offset)}>
+					{/* Travel Vector Arrow */}
+					<primitive 
+						object={new THREE.ArrowHelper(
+							new THREE.Vector3(...organism.travelVector).set(organism.travelVector[0], organism.travelVector[1], -organism.travelVector[2]), 
+							new THREE.Vector3(0, 0, 0), 
+							1.5, 
+							0xffffff,
+							0.4,
+							0.2
+						)} 
+					/>
+					{/* Directional Spotlight */}
+					<spotLight
+						color={organism.skinColor}
+						intensity={500} // Extra strong to hit walls
+						distance={24}
+						angle={15 * (Math.PI / 180)} // 15 degrees spread
+						penumbra={0.3}
+						position={[0, 0, 0]}
+						target={targetObject}
+					/>
+					<primitive object={targetObject} />
+				</group>
+			)}
 		</group>
 	);
 }
