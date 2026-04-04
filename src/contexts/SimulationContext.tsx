@@ -654,6 +654,7 @@ export function SimulationProvider({
 			birthMargin,
 		);
 
+		// After grid tick, process organisms
 		updateOrganismsAfterTick();
 
 		if (gridRef.current.getLivingCells().length === 0) {
