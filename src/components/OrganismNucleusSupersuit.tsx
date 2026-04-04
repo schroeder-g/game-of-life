@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'; // Import for merging geometries
+import BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'; // Import for merging geometries
 import { Organism } from '../core/Organism';
 import { parseKey, makeKey } from '../core/Organism';
 
