@@ -445,7 +445,7 @@ export function processOrganisms(
 			livingCells: currentLivingSet,
 			cytoplasm: currentCytoplasm,
 			skinColor,
-			previousLivingCells: organism.livingCells, // Store the current livingCells for the next tick's processing
+			previousLivingCells: new Set(currentLivingSet), // Store the current livingCells for the next tick's processing
 		});
 	}
 
