@@ -60,9 +60,10 @@ function OrganismSupersuitMesh({
 	const sphereRadiusCore = (1 - cellMargin) / 4;
 	const beamRadiusCore = sphereRadiusCore / 2;
 
-	// Supersuit dimensions (slightly larger than core visuals)
-	const sphereRadiusSupersuit = sphereRadiusCore * 1.35;
-	const beamRadiusSupersuit = beamRadiusCore * 0.9; // 50% smaller (was 1.8)
+	// Supersuit dimensions (Smooth and rounded, clinging to the skeleton)
+	const sphereRadiusSupersuit = sphereRadiusCore * 1.6; // 1.6x core for a "bloopy" look
+	// Thick beams that "cling" and merge with the spheres
+	const beamRadiusSupersuit = sphereRadiusSupersuit * 0.8;
 
 	const { sphereData, beamData } = useMemo(() => {
 		const currentLivingCells = organism.livingCells;
@@ -105,8 +106,9 @@ function OrganismSupersuitMesh({
 						tempVec2.set(nx - offset, ny - offset, gridSize - 1 - nz - offset);
 
 						const direction = new THREE.Vector3().subVectors(tempVec2, tempVec1).normalize();
-						const beamStart = tempVec1.clone().add(direction.clone().multiplyScalar(sphereRadiusSupersuit));
-						const beamEnd = tempVec2.clone().sub(direction.clone().multiplyScalar(sphereRadiusSupersuit));
+						// Beams connect from sphere surface to sphere surface
+						const beamStart = tempVec1.clone().add(direction.clone().multiplyScalar(sphereRadiusSupersuit * 0.5));
+						const beamEnd = tempVec2.clone().sub(direction.clone().multiplyScalar(sphereRadiusSupersuit * 0.5));
 						const midPoint = new THREE.Vector3().addVectors(beamStart, beamEnd).multiplyScalar(0.5);
 						const length = beamStart.distanceTo(beamEnd);
 
@@ -151,45 +153,50 @@ function OrganismSupersuitMesh({
 		beamMeshRef.current.instanceMatrix.needsUpdate = true;
 	}, [beamData]);
 
+	const redColor = useMemo(() => new THREE.Color('#ff0000'), []); // Brighter red
+	const crimsonEmissive = useMemo(() => new THREE.Color('#ff2222'), []); // Brighter red emissive
+
 	useFrame(({ clock }) => {
 		const time = clock.getElapsedTime();
 		if (sphereMeshRef.current && sphereMeshRef.current.material) {
 			const pulse = (Math.sin(time * 3) + 1) / 2;
-			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5 + pulse * 2.5;
-			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).opacity = 0.15 + pulse * 0.15;
+			// Brighter pulses (2.0 to 5.0 base intensity)
+			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 2.0 + pulse * 3.0;
 		}
 		if (beamMeshRef.current && beamMeshRef.current.material) {
-			const pulse = (Math.sin(time * 3) + 1) / 2; // Sync with spheres
-			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.0 + pulse * 3.0;
-			(beamMeshRef.current.material as THREE.MeshStandardMaterial).opacity = 0.1 + pulse * 0.2;
+			const pulse = (Math.sin(time * 3) + 1) / 2;
+			(beamMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.5 + pulse * 3.5;
 		}
 	});
 
 	return (
 		<group>
+			{/* Smooth Organic Skeleton Nodes (Spheres) */}
 			<instancedMesh ref={sphereMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_INSTANCES]}>
-				<sphereGeometry args={[sphereRadiusSupersuit, 12, 12]} />
+				<sphereGeometry args={[sphereRadiusSupersuit, 16, 16]} />
 				<meshStandardMaterial
-					color={organism.skinColor}
-					transparent
-					opacity={0.15}
-					depthWrite={false}
-					emissive={organism.skinColor}
-					emissiveIntensity={1}
-					roughness={0.2}
+					color={redColor}
+					transparent={false}
+					opacity={1.0}
+					depthWrite={true}
+					emissive={crimsonEmissive}
+					emissiveIntensity={2.0}
+					roughness={0.15}
 					metalness={0.8}
 				/>
 			</instancedMesh>
+
+			{/* Smooth Organic Skeleton Beams (Thickened Cylinders) */}
 			<instancedMesh ref={beamMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_BEAM_INSTANCES]}>
-				<cylinderGeometry args={[beamRadiusSupersuit, beamRadiusSupersuit, 1, 8]} /> {/* 8 segments for smoother cylinders */}
+				<cylinderGeometry args={[beamRadiusSupersuit, beamRadiusSupersuit, 1, 12]} />
 				<meshStandardMaterial
-					color={organism.skinColor}
-					transparent
-					opacity={0.1}
-					depthWrite={false}
-					emissive={organism.skinColor}
-					emissiveIntensity={0.5}
-					roughness={0.2}
+					color={redColor}
+					transparent={false}
+					opacity={1.0}
+					depthWrite={true}
+					emissive={crimsonEmissive}
+					emissiveIntensity={1.5}
+					roughness={0.15}
 					metalness={0.8}
 				/>
 			</instancedMesh>
