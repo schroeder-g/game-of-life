@@ -153,8 +153,16 @@ export function processOrganisms(
 		}
 	}
 
-	const allOrgKeyMap = new Map<string, Set<string>>();
-	for (const [id, org] of organisms) allOrgKeyMap.set(id, org.livingCells);
+	// NEW: Pre-calculate extended bodies (living cells + cytoplasm) for all organisms
+	const allOrganismsExtendedBodies = new Map<string, Set<string>>();
+	for (const [id, org] of organisms) {
+		const extendedBody = new Set<string>();
+		org.livingCells.forEach(key => extendedBody.add(key));
+		// Note: org.cytoplasm is already computed and up-to-date from the previous tick,
+		// or from organism creation/deserialization.
+		org.cytoplasm.forEach(key => extendedBody.add(key));
+		allOrganismsExtendedBodies.set(id, extendedBody);
+	}
 
 	for (const [id, organism] of organisms) {
 		const organismTerritory = new Set<string>([...organism.livingCells, ...organism.cytoplasm]);
@@ -196,8 +204,13 @@ export function processOrganisms(
 		let travelVector = derivedTravelVector; // Use this derived vector for wall avoidance logic
 		// ----------------------------------------------
 
-		const otherOrgCells = new Set<string>();
-		for (const [oid, oCells] of allOrgKeyMap) if (oid !== id) oCells.forEach(k => otherOrgCells.add(k));
+		// NEW: Construct the exclusion zone for *this* organism, including living cells and cytoplasm of others
+		const otherOrgExclusionZone = new Set<string>();
+		for (const [otherOrgId, otherOrgBody] of allOrganismsExtendedBodies) {
+			if (otherOrgId !== id) { // Only add bodies of *other* organisms
+				otherOrgBody.forEach(k => otherOrgExclusionZone.add(k));
+			}
+		}
 
 		// --- RULE-BASED NAVIGATION ---
 		const overlapNormal = getOverlapNormal(currentCytoplasm, gridSize);
@@ -303,7 +316,7 @@ export function processOrganisms(
 				}
 
 				// Step 4: Validate the final proposed position (after rotation and potential retreat)
-				if (isPositionValid(finalProposedCells, otherOrgCells, gridSize)) {
+				if (isPositionValid(finalProposedCells, otherOrgExclusionZone, gridSize)) {
 					nextCells = finalProposedCells;
 					travelVector = rotatedTravelVectorCandidate; // Update travelVector to the newly rotated one
 					moveChosen = true;
@@ -345,7 +358,7 @@ export function processOrganisms(
 							if (dotProductWithAway > currentBestDotProduct) { // Found a better alignment
 								const candidateCellsAfterRotation = rotateCells(currentCells, axis, angle, getCentroid(currentCells));
 								// Check if this rotated position is valid before considering it
-								if (isPositionValid(candidateCellsAfterRotation, otherOrgCells, gridSize)) {
+								if (isPositionValid(candidateCellsAfterRotation, otherOrgExclusionZone, gridSize)) {
 									currentBestDotProduct = dotProductWithAway;
 									bestCandidateCells = candidateCellsAfterRotation;
 									bestCandidateVector = rv;
@@ -369,7 +382,7 @@ export function processOrganisms(
 
 				for (let i = 0; i < 2; i++) { // Try up to 2 nudges
 					const proposedNudgeCells = translateCells(cellsForNudge, Math.sign(awayVector[0]), Math.sign(awayVector[1]), Math.sign(awayVector[2]));
-					if (isPositionValid(proposedNudgeCells, otherOrgCells, gridSize)) {
+					if (isPositionValid(proposedNudgeCells, otherOrgExclusionZone, gridSize)) {
 						cellsForNudge = proposedNudgeCells;
 						nudgeApplied = true;
 						bestCandidateMoveChosen = true; // A nudge was successfully applied
