@@ -57,7 +57,7 @@ function OrganismCoreMesh({
 
 	const offset = (gridSize - 1) / 2;
 	// CHANGE: Make spheres tinier (e.g., 1/8th of cell width instead of 1/4)
-	const sphereRadius = (1 - cellMargin) / 8; // Adjusted for "tiny"
+	const sphereRadius = (1 - cellMargin) / 4; // Make spheres larger for better visibility
 	const beamRadius = sphereRadius / 2; // Adjust beam radius to be relative to new sphere size
 	const beamLength = (1 - cellMargin) - (2 * sphereRadius); // Distance between sphere surfaces
 
@@ -160,8 +160,8 @@ function OrganismCoreMesh({
 			const time = clock.getElapsedTime();
 			// Sine wave from 0 to 1 over 2 seconds (Math.PI * time / 2)
 			const pulseFactor = (Math.sin(time * Math.PI) + 1) / 2;
-			// CHANGE: Increase base and peak emissive intensity for a stronger glow
-			const intensity = 1.0 + (pulseFactor * 2.0); // Pulse from 1.0 to 3.0 intensity
+			// Increase base and peak emissive intensity for a stronger glow
+			const intensity = 2.0 + (pulseFactor * 3.0); // Pulse from 2.0 to 5.0 intensity
 			(sphereMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = intensity;
 		}
 	});
@@ -175,7 +175,7 @@ function OrganismCoreMesh({
 				<meshStandardMaterial
 					color={sphereColor}
 					emissive={emissiveColor}
-					emissiveIntensity={1.0} // CHANGE: Base emissive intensity
+					emissiveIntensity={2.0} // Base emissive intensity
 				/>
 			</instancedMesh>
 

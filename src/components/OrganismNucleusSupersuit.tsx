@@ -131,7 +131,7 @@ function OrganismSupersuitMesh({
 			<meshStandardMaterial
 				color={organism.skinColor}
 				transparent
-				opacity={0.05} // Very subtle transparency
+				opacity={0.15} // Increased transparency for better visibility
 				depthWrite={false}
 				roughness={0.5}
 				metalness={0.5}

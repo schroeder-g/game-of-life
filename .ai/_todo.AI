@@ -9,6 +9,9 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-074:** [COMPLETED] Make organism living cells more visible by adjusting `OrganismCoreVisuals` and `OrganismNucleusSupersuit` rendering properties.
+
+********COMPLETED ITEMS ************
 *   **TODO-073:** [COMPLETED] Fix `Cell.tsx` shader to correctly use `instanceOpacity` for cell visibility.
 
 ********COMPLETED ITEMS ************
