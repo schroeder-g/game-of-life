@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js'; // Import for merging geometries
+import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'; // Import for merging geometries
 import { Organism } from '../core/Organism';
 import { parseKey, makeKey } from '../core/Organism';
 
@@ -118,7 +118,7 @@ function OrganismSupersuitMesh({
 		if (geometries.length === 0) return null;
 
 		// Merge all geometries into a single BufferGeometry
-		const merged = BufferGeometryUtils.mergeBufferGeometries(geometries);
+		const merged = mergeBufferGeometries(geometries);
 		return merged;
 
 	}, [organism.livingCells, organismsVersion, gridSize, offset, sphereRadiusSupersuit, beamRadiusSupersuit, beamLengthSupersuit]);
