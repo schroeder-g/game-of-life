@@ -99,6 +99,31 @@ function getOverlapNormal(cytoplasm: Set<string>, gridSize: number): [number, nu
 	return [nx/len, ny/len, nz/len];
 }
 
+// Helper to get bounding box dimensions
+function getBoundingBoxDimensions(cells: Array<[number, number, number]>): { minX: number, maxX: number, minY: number, maxY: number, minZ: number, maxZ: number, largestDim: number } {
+	if (cells.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0, largestDim: 0 };
+
+	let minX = Infinity, maxX = -Infinity;
+	let minY = Infinity, maxY = -Infinity;
+	let minZ = Infinity, maxZ = -Infinity;
+
+	for (const [x, y, z] of cells) {
+		minX = Math.min(minX, x);
+		maxX = Math.max(maxX, x);
+		minY = Math.min(minY, y);
+		maxY = Math.max(maxY, y);
+		minZ = Math.min(minZ, z);
+		maxZ = Math.max(maxZ, z);
+	}
+
+	const dimX = maxX - minX + 1;
+	const dimY = maxY - minY + 1;
+	const dimZ = maxZ - minZ + 1;
+	const largestDim = Math.max(dimX, dimY, dimZ);
+
+	return { minX, maxX, minY, maxY, minZ, maxZ, largestDim };
+}
+
 export function processOrganisms(
 	grid: Grid3D,
 	organisms: Map<string, Organism>,
@@ -146,8 +171,21 @@ export function processOrganisms(
 		let currentCells: Array<[number, number, number]> = Array.from(currentLivingSet).map(parseKey);
 		let currentCentroid = getCentroid(currentCells);
 
-		let { travelVector } = organism;
-		if (!travelVector) travelVector = [0, 0, 1];
+		// --- DERIVE TRAVEL VECTOR FROM GOL MOVEMENT ---
+		let derivedTravelVector: [number, number, number] = organism.travelVector || [0, 0, 1]; // Default if no previous
+		if (organism.centroid) {
+			const [prevCx, prevCy, prevCz] = organism.centroid;
+			const [currCx, currCy, currCz] = currentCentroid;
+			const dx = currCx - prevCx;
+			const dy = currCy - prevCy;
+			const dz = currCz - prevCz;
+			const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+			if (len > 0.01) { // Only update if there was significant movement
+				derivedTravelVector = [dx / len, dy / len, dz / len];
+			}
+		}
+		let travelVector = derivedTravelVector; // Use this derived vector for wall avoidance logic
+		// ----------------------------------------------
 
 		const otherOrgCells = new Set<string>();
 		for (const [oid, oCells] of allOrgKeyMap) if (oid !== id) oCells.forEach(k => otherOrgCells.add(k));
@@ -168,7 +206,50 @@ export function processOrganisms(
 			// 1. POINTING AT WALL (dot > 0.15)
 			if (dot > 0.15) {
 				const previousCells = Array.from(organism.previousLivingCells).map(parseKey);
-				if (previousCells.length > 0) nextCells = previousCells;
+					// --- RETREAT: Move back from the wall by 1/2 of its largest dimension ---
+					const { largestDim } = getBoundingBoxDimensions(currentCells);
+					const retreatDistance = Math.ceil(largestDim / 2); // Round up to ensure sufficient retreat
+
+					// Calculate retreat vector opposite to overlapNormal
+					const retreatVector: [number, number, number] = [
+						-Math.sign(overlapNormal[0]) * retreatDistance,
+						-Math.sign(overlapNormal[1]) * retreatDistance,
+						-Math.sign(overlapNormal[2]) * retreatDistance,
+					];
+
+					const retreatedCells = translateCells(currentCells, retreatVector[0], retreatVector[1], retreatVector[2]);
+
+					// Check if the retreated position is valid (within bounds and no collisions with other organisms)
+					// Note: We don't check for self-collision here, as the organism is moving its entire body.
+					// We also don't check for cytoplasm collision yet, as this is just a temporary retreat for pivoting.
+					// The full validity check will happen after rotation and forward step.
+					let retreatValid = true;
+					for (const [x, y, z] of retreatedCells) {
+						if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
+							retreatValid = false;
+							break;
+						}
+						// No need to check collision with other organisms here, as the organism is just moving itself.
+						// The main `isPositionValid` check later will handle this for the final proposed position.
+					}
+
+					if (retreatValid) {
+						nextCells = retreatedCells;
+						currentCentroid = getCentroid(nextCells); // Update centroid for rotation
+						console.log(`[NAV] ID:${id} retreated by ${retreatDistance} units. New centroid: [${currentCentroid.map(c => c.toFixed(1)).join(',')}]`);
+					} else {
+						// If retreat is not valid (e.g., pushes it out of bounds on the other side),
+						// fall back to previous cells or current cells if no previous.
+						const previousCells = Array.from(organism.previousLivingCells).map(parseKey);
+						if (previousCells.length > 0) {
+							nextCells = previousCells;
+							currentCentroid = getCentroid(nextCells);
+							console.log(`[NAV] ID:${id} retreat failed, falling back to previous cells.`);
+						} else {
+							nextCells = currentCells; // Stay put if no previous and retreat fails
+							console.log(`[NAV] ID:${id} retreat failed, staying put.`);
+						}
+					}
 
 				const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
 				const absNorm = [Math.abs(overlapNormal[0]), Math.abs(overlapNormal[1]), Math.abs(overlapNormal[2])];
@@ -272,7 +353,7 @@ export function processOrganisms(
 			skinColor: computeSkinColor(currentLivingSet, gridSize),
 			previousLivingCells: new Set(currentLivingSet),
 			centroid: currentCentroid,
-			travelVector: travelVector as [number, number, number],
+			travelVector: travelVector,
 			straightSteps: 0,
 			avoidanceSteps: 0,
 			parallelSteps: 0,
