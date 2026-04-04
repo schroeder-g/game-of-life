@@ -81,7 +81,7 @@ export function Cells({
 	}, [grid]);
 
 	const {
-		state: { speed, isAnimatingInit, viewMode },
+		state: { speed, isAnimatingInit },
 	} = useSimulation();
 
 	// Create a set of all cell keys belonging to any organism
