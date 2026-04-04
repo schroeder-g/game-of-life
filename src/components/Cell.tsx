@@ -87,6 +87,10 @@ export function Cells({
 	// Create a set of all cell keys belonging to any organism
 	const organismCellKeys = useMemo(() => {
 		const keys = new Set<string>();
+		if (!organisms) {
+			console.warn("Cells component received undefined 'organisms' prop. This should not happen.");
+			return keys; // Return an empty set to prevent crash
+		}
 		organisms.forEach(org => {
 			org.livingCells.forEach(key => keys.add(key));
 		});
