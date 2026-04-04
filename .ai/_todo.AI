@@ -4,16 +4,9 @@ Obey GENERAL RULES, at end.
 
 
 **RECOMMENDED SEQUENCE**
- /undo
+ 
 **ACTIVE ITEMS**
-*   **TODO-062:** [COMPLETED] Create `src/data/organism-names.ts` with 100 unique names and implement unique name assignment logic. (Related to Organisms.AI: Naming)
-*   **TODO-063:** Implement organism restoration on `reset()` and dissolution on `clear()` and `grid size changed`. (Related to Organisms.AI: Organism Lifecycle)
-*   **TODO-064:** Create `src/components/OrganismSkins.tsx` and mount it in `Grid.tsx` to render organism skins. (Related to Organisms.AI: Skin Rendering)
-*   **TODO-066:**  [COMPLETED] Add tooltip to Magic Wand button in `SelectedCommunityPanel.tsx` when `birthMargin < 1`. (Related to Organisms.AI: Creating an Organism - UI Trigger)
-*   **TODO-068:** Review and update `SimulationContext` to handle `organismsRef` persistence/reset as per `Organisms.AI` data model.
-*   **TODO-069:** Add `AiReminder` spans for documentation and testing of new organism features.
-*   **TODO-070:** Review `SelectedCommunityPanel.tsx` for any remaining `AiReminder` spans related to previous changes.
-*   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests.
+*   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
 *   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
