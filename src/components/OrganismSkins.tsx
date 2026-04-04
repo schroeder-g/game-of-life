@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber';
 import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import type { Organism } from '../core/Organism';
-import { parseKey } from '../core/Organism';
+import { parseKey, computeCytoplasm } from '../core/Organism'; // Import computeCytoplasm
 
 const MAX_SKIN_INSTANCES = 20000;
 

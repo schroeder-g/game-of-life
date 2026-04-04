@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { Grid3D } from '../core/Grid3D';
 import { useSimulation } from '../contexts/SimulationContext';
 import { ClaimHint } from './ClaimHint';
-import { Organism, makeKey } from '../core/Organism'; // ADD THIS IMPORT
+import { Organism, makeKey } from '../core/Organism'; // Updated import for makeKey
 
 // Custom shader material for per-instance color and opacity
 const cellShaderMaterial = {

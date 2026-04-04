@@ -12,7 +12,12 @@ import { Emitter } from '../core/events';
 import { Grid3D } from '../core/Grid3D';
 import { loadSettings, saveSettings } from '../hooks/useSettings';
 import { CameraOrientation } from '../core/faceOrientationKeyMapping';
-import { Organism, makeKey, computeCytoplasm, computeSkinColor } from '../core/Organism';
+import {
+	Organism,
+	makeKey,
+	computeCytoplasm,
+	computeSkinColor,
+} from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
 import { processOrganisms } from '../core/organism-processing';
 
@@ -81,8 +86,8 @@ export interface SimulationState {
 		distribution: 'dev' | 'test' | 'prod';
 	};
 	showIntroduction: boolean;
-	organisms: Map<string, Organism>;
-	organismsVersion: number;
+	organisms: Map<string, Organism>; // Map of organism ID to Organism object
+	organismsVersion: number; // To trigger re-renders when organisms change
 }
 
 export interface SimulationActions {
@@ -159,7 +164,7 @@ export interface SimulationMeta {
 	eventBus: Emitter<AppEvents>;
 	movement: React.MutableRefObject<Record<string, boolean>>;
 	velocity: React.MutableRefObject<Record<string, number>>;
-	organismsRef: React.MutableRefObject<Map<string, Organism>>;
+	organismsRef: React.MutableRefObject<Map<string, Organism>>; // Ref for mutable organisms map
 }
 
 export interface SimulationContextValue {
@@ -202,10 +207,14 @@ export function SimulationProvider({
 	const velocity = useRef<Record<string, number>>({
 		rotateYaw: 0,
 		rotateRoll: 0,
+		panX: 0, // Initialize panX
+		panY: 0, // Initialize panY
+		dolly: 0, // Initialize dolly
+		rotatePitch: 0, // Initialize rotatePitch
 	});
-	const organismsRef = useRef<Map<string, Organism>>(new Map());
-	const [organismsVersion, setOrganismsVersion] = useState(0);
-	const initialOrganismsRef = useRef<Map<string, Organism>>(new Map());
+	const organismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize organismsRef
+	const [organismsVersion, setOrganismsVersion] = useState(0); // Initialize organismsVersion
+	const initialOrganismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize initialOrganismsRef
 	const isFirstLoadRef = useRef(true);
 	const [hasInitialState, setHasInitialState] = useState(false);
 	const [hasPastHistory, setHasPastHistory] = useState(false);
@@ -605,14 +614,16 @@ export function SimulationProvider({
 	const randomize = useCallback(() => {
 		gridRef.current.randomize(density);
 		initialStateRef.current = gridRef.current.saveState();
-		initialOrganismsRef.current = new Map();
+		initialOrganismsRef.current = new Map(); // Clear initial organisms
+		organismsRef.current.clear(); // Clear current organisms
+		setOrganismsVersion(v => v + 1); // Trigger re-render
 		setHasInitialState(initialStateRef.current.length > 0);
 	}, [density]);
 
 	const reset = useCallback(() => {
 		setRunning(false);
 		gridRef.current.restoreState(initialStateRef.current);
-		organismsRef.current = new Map(initialOrganismsRef.current);
+		organismsRef.current = new Map(initialOrganismsRef.current); // Restore organisms from initial state
 		setOrganismsVersion(v => v + 1);
 	}, []);
 
@@ -620,9 +631,9 @@ export function SimulationProvider({
 		setRunning(false);
 		gridRef.current.clear();
 		initialStateRef.current = [];
-		initialOrganismsRef.current = new Map();
-		organismsRef.current = new Map();
-		setOrganismsVersion(v => v + 1);
+		initialOrganismsRef.current = new Map(); // Clear initial organisms
+		organismsRef.current = new Map(); // Clear current organisms
+		setOrganismsVersion(v => v + 1); // Trigger re-render
 		setHasInitialState(false);
 	}, []);
 
@@ -707,6 +718,8 @@ export function SimulationProvider({
 			// We don't restore state immediately here because runInitAnimation handles it
 			runInitAnimation(cells);
 			setCommunity([]);
+			organismsRef.current.clear(); // Clear organisms when applying new cells
+			setOrganismsVersion(v => v + 1);
 		},
 		[
 			gridSize,
@@ -788,11 +801,11 @@ export function SimulationProvider({
 				livingCells,
 				cytoplasm,
 				skinColor,
-				previousLivingCells: new Set(livingCells),
+				previousLivingCells: new Set(livingCells), // Initialize previousLivingCells
 			};
 
 			organismsRef.current.set(newOrganism.id, newOrganism);
-			setOrganismsVersion(v => v + 1);
+			setOrganismsVersion(v => v + 1); // Trigger re-render
 		},
 		[gridSize, neighborFaces, neighborEdges, neighborCorners],
 	);
