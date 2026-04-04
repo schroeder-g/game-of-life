@@ -278,7 +278,7 @@ export function processOrganisms(
 				console.log(`[NAV] ID:${id} pivoting towards: [${bestParallel.join(',')}] (Dist: ${maxDist.toFixed(1)})`);
 
 				for (const axis of (['x', 'y', 'z'] as const)) {
-					for (const angle of ([90, 180, 270] as const)) {
+					for (const angle of ([90, 270] as const)) { // Only consider 90-degree rotations
 						const rv = rotateVector(travelVector as [number, number, number], axis, angle);
 						const rvVec = new THREE.Vector3(...rv);
 						if (rvVec.dot(new THREE.Vector3(...bestParallel)) > 0.6) {
