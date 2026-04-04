@@ -9,12 +9,12 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
-*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
+*   **TODO-071:** [COMPLETED] When clicking a community in the cube, if it is part of an Organism, then make it the current community in the Community Selection panel and update the display accordingly.
+*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm for organisms to be strictly within [1, gridSize-2].
 *   **TODO-061:** [COMPLETED] Implement syncing of organism living cells with flood fill and dissolution if no cells remain connected. (Related to Organisms.AI: Post-Tick Organism Processing - Step 1)
 *   **TODO-060:** [COMPLETED] Implement skin breach detection and organism dissolution. (Related to Organisms.AI: Post-Tick Organism Processing - Step 3)
 *   **TODO-058:** [COMPLETED] Implement full juking logic for organisms, including finding valid offsets and applying grid mutations. (Related to Organisms.AI: Post-Tick Organism Processing - Step 4) - **Preference for rotation in juke selection implemented.**
 *   **TODO-059:** [COMPLETED] Implement random rotation logic for organisms. (Related to Organisms.AI: Post-Tick Organism Processing - Step 5)
-*   **TODO-071:** [COMPLETED] When clicking a community in the cube, if it is part of an Organism, then make it the current community in the Community Selection panel and update the display accordingly.
 *   **TODO-017:** [COMPLETED] `QA-3` (from `quality-doc-test-process`) - Missing automated test.
 *   **TODO-016:** [COMPLETED] `QA-2` (from `quality-key-mapping`) - Missing automated test.
 *   **TODO-015:** [COMPLETED] `UX-7` (from `quality-input-focus`) - Missing automated test.
@@ -68,7 +68,6 @@ Obey GENERAL RULES, at end.
 *   **TODO-054:** [COMPLETED] Address `SettingsSidebar_Documentation.ts` inconsistency.
 *   **TODO-055:** [COMPLETED] Removed incomplete draggable footer from `src/public/App.tsx`.
 *   **TODO-057:** [COMPLETED] Perform a tagging pass on remaining files in `src/__tests__`.
-*   **TODO-072:** [COMPLETED] Refine boundary avoidance for cytoplasm to be strictly within [1, gridSize-2].
 
 **GENERAL RULES**
 Use this file to store all TODO's as requested.
