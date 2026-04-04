@@ -13,7 +13,7 @@ import { generateShape } from '../core/shapes';
 import { Cells } from './Cell';
 import { OrganismSkins } from './OrganismSkins';
 import { OrganismCoreVisuals } from './OrganismCoreVisuals';
-import { OrganismCoreVisuals } from './OrganismCoreVisuals';
+import { OrganismNucleusSupersuit } from './OrganismNucleusSupersuit';
 import { makeKey } from '../core/Organism';
 
 const _toCamera = new THREE.Vector3();
@@ -1983,6 +1983,12 @@ export function Scene() {
 					cellMargin={cellMargin}
 				/>
 				<OrganismCoreVisuals
+					organisms={organisms}
+					organismsVersion={organismsVersion}
+					gridSize={gridRef.current.size}
+					cellMargin={cellMargin}
+				/>
+				<OrganismNucleusSupersuit
 					organisms={organisms}
 					organismsVersion={organismsVersion}
 					gridSize={gridRef.current.size}
