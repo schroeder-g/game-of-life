@@ -176,7 +176,9 @@ export function Cells({
 				y === selectorPos[1] &&
 				z === selectorPos[2];
 
-			if (isSelected) {
+			if (organismCellKeys.has(key)) {
+				color = chroma('orange'); // Make organism cells orange
+			} else if (isSelected) {
 				color = chroma('white');
 			} else if (onAxis) {
 				color = color.brighten(0.75);

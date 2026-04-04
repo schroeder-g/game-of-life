@@ -9,6 +9,9 @@ Obey GENERAL RULES, at end.
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-075:** [COMPLETED] Make living cells that are part of an Organism appear orange in `Cell.tsx`.
+
+********COMPLETED ITEMS ************
 *   **TODO-074:** [COMPLETED] Make organism living cells more visible by adjusting `OrganismCoreVisuals` and `OrganismNucleusSupersuit` rendering properties.
 
 ********COMPLETED ITEMS ************
