@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 /**
  * Organism data model.
  * An Organism is a special Community with a Cytoplasm buffer, a skin color,
@@ -14,11 +16,6 @@ export interface Organism {
 	cytoplasm: Set<string>;
 	/** Hex color string, average of living cell colors. */
 	skinColor: string;
-	/**
-	 * The living cells from the previous generation. Used for animations
-	 * like "fluttering" between states.
-	 */
-	previousLivingCells: Set<string>;
 	/**
 	 * The living cells from the previous generation. Used for animations
 	 * like "fluttering" between states.
@@ -49,6 +46,20 @@ export function computeCytoplasm(
 	neighborCorners: boolean,
 ): Set<string> {
 	const cytoplasm = new Set<string>();
+	const livingCellsArray = Array.from(livingCells).map(parseKey);
+
+	// Create a temporary grid to easily check for living cells
+	const tempGrid = Array.from({ length: gridSize }, () =>
+		Array.from({ length: gridSize }, () =>
+			Array.from({ length: gridSize }, () => false),
+		),
+	);
+	livingCellsArray.forEach(([x, y, z]) => {
+		if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize) {
+			tempGrid[z][y][x] = true;
+		}
+	});
+
 	for (const key of livingCells) {
 		const [x, y, z] = parseKey(key);
 		for (let dz = -1; dz <= 1; dz++) {
@@ -63,18 +74,19 @@ export function computeCytoplasm(
 					const nx = x + dx;
 					const ny = y + dy;
 					const nz = z + dz;
+
+					// Check bounds
 					if (
-						nx < 0 ||
-						nx >= gridSize ||
-						ny < 0 ||
-						ny >= gridSize ||
-						nz < 0 ||
-						nz >= gridSize
-					)
+						nx < 0 || nx >= gridSize ||
+						ny < 0 || ny >= gridSize ||
+						nz < 0 || nz >= gridSize
+					) {
 						continue;
+					}
 
 					const nk = makeKey(nx, ny, nz);
-					if (!livingCells.has(nk)) {
+					// If the neighbor is not a living cell of this organism, it's cytoplasm
+					if (!tempGrid[nz][ny][nx]) {
 						cytoplasm.add(nk);
 					}
 				}
@@ -105,11 +117,11 @@ export function computeSkinColor(
 		const saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6;
 		// Match Cell.tsx: chroma.hsl(240 - hue, saturation, 0.55)
 		// Compute manually without chroma dependency
-		const h = (240 - hue + 360) % 360;
+		const h = (240 - hue + 360) % 360; // Ensure hue is positive
 		const s = saturation;
-		const l = 0.55;
+	const l = 0.55;
 
-		// HSL to RGB
+		// HSL to RGB conversion logic
 		const c = (1 - Math.abs(2 * l - 1)) * s;
 		const x2 = c * (1 - Math.abs(((h / 60) % 2) - 1));
 		const m = l - c / 2;
@@ -117,23 +129,29 @@ export function computeSkinColor(
 		let r = 0,
 			g = 0,
 			b = 0;
-		if (h < 60) {
+		if (0 <= h && h < 60) {
 			r = c;
 			g = x2;
-		} else if (h < 120) {
+			b = 0;
+		} else if (60 <= h && h < 120) {
 			r = x2;
 			g = c;
-		} else if (h < 180) {
+			b = 0;
+		} else if (120 <= h && h < 180) {
+			r = 0;
 			g = c;
 			b = x2;
-		} else if (h < 240) {
+		} else if (180 <= h && h < 240) {
+			r = 0;
 			g = x2;
 			b = c;
-		} else if (h < 300) {
+		} else if (240 <= h && h < 300) {
 			r = x2;
+			g = 0;
 			b = c;
-		} else {
+		} else if (300 <= h && h < 360) {
 			r = c;
+			g = 0;
 			b = x2;
 		}
 

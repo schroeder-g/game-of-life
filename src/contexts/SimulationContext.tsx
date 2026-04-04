@@ -577,6 +577,11 @@ export function SimulationProvider({
 	const stepBackward = useCallback(() => {
 		setRunning(false);
 		gridRef.current.stepBackward();
+		// When stepping backward, organisms might also need to revert.
+		// This is a simplified approach; a full undo for organisms would be more complex.
+		// For now, we'll clear them or re-process them based on the reverted grid state.
+		organismsRef.current.clear(); // Clear organisms on step backward for simplicity
+		setOrganismsVersion(v => v + 1);
 	}, []);
 
 	const step = useCallback(() => {
