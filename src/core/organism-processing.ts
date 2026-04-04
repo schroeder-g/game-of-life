@@ -68,15 +68,6 @@ function translateCells(cells: Array<[number, number, number]>, dx: number, dy: 
 	return cells.map(([x, y, z]) => [Math.round(x + dx), Math.round(y + dy), Math.round(z + dz)]);
 }
 
-function isCellsOutOfBounds(cells: Array<[number, number, number]>, gridSize: number): boolean {
-    for (const [x, y, z] of cells) {
-        if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
-            return true;
-        }
-    }
-    return false;
-}
-
 function getConnectedComponent(seedKey: string, searchSpace: Set<string>): Set<string> {
 	const result = new Set<string>();
 	const queue: string[] = [seedKey];
@@ -346,7 +337,8 @@ export function processOrganisms(
 
 				// Step 2: Determine the rotation needed to point towards the furthest adjacent wall
 				const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
-				const absNorm = [Math.abs(overlapNormal[0]), Math.abs(overlapNormal[1]), Math.abs(overlapNormal[2])];
+				// BUG FIX: Use avoidanceNormal here
+				const absNorm = [Math.abs(avoidanceNormal[0]), Math.abs(avoidanceNormal[1]), Math.abs(avoidanceNormal[2])];
 				const wallAxisIdx = absNorm.indexOf(Math.max(...absNorm)); // Identify the primary axis of the wall
 				const wallAxis = axes[wallAxisIdx];
 				const parallelAxes = axes.filter(a => a !== wallAxis); // Axes parallel to the wall
@@ -394,34 +386,33 @@ export function processOrganisms(
 
 				// Step 3: Determine if retreat is needed after rotation
 				let finalProposedCells = rotatedCellsCandidate;
-				let retreatNeeded = isCellsOutOfBounds(rotatedCellsCandidate, gridSize);
+				// BUG FIX: Check if rotated cells (and their cytoplasm) are within grid boundaries
+				// Pass an empty Set for otherOrgExclusionZone to only check against grid boundaries
+				let retreatNeeded = !isPositionValid(rotatedCellsCandidate, new Set(), gridSize);
 
 				if (retreatNeeded) {
-					console.log(`[NAV] ID:${id} rotated cells are out of bounds, calculating retreat.`);
+					console.log(`[NAV] ID:${id} rotated cells (or cytoplasm) are out of bounds, calculating retreat.`);
 					// Calculate the precise retreat distance so cytoplasm grazes the wall
 					const rotatedCytoplasm = computeCytoplasm(new Set(rotatedCellsCandidate.map(c => makeKey(...c))), gridSize);
 					const { minX, maxX, minY, maxY, minZ, maxZ } = getBoundingBoxDimensions(Array.from(rotatedCytoplasm).map(parseKey));
 
 					let retreat_dx = 0, retreat_dy = 0, retreat_dz = 0;
 
-					// Determine the translation needed for each axis based on the overlap normal
-					// If overlapNormal[0] > 0, it means the organism was hitting the positive X wall (gridSize-1).
-					// We want the maximum X coordinate of its cytoplasm to be exactly (gridSize-1).
-					if (overlapNormal[0] > 0) retreat_dx = (gridSize - 1) - maxX;
-					// If overlapNormal[0] < 0, it means the organism was hitting the negative X wall (0).
-					// We want the minimum X coordinate of its cytoplasm to be exactly 0.
-					if (overlapNormal[0] < 0) retreat_dx = 0 - minX;
+					// Determine the translation needed for each axis based on the avoidanceNormal
+					// BUG FIX: Use avoidanceNormal here
+					if (avoidanceNormal[0] > 0) retreat_dx = (gridSize - 1) - maxX;
+					if (avoidanceNormal[0] < 0) retreat_dx = 0 - minX;
 
-					if (overlapNormal[1] > 0) retreat_dy = (gridSize - 1) - maxY;
-					if (overlapNormal[1] < 0) retreat_dy = 0 - minY;
+					if (avoidanceNormal[1] > 0) retreat_dy = (gridSize - 1) - maxY;
+					if (avoidanceNormal[1] < 0) retreat_dy = 0 - minY;
 
-					if (overlapNormal[2] > 0) retreat_dz = (gridSize - 1) - maxZ;
-					if (overlapNormal[2] < 0) retreat_dz = 0 - minZ;
+					if (avoidanceNormal[2] > 0) retreat_dz = (gridSize - 1) - maxZ;
+					if (avoidanceNormal[2] < 0) retreat_dz = 0 - minZ;
 
 					// Apply the calculated retreat translation
 					finalProposedCells = translateCells(rotatedCellsCandidate, retreat_dx, retreat_dy, retreat_dz);
 				} else {
-					console.log(`[NAV] ID:${id} rotated cells are in bounds, no retreat needed.`);
+					console.log(`[NAV] ID:${id} rotated cells (and cytoplasm) are in bounds, no retreat needed.`);
 				}
 
 				// Step 4: Validate the final proposed position (after rotation and potential retreat)
