@@ -321,29 +321,79 @@ export function processOrganisms(
 				const awayVector: [number, number, number] = [-overlapNormal[0], -overlapNormal[1], -overlapNormal[2]];
 				console.log(`[NAV] ID:${id} parallel slide. Normal:[${overlapNormal.map(x=>x.toFixed(2)).join(',')}] dot:${dot.toFixed(2)}. Repelling towards center.`);
 				
-				for (const axis of (['x', 'y', 'z'] as const)) {
-					for (const angle of ([90, 180, 270] as const)) {
-						const rv = rotateVector(travelVector as [number, number, number], axis, angle);
-						const rvVec = new THREE.Vector3(...rv);
-						if (rvVec.dot(new THREE.Vector3(...awayVector)) > 0.6) {
-							nextCells = rotateCells(nextCells, axis, angle, getCentroid(nextCells));
-							nextVector = rv;
-							break;
+				let bestCandidateCells = [...currentCells];
+				let bestCandidateVector = [...travelVector];
+				let bestCandidateMoveChosen = false; // Tracks if any valid move was found in this parallel block
+
+				// --- Rotation Attempt ---
+				// Try to align travelVector with awayVector through rotation
+				let currentBestDotProduct = new THREE.Vector3(...travelVector).dot(new THREE.Vector3(...awayVector));
+				let rotationApplied = false;
+
+				// Consider no rotation first if it's already well-aligned
+				if (currentBestDotProduct > 0.6) {
+					rotationApplied = true;
+					bestCandidateMoveChosen = true;
+				} else {
+					// Try 90, 180, 270 degree rotations around principal axes
+					for (const axis of (['x', 'y', 'z'] as const)) {
+						for (const angle of ([90, 180, 270] as const)) { // Include 180 for parallel case
+							const rv = rotateVector(travelVector as [number, number, number], axis, angle);
+							const rvVec = new THREE.Vector3(...rv);
+							const dotProductWithAway = rvVec.dot(new THREE.Vector3(...awayVector));
+							
+							if (dotProductWithAway > currentBestDotProduct) { // Found a better alignment
+								const candidateCellsAfterRotation = rotateCells(currentCells, axis, angle, getCentroid(currentCells));
+								// Check if this rotated position is valid before considering it
+								if (isPositionValid(candidateCellsAfterRotation, otherOrgCells, gridSize)) {
+									currentBestDotProduct = dotProductWithAway;
+									bestCandidateCells = candidateCellsAfterRotation;
+									bestCandidateVector = rv;
+									rotationApplied = true;
+									bestCandidateMoveChosen = true;
+								}
+							}
 						}
 					}
 				}
 
-				let nudged = nextCells;
-				for (let i = 0; i < 2; i++) {
-					const proposed = translateCells(nudged, Math.sign(awayVector[0]), Math.sign(awayVector[1]), Math.sign(awayVector[2]));
-					if (isPositionValid(proposed, otherOrgCells, gridSize)) {
-						nudged = proposed;
-						moveChosen = true;
+				if (rotationApplied) {
+					console.log(`[NAV] ID:${id} parallel: applied rotation. New vector: [${bestCandidateVector.map(v => v.toFixed(2)).join(',')}]`);
+				} else {
+					console.log(`[NAV] ID:${id} parallel: no beneficial rotation found or valid.`);
+				}
+
+				// --- Nudge Attempt (after potential rotation) ---
+				let cellsForNudge = [...bestCandidateCells]; // Start nudging from the best rotated position
+				let nudgeApplied = false;
+
+				for (let i = 0; i < 2; i++) { // Try up to 2 nudges
+					const proposedNudgeCells = translateCells(cellsForNudge, Math.sign(awayVector[0]), Math.sign(awayVector[1]), Math.sign(awayVector[2]));
+					if (isPositionValid(proposedNudgeCells, otherOrgCells, gridSize)) {
+						cellsForNudge = proposedNudgeCells;
+						nudgeApplied = true;
+						bestCandidateMoveChosen = true; // A nudge was successfully applied
+						console.log(`[NAV] ID:${id} parallel: applied nudge ${i+1}.`);
+					} else {
+						// If this nudge is invalid, stop trying further nudges in this direction
 						break;
 					}
-					nudged = proposed;
 				}
-				nextCells = nudged;
+
+				if (nudgeApplied) {
+					nextCells = cellsForNudge;
+					travelVector = bestCandidateVector; // Keep the vector from rotation, or original if no rotation
+					moveChosen = true; // Final move chosen for this tick
+				} else if (bestCandidateMoveChosen) { // Only rotation was applied, no nudge
+					nextCells = bestCandidateCells;
+					travelVector = bestCandidateVector;
+					moveChosen = true; // Final move chosen for this tick
+				} else {
+					// No valid rotation or nudge was found. Organism stays put.
+					console.log(`[NAV] ID:${id} parallel: no valid move found, staying put.`);
+					// nextCells and travelVector retain their initial values (currentCells, derivedTravelVector)
+					moveChosen = false; // Ensure moveChosen is false if nothing happened
+				}
 			}
 
 			if (moveChosen) {
@@ -362,11 +412,12 @@ export function processOrganisms(
 				currentCells = roundedNext;
 				currentLivingSet = new Set(currentCells.map(([x,y,z]) => makeKey(x,y,z)));
 				currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
-				currentCentroid = getCentroid(currentCells);
 				travelVector = nextVector as [number, number, number];
 			}
 		}
 
+		// Update centroid here, after all potential movements are finalized for this organism
+		currentCentroid = getCentroid(currentCells);
 		updatedOrganisms.set(id, {
 			...organism,
 			livingCells: currentLivingSet,
