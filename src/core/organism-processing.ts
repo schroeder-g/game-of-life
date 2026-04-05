@@ -212,14 +212,13 @@ function getAvoidanceNormal(
 
     let currentWallOverlapTempNormal: [number, number, number] = [0, 0, 0];
     let currentWallOverlap = false;
-    for (const key of cytoplasm) {
-        const [x, y, z] = parseKey(key);
-        if (x <= 0) { currentWallOverlapTempNormal[0] -= 1; currentWallOverlap = true; }
-        if (x >= gridSize - 1) { currentWallOverlapTempNormal[0] += 1; currentWallOverlap = true; }
-        if (y <= 0) { currentWallOverlapTempNormal[1] -= 1; currentWallOverlap = true; }
-        if (y >= gridSize - 1) { currentWallOverlapTempNormal[1] += 1; currentWallOverlap = true; }
-        if (z <= 0) { currentWallOverlapTempNormal[2] -= 1; currentWallOverlap = true; }
-        if (z >= gridSize - 1) { currentWallOverlapTempNormal[2] += 1; currentWallOverlap = true; }
+    for (const [x, y, z] of livingCells) {
+        if (x <= 1) { currentWallOverlapTempNormal[0] -= 1; currentWallOverlap = true; }
+        if (x >= gridSize - 2) { currentWallOverlapTempNormal[0] += 1; currentWallOverlap = true; }
+        if (y <= 1) { currentWallOverlapTempNormal[1] -= 1; currentWallOverlap = true; }
+        if (y >= gridSize - 2) { currentWallOverlapTempNormal[1] += 1; currentWallOverlap = true; }
+        if (z <= 1) { currentWallOverlapTempNormal[2] -= 1; currentWallOverlap = true; }
+        if (z >= gridSize - 2) { currentWallOverlapTempNormal[2] += 1; currentWallOverlap = true; }
     }
     if (currentWallOverlap) {
         const len = Math.sqrt(currentWallOverlapTempNormal[0]*currentWallOverlapTempNormal[0] + currentWallOverlapTempNormal[1]*currentWallOverlapTempNormal[1] + currentWallOverlapTempNormal[2]*currentWallOverlapTempNormal[2]);
