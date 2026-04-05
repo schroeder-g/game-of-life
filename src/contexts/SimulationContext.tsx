@@ -597,6 +597,42 @@ export function SimulationProvider({
 		futureOrganismsRef.current = [];
 	}, []);
 
+	/** Remove organism territory from the grid before GoL tick, restore living cells after. */
+	const tickWithOrganismExclusion = useCallback(() => {
+		const grid = gridRef.current;
+		const orgs = organismsRef.current;
+
+		// Phase 1a: Remove organism cells (living + cytoplasm) from the grid
+		const removedCells: Array<[number, number, number]> = [];
+		for (const [, org] of orgs) {
+			for (const key of org.livingCells) {
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					grid.set(x, y, z, false);
+					removedCells.push([x, y, z]);
+				}
+			}
+			for (const key of org.cytoplasm) {
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					grid.set(x, y, z, false);
+					removedCells.push([x, y, z]);
+				}
+			}
+		}
+
+		// Phase 1b: Run GoL on non-organism cells only
+		grid.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+
+		// Phase 1c: Re-place organism living cells on the grid
+		for (const [, org] of orgs) {
+			for (const key of org.livingCells) {
+				const [x, y, z] = parseKey(key);
+				grid.set(x, y, z, true);
+			}
+		}
+	}, [surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
+
 	const updateOrganismsAfterTick = useCallback((skipSnapshot = false) => {
 		if (!skipSnapshot) {
 			recordOrganismAction();
@@ -626,7 +662,7 @@ export function SimulationProvider({
 
 		organismsRef.current = updatedOrganisms;
 		setOrganismsVersion(v => v + 1);
-	}, [gridSize, neighborFaces, neighborEdges, neighborCorners, recordOrganismAction]);
+	}, [gridSize, neighborFaces, neighborEdges, neighborCorners, recordOrganismAction, surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
 
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
@@ -660,13 +696,12 @@ export function SimulationProvider({
 			gridRef.current.neighborFaces = neighborFaces;
 			gridRef.current.neighborEdges = neighborEdges;
 			gridRef.current.neighborCorners = neighborCorners;
-			gridRef.current.tick(
-				surviveMin,
-				surviveMax,
-				birthMin,
-				birthMax,
-				birthMargin,
-			);
+			// GoL Phase 1: tick non-organism cells only
+			if (organismsRef.current.size > 0) {
+				tickWithOrganismExclusion();
+			} else {
+				gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+			}
 			updateOrganismsAfterTick();
 		}
 	}, [
@@ -680,6 +715,7 @@ export function SimulationProvider({
 		neighborEdges,
 		neighborCorners,
 		updateOrganismsAfterTick,
+		tickWithOrganismExclusion,
 	]);
 
 	const randomize = useCallback(() => {
@@ -712,13 +748,12 @@ export function SimulationProvider({
 		gridRef.current.neighborFaces = neighborFaces;
 		gridRef.current.neighborEdges = neighborEdges;
 		gridRef.current.neighborCorners = neighborCorners;
-		gridRef.current.tick(
-			surviveMin,
-			surviveMax,
-			birthMin,
-			birthMax,
-			birthMargin,
-		);
+		// GoL Phase 1: tick non-organism cells only
+		if (organismsRef.current.size > 0) {
+			tickWithOrganismExclusion();
+		} else {
+			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+		}
 
 		// After grid tick, process organisms
 		updateOrganismsAfterTick();
@@ -736,6 +771,7 @@ export function SimulationProvider({
 		neighborEdges,
 		neighborCorners,
 		updateOrganismsAfterTick,
+		tickWithOrganismExclusion,
 	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
