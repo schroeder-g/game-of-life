@@ -518,12 +518,12 @@ export function processOrganisms(
                     }
 
                     let cx = 0, cy = 0, cz = 0;
-                    if (maxX > gridSize - 3) cx = (gridSize - 3) - maxX;
-                    if (minX < 2) cx = 2 - minX;
-                    if (maxY > gridSize - 3) cy = (gridSize - 3) - maxY;
-                    if (minY < 2) cy = 2 - minY;
-                    if (maxZ > gridSize - 3) cz = (gridSize - 3) - maxZ;
-                    if (minZ < 2) cz = 2 - minZ;
+                    if (maxX > gridSize - 4) cx = (gridSize - 4) - maxX;
+                    if (minX < 3) cx = 3 - minX;
+                    if (maxY > gridSize - 4) cy = (gridSize - 4) - maxY;
+                    if (minY < 3) cy = 3 - minY;
+                    if (maxZ > gridSize - 4) cz = (gridSize - 4) - maxZ;
+                    if (minZ < 3) cz = 3 - minZ;
 
                     const finalCandidate = translateCells(candidate, cx, cy, cz);
                     
@@ -593,12 +593,12 @@ export function processOrganisms(
                     }
 
                     let cx = 0, cy = 0, cz = 0;
-                    if (maxX > gridSize - 3) cx = (gridSize - 3) - maxX;
-                    if (minX < 2) cx = 2 - minX;
-                    if (maxY > gridSize - 3) cy = (gridSize - 3) - maxY;
-                    if (minY < 2) cy = 2 - minY;
-                    if (maxZ > gridSize - 3) cz = (gridSize - 3) - maxZ;
-                    if (minZ < 2) cz = 2 - minZ;
+                    if (maxX > gridSize - 4) cx = (gridSize - 4) - maxX;
+                    if (minX < 3) cx = 3 - minX;
+                    if (maxY > gridSize - 4) cy = (gridSize - 4) - maxY;
+                    if (minY < 3) cy = 3 - minY;
+                    if (maxZ > gridSize - 4) cz = (gridSize - 4) - maxZ;
+                    if (minZ < 3) cz = 3 - minZ;
 
                     const finalCandidate = translateCells(candidate, cx, cy, cz);
 
