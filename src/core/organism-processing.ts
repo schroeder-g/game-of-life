@@ -1,6 +1,3 @@
-/**
- * Pure post-tick organism processing logic.
- */
 
 import type { Grid3D } from './Grid3D';
 import * as THREE from 'three';
@@ -16,7 +13,6 @@ import {
 } from './Organism';
 
 const AVOIDANCE_LOOK_AHEAD_DISTANCE = 4; // Cells
-
 
 interface ProcessOrganismsResult {
 	updatedOrganisms: Map<string, Organism>;
@@ -38,30 +34,104 @@ function unitOffsets(): Array<[number, number, number]> {
 
 const UNIT_OFFSETS = unitOffsets();
 
-/** Standard validator: ensures cells stay within bounds and do not collide with other organisms. */
-function isPositionValid(
+function computeSkin(cytoplasmSpace: Set<string>, allOrganismSpaces: Set<string>, gridSize: number): Set<string> {
+    const skin = new Set<string>();
+    for (const cytoKey of cytoplasmSpace) {
+        const [cx, cy, cz] = parseKey(cytoKey);
+        for (const [dx, dy, dz] of UNIT_OFFSETS) {
+            const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+			// NOTE: We do NOT bounds check yet. If skin is outside bounds, we want to know!
+            const nk = makeKey(nx, ny, nz);
+            if (!allOrganismSpaces.has(nk)) {
+                skin.add(nk);
+            }
+        }
+    }
+    return skin;
+}
+
+// Hypothesizes the organism shape after applying GoL rules strictly to its territory in liminal space
+function simulateCytoplasmTick(
 	proposedCells: Array<[number, number, number]>,
-	otherOrgCells: Set<string>,
+	otherLivingKeys: Set<string>,
 	gridSize: number,
+	surviveMin: number, surviveMax: number,
+	birthMin: number, birthMax: number, birthMargin: number,
+	neighborFaces: boolean, neighborEdges: boolean, neighborCorners: boolean
+): Array<[number, number, number]> {
+    const tempLiving = new Set<string>(otherLivingKeys);
+    proposedCells.forEach(([x,y,z]) => tempLiving.add(makeKey(x,y,z)));
+
+    const proposedCytoplasm = computeCytoplasm(new Set(proposedCells.map(c => makeKey(...c))), gridSize);
+    const testZone = new Set<string>([...proposedCells.map(c => makeKey(...c)), ...proposedCytoplasm]);
+
+    const nextLiving = new Array<[number, number, number]>();
+
+    const countNeighbors = (cx: number, cy: number, cz: number) => {
+        let n = 0;
+        for (let dz = -1; dz <= 1; dz++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0 && dz === 0) continue;
+                    let match = false;
+                    const sum = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+                    if (neighborFaces && sum === 1) match = true;
+                    if (neighborEdges && sum === 2) match = true;
+                    if (neighborCorners && sum === 3) match = true;
+                    if (match) {
+                        const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+                        if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize && nz >= 0 && nz < gridSize) {
+                            if (tempLiving.has(makeKey(nx, ny, nz))) n++;
+                        }
+                    }
+                }
+            }
+        }
+        return n;
+    };
+
+    for (const key of testZone) {
+        const [x, y, z] = parseKey(key);
+		if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) continue;
+        const isAlive = tempLiving.has(key);
+        const neighbors = countNeighbors(x, y, z);
+        
+        if (isAlive) {
+            if (neighbors >= surviveMin && neighbors <= surviveMax) nextLiving.push([x, y, z]);
+        } else {
+            if (neighbors >= birthMin && neighbors <= birthMax) nextLiving.push([x, y, z]);
+        }
+    }
+    return nextLiving;
+}
+
+function isSkinValid(
+	nextCellsHypothesis: Array<[number, number, number]>,
+	allOtherOrganismBodies: Set<string>,
+	allOtherOrganismSkins: Set<string>,
+	gridSize: number
 ): boolean {
-	const proposedSet = new Set<string>(proposedCells.map(([x,y,z]) => makeKey(x,y,z)));
+    const hypLivingMap = new Set(nextCellsHypothesis.map(c => makeKey(...c)));
+    const hypCytoplasm = computeCytoplasm(hypLivingMap, gridSize);
+    const combinedHypSpace = new Set<string>([...hypLivingMap, ...hypCytoplasm]);
 
-	for (const [x, y, z] of proposedCells) {
-		if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize)
-			return false;
-		const k = makeKey(x, y, z);
-		if (otherOrgCells.has(k)) return false;
-	}
+    // All spaces occupied by THIS organism and OTHER organisms
+    const universalSpace = new Set<string>([...allOtherOrganismBodies, ...combinedHypSpace]);
 
-	const proposedCyto = computeCytoplasm(proposedSet, gridSize);
-	for (const cytoKey of proposedCyto) {
-		const [cx, cy, cz] = parseKey(cytoKey);
-		if (cx < 0 || cx >= gridSize || cy < 0 || cy >= gridSize || cz < 0 || cz >= gridSize)
-			return false;
-		if (otherOrgCells.has(cytoKey)) return false;
-	}
+    const hypSkin = computeSkin(hypCytoplasm, universalSpace, gridSize);
 
-	return true;
+    for (const sk of hypSkin) {
+        const [x, y, z] = parseKey(sk);
+        // Condition B: Skin outside cube
+        if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
+            return false;
+        }
+        // Condition C: Skin overlaps another skin
+        if (allOtherOrganismSkins.has(sk)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function translateCells(cells: Array<[number, number, number]>, dx: number, dy: number, dz: number): Array<[number, number, number]> {
@@ -88,10 +158,9 @@ function getConnectedComponent(seedKey: string, searchSpace: Set<string>): Set<s
 	return result;
 }
 
-// Replaces the old getOverlapNormal function
 function getAvoidanceNormal(
     livingCells: Array<[number, number, number]>,
-    cytoplasm: Set<string>, // current cytoplasm
+    cytoplasm: Set<string>,
     travelVector: [number, number, number],
     gridSize: number,
     otherOrgExclusionZone: Set<string>,
@@ -100,7 +169,6 @@ function getAvoidanceNormal(
     let totalNormal: [number, number, number] = [0, 0, 0];
     let collisionDetected = false;
 
-    // Helper to add to totalNormal and set collisionDetected
     const addNormalComponent = (component: [number, number, number]) => {
         totalNormal[0] += component[0];
         totalNormal[1] += component[1];
@@ -108,9 +176,6 @@ function getAvoidanceNormal(
         collisionDetected = true;
     };
 
-    // --- Reactive Collision Detection (Current Position) ---
-
-    // 1. Immediate Wall Overlap
     let currentWallOverlapTempNormal: [number, number, number] = [0, 0, 0];
     let currentWallOverlap = false;
     for (const key of cytoplasm) {
@@ -129,13 +194,10 @@ function getAvoidanceNormal(
         }
     }
 
-    // 2. Immediate Other Organism Overlap
     const currentExtendedBody = new Set<string>(livingCells.map(c => makeKey(...c)));
     cytoplasm.forEach(k => currentExtendedBody.add(k));
     for (const key of currentExtendedBody) {
         if (otherOrgExclusionZone.has(key)) {
-            // Immediate collision with another organism. Repel strongly.
-            // A simple repulsion: away from the grid center, or opposite to travel vector if at center.
             const [x, y, z] = parseKey(key);
             const center = gridSize / 2;
             const repelX = x - center;
@@ -144,407 +206,366 @@ function getAvoidanceNormal(
             const len = Math.sqrt(repelX*repelX + repelY*repelY + repelZ*repelZ);
             if (len > 0) {
                 addNormalComponent([-repelX/len, -repelY/len, -repelZ/len]);
-            } else { // If at center, just push back along travel vector
+            } else {
                 addNormalComponent([-travelVector[0], -travelVector[1], -travelVector[2]]);
             }
-            // No break here, as multiple points of contact might contribute to the total normal
         }
     }
 
-    // --- Proactive Collision Detection (Look Ahead) ---
     for (let i = 1; i <= lookAheadDistance; i++) {
         const proposedDx = travelVector[0] * i;
         const proposedDy = travelVector[1] * i;
         const proposedDz = travelVector[2] * i;
 
         const translatedCells = translateCells(livingCells, proposedDx, proposedDy, proposedDz);
-        const translatedCytoplasm = computeCytoplasm(new Set(translatedCells.map(c => makeKey(...c))), gridSize);
+        const translatedSet = new Set<string>(translatedCells.map(c => makeKey(c[0], c[1], c[2])));
+        const translatedCytoplasm = computeCytoplasm(translatedSet, gridSize);
 
-        // Proactive Wall Collision
-        let proactiveWallTempNormal: [number, number, number] = [0, 0, 0];
-        let proactiveWallHit = false;
+        let tempNormal: [number, number, number] = [0, 0, 0];
+        let foundCollisionAtThisStep = false;
+
         for (const key of translatedCytoplasm) {
             const [x, y, z] = parseKey(key);
-            if (x < 0) { proactiveWallTempNormal[0] -= 1; proactiveWallHit = true; }
-            if (x >= gridSize) { proactiveWallTempNormal[0] += 1; proactiveWallHit = true; }
-            if (y < 0) { proactiveWallTempNormal[1] -= 1; proactiveWallHit = true; }
-            if (y >= gridSize) { proactiveWallTempNormal[1] += 1; proactiveWallHit = true; }
-            if (z < 0) { proactiveWallTempNormal[2] -= 1; proactiveWallHit = true; }
-            if (z >= gridSize) { proactiveWallTempNormal[2] += 1; proactiveWallHit = true; }
-        }
-        if (proactiveWallHit) {
-            const len = Math.sqrt(proactiveWallTempNormal[0]*proactiveWallTempNormal[0] + proactiveWallTempNormal[1]*proactiveWallTempNormal[1] + proactiveWallTempNormal[2]*proactiveWallTempNormal[2]);
-            if (len > 0) {
-                addNormalComponent([proactiveWallTempNormal[0]/len, proactiveWallTempNormal[1]/len, proactiveWallTempNormal[2]/len]);
-            }
+            if (x < 0) { tempNormal[0] -= 1; foundCollisionAtThisStep = true; }
+            if (x >= gridSize) { tempNormal[0] += 1; foundCollisionAtThisStep = true; }
+            if (y < 0) { tempNormal[1] -= 1; foundCollisionAtThisStep = true; }
+            if (y >= gridSize) { tempNormal[1] += 1; foundCollisionAtThisStep = true; }
+            if (z < 0) { tempNormal[2] -= 1; foundCollisionAtThisStep = true; }
+            if (z >= gridSize) { tempNormal[2] += 1; foundCollisionAtThisStep = true; }
         }
 
-        // Proactive Other Organism Collision
-        for (const key of translatedCytoplasm) {
+        const translatedExtendedBody = new Set<string>([...translatedSet, ...translatedCytoplasm]);
+        for (const key of translatedExtendedBody) {
             if (otherOrgExclusionZone.has(key)) {
-                // Proactive collision with another organism.
-                // Repel in the opposite direction of travel.
-                addNormalComponent([-travelVector[0], -travelVector[1], -travelVector[2]]);
-                // No break here, as multiple points of contact might contribute to the total normal
+                foundCollisionAtThisStep = true;
+                const [x, y, z] = parseKey(key);
+                const repelX = travelVector[0];
+                const repelY = travelVector[1];
+                const repelZ = travelVector[2];
+                const len = Math.sqrt(repelX*repelX + repelY*repelY + repelZ*repelZ);
+                if (len > 0) {
+                    tempNormal[0] -= repelX/len;
+                    tempNormal[1] -= repelY/len;
+                    tempNormal[2] -= repelZ/len;
+                }
+            }
+        }
+
+        if (foundCollisionAtThisStep) {
+            const len = Math.sqrt(tempNormal[0]*tempNormal[0] + tempNormal[1]*tempNormal[1] + tempNormal[2]*tempNormal[2]);
+            if (len > 0) {
+                const weight = 1 / Math.pow(i, 2);
+                addNormalComponent([tempNormal[0]/len * weight, tempNormal[1]/len * weight, tempNormal[2]/len * weight]);
             }
         }
     }
 
-    if (collisionDetected) {
-        const len = Math.sqrt(totalNormal[0]*totalNormal[0] + totalNormal[1]*totalNormal[1] + totalNormal[2]*totalNormal[2]);
-        if (len > 0) {
-            return [totalNormal[0]/len, totalNormal[1]/len, totalNormal[2]/len];
-        }
+    const totalLen = Math.sqrt(totalNormal[0]*totalNormal[0] + totalNormal[1]*totalNormal[1] + totalNormal[2]*totalNormal[2]);
+    if (totalLen > 0) {
+        return [totalNormal[0]/totalLen, totalNormal[1]/totalLen, totalNormal[2]/totalLen];
     }
+
     return [0, 0, 0];
 }
 
-// Helper to get bounding box dimensions
 function getBoundingBoxDimensions(cells: Array<[number, number, number]>): { minX: number, maxX: number, minY: number, maxY: number, minZ: number, maxZ: number, largestDim: number } {
 	if (cells.length === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0, largestDim: 0 };
-
 	let minX = Infinity, maxX = -Infinity;
 	let minY = Infinity, maxY = -Infinity;
 	let minZ = Infinity, maxZ = -Infinity;
-
 	for (const [x, y, z] of cells) {
-		minX = Math.min(minX, x);
-		maxX = Math.max(maxX, x);
-		minY = Math.min(minY, y);
-		maxY = Math.max(maxY, y);
-		minZ = Math.min(minZ, z);
-		maxZ = Math.max(maxZ, z);
+		minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+		minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+		minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
 	}
-
-	const dimX = maxX - minX + 1;
-	const dimY = maxY - minY + 1;
-	const dimZ = maxZ - minZ + 1;
-	const largestDim = Math.max(dimX, dimY, dimZ);
-
-	return { minX, maxX, minY, maxY, minZ, maxZ, largestDim };
+	return { minX, maxX, minY, maxY, minZ, maxZ, largestDim: Math.max(maxX-minX+1, maxY-minY+1, maxZ-minZ+1) };
 }
 
 export function processOrganisms(
 	grid: Grid3D,
-	organisms: Map<string, Organism>,
+	organismsMap: Map<string, Organism>,
 	gridSize: number,
-	neighborFaces: boolean,
-	neighborEdges: boolean,
-	neighborCorners: boolean,
+	surviveMin: number, surviveMax: number,
+	birthMin: number, birthMax: number, birthMargin: number,
+	neighborFaces: boolean, neighborEdges: boolean, neighborCorners: boolean,
 ): ProcessOrganismsResult {
 	const updatedOrganisms = new Map<string, Organism>();
 	const gridMutations: Array<[number, number, number, boolean]> = [];
 
-	const allLivingKeys = new Set<string>();
+	const globalLivingKeys = new Set<string>();
 	for (let z = 0; z < gridSize; z++) {
 		for (let y = 0; y < gridSize; y++) {
 			for (let x = 0; x < gridSize; x++) {
-				if (grid.get(x, y, z)) allLivingKeys.add(makeKey(x, y, z));
+				if (grid.get(x, y, z)) globalLivingKeys.add(makeKey(x, y, z));
 			}
 		}
 	}
 
-	// NEW: Pre-calculate extended bodies (living cells + cytoplasm) for all organisms
-	const allOrganismsExtendedBodies = new Map<string, Set<string>>();
-	for (const [id, org] of organisms) {
-		const extendedBody = new Set<string>();
-		org.livingCells.forEach(key => extendedBody.add(key));
-		// Note: org.cytoplasm is already computed and up-to-date from the previous tick,
-		// or from organism creation/deserialization.
-		org.cytoplasm.forEach(key => extendedBody.add(key));
-		allOrganismsExtendedBodies.set(id, extendedBody);
-	}
+    // Step 2: Randomize Adjustment Order
+    const randomOrder = Array.from(organismsMap.keys());
+    for (let i = randomOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [randomOrder[i], randomOrder[j]] = [randomOrder[j], randomOrder[i]];
+    }
 
-	for (const [id, organism] of organisms) {
-		const organismTerritory = new Set<string>([...organism.livingCells, ...organism.cytoplasm]);
-		const potentialNewLivingCells = new Set<string>();
-		for (const key of allLivingKeys) if (organismTerritory.has(key)) potentialNewLivingCells.add(key);
+    // State Tracking
+    const updatedGlobalBodies = new Map<string, Set<string>>();
+    const updatedGlobalSkins = new Map<string, Set<string>>();
 
+    const rebuildGlobalSpaces = () => {
+        const allBodies = new Set<string>();
+        const allSkins = new Set<string>();
+        for (const bodySet of updatedGlobalBodies.values()) {
+            for (const key of bodySet) allBodies.add(key);
+        }
+        for (const skinSet of updatedGlobalSkins.values()) {
+            for (const key of skinSet) allSkins.add(key);
+        }
+        return { allBodies, allSkins };
+    };
+
+    // Initialize all existing positions before adjustments
+    for (const [id, org] of organismsMap) {
+        // We use the start-of-tick components to build the baseline masks
+        const orgLiving = new Set(org.previousLivingCells); // Fallback to previous living to freeze properly
+        const orgCyto = org.cytoplasm;
+        const orgBody = new Set<string>([...orgLiving, ...orgCyto]);
+        updatedGlobalBodies.set(id, orgBody);
+    }
+    
+    // Now calc baseline skins using the universal bodies map
+    for (const [id, _] of organismsMap) {
+        const orgCyto = organismsMap.get(id)!.cytoplasm;
+        const excludeSpaces = new Set<string>();
+        for (const [oID, b] of updatedGlobalBodies) if (oID !== id) { for (const k of b) excludeSpaces.add(k); }
+        for (const k of updatedGlobalBodies.get(id)!) excludeSpaces.add(k);
+        const orgSkin = computeSkin(orgCyto, excludeSpaces, gridSize);
+        updatedGlobalSkins.set(id, orgSkin);
+    }
+
+	for (const id of randomOrder) {
+        const organism = organismsMap.get(id)!;
+        
+        // 1: "Tick Starting" Configuration
+        const startCells = Array.from(organism.previousLivingCells).map(parseKey);
+        
+        // Find what GoL produced for this organism's territory during Grid3D.tick()
+        const previousTerritory = new Set<string>([...organism.previousLivingCells, ...organism.cytoplasm]);
+        const tickProducedLivingCells = new Set<string>();
+        for (const key of globalLivingKeys) {
+            if (previousTerritory.has(key)) tickProducedLivingCells.add(key);
+        }
+        
 		let allComps: Array<Set<string>> = [];
 		const visitedForComp = new Set<string>();
-		for (const seed of potentialNewLivingCells) {
+		for (const seed of tickProducedLivingCells) {
 			if (!visitedForComp.has(seed)) {
-				const comp = getConnectedComponent(seed, potentialNewLivingCells);
+				const comp = getConnectedComponent(seed, tickProducedLivingCells);
 				if (comp.size > 2) allComps.push(comp);
 				comp.forEach(k => visitedForComp.add(k));
 			}
 		}
 
-		if (allComps.length === 0) continue;
+        let currentLivingSet = new Set<string>();
+        for (const comp of allComps) comp.forEach(k => currentLivingSet.add(k));
+        let currentCells = Array.from(currentLivingSet).map(parseKey);
+        let currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
 
-		let currentLivingSet = new Set<string>();
-		for (const comp of allComps) comp.forEach(k => currentLivingSet.add(k));
-
-		let currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
-		let currentCells: Array<[number, number, number]> = Array.from(currentLivingSet).map(parseKey);
-		let currentCentroid = getCentroid(currentCells);
-
-		// --- DERIVE TRAVEL VECTOR FROM GOL MOVEMENT ---
-		let derivedTravelVector: [number, number, number] = organism.travelVector || [0, 0, 1]; // Default if no previous
+        // Calculate travel vector based on standard rules
+		let derivedTravelVector: [number, number, number] = organism.travelVector || [0, 0, 1];
+        const currentCentroid = getCentroid(currentCells);
 		if (organism.centroid) {
 			const [prevCx, prevCy, prevCz] = organism.centroid;
 			const [currCx, currCy, currCz] = currentCentroid;
-			const dx = currCx - prevCx;
-			const dy = currCy - prevCy;
-			const dz = currCz - prevCz;
+			const dx = currCx - prevCx; const dy = currCy - prevCy; const dz = currCz - prevCz;
 			const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
-			if (len > 0.01) { // Only update if there was significant movement
-				derivedTravelVector = [dx / len, dy / len, dz / len];
-			}
+			if (len > 0.01) derivedTravelVector = [dx / len, dy / len, dz / len];
 		}
-		let travelVector = derivedTravelVector; // Use this derived vector for wall avoidance logic
-		// ----------------------------------------------
+		let travelVector = derivedTravelVector;
 
-		// NEW: Construct the exclusion zone for *this* organism, including living cells and cytoplasm of others
+        // Exclusion Zone calculation for collision logic
 		const otherOrgExclusionZone = new Set<string>();
-		for (const [otherOrgId, otherOrgBody] of allOrganismsExtendedBodies) {
-			if (otherOrgId !== id) { // Only add bodies of *other* organisms
+		for (const [otherOrgId, otherOrgBody] of updatedGlobalBodies) {
+			if (otherOrgId !== id) {
 				otherOrgBody.forEach(k => otherOrgExclusionZone.add(k));
 			}
 		}
+        
+        const otherLivingList = new Set<string>(globalLivingKeys);
+        for (const k of currentLivingSet) otherLivingList.delete(k); // remove self
 
-		// --- RULE-BASED NAVIGATION ---
-		// Use the new combined avoidance normal function for both reactive and proactive detection
-		const avoidanceNormal = getAvoidanceNormal(
-			currentCells, // Pass current living cells
-			currentCytoplasm,
-			travelVector,
-			gridSize,
-			otherOrgExclusionZone,
-			AVOIDANCE_LOOK_AHEAD_DISTANCE,
-		);
+        // Function that evaluates the generalized skin rule constraint
+        const checkAdjustmentSafe = (candidateCells: Array<[number, number, number]>) => {
+            const hypNext = simulateCytoplasmTick(candidateCells, otherLivingList, gridSize, surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners);
+            const spaces = rebuildGlobalSpaces();
+            const { allBodies, allSkins } = spaces;
+            
+            // Remove own bodies and skin to check purely against *others*
+            const ownCurrentBody = updatedGlobalBodies.get(id);
+            if (ownCurrentBody) ownCurrentBody.forEach(k => allBodies.delete(k));
+            const ownCurrentSkin = updatedGlobalSkins.get(id);
+            if (ownCurrentSkin) ownCurrentSkin.forEach(k => allSkins.delete(k));
 
-		if (avoidanceNormal[0] !== 0 || avoidanceNormal[1] !== 0 || avoidanceNormal[2] !== 0) {
-			// Diagnostic logs on Wall Encounter
-			const v = new THREE.Vector3(...travelVector);
-			const n = new THREE.Vector3(...avoidanceNormal);
-			const dot = v.dot(n);
-			console.log(`[NAV] ID:${id} avoidance: ${avoidanceNormal.map(x=>x.toFixed(2)).join(',')} at Z:[${currentCentroid[2].toFixed(1)}] dot:${dot.toFixed(2)}`);
+            return isSkinValid(hypNext, allBodies, allSkins, gridSize);
+        };
 
-			let nextCells: Array<[number, number, number]> = [...currentCells];
-			let nextVector: [number, number, number] = [...travelVector];
-			let moveChosen = false;
+        // --- RULE-BASED NAVIGATION ---
+		let nextCells: Array<[number, number, number]> = [...currentCells];
+		let nextVector: [number, number, number] = [...travelVector];
+        let finalizedTranslation = false;
 
-			// 1. POINTING AT WALL (dot > 0.15)
-			if (dot > 0.15) {
-				const previousCells = Array.from(organism.previousLivingCells).map(parseKey);
-				
-				// Step 1: Start with the organism's previous valid position (or current if no previous)
-				// This ensures we revert to a known good state before attempting complex maneuvers.
-				let cellsForProcessing = previousCells.length > 0 ? previousCells : currentCells;
-				let centroidForRotation = getCentroid(cellsForProcessing);
-				let currentTravelVector = [...travelVector]; // Use the current travel vector for rotation
+        const dot = new THREE.Vector3(...travelVector).dot(new THREE.Vector3(...getAvoidanceNormal(currentCells, currentCytoplasm, travelVector, gridSize, otherOrgExclusionZone, AVOIDANCE_LOOK_AHEAD_DISTANCE)));
+        const avoidanceNormal = getAvoidanceNormal(currentCells, currentCytoplasm, travelVector, gridSize, otherOrgExclusionZone, AVOIDANCE_LOOK_AHEAD_DISTANCE);
 
-				// Step 2: Determine the rotation needed to point towards the furthest adjacent wall
-				const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
-				// BUG FIX: Use avoidanceNormal here
-				const absNorm = [Math.abs(avoidanceNormal[0]), Math.abs(avoidanceNormal[1]), Math.abs(avoidanceNormal[2])];
-				const wallAxisIdx = absNorm.indexOf(Math.max(...absNorm)); // Identify the primary axis of the wall
-				const wallAxis = axes[wallAxisIdx];
-				const parallelAxes = axes.filter(a => a !== wallAxis); // Axes parallel to the wall
+        let safeCandidateFound = false;
 
-				let bestParallelDirection: [number, number, number] = [0, 0, 0];
-				let maxDist = -1;
+        if (avoidanceNormal[0] !== 0 || avoidanceNormal[1] !== 0 || avoidanceNormal[2] !== 0) {
+            if (dot > 0.15) { // POINTING AT WALL
+                let cellsForProcessing = startCells;
+                let centroidForRotation = getCentroid(cellsForProcessing);
+                let currentTravelVector = [...travelVector];
+                
+                const absNorm = [Math.abs(avoidanceNormal[0]), Math.abs(avoidanceNormal[1]), Math.abs(avoidanceNormal[2])];
+                const wallAxisIdx = absNorm.indexOf(Math.max(...absNorm));
+                const parallelAxes = ['x', 'y', 'z'].filter(a => a !== ['x', 'y', 'z'][wallAxisIdx]) as Array<'x'|'y'|'z'>;
+                
+                let bestParallelDirection: [number, number, number] = [0, 0, 0];
+                let maxDist = -1;
+                for (const axis of parallelAxes) {
+                    const idx = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
+                    const distPos = (gridSize - 1) - centroidForRotation[idx];
+                    const distNeg = centroidForRotation[idx];
+                    const weight = (axis === 'y') ? 1.2 : 1.0;
+                    if (Math.max(distPos, distNeg) * weight > maxDist) {
+                        maxDist = Math.max(distPos, distNeg) * weight;
+                        bestParallelDirection = [0, 0, 0];
+                        bestParallelDirection[idx] = distPos > distNeg ? 1 : -1;
+                    }
+                }
 
-				// Find the parallel direction that points towards the largest open space
-				for (const axis of parallelAxes) {
-					const idx = axis === 'x' ? 0 : axis === 'y' ? 1 : 2;
-					const distPos = (gridSize - 1) - centroidForRotation[idx]; // Distance to positive boundary
-					const distNeg = centroidForRotation[idx]; // Distance to negative boundary
-					const currentMax = Math.max(distPos, distNeg);
-					
-					// Prioritize Y-axis (up) for equal or near-equal distances to encourage upward movement
-					const weight = (axis === 'y') ? 1.2 : 1.0;
-					if (currentMax * weight > maxDist) {
-						maxDist = currentMax * weight;
-						bestParallelDirection = [0, 0, 0];
-						bestParallelDirection[idx] = distPos > distNeg ? 1 : -1; // Set direction (1 or -1)
-					}
-				}
+                // rotation attempts
+                for (const axis of (['x', 'y', 'z'] as const)) {
+                    for (const angle of ([90, 270] as const)) {
+                        const rv = rotateVector(currentTravelVector as [number, number, number], axis, angle);
+                        if (new THREE.Vector3(...rv).dot(new THREE.Vector3(...bestParallelDirection)) > 0.6) {
+                            const rotatedCellsCandidate = rotateCells(cellsForProcessing, axis, angle, centroidForRotation);
+                            
+                            // Does it need retreat? Check basic grid bounds and other bodies
+                            const tempCyto = computeCytoplasm(new Set(rotatedCellsCandidate.map(c => makeKey(...c))), gridSize);
+                            const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
+                            let rx = 0, ry = 0, rz = 0;
+                            if (avoidanceNormal[0] > 0) rx = (gridSize - 1) - bounding.maxX;
+                            if (avoidanceNormal[0] < 0) rx = 0 - bounding.minX;
+                            if (avoidanceNormal[1] > 0) ry = (gridSize - 1) - bounding.maxY;
+                            if (avoidanceNormal[1] < 0) ry = 0 - bounding.minY;
+                            if (avoidanceNormal[2] > 0) rz = (gridSize - 1) - bounding.maxZ;
+                            if (avoidanceNormal[2] < 0) rz = 0 - bounding.minZ;
 
-				console.log(`[NAV] ID:${id} pivoting towards: [${bestParallelDirection.join(',')}] (Dist: ${maxDist.toFixed(1)})`);
+                            const finalCandidate = translateCells(rotatedCellsCandidate, rx, ry, rz);
+                            if (checkAdjustmentSafe(finalCandidate)) {
+                                nextCells = finalCandidate;
+                                travelVector = rv as [number, number, number];
+                                nextVector = rv as [number, number, number];
+                                finalizedTranslation = true;
+                                safeCandidateFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (safeCandidateFound) break;
+                }
+            } else if (Math.abs(dot) <= 0.15) { // PARALLEL
+                const awayVector: [number, number, number] = [-avoidanceNormal[0], -avoidanceNormal[1], -avoidanceNormal[2]];
+                let bestDotProduct = new THREE.Vector3(...travelVector).dot(new THREE.Vector3(...awayVector));
+                
+                // Rotation attempt
+                if (bestDotProduct > 0.6 && checkAdjustmentSafe(currentCells)) {
+                    safeCandidateFound = true;
+                } else {
+                    for (const axis of (['x', 'y', 'z'] as const)) {
+                        for (const angle of ([90, 180, 270] as const)) {
+                            const rv = rotateVector(travelVector as [number, number, number], axis, angle);
+                            if (new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector)) > bestDotProduct) {
+                                const rotatedCandidate = rotateCells(currentCells, axis, angle, getCentroid(currentCells));
+                                if (checkAdjustmentSafe(rotatedCandidate)) {
+                                    bestDotProduct = new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector));
+                                    nextCells = rotatedCandidate;
+                                    nextVector = rv as [number, number, number];
+                                    finalizedTranslation = true;
+                                    safeCandidateFound = true;
+                                    travelVector = nextVector;
+                                }
+                            }
+                        }
+                    }
+                }
 
-				let rotatedCellsCandidate = [...cellsForProcessing];
-				let rotatedTravelVectorCandidate = [...currentTravelVector];
-				let rotationApplied = false;
+                // Nudge attempt
+                for (let i = 0; i < 2; i++) {
+                    const proposedNudge = translateCells(nextCells, Math.sign(awayVector[0]), Math.sign(awayVector[1]), Math.sign(awayVector[2]));
+                    if (checkAdjustmentSafe(proposedNudge)) {
+                        nextCells = proposedNudge;
+                        finalizedTranslation = true;
+                        safeCandidateFound = true;
+                        break;
+                    }
+                }
+            }
+        }
 
-				// Attempt to rotate the organism's cells and travel vector
-				for (const axis of (['x', 'y', 'z'] as const)) {
-					for (const angle of ([90, 270] as const)) { // Only consider 90-degree rotations
-						const rv = rotateVector(currentTravelVector as [number, number, number], axis, angle);
-						const rvVec = new THREE.Vector3(...rv);
-						// Check if the rotated vector aligns with the best parallel direction
-						if (rvVec.dot(new THREE.Vector3(...bestParallelDirection)) > 0.6) {
-							rotatedCellsCandidate = rotateCells(cellsForProcessing, axis, angle, centroidForRotation);
-							rotatedTravelVectorCandidate = rv;
-							rotationApplied = true;
-							break;
-						}
-					}
-					if (rotationApplied) break;
-				}
+        // 4. Hard Fallback constraint 
+        // If we didn't actively avoid walls, we must still check if standard movement breaks rules
+        if (!finalizedTranslation) {
+            if (!checkAdjustmentSafe(currentCells)) {
+                console.log(`[NAV] ID:${id} standard movement violated safe skin lookahead. Hard freezing.`);
+                // 5. If organism has no safe adjustments (including its default tick attempt), it stays in Tick Starting pos.
+                nextCells = startCells; // Revert strictly back to start of generation components
+                // Reset standard GoL products that were created
+                travelVector = organism.travelVector || [0,0,1];
+                nextVector = travelVector;
+            } else {
+                nextCells = currentCells;
+            }
+        }
 
-				// Step 3: Determine if retreat is needed after rotation
-				let finalProposedCells = rotatedCellsCandidate;
-				// BUG FIX: Check if rotated cells (and their cytoplasm) are within grid boundaries
-				// Pass an empty Set for otherOrgExclusionZone to only check against grid boundaries
-				let retreatNeeded = !isPositionValid(rotatedCellsCandidate, new Set(), gridSize);
+        // Apply final state
+        for (const k of Array.from(tickProducedLivingCells)) {
+            const [x, y, z] = parseKey(k);
+            gridMutations.push([x, y, z, false]); // Clear the original generated ones
+            globalLivingKeys.delete(k);
+        }
 
-				if (retreatNeeded) {
-					console.log(`[NAV] ID:${id} rotated cells (or cytoplasm) are out of bounds, calculating retreat.`);
-					// Calculate the precise retreat distance so cytoplasm grazes the wall
-					const rotatedCytoplasm = computeCytoplasm(new Set(rotatedCellsCandidate.map(c => makeKey(...c))), gridSize);
-					const { minX, maxX, minY, maxY, minZ, maxZ } = getBoundingBoxDimensions(Array.from(rotatedCytoplasm).map(parseKey));
+        const roundedNext: Array<[number, number, number]> = [];
+        for (const [x, y, z] of nextCells) {
+            const rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
+            gridMutations.push([rx, ry, rz, true]);
+            globalLivingKeys.add(makeKey(rx, ry, rz));
+            roundedNext.push([rx, ry, rz]);
+        }
+        
+        currentLivingSet = new Set(roundedNext.map(c => makeKey(...c)));
+        currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
+        
+        // Immediately push to update Global Maps for the next sequence item
+        updatedGlobalBodies.set(id, new Set([...currentLivingSet, ...currentCytoplasm]));
+        
+        const excludeSpaces = new Set<string>();
+        for (const [oID, b] of updatedGlobalBodies) if (oID !== id) { for (const k of b) excludeSpaces.add(k); }
+        for (const k of updatedGlobalBodies.get(id)!) excludeSpaces.add(k);
+        updatedGlobalSkins.set(id, computeSkin(currentCytoplasm, excludeSpaces, gridSize));
 
-					let retreat_dx = 0, retreat_dy = 0, retreat_dz = 0;
-
-					// Determine the translation needed for each axis based on the avoidanceNormal
-					// BUG FIX: Use avoidanceNormal here
-					if (avoidanceNormal[0] > 0) retreat_dx = (gridSize - 1) - maxX;
-					if (avoidanceNormal[0] < 0) retreat_dx = 0 - minX;
-
-					if (avoidanceNormal[1] > 0) retreat_dy = (gridSize - 1) - maxY;
-					if (avoidanceNormal[1] < 0) retreat_dy = 0 - minY;
-
-					if (avoidanceNormal[2] > 0) retreat_dz = (gridSize - 1) - maxZ;
-					if (avoidanceNormal[2] < 0) retreat_dz = 0 - minZ;
-
-					// Apply the calculated retreat translation
-					finalProposedCells = translateCells(rotatedCellsCandidate, retreat_dx, retreat_dy, retreat_dz);
-				} else {
-					console.log(`[NAV] ID:${id} rotated cells (and cytoplasm) are in bounds, no retreat needed.`);
-				}
-
-				// Step 4: Validate the final proposed position (after rotation and potential retreat)
-				if (isPositionValid(finalProposedCells, otherOrgExclusionZone, gridSize)) {
-					nextCells = finalProposedCells;
-					travelVector = rotatedTravelVectorCandidate as [number, number, number];
-					moveChosen = true;
-					currentCentroid = getCentroid(nextCells); // Update centroid for the final position
-					console.log(`[NAV] ID:${id} rotated and potentially retreated. Final centroid: [${currentCentroid.map(c => c.toFixed(1)).join(',')}]`);
-				} else {
-					console.log(`[NAV] ID:${id} rotation/retreat failed, staying put.`);
-					// If the final position is not valid (e.g., pushed into another organism),
-					// the organism effectively stays in its original position for this tick.
-					// `nextCells` and `travelVector` will retain their values from before this wall avoidance attempt.
-				}
-			}
-			// 2. PARALLEL TO WALL (Math.abs(dot) <= 0.15)
-			else if (Math.abs(dot) <= 0.15) {
-				const awayVector: [number, number, number] = [-avoidanceNormal[0], -avoidanceNormal[1], -avoidanceNormal[2]]; // Use avoidanceNormal
-				console.log(`[NAV] ID:${id} parallel slide. Normal:[${avoidanceNormal.map(x=>x.toFixed(2)).join(',')}] dot:${dot.toFixed(2)}. Repelling towards center.`); // Use avoidanceNormal
-				
-				let bestCandidateCells = [...currentCells];
-				let bestCandidateVector = [...travelVector];
-				let bestCandidateMoveChosen = false; // Tracks if any valid move was found in this parallel block
-
-				// --- Rotation Attempt ---
-				// Try to align travelVector with awayVector through rotation
-				let currentBestDotProduct = new THREE.Vector3(...travelVector).dot(new THREE.Vector3(...awayVector));
-				let rotationApplied = false;
-
-				// Consider no rotation first if it's already well-aligned
-				if (currentBestDotProduct > 0.6) {
-					rotationApplied = true;
-					bestCandidateMoveChosen = true;
-				} else {
-					// Try 90, 180, 270 degree rotations around principal axes
-					for (const axis of (['x', 'y', 'z'] as const)) {
-						for (const angle of ([90, 180, 270] as const)) { // Include 180 for parallel case
-							const rv = rotateVector(travelVector as [number, number, number], axis, angle);
-							const rvVec = new THREE.Vector3(...rv);
-							const dotProductWithAway = rvVec.dot(new THREE.Vector3(...awayVector));
-							
-							if (dotProductWithAway > currentBestDotProduct) { // Found a better alignment
-								const candidateCellsAfterRotation = rotateCells(currentCells, axis, angle, getCentroid(currentCells));
-								// Check if this rotated position is valid before considering it
-								if (isPositionValid(candidateCellsAfterRotation, otherOrgExclusionZone, gridSize)) {
-									currentBestDotProduct = dotProductWithAway;
-									bestCandidateCells = candidateCellsAfterRotation;
-									bestCandidateVector = rv;
-									rotationApplied = true;
-									bestCandidateMoveChosen = true;
-								}
-							}
-						}
-					}
-				}
-
-				if (rotationApplied) {
-					console.log(`[NAV] ID:${id} parallel: applied rotation. New vector: [${bestCandidateVector.map(v => v.toFixed(2)).join(',')}]`);
-				} else {
-					console.log(`[NAV] ID:${id} parallel: no beneficial rotation found or valid.`);
-				}
-
-				// --- Nudge Attempt (after potential rotation) ---
-				let cellsForNudge = [...bestCandidateCells]; // Start nudging from the best rotated position
-				let nudgeApplied = false;
-
-				for (let i = 0; i < 2; i++) { // Try up to 2 nudges
-					const proposedNudgeCells = translateCells(cellsForNudge, Math.sign(awayVector[0]), Math.sign(awayVector[1]), Math.sign(awayVector[2]));
-					if (isPositionValid(proposedNudgeCells, otherOrgExclusionZone, gridSize)) {
-						cellsForNudge = proposedNudgeCells;
-						nudgeApplied = true;
-						bestCandidateMoveChosen = true; // A nudge was successfully applied
-						console.log(`[NAV] ID:${id} parallel: applied nudge ${i+1}.`);
-					} else {
-						// If this nudge is invalid, stop trying further nudges in this direction
-						break;
-					}
-				}
-
-				if (nudgeApplied) {
-					nextCells = cellsForNudge;
-					travelVector = bestCandidateVector as [number, number, number];
-					moveChosen = true; // Final move chosen for this tick
-				} else if (bestCandidateMoveChosen) { // Only rotation was applied, no nudge
-					nextCells = bestCandidateCells;
-					travelVector = bestCandidateVector as [number, number, number];
-					moveChosen = true; // Final move chosen for this tick
-				} else {
-					// No valid rotation or nudge was found. Organism stays put.
-					console.log(`[NAV] ID:${id} parallel: no valid move found, staying put.`);
-					// nextCells and travelVector retain their initial values (currentCells, derivedTravelVector)
-					moveChosen = false; // Ensure moveChosen is false if nothing happened
-				}
-			}
-
-			if (moveChosen) {
-				for (const k of currentLivingSet) {
-					const [x, y, z] = parseKey(k);
-					gridMutations.push([x, y, z, false]);
-					allLivingKeys.delete(k);
-				}
-				const roundedNext: Array<[number, number, number]> = [];
-				for (const [x, y, z] of nextCells) {
-					const rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
-					gridMutations.push([rx, ry, rz, true]);
-					allLivingKeys.add(makeKey(rx, ry, rz));
-					roundedNext.push([rx, ry, rz]);
-				}
-				currentCells = roundedNext;
-				currentLivingSet = new Set(currentCells.map(([x,y,z]) => makeKey(x,y,z)));
-				currentCytoplasm = computeCytoplasm(currentLivingSet, gridSize);
-				travelVector = nextVector as [number, number, number];
-			}
-		}
-
-		// Update centroid here, after all potential movements are finalized for this organism
-		currentCentroid = getCentroid(currentCells);
 		updatedOrganisms.set(id, {
 			...organism,
 			livingCells: currentLivingSet,
 			cytoplasm: currentCytoplasm,
 			skinColor: computeSkinColor(currentLivingSet, gridSize),
-			previousLivingCells: new Set(currentLivingSet),
-			centroid: currentCentroid,
-			travelVector: travelVector,
-			straightSteps: 0,
-			avoidanceSteps: 0,
-			parallelSteps: 0,
-			stuckTicks: 0,
+			previousLivingCells: organism.previousLivingCells, // will be shifted externally if needed, or by standard flow
+			centroid: getCentroid(roundedNext),
+			travelVector: nextVector,
+			straightSteps: 0, avoidanceSteps: 0, parallelSteps: 0, stuckTicks: 0,
 		});
 	}
 
 	return { updatedOrganisms, gridMutations };
 }
+
