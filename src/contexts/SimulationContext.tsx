@@ -27,6 +27,7 @@ import {
 } from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
 import { processOrganisms } from '../core/organism-processing';
+import { IOrganismManager, DefaultOrganismManager } from '../core/OrganismManager';
 import { exportGenesisConfig, importGenesisConfig } from '../hooks/useGenesisConfigs';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
 
@@ -235,13 +236,8 @@ export function SimulationProvider({
 		dolly: 0, // Initialize dolly
 		rotatePitch: 0, // Initialize rotatePitch
 	});
-	const organismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize organismsRef
-	const [organismsVersion, setOrganismsVersion] = useState(0); // Initialize organismsVersion
-	const initialOrganismsRef = useRef<Map<string, Organism>>(new Map()); // Initialize initialOrganismsRef
-	
-	// History stacks for organisms (parallel to Grid3D)
-	const pastOrganismsRef = useRef<Map<string, Organism>[]>([]);
-	const futureOrganismsRef = useRef<Map<string, Organism>[]>([]);
+	const organismManagerRef = useRef<IOrganismManager>(new DefaultOrganismManager());
+	const [organismsVersion, setOrganismsVersion] = useState(0);
 	const historyLimit = 100;
 
 	const isFirstLoadRef = useRef(true);
@@ -472,10 +468,8 @@ export function SimulationProvider({
 					
 					// Hydrate default organisms
 					if (defaultConfig.organisms) {
-						for (const orgData of defaultConfig.organisms) {
-							organismsRef.current.set(orgData.id, deserializeOrganism(orgData, defaultConfig.settings.gridSize));
-						}
-						setOrganismsVersion(v => v + 1);
+						organismManagerRef.current.applyOrganisms(defaultConfig.organisms, defaultConfig.settings.gridSize);
+						setOrganismsVersion(organismManagerRef.current.version);
 					}
 					
 					// Apply default settings
@@ -578,9 +572,9 @@ export function SimulationProvider({
 
 	useEffect(() => {
 		if (!enableOrganisms) {
-			if (organismsRef.current.size > 0) {
-				organismsRef.current.clear();
-				setOrganismsVersion(v => v + 1);
+			if (organismManagerRef.current.organisms.size > 0) {
+				organismManagerRef.current.clear();
+				setOrganismsVersion(organismManagerRef.current.version);
 			}
 			setSelectedOrganismId(null);
 		}
@@ -598,93 +592,22 @@ export function SimulationProvider({
 			setHasInitialState(false);
 			setGridSize(newSize);
 			setCommunity([]);
-			organismsRef.current.clear();
-			setOrganismsVersion(v => v + 1);
+			organismManagerRef.current.clear();
+			setOrganismsVersion(organismManagerRef.current.version);
 		},
 		[neighborFaces, neighborEdges, neighborCorners],
 	);
 
-	const recordOrganismAction = useCallback(() => {
-		// Snapshot current organisms to past history
-		pastOrganismsRef.current.push(cloneOrganisms(organismsRef.current));
-		if (pastOrganismsRef.current.length > historyLimit) {
-			pastOrganismsRef.current.shift();
-		}
-		// Clear future history when a new action is recorded
-		futureOrganismsRef.current = [];
-	}, []);
+	
 
-	/** Remove organism territory from the grid before GoL tick, restore living cells after. */
-	const tickWithOrganismExclusion = useCallback(() => {
-		const grid = gridRef.current;
-		const orgs = organismsRef.current;
+	
 
-		// Phase 1a: Remove organism cells (living + cytoplasm) from the grid
-		const removedCells: Array<[number, number, number]> = [];
-		for (const [, org] of orgs) {
-			for (const key of org.livingCells) {
-				const [x, y, z] = parseKey(key);
-				if (grid.get(x, y, z)) {
-					grid.set(x, y, z, false);
-					removedCells.push([x, y, z]);
-				}
-			}
-			for (const key of org.cytoplasm) {
-				const [x, y, z] = parseKey(key);
-				if (grid.get(x, y, z)) {
-					grid.set(x, y, z, false);
-					removedCells.push([x, y, z]);
-				}
-			}
-		}
-
-		// Phase 1b: Run GoL on non-organism cells only
-		grid.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
-
-		// Phase 1c: Re-place organism living cells on the grid
-		for (const [, org] of orgs) {
-			for (const key of org.livingCells) {
-				const [x, y, z] = parseKey(key);
-				grid.set(x, y, z, true);
-			}
-		}
-	}, [surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
-
-	const updateOrganismsAfterTick = useCallback((skipSnapshot = false) => {
-		if (!skipSnapshot) {
-			recordOrganismAction();
-		}
-		
-		// Call the pure processing function
-		const { updatedOrganisms, gridMutations } = processOrganisms(
-			gridRef.current,
-			organismsRef.current,
-			gridSize,
-			surviveMin,
-			surviveMax,
-			birthMin,
-			birthMax,
-			birthMargin,
-			neighborFaces,
-			neighborEdges,
-			neighborCorners,
-		);
-
-		// Apply grid mutations
-		if (gridMutations.length > 0) {
-			for (const [x, y, z, alive] of gridMutations) {
-				gridRef.current.set(x, y, z, alive);
-			}
-		}
-
-		organismsRef.current = updatedOrganisms;
-		setOrganismsVersion(v => v + 1);
-	}, [gridSize, neighborFaces, neighborEdges, neighborCorners, recordOrganismAction, surviveMin, surviveMax, birthMin, birthMax, birthMargin]);
+	
 
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
 			initialStateRef.current = gridRef.current.saveState();
-			initialOrganismsRef.current = new Map(organismsRef.current);
+			organismManagerRef.current.saveInitialState();
 			setHasInitialState(initialStateRef.current.length > 0);
 		}
 		setRunning(r => !r);
@@ -693,33 +616,30 @@ export function SimulationProvider({
 	const stepBackward = useCallback(() => {
 		setRunning(false);
 		const success = gridRef.current.stepBackward();
-		if (success && pastOrganismsRef.current.length > 0) {
-			// Save current to future for "redo" consistency (if ever implemented)
-			futureOrganismsRef.current.push(cloneOrganisms(organismsRef.current));
-			
-			// Restore from past
-			organismsRef.current = pastOrganismsRef.current.pop()!;
-			setOrganismsVersion(v => v + 1);
+		if (success) {
+			organismManagerRef.current.stepBackward();
+			setOrganismsVersion(organismManagerRef.current.version);
 		}
 	}, []);
 
 	const step = useCallback(() => {
 		if (!running) {
 			if (gridRef.current.generation === 0) {
-				initialStateRef.current = gridRef.current.saveState();
-				initialOrganismsRef.current = new Map(organismsRef.current);
+				organismManagerRef.current.saveInitialState();
 				setHasInitialState(initialStateRef.current.length > 0);
 			}
 			gridRef.current.neighborFaces = neighborFaces;
 			gridRef.current.neighborEdges = neighborEdges;
 			gridRef.current.neighborCorners = neighborCorners;
 			// GoL Phase 1: tick non-organism cells only
-			if (organismsRef.current.size > 0) {
-				tickWithOrganismExclusion();
-			} else {
-				gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+			if (enableOrganisms) { 
+				organismManagerRef.current.beforeTick(gridRef.current); 
 			}
-			updateOrganismsAfterTick();
+			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+			if (enableOrganisms) { 
+				organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
+				setOrganismsVersion(organismManagerRef.current.version);
+			}
 		}
 	}, [
 		running,
@@ -731,33 +651,31 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
-		updateOrganismsAfterTick,
-		tickWithOrganismExclusion,
+		
+		
 	]);
 
 	const randomize = useCallback(() => {
 		gridRef.current.randomize(density);
 		initialStateRef.current = gridRef.current.saveState();
-		initialOrganismsRef.current = new Map(); // Clear initial organisms
-		organismsRef.current.clear(); // Clear current organisms
-		setOrganismsVersion(v => v + 1); // Trigger re-render
+		organismManagerRef.current.clear(); // Clear current organisms
+		setOrganismsVersion(organismManagerRef.current.version); // Trigger re-render
 		setHasInitialState(initialStateRef.current.length > 0);
 	}, [density]);
 
 	const reset = useCallback(() => {
 		setRunning(false);
 		gridRef.current.restoreState(initialStateRef.current);
-		organismsRef.current = new Map(initialOrganismsRef.current); // Restore organisms from initial state
-		setOrganismsVersion(v => v + 1);
+		organismManagerRef.current.restoreInitialState();
+		setOrganismsVersion(organismManagerRef.current.version);
 	}, []);
 
 	const clear = useCallback(() => {
 		setRunning(false);
 		gridRef.current.clear();
 		initialStateRef.current = [];
-		initialOrganismsRef.current = new Map(); // Clear initial organisms
-		organismsRef.current = new Map(); // Clear current organisms
-		setOrganismsVersion(v => v + 1); // Trigger re-render
+		organismManagerRef.current.clear();
+		setOrganismsVersion(organismManagerRef.current.version);
 		setHasInitialState(false);
 	}, []);
 
@@ -766,14 +684,14 @@ export function SimulationProvider({
 		gridRef.current.neighborEdges = neighborEdges;
 		gridRef.current.neighborCorners = neighborCorners;
 		// GoL Phase 1: tick non-organism cells only
-		if (organismsRef.current.size > 0) {
-			tickWithOrganismExclusion();
-		} else {
-			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+		if (enableOrganisms) { 
+			organismManagerRef.current.beforeTick(gridRef.current); 
 		}
-
-		// After grid tick, process organisms
-		updateOrganismsAfterTick();
+		gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+		if (enableOrganisms) { 
+			organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
+			setOrganismsVersion(organismManagerRef.current.version);
+		}
 
 		if (gridRef.current.getLivingCells().length === 0) {
 			setRunning(false);
@@ -787,45 +705,45 @@ export function SimulationProvider({
 		neighborFaces,
 		neighborEdges,
 		neighborCorners,
-		updateOrganismsAfterTick,
-		tickWithOrganismExclusion,
+		
+		
 	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
-		recordOrganismAction();
+		organismManagerRef.current.recordAction();
 		gridRef.current.recordAction();
 		gridRef.current.toggle(x, y, z);
-	}, [recordOrganismAction]);
+	}, []);
 
 	const setCell = useCallback(
 		(x: number, y: number, z: number, alive: boolean) => {
-			recordOrganismAction();
+			organismManagerRef.current.recordAction();
 			gridRef.current.recordAction();
 			gridRef.current.set(x, y, z, alive);
 		},
-		[recordOrganismAction],
+		[],
 	);
 
 	const setCells = useCallback(
 		(cells: Array<[number, number, number]>) => {
-			recordOrganismAction();
+			organismManagerRef.current.recordAction();
 			gridRef.current.recordAction();
 			for (const [x, y, z] of cells) {
 				gridRef.current.set(x, y, z, true);
 			}
 		},
-		[recordOrganismAction],
+		[],
 	);
 
 	const deleteCells = useCallback(
 		(cells: Array<[number, number, number]>) => {
-			recordOrganismAction();
+			organismManagerRef.current.recordAction();
 			gridRef.current.recordAction();
 			for (const [x, y, z] of cells) {
 				gridRef.current.set(x, y, z, false);
 			}
 		},
-		[recordOrganismAction],
+		[],
 	);
 	const applyCells = useCallback(
 		async (
@@ -858,13 +776,13 @@ export function SimulationProvider({
 			setCommunity([]);
 			
 			// Hydration Logic: Re-instantiate organisms from saved state
-			organismsRef.current.clear();
-			pastOrganismsRef.current = [];
-			futureOrganismsRef.current = [];
+			organismManagerRef.current.organisms.clear();
+			
+			
 			
 			if (savedOrgs && Array.isArray(savedOrgs)) {
 				for (const orgData of savedOrgs) {
-					organismsRef.current.set(orgData.id, deserializeOrganism(orgData, finalGridSize));
+					organismManagerRef.current.organisms.set(orgData.id, deserializeOrganism(orgData, finalGridSize));
 				}
 			}
 			
@@ -926,7 +844,7 @@ export function SimulationProvider({
 			let name = baseName;
 			let counter = 1;
 			const existingNames = new Set(
-				Array.from(organismsRef.current.values()).map(o => o.name),
+				Array.from(organismManagerRef.current.organisms.values()).map(o => o.name),
 			);
 			while (existingNames.has(name)) {
 				counter++;
@@ -960,7 +878,7 @@ export function SimulationProvider({
 				centroid: getCentroid(livingCells),
 			};
 
-			organismsRef.current.set(newOrganism.id, newOrganism);
+			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
 		},
 		[gridSize, neighborFaces, neighborEdges, neighborCorners],
@@ -976,7 +894,7 @@ export function SimulationProvider({
 					newCommunity.map(([x, y, z]) => makeKey(x, y, z)),
 				);
 				let foundId: string | null = null;
-				for (const [id, org] of organismsRef.current.entries()) {
+				for (const [id, org] of organismManagerRef.current.organisms.entries()) {
 					for (const key of communityKeys) {
 						if (org.livingCells.has(key)) {
 							foundId = id;
@@ -994,11 +912,11 @@ export function SimulationProvider({
 	const moveSelectedOrganism = useCallback(
 		(delta: [number, number, number]) => {
 			if (!selectedOrganismId) return;
-			const org = organismsRef.current.get(selectedOrganismId);
+			const org = organismManagerRef.current.organisms.get(selectedOrganismId);
 			if (!org) return;
 
 			// Snapshot for undo
-			recordOrganismAction();
+			organismManagerRef.current.recordAction();
 
 			const [dx, dy, dz] = delta;
 			const oldCells = Array.from(org.livingCells);
@@ -1049,7 +967,7 @@ export function SimulationProvider({
 		[
 			selectedOrganismId,
 			gridSize,
-			recordOrganismAction,
+			
 			neighborFaces,
 			neighborEdges,
 			neighborCorners,
@@ -1059,11 +977,11 @@ export function SimulationProvider({
 	const rotateSelectedOrganism = useCallback(
 		(axis: THREE.Vector3, angle: number) => {
 			if (!selectedOrganismId) return;
-			const org = organismsRef.current.get(selectedOrganismId);
+			const org = organismManagerRef.current.organisms.get(selectedOrganismId);
 			if (!org || !org.centroid) return;
 
 			// Snapshot for undo
-			recordOrganismAction();
+			organismManagerRef.current.recordAction();
 
 			// Map THREE axis and angle to our rotateCells signature
 			const axisKey = axis.x !== 0 ? 'x' : axis.y !== 0 ? 'y' : 'z';
@@ -1123,7 +1041,7 @@ export function SimulationProvider({
 		[
 			selectedOrganismId,
 			gridSize,
-			recordOrganismAction,
+			
 			neighborFaces,
 			neighborEdges,
 			neighborCorners,
@@ -1166,7 +1084,7 @@ export function SimulationProvider({
 			userName,
 			buildInfo,
 			showIntroduction,
-			organisms: organismsRef.current,
+			organisms: organismManagerRef.current.organisms,
 			organismsVersion,
 			selectedOrganismId,
 			showCytoplasm,
@@ -1230,7 +1148,7 @@ export function SimulationProvider({
 			eventBus: eventBusRef.current,
 			movement,
 			velocity,
-			organismsRef,
+			organismsRef: organismManagerRef as any,
 		},
 	};
 
@@ -1239,7 +1157,7 @@ export function SimulationProvider({
 		(window as any).dumpSimulationState = () => {
 			const state = {
 				gridSize: value.state.gridSize,
-				organisms: Array.from(organismsRef.current.entries()).map(([id, org]) => ({
+				organisms: Array.from(organismManagerRef.current.organisms.entries()).map(([id, org]) => ({
 					id,
 					centroid: org.centroid,
 					travelVector: org.travelVector,

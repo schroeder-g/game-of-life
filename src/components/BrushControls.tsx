@@ -456,7 +456,7 @@ export function BrushControls({
 	const handleMouseDown = useCallback((e: React.MouseEvent) => {
 		// Prevent dragging if the event originated from the size slider or the header toggle button
 		if (
-			((e.target as HTMLElement) instanceof HTMLInputElement && (e.target as HTMLInputElement).type === 'range') ||
+			('tagName' in (e.target as HTMLElement) && (e.target as HTMLInputElement).tagName === 'INPUT' && (e.target as HTMLInputElement).type === 'range') ||
 			(e.target as HTMLElement).closest('#brush-controls-toggle-button')
 		) {
 			return;
@@ -538,7 +538,7 @@ export function BrushControls({
 	const handleTouchStart = useCallback((e: React.TouchEvent) => {
 		// Prevent dragging if the event originated from the size slider or the header toggle button
 		if (
-			((e.target as HTMLElement) instanceof HTMLInputElement && (e.target as HTMLInputElement).type === 'range') ||
+			('tagName' in (e.target as HTMLElement) && (e.target as HTMLInputElement).tagName === 'INPUT' && (e.target as HTMLInputElement).type === 'range') ||
 			(e.target as HTMLElement).closest('#brush-controls-toggle-button')
 		) {
 			return;
