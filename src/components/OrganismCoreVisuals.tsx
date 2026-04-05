@@ -61,8 +61,8 @@ function OrganismCoreMesh({
 	const beamMeshRef = useRef<THREE.InstancedMesh>(null);
 
 	const offset = (gridSize - 1) / 2;
-	// CHANGE: Make spheres tinier (e.g., 1/8th of cell width instead of 1/4)
-	const sphereRadius = (1 - cellMargin) / 4; // Make spheres larger for better visibility
+	// CHANGE: Make spheres 0.75 times the width of cell diameter
+	const sphereRadius = (1 - cellMargin) * 0.375;
 	const beamRadius = sphereRadius / 4; // 50% smaller (was /2)
 	const beamLength = (1 - cellMargin) - (2 * sphereRadius); // Distance between sphere surfaces
 
@@ -168,9 +168,8 @@ function OrganismCoreMesh({
 	}, [beamData]);
 
 
-	// Pulsing effect for spheres
-	const sphereColor = useMemo(() => new THREE.Color(organism.skinColor), [organism.skinColor]);
-	const emissiveColor = useMemo(() => new THREE.Color(0xffffff), []); // White for pulsing brightness
+	const sphereColor = useMemo(() => new THREE.Color(0xffffff), []);
+	const emissiveColor = useMemo(() => new THREE.Color(0xffffff), []); // White for glow
 
 	const targetObject = useMemo(() => new THREE.Object3D(), []);
 	useEffect(() => {

@@ -1227,8 +1227,8 @@ export function SettingsSidebar({
 
 function OrganismsSection() {
 	const {
-		state: { showCytoplasm, showSkin },
-		actions: { setShowCytoplasm, setShowSkin },
+		state: { showCytoplasm, showSkin, enableOrganisms },
+		actions: { setShowCytoplasm, setShowSkin, setEnableOrganisms },
 	} = useSimulation();
 
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
@@ -1261,45 +1261,59 @@ function OrganismsSection() {
 			</h3>
 			{!isCollapsed && (
 				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
-					<h4
-						onClick={() => setVisCollapsed(!visCollapsed)}
-						style={{
-							cursor: 'pointer',
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							margin: 0,
-							paddingBottom: '8px',
-							marginBottom: visCollapsed ? 0 : '12px',
-							color: '#aaa',
-							fontWeight: 'normal',
-						}}
-					>
-						Visualization
-						<span style={{ fontSize: '10px', opacity: 0.6 }}>
-							{visCollapsed ? '▼' : '▲'}
-						</span>
-					</h4>
-					{!visCollapsed && (
+					<label className='control-label row' style={{ marginBottom: enableOrganisms ? '16px' : '0' }}>
+						<span>Enable Organisms</span>
+						<input
+							type='checkbox'
+							className='glass-checkbox'
+							checked={enableOrganisms}
+							onChange={e => setEnableOrganisms(e.target.checked)}
+						/>
+					</label>
+
+					{enableOrganisms && (
 						<>
-							<label className='control-label row'>
-								<span>Show Cytoplasm</span>
-								<input
-									type='checkbox'
-									className='glass-checkbox'
-									checked={showCytoplasm}
-									onChange={e => setShowCytoplasm(e.target.checked)}
-								/>
-							</label>
-							<label className='control-label row'>
-								<span>Show Skin</span>
-								<input
-									type='checkbox'
-									className='glass-checkbox'
-									checked={showSkin}
-									onChange={e => setShowSkin(e.target.checked)}
-								/>
-							</label>
+							<h4
+								onClick={() => setVisCollapsed(!visCollapsed)}
+								style={{
+									cursor: 'pointer',
+									display: 'flex',
+									justifyContent: 'space-between',
+									alignItems: 'center',
+									margin: 0,
+									paddingBottom: '8px',
+									marginBottom: visCollapsed ? 0 : '12px',
+									color: '#aaa',
+									fontWeight: 'normal',
+								}}
+							>
+								Visualization
+								<span style={{ fontSize: '10px', opacity: 0.6 }}>
+									{visCollapsed ? '▼' : '▲'}
+								</span>
+							</h4>
+							{!visCollapsed && (
+								<>
+									<label className='control-label row'>
+										<span>Show Cytoplasm</span>
+										<input
+											type='checkbox'
+											className='glass-checkbox'
+											checked={showCytoplasm}
+											onChange={e => setShowCytoplasm(e.target.checked)}
+										/>
+									</label>
+									<label className='control-label row'>
+										<span>Show Skin</span>
+										<input
+											type='checkbox'
+											className='glass-checkbox'
+											checked={showSkin}
+											onChange={e => setShowSkin(e.target.checked)}
+										/>
+									</label>
+								</>
+							)}
 						</>
 					)}
 				</div>

@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import chroma from 'chroma-js';
 import { Organism, parseKey, makeKey } from '../core/Organism';
 
 const MAX_SUPERSUIT_INSTANCES = 1000;
@@ -158,8 +159,7 @@ function OrganismSupersuitMesh({
 		beamMeshRef.current.instanceMatrix.needsUpdate = true;
 	}, [beamData]);
 
-	const redColor = useMemo(() => new THREE.Color('#ff0000'), []); // Brighter red
-	const crimsonEmissive = useMemo(() => new THREE.Color('#ff2222'), []); // Brighter red emissive
+	const suitColor = useMemo(() => new THREE.Color(chroma(organism.skinColor).saturate(2).brighten(1).hex()), [organism.skinColor]);
 
 	// Removed pulsing effect as per TODO-076 (Reflectivity instead of glow)
 
@@ -173,14 +173,11 @@ function OrganismSupersuitMesh({
 			>
 				<sphereGeometry args={[sphereRadiusSupersuit, 16, 16]} />
 				<meshStandardMaterial
-					color={redColor}
-					transparent={false}
-					opacity={1.0}
-					depthWrite={true}
-					emissive={crimsonEmissive}
-					emissiveIntensity={1.5}
-					roughness={0.4}
-					metalness={0.5}
+					color={suitColor}
+					emissive={suitColor}
+					emissiveIntensity={0.4}
+					roughness={0.1}
+					metalness={0.8}
 				/>
 			</instancedMesh>
 
@@ -188,14 +185,11 @@ function OrganismSupersuitMesh({
 			<instancedMesh ref={beamMeshRef} args={[undefined, undefined, MAX_SUPERSUIT_BEAM_INSTANCES]}>
 				<cylinderGeometry args={[beamRadiusSupersuit, beamRadiusSupersuit, 1, 12]} />
 				<meshStandardMaterial
-					color={redColor}
-					transparent={false}
-					opacity={1.0}
-					depthWrite={true}
-					emissive={crimsonEmissive}
-					emissiveIntensity={1.0}
-					roughness={0.4}
-					metalness={0.5}
+					color={suitColor}
+					emissive={suitColor}
+					emissiveIntensity={0.4}
+					roughness={0.1}
+					metalness={0.8}
 				/>
 			</instancedMesh>
 		</group>

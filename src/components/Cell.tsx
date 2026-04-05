@@ -128,12 +128,14 @@ export function Cells({
 		const cellsToRender: Array<[number, number, number]> = []; // NEW ARRAY
 		const cellsToRenderKeys: string[] = []; // NEW ARRAY for keys
 
-		// Do NOT filter out cells that belong to an organism anymore.
-		// We want to render them differently instead.
+		// Filter out cells that belong to an organism.
+		// They will be rendered by OrganismCoreVisuals and OrganismNucleusSupersuit.
 		livingCells.forEach(pos => {
 			const key = makeKey(pos[0], pos[1], pos[2]);
-			cellsToRender.push(pos);
-			cellsToRenderKeys.push(key);
+			if (!organismCellKeys.has(key)) {
+				cellsToRender.push(pos);
+				cellsToRenderKeys.push(key);
+			}
 		});
 
 		const count = cellsToRender.length; // Use filtered count
@@ -171,16 +173,7 @@ export function Cells({
 				y === selectorPos[1] &&
 				z === selectorPos[2];
 
-			if (organismCellKeys.has(key)) {
-				// Find the specific organism to get its skinColor
-				let orgColor = 'orange';
-				organisms.forEach((org) => {
-					if (org.livingCells.has(key)) {
-						orgColor = org.skinColor;
-					}
-				});
-				color = chroma(orgColor);
-			} else if (isSelected) {
+			if (isSelected) {
 				color = chroma('white');
 			} else if (onAxis) {
 				color = color.brighten(0.75);
@@ -219,9 +212,6 @@ export function Cells({
 			// Opacity
 			if (isSelected) {
 				opacities[i] = 1.0;
-			} else if (organismCellKeys.has(key)) {
-				// Organism cells are "ghostly" so we can see the core visuals inside
-				opacities[i] = 0.0;
 			} else {
 				const dx = x - center,
 					dy = y - center,
@@ -305,7 +295,7 @@ export function Cells({
 			// X-axis
 			for (let x = 0; x < gridSize; x++) {
 				const key = `${x},${sy},${sz}`;
-				if (!livingKeys.has(key) && !organismCellKeys.has(key)) { // ADD organismCellKeys check
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						x - offset,
 						sy - offset,
@@ -323,7 +313,7 @@ export function Cells({
 			for (let y = 0; y < gridSize; y++) {
 				if (y === sy) continue; // already handled in X-axis pass for center
 				const key = `${sx},${y},${sz}`;
-				if (!livingKeys.has(key) && !organismCellKeys.has(key)) { // ADD organismCellKeys check
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						sx - offset,
 						y - offset,
@@ -341,7 +331,7 @@ export function Cells({
 			for (let z = 0; z < gridSize; z++) {
 				if (z === sz) continue; // already handled
 				const key = `${sx},${sy},${z}`;
-				if (!livingKeys.has(key) && !organismCellKeys.has(key)) { // ADD organismCellKeys check
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						sx - offset,
 						sy - offset,

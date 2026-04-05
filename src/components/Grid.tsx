@@ -1924,13 +1924,22 @@ export function Scene() {
 
 	return (
 		<>
-			<ambientLight intensity={1.2} />
+			<ambientLight intensity={1.5} />
+			{/* Main Key Light */}
 			<directionalLight 
 				position={[10, 20, 10]} 
 				intensity={2.5} 
 				castShadow 
 				shadow-mapSize={[1024, 1024]}
 			/>
+			{/* Fill Light */}
+			<directionalLight position={[-10, 10, 20]} intensity={1.5} color="#e0eaff" />
+			{/* Rim Light */}
+			<directionalLight position={[20, -10, -20]} intensity={2.0} color="#ffe0e0" />
+			{/* Top/Bottom Edge Lights */}
+			<directionalLight position={[0, 30, 0]} intensity={1.0} />
+			<directionalLight position={[0, -30, 0]} intensity={0.8} />
+
 			<pointLight position={[50, 50, 50]} intensity={800} />
 			<pointLight position={[-50, -50, -50]} intensity={400} />
 			<group ref={cubeRef}>

@@ -54,6 +54,7 @@ const defaults = {
 	easeIn: 0.2,
 	easeOut: 0.5,
 	squareUp: 1,
+	enableOrganisms: true,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -100,6 +101,7 @@ export interface SimulationState {
 	selectedOrganismId: string | null;
 	showCytoplasm: boolean;
 	showSkin: boolean;
+	enableOrganisms: boolean;
 }
 
 export interface SimulationActions {
@@ -133,6 +135,7 @@ export interface SimulationActions {
 	convertCommunityToOrganism: (community: Array<[number, number, number]>) => void;
 	setShowCytoplasm: (val: boolean) => void;
 	setShowSkin: (val: boolean) => void;
+	setEnableOrganisms: (val: boolean) => void;
 
 	playStop: () => void;
 	step: () => void;
@@ -309,6 +312,9 @@ export function SimulationProvider({
 	);
 	const [showCytoplasm, setShowCytoplasm] = useState(true);
 	const [showSkin, setShowSkin] = useState(true);
+	const [enableOrganisms, setEnableOrganisms] = useState(
+		Boolean(storedSettings.enableOrganisms),
+	);
 
 
 	const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
@@ -542,8 +548,8 @@ export function SimulationProvider({
 			invertRoll: invertRoll ? 1 : 0,
 			easeIn,
 			easeOut,
-
 			rollSpeed,
+			enableOrganisms: enableOrganisms ? 1 : 0,
 		};
 		saveSettings(settings);
 	}, [
@@ -567,7 +573,18 @@ export function SimulationProvider({
 		easeIn,
 		easeOut,
 		rollSpeed,
+		enableOrganisms,
 	]);
+
+	useEffect(() => {
+		if (!enableOrganisms) {
+			if (organismsRef.current.size > 0) {
+				organismsRef.current.clear();
+				setOrganismsVersion(v => v + 1);
+			}
+			setSelectedOrganismId(null);
+		}
+	}, [enableOrganisms]);
 
 	const handleGridSizeChange = useCallback(
 		(newSize: number) => {
@@ -819,6 +836,11 @@ export function SimulationProvider({
 			const savedOrgs = config.organisms;
 			const finalGridSize = updateGridSize ?? gridSize;
 
+			if (savedOrgs && savedOrgs.length > 0 && !enableOrganisms) {
+				alert('Cannot load a scene containing organisms while Organisms are disabled.');
+				return;
+			}
+
 			setRunning(false);
 			if (updateGridSize !== undefined && updateGridSize !== gridSize) {
 				gridRef.current = new Grid3D(updateGridSize);
@@ -854,6 +876,7 @@ export function SimulationProvider({
 			neighborEdges,
 			neighborCorners,
 			runInitAnimation,
+			enableOrganisms,
 		],
 	);
 
@@ -920,7 +943,10 @@ export function SimulationProvider({
 			const skinColor = computeSkinColor(livingCells, gridSize);
 
 			const newOrganism: Organism = {
-				id: crypto.randomUUID(),
+				id:
+					typeof crypto !== 'undefined' && crypto.randomUUID
+						? crypto.randomUUID()
+						: `org-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
 				name,
 				livingCells,
 				cytoplasm,
@@ -1145,6 +1171,7 @@ export function SimulationProvider({
 			selectedOrganismId,
 			showCytoplasm,
 			showSkin,
+			enableOrganisms,
 		},
 		actions: {
 			setSpeed,
@@ -1193,6 +1220,7 @@ export function SimulationProvider({
 			rotateSelectedOrganism,
 			setShowCytoplasm,
 			setShowSkin,
+			setEnableOrganisms,
 		},
 		meta: {
 			gridRef,
