@@ -229,9 +229,7 @@ export function AppHeaderPanel({
 			/>
 
 			<SelectedCommunityPanel
-				isVisible={
-					showCommunityPanel && community.length > 0 && !viewMode
-				}
+				isVisible={true}
 				onClose={() => setShowCommunityPanel(false)}
 			/>
 		</div>
