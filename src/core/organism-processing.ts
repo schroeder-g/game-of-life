@@ -140,7 +140,8 @@ function isSkinValid(
 	nextCellsHypothesis: Array<[number, number, number]>,
 	allOtherOrganismBodies: Set<string>,
 	allOtherOrganismSkins: Set<string>,
-	gridSize: number
+	gridSize: number,
+    candidateCells?: Array<[number, number, number]>
 ): boolean {
     const hypLivingMap = new Set(nextCellsHypothesis.map(c => makeKey(...c)));
     const hypCytoplasm = computeCytoplasm(hypLivingMap, gridSize);
@@ -155,10 +156,12 @@ function isSkinValid(
         const [x, y, z] = parseKey(sk);
         // Condition B: Skin outside cube
         if (x < 0 || x >= gridSize || y < 0 || y >= gridSize || z < 0 || z >= gridSize) {
+            console.log(`[NAV DEBUG] Skin out of bounds at ${x},${y},${z}.`);
             return false;
         }
         // Condition C: Skin overlaps another skin
         if (allOtherOrganismSkins.has(sk)) {
+            console.log(`[NAV DEBUG] Skin overlap at ${x},${y},${z}.`);
             return false;
         }
     }
@@ -437,7 +440,14 @@ export function processOrganisms(
             const ownCurrentSkin = updatedGlobalSkins.get(id);
             if (ownCurrentSkin) ownCurrentSkin.forEach(k => allSkins.delete(k));
 
-            return isSkinValid(hypNext, allBodies, allSkins, gridSize);
+            const valid = isSkinValid(hypNext, allBodies, allSkins, gridSize, candidateCells);
+            if (!valid) {
+                 // Check if hypNext is completely broken (GoL killed it)
+                 if (hypNext.length < candidateCells.length * 0.8) {
+                     console.log(`[NAV DEBUG] GoL Liminal space drastically reduced cell count! From ${candidateCells.length} to ${hypNext.length}`);
+                 }
+            }
+            return valid;
         };
 
         // --- RULE-BASED NAVIGATION ---
@@ -483,18 +493,39 @@ export function processOrganisms(
                         candidateCells = rotateCells(candidateCells, axis, angle as 90|180|270, centroidForRotation);
                     }
                     
-                    // Does it need retreat?
-                    const tempCyto = computeCytoplasm(new Set(candidateCells.map(c => makeKey(...c))), gridSize);
-                    const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
+                    // 1. Initial push based on avoidanceNormal
                     let rx = 0, ry = 0, rz = 0;
-                    if (avoidanceNormal[0] > 0) rx = (gridSize - 3) - bounding.maxX;
-                    if (avoidanceNormal[0] < 0) rx = 2 - bounding.minX;
-                    if (avoidanceNormal[1] > 0) ry = (gridSize - 3) - bounding.maxY;
-                    if (avoidanceNormal[1] < 0) ry = 2 - bounding.minY;
-                    if (avoidanceNormal[2] > 0) rz = (gridSize - 3) - bounding.maxZ;
-                    if (avoidanceNormal[2] < 0) rz = 2 - bounding.minZ;
+                    if (avoidanceNormal[0] > 0) rx = -2;
+                    if (avoidanceNormal[0] < 0) rx = 2;
+                    if (avoidanceNormal[1] > 0) ry = -2;
+                    if (avoidanceNormal[1] < 0) ry = 2;
+                    if (avoidanceNormal[2] > 0) rz = -2;
+                    if (avoidanceNormal[2] < 0) rz = 2;
 
-                    const finalCandidate = translateCells(candidateCells, rx, ry, rz);
+                    let candidate = translateCells(candidateCells, rx, ry, rz);
+
+                    // 2. Unconditional bounding clamp based on living cells to ensure rotation didn't clip the glass
+                    let minX = Infinity, maxX = -Infinity;
+                    let minY = Infinity, maxY = -Infinity;
+                    let minZ = Infinity, maxZ = -Infinity;
+                    for (const [x, y, z] of candidate) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        if (z < minZ) minZ = z;
+                        if (z > maxZ) maxZ = z;
+                    }
+
+                    let cx = 0, cy = 0, cz = 0;
+                    if (maxX > gridSize - 3) cx = (gridSize - 3) - maxX;
+                    if (minX < 2) cx = 2 - minX;
+                    if (maxY > gridSize - 3) cy = (gridSize - 3) - maxY;
+                    if (minY < 2) cy = 2 - minY;
+                    if (maxZ > gridSize - 3) cz = (gridSize - 3) - maxZ;
+                    if (minZ < 2) cz = 2 - minZ;
+
+                    const finalCandidate = translateCells(candidate, cx, cy, cz);
                     
                     // Score the attempt. Higher score means closer to bestParallelDirection
                     const score = new THREE.Vector3(...rv).dot(new THREE.Vector3(...bestParallelDirection));
@@ -537,18 +568,39 @@ export function processOrganisms(
                             candidateCells = rotateCells(candidateCells, axis, angle as 90|180|270, getCentroid(cellsForProcessing));
                         }
                         
-                        // Add a retreat/juke step here too to ensure clearance
-                        const tempCyto = computeCytoplasm(new Set(candidateCells.map(c => makeKey(...c))), gridSize);
-                        const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
-                        let rx = 0, ry = 0, rz = 0;
-                        if (avoidanceNormal[0] > 0) rx = (gridSize - 3) - bounding.maxX;
-                        if (avoidanceNormal[0] < 0) rx = 2 - bounding.minX;
-                        if (avoidanceNormal[1] > 0) ry = (gridSize - 3) - bounding.maxY;
-                        if (avoidanceNormal[1] < 0) ry = 2 - bounding.minY;
-                        if (avoidanceNormal[2] > 0) rz = (gridSize - 3) - bounding.maxZ;
-                        if (avoidanceNormal[2] < 0) rz = 2 - bounding.minZ;
-                        
-                        const finalCandidate = translateCells(candidateCells, rx, ry, rz);
+                    // 1. Initial push based on avoidanceNormal
+                    let rx = 0, ry = 0, rz = 0;
+                    if (avoidanceNormal[0] > 0) rx = -2;
+                    if (avoidanceNormal[0] < 0) rx = 2;
+                    if (avoidanceNormal[1] > 0) ry = -2;
+                    if (avoidanceNormal[1] < 0) ry = 2;
+                    if (avoidanceNormal[2] > 0) rz = -2;
+                    if (avoidanceNormal[2] < 0) rz = 2;
+
+                    let candidate = translateCells(candidateCells, rx, ry, rz);
+
+                    // 2. Unconditional bounding clamp based on living cells to ensure rotation didn't clip the glass
+                    let minX = Infinity, maxX = -Infinity;
+                    let minY = Infinity, maxY = -Infinity;
+                    let minZ = Infinity, maxZ = -Infinity;
+                    for (const [x, y, z] of candidate) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        if (z < minZ) minZ = z;
+                        if (z > maxZ) maxZ = z;
+                    }
+
+                    let cx = 0, cy = 0, cz = 0;
+                    if (maxX > gridSize - 3) cx = (gridSize - 3) - maxX;
+                    if (minX < 2) cx = 2 - minX;
+                    if (maxY > gridSize - 3) cy = (gridSize - 3) - maxY;
+                    if (minY < 2) cy = 2 - minY;
+                    if (maxZ > gridSize - 3) cz = (gridSize - 3) - maxZ;
+                    if (minZ < 2) cz = 2 - minZ;
+
+                    const finalCandidate = translateCells(candidate, cx, cy, cz);
 
                         const dotScore = new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector));
                         if (dotScore > bestScore && checkAdjustmentSafe(finalCandidate)) {
