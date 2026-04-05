@@ -487,12 +487,12 @@ export function processOrganisms(
                     const tempCyto = computeCytoplasm(new Set(candidateCells.map(c => makeKey(...c))), gridSize);
                     const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
                     let rx = 0, ry = 0, rz = 0;
-                    if (avoidanceNormal[0] > 0) rx = (gridSize - 2) - bounding.maxX;
-                    if (avoidanceNormal[0] < 0) rx = 1 - bounding.minX;
-                    if (avoidanceNormal[1] > 0) ry = (gridSize - 2) - bounding.maxY;
-                    if (avoidanceNormal[1] < 0) ry = 1 - bounding.minY;
-                    if (avoidanceNormal[2] > 0) rz = (gridSize - 2) - bounding.maxZ;
-                    if (avoidanceNormal[2] < 0) rz = 1 - bounding.minZ;
+                    if (avoidanceNormal[0] > 0) rx = (gridSize - 3) - bounding.maxX;
+                    if (avoidanceNormal[0] < 0) rx = 2 - bounding.minX;
+                    if (avoidanceNormal[1] > 0) ry = (gridSize - 3) - bounding.maxY;
+                    if (avoidanceNormal[1] < 0) ry = 2 - bounding.minY;
+                    if (avoidanceNormal[2] > 0) rz = (gridSize - 3) - bounding.maxZ;
+                    if (avoidanceNormal[2] < 0) rz = 2 - bounding.minZ;
 
                     const finalCandidate = translateCells(candidateCells, rx, ry, rz);
                     
@@ -518,24 +518,46 @@ export function processOrganisms(
                 const awayVector: [number, number, number] = [-avoidanceNormal[0], -avoidanceNormal[1], -avoidanceNormal[2]];
                 let bestDotProduct = new THREE.Vector3(...travelVector).dot(new THREE.Vector3(...awayVector));
                 
+                let cellsForProcessing = startCells;
+                
                 // Rotation attempt
-                if (bestDotProduct > 0.6 && checkAdjustmentSafe(currentCells)) {
+                if (bestDotProduct > 0.6 && checkAdjustmentSafe(cellsForProcessing)) {
                     safeCandidateFound = true;
+                    nextCells = cellsForProcessing;
+                    finalizedTranslation = true;
                 } else {
-                    for (const axis of (['x', 'y', 'z'] as const)) {
-                        for (const angle of ([90, 180, 270] as const)) {
-                            const rv = rotateVector(travelVector as [number, number, number], axis, angle);
-                            if (new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector)) > bestDotProduct) {
-                                const rotatedCandidate = rotateCells(currentCells, axis, angle, getCentroid(currentCells));
-                                if (checkAdjustmentSafe(rotatedCandidate)) {
-                                    bestDotProduct = new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector));
-                                    nextCells = rotatedCandidate;
-                                    nextVector = rv as [number, number, number];
-                                    finalizedTranslation = true;
-                                    safeCandidateFound = true;
-                                    travelVector = nextVector;
-                                }
-                            }
+                    // Try all 24 orientations instead of just the basic 9 here too!
+                    let bestScore = -Infinity;
+                    
+                    for (const ops of ALL_24_ORIENTATIONS) {
+                        let rv = [...travelVector] as [number, number, number];
+                        let candidateCells = [...cellsForProcessing];
+                        for (const [axis, angle] of ops) {
+                            rv = rotateVector(rv, axis, angle as 90|180|270);
+                            candidateCells = rotateCells(candidateCells, axis, angle as 90|180|270, getCentroid(cellsForProcessing));
+                        }
+                        
+                        // Add a retreat/juke step here too to ensure clearance
+                        const tempCyto = computeCytoplasm(new Set(candidateCells.map(c => makeKey(...c))), gridSize);
+                        const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
+                        let rx = 0, ry = 0, rz = 0;
+                        if (avoidanceNormal[0] > 0) rx = (gridSize - 3) - bounding.maxX;
+                        if (avoidanceNormal[0] < 0) rx = 2 - bounding.minX;
+                        if (avoidanceNormal[1] > 0) ry = (gridSize - 3) - bounding.maxY;
+                        if (avoidanceNormal[1] < 0) ry = 2 - bounding.minY;
+                        if (avoidanceNormal[2] > 0) rz = (gridSize - 3) - bounding.maxZ;
+                        if (avoidanceNormal[2] < 0) rz = 2 - bounding.minZ;
+                        
+                        const finalCandidate = translateCells(candidateCells, rx, ry, rz);
+
+                        const dotScore = new THREE.Vector3(...rv).dot(new THREE.Vector3(...awayVector));
+                        if (dotScore > bestScore && checkAdjustmentSafe(finalCandidate)) {
+                            bestScore = dotScore;
+                            nextCells = finalCandidate;
+                            nextVector = rv as [number, number, number];
+                            finalizedTranslation = true;
+                            safeCandidateFound = true;
+                            travelVector = nextVector;
                         }
                     }
                 }
