@@ -709,6 +709,8 @@ export function Scene() {
 		organisms,
 		organismsVersion,
 		selectedOrganismId,
+		showCytoplasm,
+		showSkin,
 	} = state;
 	const {
 		state: brushState,
@@ -1982,12 +1984,14 @@ export function Scene() {
 						}
 					}}
 				/>
-				<OrganismSkins
-					organisms={organisms}
-					organismsVersion={organismsVersion}
-					gridSize={gridRef.current.size}
-					cellMargin={cellMargin}
-				/>
+				{showSkin && (
+					<OrganismSkins
+						organisms={organisms}
+						organismsVersion={organismsVersion}
+						gridSize={gridRef.current.size}
+						cellMargin={cellMargin}
+					/>
+				)}
 				<OrganismCoreVisuals
 					organisms={organisms}
 					organismsVersion={organismsVersion}
@@ -2003,12 +2007,14 @@ export function Scene() {
 						eventBus.emit('showCommunityPanel', true);
 					}}
 				/>
-				<CytoplasmSkin
-					organisms={organisms}
-					organismsVersion={organismsVersion}
-					gridSize={gridRef.current.size}
-					cellMargin={cellMargin}
-				/>
+				{showCytoplasm && (
+					<CytoplasmSkin
+						organisms={organisms}
+						organismsVersion={organismsVersion}
+						gridSize={gridRef.current.size}
+						cellMargin={cellMargin}
+					/>
+				)}
 				<OrganismNucleusSupersuit
 					organisms={organisms}
 					organismsVersion={organismsVersion}

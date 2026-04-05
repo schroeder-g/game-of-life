@@ -95,9 +95,11 @@ export interface SimulationState {
 		distribution: 'dev' | 'test' | 'prod';
 	};
 	showIntroduction: boolean;
-	organisms: Map<string, Organism>; // Map of organism ID to Organism object
-	organismsVersion: number; // To trigger re-renders when organisms change
+	organisms: Map<string, Organism>;
+	organismsVersion: number;
 	selectedOrganismId: string | null;
+	showCytoplasm: boolean;
+	showSkin: boolean;
 }
 
 export interface SimulationActions {
@@ -129,6 +131,8 @@ export interface SimulationActions {
 	setUserName: (name: string) => void;
 	setShowIntroduction: (show: boolean) => void;
 	convertCommunityToOrganism: (community: Array<[number, number, number]>) => void;
+	setShowCytoplasm: (val: boolean) => void;
+	setShowSkin: (val: boolean) => void;
 
 	playStop: () => void;
 	step: () => void;
@@ -303,6 +307,9 @@ export function SimulationProvider({
 	const [birthMargin, setBirthMargin] = useState(
 		storedSettings.birthMargin,
 	);
+	const [showCytoplasm, setShowCytoplasm] = useState(true);
+	const [showSkin, setShowSkin] = useState(true);
+
 
 	const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
 	const [rotationSpeed, setRotationSpeed] = useState(
@@ -1095,6 +1102,8 @@ export function SimulationProvider({
 			organisms: organismsRef.current,
 			organismsVersion,
 			selectedOrganismId,
+			showCytoplasm,
+			showSkin,
 		},
 		actions: {
 			setSpeed,
@@ -1141,6 +1150,8 @@ export function SimulationProvider({
 			recenter,
 			moveSelectedOrganism,
 			rotateSelectedOrganism,
+			setShowCytoplasm,
+			setShowSkin,
 		},
 		meta: {
 			gridRef,

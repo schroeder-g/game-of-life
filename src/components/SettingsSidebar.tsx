@@ -1216,11 +1216,95 @@ export function SettingsSidebar({
 						{!viewMode && <EnvironmentSection />}
 						{!viewMode && <SelectorPositionSection />}
 						<RulesSection />
+						<OrganismsSection />
 						<TestsSection />
 					</>
 				</div>
 			</aside>
 		</>
+	);
+}
+
+function OrganismsSection() {
+	const {
+		state: { showCytoplasm, showSkin },
+		actions: { setShowCytoplasm, setShowSkin },
+	} = useSimulation();
+
+	const [isCollapsed, setIsCollapsed] = usePersistentState(
+		'gol_collapse_organisms',
+		false,
+	);
+	const [visCollapsed, setVisCollapsed] = usePersistentState(
+		'gol_collapse_organisms_vis',
+		false,
+	);
+
+	return (
+		<section className='menu-section'>
+			<h3
+				onClick={() => setIsCollapsed(!isCollapsed)}
+				style={{
+					cursor: 'pointer',
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					margin: 0,
+					paddingBottom: '8px',
+					marginBottom: isCollapsed ? 0 : '16px',
+				}}
+			>
+				Organisms
+				<span style={{ fontSize: '12px', opacity: 0.6 }}>
+					{isCollapsed ? '▼' : '▲'}
+				</span>
+			</h3>
+			{!isCollapsed && (
+				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
+					<h4
+						onClick={() => setVisCollapsed(!visCollapsed)}
+						style={{
+							cursor: 'pointer',
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							margin: 0,
+							paddingBottom: '8px',
+							marginBottom: visCollapsed ? 0 : '12px',
+							color: '#aaa',
+							fontWeight: 'normal',
+						}}
+					>
+						Visualization
+						<span style={{ fontSize: '10px', opacity: 0.6 }}>
+							{visCollapsed ? '▼' : '▲'}
+						</span>
+					</h4>
+					{!visCollapsed && (
+						<>
+							<label className='control-label row'>
+								<span>Show Cytoplasm</span>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showCytoplasm}
+									onChange={e => setShowCytoplasm(e.target.checked)}
+								/>
+							</label>
+							<label className='control-label row'>
+								<span>Show Skin</span>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showSkin}
+									onChange={e => setShowSkin(e.target.checked)}
+								/>
+							</label>
+						</>
+					)}
+				</div>
+			)}
+		</section>
 	);
 }
 
