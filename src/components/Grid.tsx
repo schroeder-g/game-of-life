@@ -14,6 +14,7 @@ import { Cells } from './Cell';
 import { OrganismSkins } from './OrganismSkins';
 import { OrganismCoreVisuals } from './OrganismCoreVisuals';
 import { OrganismNucleusSupersuit } from './OrganismNucleusSupersuit';
+import { CytoplasmSkin } from './CytoplasmSkin';
 import { makeKey } from '../core/Organism';
 
 const _toCamera = new THREE.Vector3();
@@ -2001,6 +2002,12 @@ export function Scene() {
 						setCommunity(organismCommunity);
 						eventBus.emit('showCommunityPanel', true);
 					}}
+				/>
+				<CytoplasmSkin
+					organisms={organisms}
+					organismsVersion={organismsVersion}
+					gridSize={gridRef.current.size}
+					cellMargin={cellMargin}
 				/>
 				<OrganismNucleusSupersuit
 					organisms={organisms}

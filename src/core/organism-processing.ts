@@ -418,7 +418,7 @@ export function processOrganisms(
 				// Step 4: Validate the final proposed position (after rotation and potential retreat)
 				if (isPositionValid(finalProposedCells, otherOrgExclusionZone, gridSize)) {
 					nextCells = finalProposedCells;
-					travelVector = rotatedTravelVectorCandidate; // Update travelVector to the newly rotated one
+					travelVector = rotatedTravelVectorCandidate as [number, number, number];
 					moveChosen = true;
 					currentCentroid = getCentroid(nextCells); // Update centroid for the final position
 					console.log(`[NAV] ID:${id} rotated and potentially retreated. Final centroid: [${currentCentroid.map(c => c.toFixed(1)).join(',')}]`);
@@ -495,11 +495,11 @@ export function processOrganisms(
 
 				if (nudgeApplied) {
 					nextCells = cellsForNudge;
-					travelVector = bestCandidateVector; // Keep the vector from rotation, or original if no rotation
+					travelVector = bestCandidateVector as [number, number, number];
 					moveChosen = true; // Final move chosen for this tick
 				} else if (bestCandidateMoveChosen) { // Only rotation was applied, no nudge
 					nextCells = bestCandidateCells;
-					travelVector = bestCandidateVector;
+					travelVector = bestCandidateVector as [number, number, number];
 					moveChosen = true; // Final move chosen for this tick
 				} else {
 					// No valid rotation or nudge was found. Organism stays put.
