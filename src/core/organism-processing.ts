@@ -257,14 +257,14 @@ function getAvoidanceNormal(
         let tempNormal: [number, number, number] = [0, 0, 0];
         let foundCollisionAtThisStep = false;
 
-        for (const key of translatedCytoplasm) {
-            const [x, y, z] = parseKey(key);
-            if (x < 0) { tempNormal[0] -= 1; foundCollisionAtThisStep = true; }
-            if (x >= gridSize) { tempNormal[0] += 1; foundCollisionAtThisStep = true; }
-            if (y < 0) { tempNormal[1] -= 1; foundCollisionAtThisStep = true; }
-            if (y >= gridSize) { tempNormal[1] += 1; foundCollisionAtThisStep = true; }
-            if (z < 0) { tempNormal[2] -= 1; foundCollisionAtThisStep = true; }
-            if (z >= gridSize) { tempNormal[2] += 1; foundCollisionAtThisStep = true; }
+        // Check boundary limits using living cells directly to prevent array truncation blindness! 
+        for (const [x, y, z] of translatedCells) {
+            if (x <= 1) { tempNormal[0] -= 1; foundCollisionAtThisStep = true; }
+            if (x >= gridSize - 2) { tempNormal[0] += 1; foundCollisionAtThisStep = true; }
+            if (y <= 1) { tempNormal[1] -= 1; foundCollisionAtThisStep = true; }
+            if (y >= gridSize - 2) { tempNormal[1] += 1; foundCollisionAtThisStep = true; }
+            if (z <= 1) { tempNormal[2] -= 1; foundCollisionAtThisStep = true; }
+            if (z >= gridSize - 2) { tempNormal[2] += 1; foundCollisionAtThisStep = true; }
         }
 
         const translatedExtendedBody = new Set<string>([...translatedSet, ...translatedCytoplasm]);
