@@ -559,7 +559,7 @@ export function processOrganisms(
 			livingCells: currentLivingSet,
 			cytoplasm: currentCytoplasm,
 			skinColor: computeSkinColor(currentLivingSet, gridSize),
-			previousLivingCells: organism.previousLivingCells, // will be shifted externally if needed, or by standard flow
+			previousLivingCells: currentLivingSet,
 			centroid: getCentroid(roundedNext),
 			travelVector: nextVector,
 			straightSteps: 0, avoidanceSteps: 0, parallelSteps: 0, stuckTicks: 0,
