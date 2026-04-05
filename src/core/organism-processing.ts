@@ -487,12 +487,12 @@ export function processOrganisms(
                     const tempCyto = computeCytoplasm(new Set(candidateCells.map(c => makeKey(...c))), gridSize);
                     const bounding = getBoundingBoxDimensions(Array.from(tempCyto).map(parseKey));
                     let rx = 0, ry = 0, rz = 0;
-                    if (avoidanceNormal[0] > 0) rx = (gridSize - 1) - bounding.maxX;
-                    if (avoidanceNormal[0] < 0) rx = 0 - bounding.minX;
-                    if (avoidanceNormal[1] > 0) ry = (gridSize - 1) - bounding.maxY;
-                    if (avoidanceNormal[1] < 0) ry = 0 - bounding.minY;
-                    if (avoidanceNormal[2] > 0) rz = (gridSize - 1) - bounding.maxZ;
-                    if (avoidanceNormal[2] < 0) rz = 0 - bounding.minZ;
+                    if (avoidanceNormal[0] > 0) rx = (gridSize - 2) - bounding.maxX;
+                    if (avoidanceNormal[0] < 0) rx = 1 - bounding.minX;
+                    if (avoidanceNormal[1] > 0) ry = (gridSize - 2) - bounding.maxY;
+                    if (avoidanceNormal[1] < 0) ry = 1 - bounding.minY;
+                    if (avoidanceNormal[2] > 0) rz = (gridSize - 2) - bounding.maxZ;
+                    if (avoidanceNormal[2] < 0) rz = 1 - bounding.minZ;
 
                     const finalCandidate = translateCells(candidateCells, rx, ry, rz);
                     
