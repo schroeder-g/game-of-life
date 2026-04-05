@@ -159,7 +159,7 @@ function OrganismSupersuitMesh({
 		beamMeshRef.current.instanceMatrix.needsUpdate = true;
 	}, [beamData]);
 
-	const suitColor = useMemo(() => new THREE.Color(chroma(organism.skinColor).saturate(2).brighten(1).hex()), [organism.skinColor]);
+	const suitColor = useMemo(() => new THREE.Color(chroma(organism.skinColor).saturate(2).darken(0.8).hex()), [organism.skinColor]);
 
 	// Removed pulsing effect as per TODO-076 (Reflectivity instead of glow)
 
@@ -174,10 +174,8 @@ function OrganismSupersuitMesh({
 				<sphereGeometry args={[sphereRadiusSupersuit, 16, 16]} />
 				<meshStandardMaterial
 					color={suitColor}
-					emissive={suitColor}
-					emissiveIntensity={0.4}
-					roughness={0.1}
-					metalness={0.8}
+					roughness={0.3}
+					metalness={0.3}
 				/>
 			</instancedMesh>
 
@@ -186,10 +184,8 @@ function OrganismSupersuitMesh({
 				<cylinderGeometry args={[beamRadiusSupersuit, beamRadiusSupersuit, 1, 12]} />
 				<meshStandardMaterial
 					color={suitColor}
-					emissive={suitColor}
-					emissiveIntensity={0.4}
-					roughness={0.1}
-					metalness={0.8}
+					roughness={0.3}
+					metalness={0.3}
 				/>
 			</instancedMesh>
 		</group>
