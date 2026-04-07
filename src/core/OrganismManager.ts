@@ -130,14 +130,6 @@ export class DefaultOrganismManager implements IOrganismManager {
 	public afterTick(grid: Grid3D, params: TickParams) {
 		if (this._organisms.size === 0) return;
 
-		// Re-place organism living cells on the grid before processing them
-		for (const [, org] of this._organisms) {
-			for (const key of org.livingCells) {
-				const [x, y, z] = parseKey(key);
-				grid.set(x, y, z, true);
-			}
-		}
-
 		this.recordAction();
 
 		const { updatedOrganisms, gridMutations } = processOrganisms(
