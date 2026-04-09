@@ -89,6 +89,7 @@ export default function App() {
 	return (
 		<div className="app">
 			<AppHeaderPanel 
+				isSmallScreen={isSmallScreen}
 				showSettingsSidebar={showSettingsSidebar}
 				setShowSettingsSidebar={setShowSettingsSidebar}
 				showCommunityPanel={showCommunityPanel}

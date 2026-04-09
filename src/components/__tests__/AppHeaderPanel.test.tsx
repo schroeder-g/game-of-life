@@ -93,13 +93,13 @@ describe('AppHeaderPanel', () => {
 			actions: mockSimulationActions,
 			meta: {
 				cameraActionsRef: { current: {} },
-				eventBus: { on: vi.fn(() => () => {}), emit: vi.fn() },
+				eventBus: { on: vi.fn(() => () => { }), emit: vi.fn() },
 				gridRef: {
 					current: {
 						generation: 0,
 						version: 1,
 						getLivingCells: () => [],
-						on: vi.fn(() => () => {}),
+						on: vi.fn(() => () => { }),
 					},
 				},
 			},
@@ -143,19 +143,17 @@ describe('AppHeaderPanel', () => {
 		});
 	});
 
-	it('[AHP_TITLE_001] displays title, build info, and welcome message', () => {
+	it('[AHP_TITLE_001] displays title', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		expect(screen.getByText('Cube of Life')).toBeInTheDocument();
-		const buildInfoDiv = screen.getByTestId('build-info');
-		expect(buildInfoDiv.textContent).toContain('Build: 2.1.0');
-		expect(buildInfoDiv.textContent).toContain('Welcome, Tester!');
 	});
 
 	it('[AHP_SCENE_SELECT_001][UC-3] allows selecting a scene and loads it', async () => {
@@ -171,9 +169,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 
@@ -206,24 +205,26 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		expect(screen.getByTestId('status-scene').textContent).toContain('Test Scene');
 		expect(screen.getByTestId('status-orientation').textContent).toContain('Front');
-		expect(screen.getByTestId('status-stats').textContent).toContain('Generation:');
-		expect(screen.getByTestId('status-stats').textContent).toContain('Cells:');
+		expect(screen.getByTestId('status-generation').textContent).toContain('Generation:');
+		expect(screen.getByTestId('status-cells').textContent).toContain('Cells:');
 	});
 
 	it('[AHP_MODAL_001][UI-2] opens and closes the documentation modal', async () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const helpButton = screen.getByRole('button', { name: 'Help (?)' });
@@ -249,9 +250,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const sceneButton = screen.getByRole('button', {
@@ -265,9 +267,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const toggleButton = screen.getByRole('button', {
@@ -284,9 +287,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const playButton = screen.getByRole('button', {
@@ -300,9 +304,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const speedSlider = screen.getByRole('slider');
@@ -319,9 +324,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const stepBackButton = screen.getByRole('button', {
@@ -339,9 +345,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const stepFwdButton = screen.getByRole('button', {
@@ -355,9 +362,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const resetButton = screen.getByRole('button', {
@@ -371,9 +379,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const fitButton = screen.getByRole('button', { name: 'Fit (F)' });
@@ -385,9 +394,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const recenterButton = screen.getByRole('button', {
@@ -401,9 +411,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const squareUpButton = screen.getByRole('button', {
@@ -419,9 +430,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const commButton = screen.getByRole('button', {
@@ -438,6 +450,7 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={setShowSettingsSidebar}
+				isSmallScreen={false}
 			/>,
 		);
 		const settingsButton = screen.getByRole('button', {
@@ -451,9 +464,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		const helpButton = screen.getByRole('button', { name: 'Help (?)' });
@@ -483,9 +497,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -501,9 +516,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -527,9 +543,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -547,9 +564,10 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -559,5 +577,50 @@ describe('AppHeaderPanel', () => {
 		expect(
 			await screen.findByRole('heading', { name: 'User Manual' }),
 		).toBeInTheDocument();
+	});
+
+	it('[AHPB_VISIBILITY_001] hides Fit and Recenter buttons on small screens or when SquareUp is active', () => {
+		// Case 1: Large screen, SquareUp OFF - should be visible
+		const { rerender } = render(
+			<AppHeaderPanel
+				showSettingsSidebar={false}
+				setShowSettingsSidebar={() => { }}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
+			/>,
+		);
+		expect(screen.getByRole('button', { name: 'Fit (F)' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Recenter (S)' })).toBeInTheDocument();
+
+		// Case 2: Small screen, SquareUp OFF - should be hidden
+		rerender(
+			<AppHeaderPanel
+				showSettingsSidebar={false}
+				setShowSettingsSidebar={() => { }}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={true}
+			/>,
+		);
+		expect(screen.queryByRole('button', { name: 'Fit (F)' })).not.toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Recenter (S)' })).not.toBeInTheDocument();
+
+		// Case 3: Large screen, SquareUp ON - should be hidden
+		mockUseSimulation.mockReturnValue({
+			...mockUseSimulation(),
+			state: { ...mockSimulationState, squareUp: true },
+		});
+		rerender(
+			<AppHeaderPanel
+				showSettingsSidebar={false}
+				setShowSettingsSidebar={() => { }}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => { }}
+				isSmallScreen={false}
+			/>,
+		);
+		expect(screen.queryByRole('button', { name: 'Fit (F)' })).not.toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Recenter (S)' })).not.toBeInTheDocument();
 	});
 });

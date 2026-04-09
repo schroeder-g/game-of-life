@@ -386,7 +386,7 @@ interface AppHeaderPanelButtonsProps {
 	setShowSettingsSidebar: (show: boolean) => void;
 	showCommunityPanel: boolean;
 	setShowCommunityPanel: (show: boolean) => void;
-	
+
 	// Brush related props
 	selectedShape: ShapeType;
 	paintMode: 1 | 0 | -1;
@@ -395,8 +395,9 @@ interface AppHeaderPanelButtonsProps {
 	setPaintMode: (mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1)) => void;
 	setShapeSize: (size: number) => void;
 	setIsHollow: (hollow: boolean) => void;
-	
+
 	selectedOrganismId: string | null;
+	isSmallScreen: boolean;
 }
 
 export function AppHeaderPanelButtons({
@@ -437,6 +438,7 @@ export function AppHeaderPanelButtons({
 	setShapeSize,
 	setIsHollow,
 	selectedOrganismId,
+	isSmallScreen,
 }: AppHeaderPanelButtonsProps) {
 	return (
 		<div className='button-group panel-actions'>
@@ -487,12 +489,12 @@ export function AppHeaderPanelButtons({
 				{running ? '⏸' : '▶'}
 			</button>
 			{viewMode && (
-				<div className='speed-control'>
+				<div className='speed-control' style={{ width: '100px' }}>
 					<span>Speed: {speed}</span>
 					<input
 						type='range'
 						min={1}
-						max={30}
+						max={100}
 						step={1}
 						value={speed}
 						onChange={e => setSpeed(Number(e.target.value))}
@@ -569,26 +571,28 @@ export function AppHeaderPanelButtons({
 			</div>{' '}
 			{/* End of new container div */}
 			<div style={{ display: 'flex', gap: '10px' }}>
-				{' '}
-				{/* New container div for Fit, Recenter, Square Up */}
-				<button
-					type='button'
-					className='glass-button hide-on-mobile'
-					onClick={fitDisplay}
-					aria-label='Fit (F)'
-					data-tooltip-bottom='Fit (F)'
-				>
-					<FitIcon />
-				</button>
-				<button
-					type='button'
-					className='glass-button hide-on-mobile'
-					onClick={recenter}
-					aria-label='Recenter (S)'
-					data-tooltip-bottom='Recenter (S)'
-				>
-					<RecenterIcon />
-				</button>
+				{!isSmallScreen && !squareUp && (
+					<>
+						<button
+							type='button'
+							className='glass-button'
+							onClick={fitDisplay}
+							aria-label='Fit (F)'
+							data-tooltip-bottom='Fit (F)'
+						>
+							<FitIcon />
+						</button>
+						<button
+							type='button'
+							className='glass-button'
+							onClick={recenter}
+							aria-label='Recenter (S)'
+							data-tooltip-bottom='Recenter (S)'
+						>
+							<RecenterIcon />
+						</button>
+					</>
+				)}
 				<button
 					type='button'
 					className={`glass-button square-up-toggle ${squareUp ? (isSquaredUp ? 'active success' : 'active primary') : ''}`}
