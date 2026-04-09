@@ -39,6 +39,7 @@ export interface IOrganismManager {
 
 	clear(): void;
 	applyOrganisms(savedOrgs: any[], gridSize: number): void;
+	removeOrganism(id: string): void;
 
 	rotateOrganism(grid: Grid3D, id: string, axis: THREE.Vector3, angle: number): void;
 }
@@ -106,6 +107,14 @@ export class DefaultOrganismManager implements IOrganismManager {
 			}
 		}
 		this.bumpVersion();
+	}
+
+	public removeOrganism(id: string) {
+		if (this._organisms.has(id)) {
+			this.recordAction();
+			this._organisms.delete(id);
+			this.bumpVersion();
+		}
 	}
 
 	public beforeTick(grid: Grid3D) {

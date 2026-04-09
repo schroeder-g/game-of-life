@@ -31,6 +31,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	get(x: number, y: number, z: number): boolean {
 		if (
+			!Number.isFinite(x) ||
+			!Number.isFinite(y) ||
+			!Number.isFinite(z) ||
 			x < 0 ||
 			x >= this.size ||
 			y < 0 ||
@@ -45,6 +48,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	set(x: number, y: number, z: number, alive: boolean): void {
 		if (
+			Number.isFinite(x) &&
+			Number.isFinite(y) &&
+			Number.isFinite(z) &&
 			x >= 0 &&
 			x < this.size &&
 			y >= 0 &&
@@ -62,6 +68,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	toggle(x: number, y: number, z: number): void {
 		if (
+			Number.isFinite(x) &&
+			Number.isFinite(y) &&
+			Number.isFinite(z) &&
 			x >= 0 &&
 			x < this.size &&
 			y >= 0 &&

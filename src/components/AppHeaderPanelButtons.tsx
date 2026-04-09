@@ -178,6 +178,54 @@ const UsersIcon = () => (
 	</svg>
 );
 
+const DnaIcon = () => (
+	<svg
+		width='20'
+		height='20'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+	>
+		<path d='M8 3v3a2 2 0 0 1-2 2H3' />
+		<path d='M21 8h-3a2 2 0 0 1-2-2V3' />
+		<path d='M3 16h3a2 2 0 0 1 2 2v3' />
+		<path d='M16 21v-3a2 2 0 0 1 2-2h3' />
+		<line x1='9' y1='9' x2='15' y2='15' />
+		<line x1='15' y1='9' x2='9' y2='15' />
+	</svg>
+);
+
+const HelpCircleIcon = () => (
+	<svg
+		width='24'
+		height='24'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+		style={{ display: 'block' }}
+	>
+		<circle cx='12' cy='12' r='11' strokeWidth='1.5' />
+		<text
+			x='12'
+			y='17'
+			textAnchor='middle'
+			fontFamily="'Courier New', Courier, monospace"
+			fontSize='18'
+			fontWeight='bold'
+			fill='currentColor'
+			stroke='none'
+		>
+			?
+		</text>
+	</svg>
+);
+
 function SceneSelectorDropdown() {
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -336,9 +384,7 @@ interface AppHeaderPanelButtonsProps {
 	handleOpenReleaseNotes: () => void;
 	showSettingsSidebar: boolean;
 	setShowSettingsSidebar: (show: boolean) => void;
-	showCommunityPanel: boolean; // New prop for community panel visibility
-	toggleCommunityPanel: () => void; // New prop to toggle community panel
-
+	
 	// Brush related props
 	selectedShape: ShapeType;
 	paintMode: 1 | 0 | -1;
@@ -347,6 +393,7 @@ interface AppHeaderPanelButtonsProps {
 	setPaintMode: (mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1)) => void;
 	setShapeSize: (size: number) => void;
 	setIsHollow: (hollow: boolean) => void;
+	
 	selectedOrganismId: string | null;
 }
 
@@ -378,9 +425,6 @@ export function AppHeaderPanelButtons({
 	handleOpenReleaseNotes,
 	showSettingsSidebar,
 	setShowSettingsSidebar,
-	showCommunityPanel, // Destructure new prop
-	toggleCommunityPanel, // Destructure new prop
-
 	selectedShape,
 	paintMode,
 	shapeSize,
@@ -543,16 +587,6 @@ export function AppHeaderPanelButtons({
 				</button>
 			</div>{' '}
 			{/* End of new container div */}
-			{/* Removed Auto-Square button */}
-			<button
-				type='button'
-				className={`glass-button ${showCommunityPanel ? 'active' : ''}`}
-				onClick={toggleCommunityPanel}
-				data-tooltip-bottom='Toggle Community Panel'
-				aria-label='Toggle Community Panel'
-			>
-				<UsersIcon />
-			</button>
 			<button
 				type='button'
 				className={`glass-button settings-theme ${showSettingsSidebar ? 'active' : ''}`}
@@ -565,12 +599,12 @@ export function AppHeaderPanelButtons({
 			<div className='dropdown-container' ref={helpDropdownRef}>
 				<button
 					type='button'
-					className='glass-button'
+					className='glass-button help-button'
 					onClick={() => setIsHelpDropdownOpen(prev => !prev)}
 					data-tooltip-bottom='Help (?)'
 					aria-label='Help (?)'
 				>
-					?
+					<HelpCircleIcon />
 				</button>
 				{isHelpDropdownOpen && (
 					<div className='dropdown-menu align-right'>

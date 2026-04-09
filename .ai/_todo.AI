@@ -1,11 +1,28 @@
 Obey GENERAL RULES, at end.
 
+Add these new items, if they are not in the Active or Completed sections.
+
+1 Finalize implementing "Organisms" as a safe-to-fail interface connected to core game play and user features.
+Automated testing is failing. Start by running automated tests.
+
+FYI  
+
+ 4 Refactoring and Centralizing Logic:                                                                           
+    • an OLD file, faceOrientationKeyMapping.ts, was created (long ago) to be the "single source of truth" for all keyboard  
+      controls related to orientation. It persists despite a long history of AI refusing to honor it and creating alternative sources of truth that are wrong.
+The goal of this task will be to understand the rules. Then to identify Orientations (Face,angle) where the keypresses are not working in the correct vectors.
+                                                              
+
+
 
 
 
 **RECOMMENDED SEQUENCE**
  
 **ACTIVE ITEMS**
+
+
+
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************

@@ -67,6 +67,7 @@ export function Cells({
 	const lastSelectorPos = useRef<string | null>(null);
 	const lastviewMode = useRef<boolean | null>(null);
 	const lastOrganismsVersion = useRef(-1); // ADD THIS REF
+	const cellsToRenderRef = useRef<Array<[number, number, number]>>([]);
 
 	// Setup colors and matrices
 	const { colorScale, offset, center, gridSize } = useMemo(() => {
@@ -137,6 +138,8 @@ export function Cells({
 				cellsToRenderKeys.push(key);
 			}
 		});
+
+		cellsToRenderRef.current = cellsToRender;
 
 		const count = cellsToRender.length; // Use filtered count
 		const colors = new Float32Array(count * 3);
@@ -365,7 +368,14 @@ export function Cells({
 			<instancedMesh
 				ref={meshRef}
 				args={[undefined, undefined, 50000]}
-				onClick={onClick}
+				onClick={(e: any) => {
+					if (onClick) {
+						if (e.instanceId !== undefined) {
+							e.cellPos = cellsToRenderRef.current[e.instanceId];
+						}
+						onClick(e);
+					}
+				}}
 			>
 				<boxGeometry args={[cellSize, cellSize, cellSize]} />
 				<shaderMaterial

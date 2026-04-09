@@ -7,37 +7,42 @@ import { AppHeaderPanelButtons } from './AppHeaderPanelButtons';
 import { DocumentationModal } from './DocumentationModal';
 import { IntroductionModal } from './IntroductionModal';
 import { ReleaseNotesModal } from './ReleaseNotesModal';
-import { SelectedCommunityPanel } from './SelectedCommunityPanel'; // Import the new panel
 import { ShortcutOverlay } from './ShortcutOverlay';
 
-function SimulationStats() {
+function GenerationDisplay() {
 	const {
 		meta: { gridRef },
-		state: { running },
 	} = useSimulation();
-	const [stats, setStats] = useState({
-		generation: gridRef.current.generation,
-		cells: gridRef.current.getLivingCells().length,
-	});
-
-	const lastVersionRef = useRef(gridRef.current.version);
+	const [generation, setGeneration] = useState(gridRef.current.generation);
 
 	useEffect(() => {
-		const updateStats = () => {
-			setStats({
-				generation: gridRef.current.generation,
-				cells: gridRef.current.getLivingCells().length,
-			});
-		};
-
+		const updateStats = () => setGeneration(gridRef.current.generation);
 		const unsubscribe = gridRef.current.on('tick', updateStats);
 		return () => unsubscribe();
-	}, [gridRef.current]); // Depend on the current Grid3D instance
+	}, [gridRef.current]);
 
 	return (
-		<div className='simulation-stats-display'>
-			Generation: {stats.generation} Cells: {stats.cells}{' '}
-			{running ? 'Running' : 'Paused'}
+		<div className='status-segment stats'>
+			<span className='label'>Generation:</span> {generation}
+		</div>
+	);
+}
+
+function CellsDisplay() {
+	const {
+		meta: { gridRef },
+	} = useSimulation();
+	const [cells, setCells] = useState(gridRef.current.getLivingCells().length);
+
+	useEffect(() => {
+		const updateStats = () => setCells(gridRef.current.getLivingCells().length);
+		const unsubscribe = gridRef.current.on('tick', updateStats);
+		return () => unsubscribe();
+	}, [gridRef.current]);
+
+	return (
+		<div className='status-segment stats'>
+			<span className='label'>Cells:</span> {cells}
 		</div>
 	);
 }
@@ -65,9 +70,8 @@ export function AppHeaderPanel({
 			speed,
 			gridSize,
 			showIntroduction,
-			community,
 			selectedOrganismId,
-		}, // Added community
+		},
 		actions: {
 			playStop,
 			step,
@@ -80,13 +84,15 @@ export function AppHeaderPanel({
 			setSpeed,
 			setShowIntroduction,
 		},
-		meta: { cameraActionsRef, eventBus }, // Added eventBus
+		meta: { cameraActionsRef, eventBus },
 	} = useSimulation();
+
 	const {
 		state: brushState,
 		actions: { setPaintMode, setShapeSize, setIsHollow },
 	} = useBrush();
 	const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
+	
 	const {
 		state: { selectedConfigName },
 	} = useGenesisConfig();
@@ -95,7 +101,6 @@ export function AppHeaderPanel({
 	const [showShortcuts, setShowShortcuts] = useState(false);
 	const [showReleaseNotes, setShowReleaseNotes] = useState(false);
 	const [isHelpDropdownOpen, setIsHelpDropdownOpen] = useState(false);
-	const [showCommunityPanel, setShowCommunityPanel] = useState(false); // New state for Community Panel
 	const helpDropdownRef = useRef<HTMLDivElement>(null);
 
 	useClickOutside(helpDropdownRef, () => setIsHelpDropdownOpen(false));
@@ -121,7 +126,6 @@ export function AppHeaderPanel({
 	}, [setShowIntroduction]);
 
 	const handleOpenShortcuts = useCallback(() => {
-		// New handler for shortcuts
 		setShowShortcuts(true);
 		setIsHelpDropdownOpen(false);
 	}, []);
@@ -131,82 +135,61 @@ export function AppHeaderPanel({
 		setIsHelpDropdownOpen(false);
 	}, []);
 
-	const toggleCommunityPanel = useCallback(() => {
-		setShowCommunityPanel(prev => !prev);
-	}, []);
-
-	// Listen for 'showCommunityPanel' event from BrushControls
-	useEffect(() => {
-		const unsubscribe = eventBus.on('showCommunityPanel', show => {
-			setShowCommunityPanel(show);
-		});
-		return () => unsubscribe();
-	}, [eventBus]);
-
-	// Ensure community panel is visible in edit mode if a community is selected
-	useEffect(() => {
-		if (!viewMode && community.length > 0) {
-			setShowCommunityPanel(true);
-		}
-	}, [viewMode, community.length]);
-
 	return (
 		<div className='app-header-panel'>
-			<div className='title-section'>
-				<h1>Cube of Life</h1>
+			<div className='header-top-row'>
+				<div className='title-section'>
+					<h1>Cube of Life</h1>
+				</div>
+
+				<AppHeaderPanelButtons
+					running={running}
+					viewMode={viewMode}
+					hasInitialState={hasInitialState}
+					hasPastHistory={hasPastHistory}
+					squareUp={squareUp}
+					isSquaredUp={isSquaredUp}
+					speed={speed}
+					gridSize={gridSize}
+					playStop={playStop}
+					step={step}
+					stepBackward={stepBackward}
+					reset={reset}
+					setviewMode={setviewMode}
+					fitDisplay={fitDisplay}
+					recenter={recenter}
+					setSquareUp={setSquareUp}
+					setSpeed={setSpeed}
+					selectedShape={selectedShape}
+					paintMode={paintMode}
+					shapeSize={shapeSize}
+					isHollow={isHollow}
+					setPaintMode={setPaintMode}
+					setShapeSize={setShapeSize}
+					setIsHollow={setIsHollow}
+					isHelpDropdownOpen={isHelpDropdownOpen}
+					setIsHelpDropdownOpen={setIsHelpDropdownOpen}
+					helpDropdownRef={helpDropdownRef}
+					handleOpenDocumentation={handleOpenDocumentation}
+					handleOpenIntroduction={handleOpenIntroduction}
+					handleOpenShortcuts={handleOpenShortcuts}
+					handleOpenReleaseNotes={handleOpenReleaseNotes}
+					showSettingsSidebar={showSettingsSidebar}
+					setShowSettingsSidebar={setShowSettingsSidebar}
+					selectedOrganismId={selectedOrganismId}
+				/>
 			</div>
 
-			<div className='cube-status-panel'>
-				<div className='scene-status'>
-					Scene: {selectedConfigName || 'Unsaved'}
+			<div className='status-bar-row'>
+				<div className='status-segment scene'>
+					<span className='label'>Scene:</span> {selectedConfigName || 'Unsaved'}
 				</div>
-				<div className='orientation-status'>
-					Face: {faceName}, {rotationDegrees}
+				<GenerationDisplay />
+				<CellsDisplay />
+				<div className='status-segment orientation'>
+					<span className='label'>Face:</span> {faceName}, {rotationDegrees}
 				</div>
-				{!viewMode && !selectedOrganismId && (
-					<div className='shape-status'>Shape: {selectedShape}</div>
-				)}
-				<SimulationStats />
 			</div>
-
-			<AppHeaderPanelButtons
-				running={running}
-				viewMode={viewMode}
-				hasInitialState={hasInitialState}
-				hasPastHistory={hasPastHistory}
-				squareUp={squareUp}
-				isSquaredUp={isSquaredUp}
-				speed={speed}
-				gridSize={gridSize}
-				playStop={playStop}
-				step={step}
-				stepBackward={stepBackward}
-				reset={reset}
-				setviewMode={setviewMode}
-				fitDisplay={fitDisplay}
-				recenter={recenter}
-				setSquareUp={setSquareUp}
-				setSpeed={setSpeed}
-				selectedShape={selectedShape}
-				paintMode={paintMode}
-				shapeSize={shapeSize}
-				isHollow={isHollow}
-				setPaintMode={setPaintMode}
-				setShapeSize={setShapeSize}
-				setIsHollow={setIsHollow}
-				isHelpDropdownOpen={isHelpDropdownOpen}
-				setIsHelpDropdownOpen={setIsHelpDropdownOpen}
-				helpDropdownRef={helpDropdownRef}
-				handleOpenDocumentation={handleOpenDocumentation}
-				handleOpenIntroduction={handleOpenIntroduction}
-				handleOpenShortcuts={handleOpenShortcuts}
-				handleOpenReleaseNotes={handleOpenReleaseNotes}
-				showSettingsSidebar={showSettingsSidebar}
-				setShowSettingsSidebar={setShowSettingsSidebar}
-				showCommunityPanel={showCommunityPanel} // Pass new prop
-				toggleCommunityPanel={toggleCommunityPanel} // Pass new prop
-				selectedOrganismId={selectedOrganismId}
-			/>
 
 			<DocumentationModal
 				isOpen={showDocumentation}
@@ -222,15 +205,9 @@ export function AppHeaderPanel({
 				isOpen={showShortcuts}
 				onClose={() => setShowShortcuts(false)}
 			/>
-
 			<ReleaseNotesModal
 				isOpen={showReleaseNotes}
 				onClose={() => setShowReleaseNotes(false)}
-			/>
-
-			<SelectedCommunityPanel
-				isVisible={true}
-				onClose={() => setShowCommunityPanel(false)}
 			/>
 		</div>
 	);

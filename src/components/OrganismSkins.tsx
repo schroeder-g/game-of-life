@@ -149,6 +149,7 @@ function SkinInstancedMesh({
 			ref={meshRef}
 			args={[undefined, undefined, MAX_SKIN_INSTANCES]}
 			renderOrder={0}
+			raycast={() => null}
 		>
 			<sphereGeometry args={[sphereRadius, 6, 6]} />
 			<meshStandardMaterial

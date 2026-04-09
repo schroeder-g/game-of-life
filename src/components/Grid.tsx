@@ -556,6 +556,13 @@ function KeyboardSelector({
 		brushRotationVersion,
 		showProjectionGuides,
 	} = brushState;
+	
+	// Top-level bail out for missing refs
+	if (!gridRef?.current || !brushQuaternion?.current) return null;
+
+	// Memoize geometries to avoid churn and crashes during mode transitions
+	const boxGeo = useMemo(() => new THREE.BoxGeometry(0.9, 0.9, 0.9), []);
+	const edgeGeo = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(0.92, 0.92, 0.92)), []);
 
 	const previewCells = useMemo(() => {
 		if (!selectorPos) return [];
@@ -638,6 +645,12 @@ function KeyboardSelector({
 			{/* Unified renderer for all brush cells */}
 			{previewCells.map(({ cell }, i) => {
 				const [x, y, z] = cell;
+
+				// Defensive check for invalid coordinates or missing ref
+				if (!gridRef.current || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+					return null;
+				}
+
 				const isAlive = gridRef.current.get(x, y, z);
 
 				let cellColor = isAlive
@@ -657,8 +670,7 @@ function KeyboardSelector({
 				return (
 					<React.Fragment key={i}>
 						{/* Primary Cell Mesh */}
-						<mesh position={position} raycast={() => null}>
-							<boxGeometry args={[0.9, 0.9, 0.9]} />
+						<mesh position={position} geometry={boxGeo} raycast={() => null}>
 							<meshBasicMaterial
 								color={cellColor}
 								transparent={isAlive}
@@ -667,10 +679,7 @@ function KeyboardSelector({
 							/>
 						</mesh>
 						{/* Outlines */}
-						<lineSegments position={position}>
-							<edgesGeometry
-								args={[new THREE.BoxGeometry(0.92, 0.92, 0.92)]}
-							/>
+						<lineSegments position={position} geometry={edgeGeo}>
 							<lineBasicMaterial color={outlineColor} />
 						</lineSegments>
 					</React.Fragment>
@@ -684,9 +693,9 @@ export function Scene() {
 	const {
 		state,
 		actions,
-		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef, organismsRef },
+		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef, organismsRef, cameraActionsRef },
 	} = useSimulation();
-	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp } =
+	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp, selectOrganism } =
 		actions;
 	const {
 		speed,
@@ -935,9 +944,7 @@ export function Scene() {
 		};
 	}, [gl, rotationSpeed, invertYaw, invertPitch, velocity]);
 
-	const {
-		meta: { cameraActionsRef },
-	} = useSimulation();
+
 
 	const maxDistance = useMemo(() => {
 		const padding = 1.1; // 10% margin
@@ -1950,44 +1957,42 @@ export function Scene() {
 					viewMode={viewMode}
 					organisms={organisms}
 					organismsVersion={organismsVersion}
-					onClick={e => {
-						if (running || viewMode || wasRotating.current) return;
+					onClick={(e: any) => {
+						if (!viewMode && running) return;
+						if (wasRotating.current) return;
 						e.stopPropagation();
-						const { instanceId } = e;
-						if (instanceId !== undefined) {
-							const cells = gridRef.current.getLivingCells();
-							const cell = cells[instanceId];
-							if (cell) {
-								const [x, y, z] = cell;
-								setSelectorPos([x, y, z]);
-								if (!viewMode) {
-									// Check if the clicked cell belongs to an organism
-									const clickedCellKey = makeKey(x, y, z);
-									let foundOrganism = null;
-									for (const org of organismsRef.current.values()) {
-										if (org.livingCells.has(clickedCellKey)) {
-											foundOrganism = org;
-											break;
-										}
+						const { cellPos } = e;
+						if (cellPos) {
+							const [x, y, z] = cellPos;
+							setSelectorPos([x, y, z]);
+							
+							// Check if the clicked cell belongs to an organism
+							const clickedCellKey = makeKey(x, y, z);
+							let foundOrganism = null;
+							if (organisms && typeof organisms.values === 'function') {
+								for (const org of organisms.values()) {
+									if (org.livingCells.has(clickedCellKey)) {
+										foundOrganism = org;
+										break;
 									}
+								}
+							}
 
-									if (foundOrganism) {
-										// If it's part of an organism, set the community to the organism's living cells
-										const organismCommunity = Array.from(foundOrganism.livingCells).map(key =>
-											key.split(',').map(Number) as [number, number, number]
-										);
-										setCommunity(organismCommunity);
-										eventBus.emit('showCommunityPanel', true);
-									} else {
-										// Otherwise, get the community as usual
-										const community = gridRef.current.getCommunity(
-											x,
-											y,
-											z,
-										);
-										setCommunity(community);
-										eventBus.emit('showCommunityPanel', true);
-									}
+							if (foundOrganism) {
+								const organismCommunity = Array.from(foundOrganism.livingCells).map(key =>
+									key.split(',').map(Number) as [number, number, number]
+								);
+								setCommunity(organismCommunity);
+								selectOrganism(foundOrganism.id);
+							} else {
+								// Fallback to standard community selection logic if not an organism
+								const comp = gridRef.current.getCommunity(x, y, z);
+								if (comp && comp.length > 0) {
+									setCommunity(comp as Array<[number, number, number]>);
+									selectOrganism(null);
+								} else {
+									setCommunity([]);
+									selectOrganism(null);
 								}
 							}
 						}
@@ -2007,13 +2012,14 @@ export function Scene() {
 					gridSize={gridRef.current.size}
 					cellMargin={cellMargin}
 					onClick={(e, organism) => {
-						if (running || viewMode || wasRotating.current) return;
+						if (!viewMode && running) return;
+						if (wasRotating.current) return;
 						e.stopPropagation();
 						const organismCommunity = Array.from(organism.livingCells).map(key =>
 							key.split(',').map(Number) as [number, number, number]
 						);
 						setCommunity(organismCommunity);
-						eventBus.emit('showCommunityPanel', true);
+						selectOrganism(organism.id);
 					}}
 				/>
 				{showCytoplasm && (
@@ -2030,17 +2036,18 @@ export function Scene() {
 					gridSize={gridRef.current.size}
 					cellMargin={cellMargin}
 					onClick={(e, organism) => {
-						if (running || viewMode || wasRotating.current) return;
+						if (!viewMode && running) return;
+						if (wasRotating.current) return;
 						e.stopPropagation();
 						const organismCommunity = Array.from(organism.livingCells).map(key =>
 							key.split(',').map(Number) as [number, number, number]
 						);
 						setCommunity(organismCommunity);
-						eventBus.emit('showCommunityPanel', true);
+						selectOrganism(organism.id);
 					}}
 				/>
 				<BoundingBox size={gridRef.current.size} />
-				{!viewMode && !selectedOrganismId && (
+				{!viewMode && !selectedOrganismId && gridRef.current && (
 					<>
 						<FaceLabels size={gridRef.current.size} />
 						<KeyboardSelector

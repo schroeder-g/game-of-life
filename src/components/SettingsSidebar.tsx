@@ -722,31 +722,31 @@ function CameraControlSection() {
 						/>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Yaw (Swivel)</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertYaw}
 							onChange={e => setInvertYaw(e.target.checked)}
 						/>
+						<span>Invert Yaw (Swivel)</span>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Roll</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertRoll}
 							onChange={e => setInvertRoll(e.target.checked)}
 						/>
+						<span>Invert Roll</span>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Vertical (Pitch)</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertPitch}
 							onChange={e => setInvertPitch(e.target.checked)}
 						/>
+						<span>Invert Vertical (Pitch)</span>
 					</label>
 					<label className='control-label'>
 						<span>Ease In (accel): {easeIn.toFixed(1)}s</span>
@@ -1262,30 +1262,22 @@ function OrganismsSection() {
 			{!isCollapsed && (
 				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
 					<label className='control-label row' style={{ marginBottom: enableOrganisms ? '16px' : '0' }}>
-						<span>Enable Organisms</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
+							style={{ width: '18px', height: '18px' }}
 							checked={enableOrganisms}
 							onChange={e => setEnableOrganisms(e.target.checked)}
 						/>
+						<span>Enable Organisms</span>
 					</label>
 
 					{enableOrganisms && (
 						<>
 							<h4
 								onClick={() => setVisCollapsed(!visCollapsed)}
-								style={{
-									cursor: 'pointer',
-									display: 'flex',
-									justifyContent: 'space-between',
-									alignItems: 'center',
-									margin: 0,
-									paddingBottom: '8px',
-									marginBottom: visCollapsed ? 0 : '12px',
-									color: '#aaa',
-									fontWeight: 'normal',
-								}}
+								className='menu-subsection-header'
+								style={{ marginBottom: visCollapsed ? 0 : '12px' }}
 							>
 								Visualization
 								<span style={{ fontSize: '10px', opacity: 0.6 }}>
@@ -1295,22 +1287,22 @@ function OrganismsSection() {
 							{!visCollapsed && (
 								<>
 									<label className='control-label row'>
-										<span>Show Cytoplasm</span>
 										<input
 											type='checkbox'
 											className='glass-checkbox'
 											checked={showCytoplasm}
 											onChange={e => setShowCytoplasm(e.target.checked)}
 										/>
+										<span>Show Cytoplasm</span>
 									</label>
 									<label className='control-label row'>
-										<span>Show Skin</span>
 										<input
 											type='checkbox'
 											className='glass-checkbox'
 											checked={showSkin}
 											onChange={e => setShowSkin(e.target.checked)}
 										/>
+										<span>Show Skin</span>
 									</label>
 								</>
 							)}

@@ -304,6 +304,24 @@ export function processOrganisms(
 			}
 		}
 
+		// A "Juke Vector" represents the direction(s) that will move the organism
+		// away from its current violations.
+		const jukeVector = new THREE.Vector3(0, 0, 0);
+		if (hasWallViolation) jukeVector.add(new THREE.Vector3(...wallNormal));
+		if (hasSkinOverlap) {
+			const overlapCenter = getAveragePosition(skinOverlaps);
+			const centroid = getCentroid(currentCells);
+			jukeVector.add(new THREE.Vector3(
+				centroid[0] - overlapCenter[0],
+				centroid[1] - overlapCenter[1],
+				centroid[2] - overlapCenter[2],
+			));
+		}
+		if (jukeVector.length() > 0.01) jukeVector.normalize();
+
+		// Current violation penalty to compare against potential candidates
+		const currentViolationPenalty = wallViolations.size + skinOverlaps.size;
+
 		if (hasWallViolation) {
 			// Vector PARALLEL to the wall. We remove the wall-normal component
 			// from the current travel vector to get the parallel component.
@@ -351,105 +369,131 @@ export function processOrganisms(
 			? new THREE.Vector3(-wallNormal[0], -wallNormal[1], -wallNormal[2]) // into the wall
 			: null;
 
-		// ── Try all 24 orientations ──────────────────────────────────
+		// ── Try all 24 orientations + Juke Translations ─────────────────
 		const centroid = getCentroid(currentCells);
 
 		interface RotationCandidate {
 			cells: Array<[number, number, number]>;
 			rv: [number, number, number];
 			score: number;
-			skinOutside: number; // count of skin cells outside bounds
+			skinOutside: number;
+			organismOverlaps: number;
+			penalty: number;
 		}
 
-		const tier1Candidates: RotationCandidate[] = [];
-		const tier2Candidates: RotationCandidate[] = [];
+		const tier1Candidates: RotationCandidate[] = []; // Perfectly clear
+		const tier2Candidates: RotationCandidate[] = []; // Improved (safER)
 
 		for (const ops of ALL_24_ORIENTATIONS) {
 			let rv = [...travelVector] as [number, number, number];
-			let candidateCells = [...currentCells] as Array<[number, number, number]>;
+			let rotatedCells = [...currentCells] as Array<[number, number, number]>;
 
 			for (const [axis, angle] of ops) {
 				rv = rotateVector(rv, axis, angle as 90|180|270);
-				candidateCells = rotateCells(candidateCells, axis, angle as 90|180|270, centroid);
+				rotatedCells = rotateCells(rotatedCells, axis, angle as 90|180|270, centroid);
 			}
 
-			// Check if rotated vector points in a forbidden direction
+			// Check if rotated vector points into a wall
 			if (forbiddenVec) {
 				const rvVec = new THREE.Vector3(...rv);
-				if (rvVec.dot(forbiddenVec) > 0.5) continue; // Points into the wall — skip
+				if (rvVec.dot(forbiddenVec) > 0.5) continue;
 			}
 
-			// Bounding clamp: shift cells inward if any living cell is out of bounds
-			let minX = Infinity, maxX = -Infinity;
-			let minY = Infinity, maxY = -Infinity;
-			let minZ = Infinity, maxZ = -Infinity;
-			for (const [x, y, z] of candidateCells) {
-				if (x < minX) minX = x;
-				if (x > maxX) maxX = x;
-				if (y < minY) minY = y;
-				if (y > maxY) maxY = y;
-				if (z < minZ) minZ = z;
-				if (z > maxZ) maxZ = z;
+			// For each rotation, try 10 translations: [0,0,0], and up to 3 steps along the Juke vector
+			// and standard axis-aligned jukes.
+			const translationsToTry: Array<[number, number, number]> = [[0, 0, 0]];
+			if (jukeVector.length() > 0.01) {
+				translationsToTry.push([Math.round(jukeVector.x), Math.round(jukeVector.y), Math.round(jukeVector.z)]);
+				translationsToTry.push([Math.round(jukeVector.x * 2), Math.round(jukeVector.y * 2), Math.round(jukeVector.z * 2)]);
+				translationsToTry.push([Math.round(jukeVector.x * 3), Math.round(jukeVector.y * 3), Math.round(jukeVector.z * 3)]);
 			}
-			let cx = 0, cy = 0, cz = 0;
-			if (maxX > gridSize - 1) cx = (gridSize - 1) - maxX;
-			if (minX < 0) cx = -minX;
-			if (maxY > gridSize - 1) cy = (gridSize - 1) - maxY;
-			if (minY < 0) cy = -minY;
-			if (maxZ > gridSize - 1) cz = (gridSize - 1) - maxZ;
-			if (minZ < 0) cz = -minZ;
 
-			const finalCells = (cx !== 0 || cy !== 0 || cz !== 0)
-				? translateCells(candidateCells, cx, cy, cz)
-				: candidateCells;
+			// For each translation candidate
+			const triedPositions = new Set<string>();
 
-			// Compute cytoplasm and skin for the candidate position
-			const candidateLivingSet = new Set(finalCells.map(c => makeKey(...c)));
-			const candidateCyto = computeCytoplasm(candidateLivingSet, gridSize);
-			const candidateBody = new Set([...candidateLivingSet, ...candidateCyto]);
+			for (const [tx, ty, tz] of translationsToTry) {
+				const posKey = `${tx},${ty},${tz}`;
+				if (triedPositions.has(posKey)) continue;
+				triedPositions.add(posKey);
 
-			// Build universal space with this candidate replacing the current organism
-			const universalSpace = new Set<string>();
-			for (const [otherId, otherBody] of allOrganismBodies) {
-				if (otherId !== id) {
-					for (const k of otherBody) universalSpace.add(k);
+				// 1. Initial translation
+				let candidateCells = translateCells(rotatedCells, tx, ty, tz);
+
+				// 2. Bounding clamp: shift cells inward ONLY if living cells are out/crossing
+				let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+				for (const [x, y, z] of candidateCells) {
+					minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+					minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+					minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
 				}
-			}
-			for (const k of candidateBody) universalSpace.add(k);
+				let cx = 0, cy = 0, cz = 0;
+				if (maxX > gridSize - 1) cx = (gridSize - 1) - maxX;
+				if (minX < 0) cx = -minX;
+				if (maxY > gridSize - 1) cy = (gridSize - 1) - maxY;
+				if (minY < 0) cy = -minY;
+				if (maxZ > gridSize - 1) cz = (gridSize - 1) - maxZ;
+				if (minZ < 0) cz = -minZ;
 
-			const candidateSkin = computeSkin(candidateCyto, universalSpace, gridSize);
+				const finalCells = (cx !== 0 || cy !== 0 || cz !== 0)
+					? translateCells(candidateCells, cx, cy, cz)
+					: candidateCells;
 
-			// Check skin-skin overlap with other organisms
-			const candidateOverlaps = findSkinOverlaps(candidateSkin, otherSkins);
-			if (candidateOverlaps.size > 0) continue; // Still overlapping — skip
+				// Compute costs
+				const candidateLivingSet = new Set(finalCells.map(c => makeKey(...c)));
+				const candidateCyto = computeCytoplasm(candidateLivingSet, gridSize);
+				const candidateBody = new Set([...candidateLivingSet, ...candidateCyto]);
 
-			// Count skin cells outside bounds
-			const { violations: candidateWallViolations } = findSkinWallViolations(candidateSkin, gridSize);
-			const skinOutsideCount = candidateWallViolations.size;
+				const universalSpace = new Set<string>();
+				for (const [otherId, otherBody] of allOrganismBodies) {
+					if (otherId !== id) {
+						for (const k of otherBody) universalSpace.add(k);
+					}
+				}
+				for (const k of candidateBody) universalSpace.add(k);
 
-			// Score: how well does the rotated vector align with ideal direction?
-			const rvVec = new THREE.Vector3(...rv);
-			const score = idealDirection.length() > 0.01 ? rvVec.dot(idealDirection) : 0;
+				const candidateSkin = computeSkin(candidateCyto, universalSpace, gridSize);
+				const candidateOverlaps = findSkinOverlaps(candidateSkin, otherSkins);
+				const { violations: candidateWallViolations } = findSkinWallViolations(candidateSkin, gridSize);
 
-			const candidate: RotationCandidate = {
-				cells: finalCells,
-				rv: rv,
-				score,
-				skinOutside: skinOutsideCount,
-			};
+				const penalty = candidateWallViolations.size + candidateOverlaps.size;
 
-			if (skinOutsideCount === 0) {
-				tier1Candidates.push(candidate);
-			} else {
-				tier2Candidates.push(candidate);
+				// Skip if penalty is NOT improved AND it's not a perfect candidate
+				if (penalty >= currentViolationPenalty && penalty > 0) continue;
+
+				// Quality score: alignment with ideal direction
+				const rvVec = new THREE.Vector3(...rv);
+				const score = idealDirection.length() > 0.01 ? rvVec.dot(idealDirection) : 0;
+
+				const candidate: RotationCandidate = {
+					cells: finalCells,
+					rv: rv,
+					score,
+					skinOutside: candidateWallViolations.size,
+					organismOverlaps: candidateOverlaps.size,
+					penalty,
+				};
+
+				if (penalty === 0) {
+					tier1Candidates.push(candidate);
+				} else if (penalty < currentViolationPenalty) {
+					tier2Candidates.push(candidate);
+				}
 			}
 		}
 
-		// Pick best candidate: Tier 1 first, then Tier 2
-		tier1Candidates.sort((a, b) => b.score - a.score);
-		tier2Candidates.sort((a, b) => b.score - a.score);
-
-		const bestCandidate = tier1Candidates[0] || tier2Candidates[0];
+		// Pick best candidate: Tier 1 (Perfect) > Tier 2 (Improved/SafER)
+		let bestCandidate: RotationCandidate | null = null;
+		if (tier1Candidates.length > 0) {
+			tier1Candidates.sort((a, b) => b.score - a.score);
+			bestCandidate = tier1Candidates[0];
+		} else if (tier2Candidates.length > 0) {
+			// Sort by absolute penalty first, then score
+			tier2Candidates.sort((a, b) => {
+				if (a.penalty !== b.penalty) return a.penalty - b.penalty;
+				return b.score - a.score;
+			});
+			bestCandidate = tier2Candidates[0];
+		}
 
 		if (bestCandidate) {
 			resolvedCells.set(id, bestCandidate.cells);

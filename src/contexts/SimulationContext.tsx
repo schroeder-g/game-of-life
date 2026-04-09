@@ -55,7 +55,7 @@ const defaults = {
 	easeIn: 0.2,
 	easeOut: 0.5,
 	squareUp: 1,
-	enableOrganisms: true,
+	enableOrganisms: false,
 };
 
 const storedSettings = { ...defaults, ...initialSettings };
@@ -137,6 +137,9 @@ export interface SimulationActions {
 	setShowCytoplasm: (val: boolean) => void;
 	setShowSkin: (val: boolean) => void;
 	setEnableOrganisms: (val: boolean) => void;
+	setSelectedOrganismId: (id: string | null) => void;
+	disorganizeOrganism: (id: string) => void;
+	selectOrganism: (id: string | null) => void;
 
 	playStop: () => void;
 	step: () => void;
@@ -197,7 +200,7 @@ export interface SimulationContextValue {
 	meta: SimulationMeta;
 }
 
-const SimulationContext = createContext<SimulationContextValue | null>(
+export const SimulationContext = createContext<SimulationContextValue | null>(
 	null,
 );
 
@@ -579,7 +582,6 @@ export function SimulationProvider({
 			setSelectedOrganismId(null);
 		}
 	}, [enableOrganisms]);
-
 	const handleGridSizeChange = useCallback(
 		(newSize: number) => {
 			setRunning(false);
@@ -598,11 +600,6 @@ export function SimulationProvider({
 		[neighborFaces, neighborEdges, neighborCorners],
 	);
 
-	
-
-	
-
-	
 
 	const playStop = useCallback(() => {
 		if (!running && gridRef.current.generation === 0) {
@@ -880,8 +877,37 @@ export function SimulationProvider({
 
 			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
+			setSelectedOrganismId(newOrganism.id);
+			setCommunity([]);
 		},
-		[gridSize, neighborFaces, neighborEdges, neighborCorners],
+		[gridSize, organismManagerRef, setOrganismsVersion, setSelectedOrganismId],
+	);
+
+	const disorganizeOrganism = useCallback(
+		(id: string) => {
+			organismManagerRef.current.removeOrganism(id);
+			if (selectedOrganismId === id) {
+				setSelectedOrganismId(null);
+			}
+			setOrganismsVersion(organismManagerRef.current.version);
+		},
+		[selectedOrganismId],
+	);
+
+	const selectOrganism = useCallback(
+		(id: string | null) => {
+			setSelectedOrganismId(id);
+			if (id) {
+				const org = organismManagerRef.current.organisms.get(id);
+				if (org) {
+					const coords = Array.from(org.livingCells).map(parseKey);
+					_setCommunityInternal(coords);
+				}
+			} else {
+				_setCommunityInternal([]);
+			}
+		},
+		[organismManagerRef],
 	);
 
 	const setCommunity = useCallback(
@@ -1117,6 +1143,9 @@ export function SimulationProvider({
 			setUserName,
 			setShowIntroduction,
 			convertCommunityToOrganism,
+			setSelectedOrganismId,
+			disorganizeOrganism,
+			selectOrganism,
 			playStop,
 			step,
 			stepBackward,

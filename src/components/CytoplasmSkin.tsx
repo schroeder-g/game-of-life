@@ -129,6 +129,7 @@ function CytoplasmSkinMesh({
 			ref={meshRef}
 			args={[undefined, undefined, MAX_CYTO_INSTANCES]}
 			renderOrder={1}
+			raycast={() => null}
 		>
 			<sphereGeometry args={[sphereRadius, 8, 8]} />
 			<meshStandardMaterial

@@ -27,9 +27,6 @@ export function AppFooterPanel({
 	return (
 		<footer
 			style={{
-				position: 'sticky',
-				bottom: 0,
-				marginTop: '-100px', // Pulls the footer up over the scene
 				zIndex: 101,
 				height: '100px',
 				backgroundColor: 'rgba(26, 26, 26, 0.4)', // Translucent
