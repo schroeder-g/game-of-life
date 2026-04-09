@@ -1983,16 +1983,13 @@ export function Scene() {
 									key.split(',').map(Number) as [number, number, number]
 								);
 								setCommunity(organismCommunity);
-								selectOrganism(foundOrganism.id);
 							} else {
 								// Fallback to standard community selection logic if not an organism
 								const comp = gridRef.current.getCommunity(x, y, z);
 								if (comp && comp.length > 0) {
 									setCommunity(comp as Array<[number, number, number]>);
-									selectOrganism(null);
 								} else {
 									setCommunity([]);
-									selectOrganism(null);
 								}
 							}
 						}

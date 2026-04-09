@@ -878,7 +878,6 @@ export function SimulationProvider({
 			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
 			setSelectedOrganismId(newOrganism.id);
-			setCommunity([]);
 		},
 		[gridSize, organismManagerRef, setOrganismsVersion, setSelectedOrganismId],
 	);

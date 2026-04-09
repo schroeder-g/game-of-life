@@ -21,6 +21,7 @@ import { ManualTestsPanel } from './ManualTestsPanel';
 interface SettingsSidebarProps {
 	isSmallScreen: boolean;
 	setIsSettingsDropdownOpen: (isOpen: boolean) => void;
+	setShowSettingsSidebar?: (show: boolean) => void;
 }
 
 function EnvironmentSection() {
@@ -1087,6 +1088,7 @@ function SceneManagementSection() {
 export function SettingsSidebar({
 	isSmallScreen,
 	setIsSettingsDropdownOpen,
+	setShowSettingsSidebar,
 }: SettingsSidebarProps) {
 	const {
 		state: { running, viewMode, community, buildInfo },
@@ -1209,6 +1211,17 @@ export function SettingsSidebar({
 						}}
 					>
 						<h2 style={{ margin: 0 }}>Settings</h2>
+						<button
+							className='glass-button danger'
+							onClick={() => {
+								setIsSettingsDropdownOpen(false);
+								if (setShowSettingsSidebar) setShowSettingsSidebar(false);
+							}}
+							style={{ padding: '2px 8px', fontSize: '0.9rem' }}
+							aria-label='Close settings'
+						>
+							X
+						</button>
 					</header>
 					<>
 						{viewMode && <CameraControlSection />}

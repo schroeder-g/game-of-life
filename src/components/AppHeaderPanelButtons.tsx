@@ -560,7 +560,7 @@ export function AppHeaderPanelButtons({
 				{/* New container div for Fit, Recenter, Square Up */}
 				<button
 					type='button'
-					className='glass-button'
+					className='glass-button hide-on-mobile'
 					onClick={fitDisplay}
 					aria-label='Fit (F)'
 					data-tooltip-bottom='Fit (F)'
@@ -569,7 +569,7 @@ export function AppHeaderPanelButtons({
 				</button>
 				<button
 					type='button'
-					className='glass-button'
+					className='glass-button hide-on-mobile'
 					onClick={recenter}
 					aria-label='Recenter (S)'
 					data-tooltip-bottom='Recenter (S)'

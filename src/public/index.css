@@ -1041,6 +1041,10 @@ kbd {
 		padding: 15px;
 	}
 
+	.hide-on-mobile {
+		display: none !important;
+	}
+
 	.app-header-panel:hover {
 		z-index: 1001;
 	}

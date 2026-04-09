@@ -38,7 +38,7 @@ export default function App() {
 	const buildInfo = window.__BUILD_INFO__;
 
 	const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
-	const [showSettingsSidebar, setShowSettingsSidebar] = useState(true);
+	const [showSettingsSidebar, setShowSettingsSidebar] = useState(window.innerWidth >= 1024);
 	const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
 	const [scrollPosition, setScrollPosition] = useState(0);
 	const mainContentRef = useRef<HTMLDivElement>(null);
@@ -125,8 +125,8 @@ export default function App() {
 					<SettingsSidebar
 						isSmallScreen={isSmallScreen}
 						setIsSettingsDropdownOpen={setIsSettingsDropdownOpen}
+						setShowSettingsSidebar={setShowSettingsSidebar}
 					/>
-					{!isSmallScreen && <SelectedCommunityPanel isVisible={true} />}
 				</aside>
 
 				<main
@@ -160,6 +160,8 @@ export default function App() {
 			</div>
 
 			<AppFooterPanel userName={userName} buildInfo={buildInfo} />
+			
+			{!isSmallScreen && <SelectedCommunityPanel isVisible={true} />}
 			
 			{showIntroduction &&
 				(userName ||
