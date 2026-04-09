@@ -139,7 +139,7 @@ export function SelectedCommunityPanel({
 	const {
 		actions: { setCustomBrush, setSelectedShape, setPaintMode },
 	} = useBrush();
-	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [showTooltip, setShowTooltip] = useState(false); // Add this line
 	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 }); // Add this line
 

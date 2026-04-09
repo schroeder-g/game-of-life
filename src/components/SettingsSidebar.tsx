@@ -1253,16 +1253,16 @@ function OrganismsSection() {
 	} = useSimulation();
 
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
-		'gol_collapse_organisms',
-		false,
+		'gol_organisms_collapsed_v2',
+		true,
 	);
 	const [visCollapsed, setVisCollapsed] = usePersistentState(
-		'gol_collapse_organisms_vis',
-		false,
+		'gol_organisms_vis_collapsed_v2',
+		true,
 	);
 
 	return (
-		<section className='menu-section'>
+		<section className={`menu-section ${isCollapsed ? 'collapsed' : ''}`}>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
 				style={{

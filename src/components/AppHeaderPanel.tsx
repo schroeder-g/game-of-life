@@ -192,8 +192,10 @@ export function AppHeaderPanel({
 				<div className='status-segment scene' data-testid='status-scene'>
 					<span className='label'>Scene:</span> {selectedConfigName || 'Unsaved'}
 				</div>
-				<div className='status-segment stats' data-testid='status-stats'>
+				<div className='status-segment generation' data-testid='status-generation'>
 					<GenerationDisplay />
+				</div>
+				<div className='status-segment cells' data-testid='status-cells'>
 					<CellsDisplay />
 				</div>
 				<div className='status-segment orientation' data-testid='status-orientation'>

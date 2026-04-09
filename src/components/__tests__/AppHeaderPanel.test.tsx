@@ -93,13 +93,13 @@ describe('AppHeaderPanel', () => {
 			actions: mockSimulationActions,
 			meta: {
 				cameraActionsRef: { current: {} },
-				eventBus: { on: vi.fn(() => () => {}), emit: vi.fn() },
+				eventBus: { on: vi.fn(() => () => { }), emit: vi.fn() },
 				gridRef: {
 					current: {
 						generation: 0,
 						version: 1,
 						getLivingCells: () => [],
-						on: vi.fn(() => () => {}),
+						on: vi.fn(() => () => { }),
 					},
 				},
 			},
@@ -147,9 +147,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -169,9 +169,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -205,25 +205,25 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
 		expect(screen.getByTestId('status-scene').textContent).toContain('Test Scene');
 		expect(screen.getByTestId('status-orientation').textContent).toContain('Front');
-		expect(screen.getByTestId('status-stats').textContent).toContain('Generation:');
-		expect(screen.getByTestId('status-stats').textContent).toContain('Cells:');
+		expect(screen.getByTestId('status-generation').textContent).toContain('Generation:');
+		expect(screen.getByTestId('status-cells').textContent).toContain('Cells:');
 	});
 
 	it('[AHP_MODAL_001][UI-2] opens and closes the documentation modal', async () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -250,9 +250,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -267,9 +267,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -287,9 +287,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -304,9 +304,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -324,9 +324,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -345,9 +345,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -362,9 +362,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -379,9 +379,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -394,9 +394,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -411,9 +411,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -430,9 +430,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -464,9 +464,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -497,9 +497,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -516,9 +516,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -543,9 +543,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -564,9 +564,9 @@ describe('AppHeaderPanel', () => {
 		render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -584,9 +584,9 @@ describe('AppHeaderPanel', () => {
 		const { rerender } = render(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
@@ -597,9 +597,9 @@ describe('AppHeaderPanel', () => {
 		rerender(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={true}
 			/>,
 		);
@@ -614,9 +614,9 @@ describe('AppHeaderPanel', () => {
 		rerender(
 			<AppHeaderPanel
 				showSettingsSidebar={false}
-				setShowSettingsSidebar={() => {}}
+				setShowSettingsSidebar={() => { }}
 				showCommunityPanel={true}
-				setShowCommunityPanel={() => {}}
+				setShowCommunityPanel={() => { }}
 				isSmallScreen={false}
 			/>,
 		);
