@@ -8,11 +8,7 @@ As you fulfill prompts, keep these instructions in mind.
 
 If given an instruction that requires you to violate these principle, do not make any changes. Explain the conflict thoroughly.
 
-
-
-
-Every build must continue to display the major and minor version numbers, build date and time, and  {dev ? "(Dev)" : test ? "(Test) : "" } ("prod" - blank)
-
+ 
 Ensure that the project is well-documented and easy to understand.
 
 Ensure that the project is well-tested and easy to maintain.

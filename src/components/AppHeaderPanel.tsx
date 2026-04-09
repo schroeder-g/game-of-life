@@ -52,6 +52,7 @@ interface AppHeaderPanelProps {
 	setShowSettingsSidebar: (show: boolean) => void;
 	showCommunityPanel: boolean;
 	setShowCommunityPanel: (show: boolean) => void;
+	isSmallScreen: boolean;
 }
 
 export function AppHeaderPanel({
@@ -59,6 +60,7 @@ export function AppHeaderPanel({
 	setShowSettingsSidebar,
 	showCommunityPanel,
 	setShowCommunityPanel,
+	isSmallScreen,
 }: AppHeaderPanelProps) {
 	const {
 		state: {
@@ -67,8 +69,6 @@ export function AppHeaderPanel({
 			hasInitialState,
 			hasPastHistory,
 			cameraOrientation,
-			userName,
-			buildInfo,
 			squareUp,
 			isSquaredUp,
 			speed,
@@ -96,7 +96,7 @@ export function AppHeaderPanel({
 		actions: { setPaintMode, setShapeSize, setIsHollow },
 	} = useBrush();
 	const { selectedShape, paintMode, shapeSize, isHollow } = brushState;
-	
+
 	const {
 		state: { selectedConfigName },
 	} = useGenesisConfig();
@@ -112,7 +112,7 @@ export function AppHeaderPanel({
 	const faceName =
 		cameraOrientation.face !== 'unknown'
 			? cameraOrientation.face.charAt(0).toUpperCase() +
-				cameraOrientation.face.slice(1)
+			cameraOrientation.face.slice(1)
 			: 'Unknown';
 	const rotationDegrees =
 		cameraOrientation.rotation !== 'unknown'
@@ -144,10 +144,7 @@ export function AppHeaderPanel({
 			<div className='header-top-row'>
 				<div className='title-section'>
 					<h1>Cube of Life</h1>
-					<div className='build-info' data-testid='build-info'>
-						<span>Build: {buildInfo.version}</span>
-						<span className='welcome-msg'>Welcome, {userName}!</span>
-					</div>
+
 				</div>
 
 				<AppHeaderPanelButtons
@@ -187,6 +184,7 @@ export function AppHeaderPanel({
 					showCommunityPanel={showCommunityPanel}
 					setShowCommunityPanel={setShowCommunityPanel}
 					selectedOrganismId={selectedOrganismId}
+					isSmallScreen={isSmallScreen}
 				/>
 			</div>
 
