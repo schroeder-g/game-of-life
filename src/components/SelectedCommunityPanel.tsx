@@ -667,16 +667,24 @@ export function SelectedCommunityPanel({
 							</p>
 						) : (
 							<>
-								<div className='community-stats' style={{ fontSize: '12px', marginBottom: '8px' }}>
+								<div className='community-stats' style={{ 
+									fontSize: '11px', 
+									marginBottom: '12px',
+									display: 'flex',
+									flexDirection: 'column',
+									gap: '6px'
+								}}>
+									{/* Row 1: Cells and Cytoplasm */}
 									<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-										<span>Cells: {community.length}</span>
+										<span>Cells: <strong>{community.length}</strong></span>
 										{matchingOrganism && (
 											<>
-												<span style={{ opacity: 0.6 }}>| Cytoplasm: {matchingOrganism.cytoplasm.size}</span>
+												<span style={{ opacity: 0.5 }}>|</span>
+												<span>Cytoplasm: <strong>{matchingOrganism.cytoplasm.size}</strong></span>
 												<div
 													style={{
-														width: '10px',
-														height: '10px',
+														width: '8px',
+														height: '8px',
 														borderRadius: '50%',
 														backgroundColor: matchingOrganism.skinColor,
 														border: '1px solid rgba(255,255,255,0.3)',
@@ -688,37 +696,29 @@ export function SelectedCommunityPanel({
 									</div>
 
 									{matchingOrganism && (
-										<div
-											style={{
-												display: 'flex',
-												flexDirection: 'column',
-												gap: '4px',
-												marginTop: '8px',
-												background: 'rgba(0,0,0,0.2)',
-												padding: '8px',
-												borderRadius: '6px',
-												fontSize: '10px',
-											}}
-										>
-											<div style={{ display: 'flex', justifyContent: 'space-between' }}>
+										<>
+											{/* Row 2: Heading */}
+											<div style={{ display: 'flex', gap: '8px' }}>
 												<span style={{ opacity: 0.7 }}>Heading:</span>
-												<span>
+												<span style={{ fontFamily: 'ui-monospace, monospace' }}>
 													{matchingOrganism.travelVector
 														? `[${matchingOrganism.travelVector.map(v => v.toFixed(2)).join(', ')}]`
 														: 'None'}
 												</span>
 											</div>
-											<div>
-												<span style={{ opacity: 0.7 }}>Wall Distances:</span>
-												<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
+
+											{/* Row 3: Wall Distances (One line) */}
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+												<span style={{ opacity: 0.7 }}>Walls:</span>
+												<div style={{ display: 'flex', gap: '12px' }}>
 													{wallDistances.map((wd, i) => (
-														<span key={i} title={wd.label}>
+														<span key={i} style={{ fontSize: '10px' }}>
 															{wd.axis}: <strong>{wd.dist.toFixed(1)}</strong>
 														</span>
 													))}
 												</div>
 											</div>
-										</div>
+										</>
 									)}
 								</div>
 
