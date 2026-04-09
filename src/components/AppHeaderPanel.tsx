@@ -22,9 +22,9 @@ function GenerationDisplay() {
 	}, [gridRef.current]);
 
 	return (
-		<div className='status-segment stats'>
-			<span className='label'>Generation:</span> {generation}
-		</div>
+		<>
+			<span className='label'>Generation:</span> {generation}{' '}
+		</>
 	);
 }
 
@@ -41,20 +41,24 @@ function CellsDisplay() {
 	}, [gridRef.current]);
 
 	return (
-		<div className='status-segment stats'>
+		<>
 			<span className='label'>Cells:</span> {cells}
-		</div>
+		</>
 	);
 }
 
 interface AppHeaderPanelProps {
 	showSettingsSidebar: boolean;
 	setShowSettingsSidebar: (show: boolean) => void;
+	showCommunityPanel: boolean;
+	setShowCommunityPanel: (show: boolean) => void;
 }
 
 export function AppHeaderPanel({
 	showSettingsSidebar,
 	setShowSettingsSidebar,
+	showCommunityPanel,
+	setShowCommunityPanel,
 }: AppHeaderPanelProps) {
 	const {
 		state: {
@@ -140,6 +144,10 @@ export function AppHeaderPanel({
 			<div className='header-top-row'>
 				<div className='title-section'>
 					<h1>Cube of Life</h1>
+					<div className='build-info' data-testid='build-info'>
+						<span>Build: {buildInfo.version}</span>
+						<span className='welcome-msg'>Welcome, {userName}!</span>
+					</div>
 				</div>
 
 				<AppHeaderPanelButtons
@@ -176,17 +184,21 @@ export function AppHeaderPanel({
 					handleOpenReleaseNotes={handleOpenReleaseNotes}
 					showSettingsSidebar={showSettingsSidebar}
 					setShowSettingsSidebar={setShowSettingsSidebar}
+					showCommunityPanel={showCommunityPanel}
+					setShowCommunityPanel={setShowCommunityPanel}
 					selectedOrganismId={selectedOrganismId}
 				/>
 			</div>
 
 			<div className='status-bar-row'>
-				<div className='status-segment scene'>
+				<div className='status-segment scene' data-testid='status-scene'>
 					<span className='label'>Scene:</span> {selectedConfigName || 'Unsaved'}
 				</div>
-				<GenerationDisplay />
-				<CellsDisplay />
-				<div className='status-segment orientation'>
+				<div className='status-segment stats' data-testid='status-stats'>
+					<GenerationDisplay />
+					<CellsDisplay />
+				</div>
+				<div className='status-segment orientation' data-testid='status-orientation'>
 					<span className='label'>Face:</span> {faceName}, {rotationDegrees}
 				</div>
 			</div>

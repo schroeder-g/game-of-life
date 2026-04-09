@@ -384,6 +384,8 @@ interface AppHeaderPanelButtonsProps {
 	handleOpenReleaseNotes: () => void;
 	showSettingsSidebar: boolean;
 	setShowSettingsSidebar: (show: boolean) => void;
+	showCommunityPanel: boolean;
+	setShowCommunityPanel: (show: boolean) => void;
 	
 	// Brush related props
 	selectedShape: ShapeType;
@@ -425,6 +427,8 @@ export function AppHeaderPanelButtons({
 	handleOpenReleaseNotes,
 	showSettingsSidebar,
 	setShowSettingsSidebar,
+	showCommunityPanel,
+	setShowCommunityPanel,
 	selectedShape,
 	paintMode,
 	shapeSize,
@@ -449,6 +453,15 @@ export function AppHeaderPanelButtons({
 				}
 			>
 				{viewMode ? <PencilIcon /> : <ProjectorIcon />}
+			</button>
+			<button
+				type='button'
+				className={`glass-button ${showCommunityPanel ? 'active' : ''}`}
+				onClick={() => setShowCommunityPanel(!showCommunityPanel)}
+				data-tooltip-bottom='Toggle Community Panel'
+				aria-label='Toggle Community Panel'
+			>
+				<UsersIcon />
 			</button>
 			<BrushControls selectedOrganismId={selectedOrganismId} />
 			<button

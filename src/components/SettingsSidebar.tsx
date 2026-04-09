@@ -55,6 +55,7 @@ function EnvironmentSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-environment'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -143,13 +144,11 @@ function EnvironmentSection() {
 								<button
 									className='glass-button'
 									onClick={randomize}
-									disabled={viewMode || hasLiveCells}
+									disabled={viewMode}
 									title={
 										viewMode
 											? 'Switch to Edit mode to randomize'
-											: hasLiveCells
-												? 'Clear board to randomize'
-												: undefined
+											: undefined
 									}
 									style={{ flexShrink: 0 }}
 								>
@@ -219,6 +218,7 @@ function RulesSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-rules'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -312,6 +312,7 @@ function RulesSection() {
 								min={0}
 								max={18}
 								step={1}
+								data-testid='rule-survive-min'
 								value={surviveMin}
 								onChange={e => setSurviveMin(Number(e.target.value))}
 							/>
@@ -323,6 +324,7 @@ function RulesSection() {
 								min={0}
 								max={18}
 								step={1}
+								data-testid='rule-survive-max'
 								value={surviveMax}
 								onChange={e => setSurviveMax(Number(e.target.value))}
 							/>
@@ -569,6 +571,7 @@ function SelectorPositionSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-selector'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -606,31 +609,34 @@ function SelectorPositionSection() {
 				<div className='selector-position-section'>
 					{(['X', 'Y', 'Z'] as const).map(axis => (
 						<div key={axis} className='coordinate-input-container'>
-							<label>{axis}</label>
-							<div className='coordinate-input-group'>
-								<input
-									type='number'
-									className='coordinate-input'
-									value={
-										selectorPos
-											? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]
-											: ''
-									}
-									onChange={e =>
-										handleCoordinateChange(axis, e.target.value)
-									}
-									min={0}
-									max={gridSize - 1}
-								/>
-								<div className='coord-buttons'>
-									<button onClick={() => increment(axis)}>▲</button>
-									<button onClick={() => decrement(axis)}>▼</button>
+							<label className='control-label'>
+								<span>{axis}:</span>
+								<div className='coordinate-input-group'>
+									<input
+										type='number'
+										className='coordinate-input tintable-input'
+										data-testid={`selector-${axis.toLowerCase()}`}
+										value={
+											selectorPos
+												? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]
+												: ''
+										}
+										onChange={e =>
+											handleCoordinateChange(axis, e.target.value)
+										}
+										min={0}
+										max={gridSize - 1}
+									/>
+									<div className='coord-buttons'>
+										<button onClick={() => increment(axis)}>▲</button>
+										<button onClick={() => decrement(axis)}>▼</button>
+									</div>
 								</div>
-							</div>
-							<div className='coord-hints'>
-								<kbd>{keyMap[axis].inc}</kbd>
-								<kbd>{keyMap[axis].dec}</kbd>
-							</div>
+								<div className='coord-hints'>
+									<kbd>{keyMap[axis].inc}</kbd>
+									<kbd>{keyMap[axis].dec}</kbd>
+								</div>
+							</label>
 						</div>
 					))}
 				</div>
@@ -672,6 +678,7 @@ function CameraControlSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-rules'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -952,6 +959,7 @@ function SceneManagementSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-scene-mgmt'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
