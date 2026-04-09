@@ -1,126 +1,139 @@
 import { Canvas } from '@react-three/fiber';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Scene } from '../components/Grid';
 import { SettingsSidebar } from '../components/SettingsSidebar';
 import { AppHeaderPanel } from '../components/AppHeaderPanel';
-import { AppFooterPanel } from '../components/AppFooterPanel'; // New import
+import { AppFooterPanel } from '../components/AppFooterPanel';
+import { SelectedCommunityPanel } from '../components/SelectedCommunityPanel';
 import { WelcomeModal } from '../components/WelcomeModal';
-import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
-import { supportsHollow } from '../core/shapes';
 import { useAppShortcuts } from '../hooks/useAppShortcuts';
+import { ContextBridge } from '../contexts/ContextBridge';
+
+const TriangleUpIcon = () => (
+	<svg
+		width='16'
+		height='16'
+		viewBox='0 0 24 24'
+		fill='currentColor' /* Solid filling as requested for "cute" look */
+		stroke='currentColor'
+		strokeWidth='1'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+	>
+		<path d='M12 4l10 16H2L12 4z' />
+	</svg>
+);
 
 export default function App() {
 	const {
 		state: {
 			viewMode,
-			running,
-			squareUp,
 			userName,
-			buildInfo,
 			showIntroduction,
 		},
-		actions: {
-			setviewMode,
-			recenter,
-			fitDisplay,
-			setSquareUp,
-			setShowIntroduction,
-			setUserName,
-		},
+		actions: { recenter, fitDisplay, setShowIntroduction, setUserName },
 	} = useSimulation();
-	const {
-		state: { selectorPos, selectedShape, shapeSize, isHollow },
-	} = useBrush();
-	const [isSmallScreen, setIsSmallScreen] = useState(false); // Moved from SettingsSidebar
-	const [showSettingsSidebar, setShowSettingsSidebar] = useState(true); // New state, defaults to true
-	const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] =
-		useState(false); // New state to track internal dropdown
 
-	// State for draggable footer poTODO-055sition
-	const canvasContainerRef = useRef<HTMLDivElement>(null); // Ref for the canvas container
-	const [canvasSize, setCanvasSize] = useState(0); // State for the square canvas size
+	const buildInfo = window.__BUILD_INFO__;
+
+	const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1024);
+	const [showSettingsSidebar, setShowSettingsSidebar] = useState(window.innerWidth >= 1024);
+	const [showCommunityPanel, setShowCommunityPanel] = useState(true);
+	const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
+	const [scrollPosition, setScrollPosition] = useState(0);
+	const mainContentRef = useRef<HTMLDivElement>(null);
 
 	useAppShortcuts();
 
+	// Effect to handle mode transitions
 	useEffect(() => {
-		console.log('App: viewMode changed to', viewMode);
 		if (viewMode === false) {
-			console.log('App: Calling recenter and fitDisplay in Edit mode.');
 			recenter();
 			fitDisplay();
 		}
 	}, [viewMode, recenter, fitDisplay]);
 
-	// Effect to set and update canvas size to be square using ResizeObserver
-	useEffect(() => {
-		if (!canvasContainerRef.current) return;
-
-		const resizeObserver = new ResizeObserver(entries => {
-			for (const entry of entries) {
-				if (entry.target === canvasContainerRef.current) {
-					const { width, height } = entry.contentRect;
-					const newSize = Math.min(width, height);
-					console.log(
-						`App: Canvas container resized. Width: ${width}, Height: ${height}, Calculated canvasSize: ${newSize}`,
-					);
-					setCanvasSize(newSize);
-				}
-			}
-		});
-
-		resizeObserver.observe(canvasContainerRef.current);
-		return () => resizeObserver.disconnect();
-	}, []);
-
 	// Effect to check screen size for small screens
 	useEffect(() => {
-		if (typeof window === 'undefined') return;
-
-		const checkScreenSize = () => {
-			setIsSmallScreen(window.innerWidth <= 768);
+		const handleResize = () => {
+			setIsSmallScreen(window.innerWidth < 1024);
 		};
-
-		checkScreenSize();
-		window.addEventListener('resize', checkScreenSize);
-
-		return () => window.removeEventListener('resize', checkScreenSize);
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
+	// Scroll listener for small screens to track scroll position for the depth indicator
+	useEffect(() => {
+		if (!isSmallScreen) {
+			setScrollPosition(0);
+			return;
+		}
+
+		const handleScroll = () => {
+			const container = mainContentRef.current;
+			if (!container) return;
+			setScrollPosition(Math.round(container.scrollTop));
+		};
+
+		window.addEventListener('scroll', handleScroll, true);
+		return () => window.removeEventListener('scroll', handleScroll, true);
+	}, [isSmallScreen]);
+
+	const scrollToTop = () => {
+		if (mainContentRef.current) {
+			mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+	};
+
 	return (
-		<div
-			className='app'
-			style={{
-				display: 'flex',
-				flexDirection: 'column',
-				height: '100vh',
-			}}
-		>
-			<AppHeaderPanel
+		<div className="app">
+			<AppHeaderPanel 
 				showSettingsSidebar={showSettingsSidebar}
 				setShowSettingsSidebar={setShowSettingsSidebar}
+				showCommunityPanel={showCommunityPanel}
+				setShowCommunityPanel={setShowCommunityPanel}
 			/>
+
+			{isSmallScreen && scrollPosition >= 75 && (
+				<div 
+					className="settings-scroll-top"
+					onClick={scrollToTop}
+					aria-label="Scroll back to top"
+				>
+					<TriangleUpIcon />
+				</div>
+			)}
+			
 			<div
-				className='main-content-layout'
+				className="main-content-layout"
+				ref={mainContentRef}
 				style={{
 					flex: 1,
 					display: 'flex',
 					flexDirection: isSmallScreen ? 'column' : 'row',
+					overflowY: isSmallScreen ? 'auto' : 'hidden',
+					overflowX: 'hidden',
+					position: 'relative',
 				}}
 			>
-				<div
-					className='ui-overlay'
-					style={{ display: showSettingsSidebar ? 'flex' : 'none' }}
+
+				<aside
+					className="ui-overlay"
+					style={{ 
+						display: showSettingsSidebar ? 'flex' : 'none',
+						flexDirection: 'column'
+					}}
 				>
 					<SettingsSidebar
 						isSmallScreen={isSmallScreen}
 						setIsSettingsDropdownOpen={setIsSettingsDropdownOpen}
+						setShowSettingsSidebar={setShowSettingsSidebar}
 					/>
-				</div>
+				</aside>
 
 				<main
-					ref={canvasContainerRef}
-					className='canvas-container'
+					className="canvas-container"
 					style={{
 						flex: 1,
 						height: '100%',
@@ -133,30 +146,26 @@ export default function App() {
 						justifyContent: 'center',
 						alignItems: 'center',
 						overflow: 'hidden',
+						position: 'relative'
 					}}
 				>
-					{/* Always render the canvas, but its container might be hidden */}
-					<div
-						style={{
-							width: canvasSize,
-							height: canvasSize,
-							position: 'relative',
-						}}
+					<Canvas
+						shadows
+						gl={{ antialias: true, alpha: true }}
+						camera={{ position: [0, 0, 40], fov: 45 }}
+						style={{ width: '100%', height: '100%', touchAction: 'none' }}
 					>
-						<Canvas
-							style={{
-								width: '100%',
-								height: '100%',
-								touchAction: 'none',
-							}}
-						>
+						<ContextBridge>
 							<Scene />
-						</Canvas>
-					</div>
+						</ContextBridge>
+					</Canvas>
 				</main>
 			</div>
-			<AppFooterPanel userName={userName} buildInfo={buildInfo} />{' '}
-			{/* New footer panel */}
+
+			<AppFooterPanel userName={userName} buildInfo={buildInfo} />
+			
+			{!isSmallScreen && showCommunityPanel && <SelectedCommunityPanel isVisible={true} />}
+			
 			{showIntroduction &&
 				(userName ||
 				localStorage.getItem('userName') ||

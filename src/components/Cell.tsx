@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { Grid3D } from '../core/Grid3D';
 import { useSimulation } from '../contexts/SimulationContext';
 import { ClaimHint } from './ClaimHint';
+import { Organism, makeKey } from '../core/Organism'; // Updated import for makeKey
 
 // Custom shader material for per-instance color and opacity
 const cellShaderMaterial = {
@@ -18,8 +19,7 @@ const cellShaderMaterial = {
 
     void main() {
       vColor = instanceColor;
-      vOpacity = instanceOpacity;
-      vHighlight = instanceHighlight;
+      vOpacity = instanceOpacity; // Corrected: Use instanceOpacity for vOpacity
       vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
       gl_Position = projectionMatrix * mvPosition;
     }
@@ -47,12 +47,17 @@ export function Cells({
 	margin,
 	onClick,
 	selectorPos,
+	viewMode,
+	organisms, // ADD THIS PROP
+	organismsVersion, // ADD THIS PROP
 }: {
 	grid: Grid3D;
 	margin: number;
 	onClick?: (e: any) => void;
 	selectorPos: [number, number, number] | null;
 	viewMode?: boolean;
+	organisms: Map<string, Organism>; // ADD THIS PROP
+	organismsVersion: number; // ADD THIS PROP
 }) {
 	const meshRef = useRef<THREE.InstancedMesh>(null);
 	const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -61,6 +66,8 @@ export function Cells({
 	const lastVersion = useRef(-1);
 	const lastSelectorPos = useRef<string | null>(null);
 	const lastviewMode = useRef<boolean | null>(null);
+	const lastOrganismsVersion = useRef(-1); // ADD THIS REF
+	const cellsToRenderRef = useRef<Array<[number, number, number]>>([]);
 
 	// Setup colors and matrices
 	const { colorScale, offset, center, gridSize } = useMemo(() => {
@@ -75,8 +82,21 @@ export function Cells({
 	}, [grid]);
 
 	const {
-		state: { speed, isAnimatingInit, viewMode },
+		state: { speed, isAnimatingInit },
 	} = useSimulation();
+
+	// Create a set of all cell keys belonging to any organism
+	const organismCellKeys = useMemo(() => {
+		const keys = new Set<string>();
+		if (!organisms) {
+			console.warn("Cells component received undefined 'organisms' prop. This should not happen.");
+			return keys; // Return an empty set to prevent crash
+		}
+		organisms.forEach(org => {
+			org.livingCells.forEach(key => keys.add(key));
+		});
+		return keys;
+	}, [organisms, organismsVersion]);
 
 	// Use useFrame to natively poll the Grid3D instance without triggering React re-renders
 	useFrame((state, delta) => {
@@ -92,33 +112,47 @@ export function Cells({
 		const gridChanged = grid.version !== lastVersion.current;
 		const selectorChanged = selectorPosStr !== lastSelectorPos.current;
 		const modeChanged = viewMode !== lastviewMode.current;
+		const organismsChanged = organismsVersion !== lastOrganismsVersion.current; // ADD THIS LINE
 
-		if (!gridChanged && !selectorChanged && !modeChanged) {
+		if (!gridChanged && !selectorChanged && !modeChanged && !organismsChanged) { // UPDATE THIS LINE
 			return;
 		}
 
 		lastVersion.current = grid.version;
 		lastSelectorPos.current = selectorPosStr;
-		lastviewMode.current = viewMode;
+		lastviewMode.current = viewMode ?? null;
+		lastOrganismsVersion.current = organismsVersion; // ADD THIS LINE
 
 		const livingCells = grid.getLivingCells();
 		const tempObject = new THREE.Object3D();
 
-		const count = livingCells.length;
+		const cellsToRender: Array<[number, number, number]> = []; // NEW ARRAY
+		const cellsToRenderKeys: string[] = []; // NEW ARRAY for keys
+
+		// Filter out cells that belong to an organism.
+		// They will be rendered by OrganismCoreVisuals and OrganismNucleusSupersuit.
+		livingCells.forEach(pos => {
+			const key = makeKey(pos[0], pos[1], pos[2]);
+			if (!organismCellKeys.has(key)) {
+				cellsToRender.push(pos);
+				cellsToRenderKeys.push(key);
+			}
+		});
+
+		cellsToRenderRef.current = cellsToRender;
+
+		const count = cellsToRender.length; // Use filtered count
 		const colors = new Float32Array(count * 3);
 		const opacities = new Float32Array(count);
 		const edgeColors = new Float32Array(count * 3);
 		const highlights = new Float32Array(count);
 
-		livingCells.forEach((pos, i) => {
+		cellsToRender.forEach((pos, i) => { // Iterate over filtered cells
 			const [x, y, z] = pos;
+			const key = cellsToRenderKeys[i]; // Get key for current cell
 
-			// Position & Scale
-			tempObject.position.set(
-				x - offset,
-				y - offset,
-				gridSize - 1 - z - offset,
-			);
+			// Apply position and initial scale
+			tempObject.position.set(x - offset, y - offset, gridSize - 1 - z - offset);
 			tempObject.scale.set(1.0, 1.0, 1.0);
 			tempObject.updateMatrix();
 			meshRef.current!.setMatrixAt(i, tempObject.matrix);
@@ -256,7 +290,7 @@ export function Cells({
 			const cellSize = 1 - margin;
 
 			const livingKeys = new Set(
-				livingCells.map(([x, y, z]) => `${x},${y},${z}`),
+				cellsToRender.map(([x, y, z]) => `${x},${y},${z}`), // Use filtered cells
 			);
 
 			let ghostCount = 0;
@@ -264,7 +298,7 @@ export function Cells({
 			// X-axis
 			for (let x = 0; x < gridSize; x++) {
 				const key = `${x},${sy},${sz}`;
-				if (!livingKeys.has(key)) {
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						x - offset,
 						sy - offset,
@@ -282,7 +316,7 @@ export function Cells({
 			for (let y = 0; y < gridSize; y++) {
 				if (y === sy) continue; // already handled in X-axis pass for center
 				const key = `${sx},${y},${sz}`;
-				if (!livingKeys.has(key)) {
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						sx - offset,
 						y - offset,
@@ -300,7 +334,7 @@ export function Cells({
 			for (let z = 0; z < gridSize; z++) {
 				if (z === sz) continue; // already handled
 				const key = `${sx},${sy},${z}`;
-				if (!livingKeys.has(key)) {
+				if (!livingKeys.has(key)) { // Ghost highlights should appear even if an organism cell is there
 					tempObject.position.set(
 						sx - offset,
 						sy - offset,
@@ -334,7 +368,14 @@ export function Cells({
 			<instancedMesh
 				ref={meshRef}
 				args={[undefined, undefined, 50000]}
-				onClick={onClick}
+				onClick={(e: any) => {
+					if (onClick) {
+						if (e.instanceId !== undefined) {
+							e.cellPos = cellsToRenderRef.current[e.instanceId];
+						}
+						onClick(e);
+					}
+				}}
 			>
 				<boxGeometry args={[cellSize, cellSize, cellSize]} />
 				<shaderMaterial
@@ -355,6 +396,7 @@ export function Cells({
 			<instancedMesh
 				ref={ghostMeshRef}
 				args={[undefined, undefined, 1000]}
+				raycast={() => null}
 			>
 				<boxGeometry args={[cellSize, cellSize, cellSize]} />
 				<meshBasicMaterial

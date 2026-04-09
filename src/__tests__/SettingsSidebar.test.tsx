@@ -6,7 +6,7 @@ import {
 	beforeEach,
 	type Mock,
 } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SettingsSidebar } from '../components/SettingsSidebar';
 import { AppHeaderPanel } from '../components/AppHeaderPanel';
 import { useSimulation } from '../contexts/SimulationContext';
@@ -14,13 +14,27 @@ import { useBrush } from '../contexts/BrushContext';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
 
 // Mock all the necessary contexts
-vi.mock('../contexts/SimulationContext', () => ({
-	useSimulation: vi.fn(),
-}));
-vi.mock('../contexts/BrushContext', () => ({ useBrush: vi.fn() }));
-vi.mock('../contexts/GenesisConfigContext', () => ({
-	useGenesisConfig: vi.fn(),
-}));
+vi.mock('../contexts/SimulationContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useSimulation: vi.fn(),
+	};
+});
+vi.mock('../contexts/BrushContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useBrush: vi.fn(),
+	};
+});
+vi.mock('../contexts/GenesisConfigContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useGenesisConfig: vi.fn(),
+	};
+});
 vi.mock('../hooks/useClickOutside', () => ({
 	useClickOutside: vi.fn(),
 }));
@@ -94,6 +108,7 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 		cameraOrientation: { face: 'front', rotation: 0 },
 		community: [],
 		showIntroduction: false,
+		organisms: new Map(),
 	};
 
 	const baseSimulationValue = {
@@ -127,12 +142,16 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 			setEaseIn: vi.fn(),
 			setEaseOut: vi.fn(),
 			setShowIntroduction: vi.fn(),
+			setSelectorPos: mocks.setSelectorPos,
+			saveConfig: mocks.saveConfig,
+			exportConfig: mocks.exportConfig,
+			importConfig: mocks.importConfig,
 		},
 		meta: {
 			cameraActionsRef: { current: {} },
 			gridRef: {
 				current: {
-					getLivingCells: () => [1],
+					getLivingCells: () => [[1, 1, 1]],
 					on: vi.fn(() => () => {}),
 					generation: 0,
 					version: 0,
@@ -194,18 +213,32 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={true}
 				setShowSettingsSidebar={vi.fn()}
+				showCommunityPanel={true}
+				setShowCommunityPanel={vi.fn()}
 			/>,
 		);
-		expect(screen.getByText(/Build:/)).toBeInTheDocument();
+		expect(screen.getByTestId('build-info')).toBeInTheDocument();
 	});
 
-	it('[UC-7] should handle Environment controls', () => {
+	it('[UC-7] should handle Environment controls', async () => {
 		// Ensure viewMode is false for Environment section to render in SettingsSidebar
 		(useSimulation as any).mockReturnValue(baseSimulationValue);
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
-		// Headers are h3 which act as buttons for expansion
-		fireEvent.click(screen.getByText(/Environment/i));
+		// Expand the Environment section if needed
+		const envHeader = screen.getByTestId('section-header-environment');
+		if (envHeader.textContent?.includes('▼')) {
+			fireEvent.click(envHeader);
+		}
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'Clear' })).not.toBeDisabled();
+		});
 
 		const gridSizeSlider = screen.getByLabelText(/Grid Size:/i);
 		fireEvent.change(gridSizeSlider, { target: { value: '30' } });
@@ -226,31 +259,50 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 	});
 
 	it('[UC-8] should handle Rules controls', () => {
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Rules/i));
 
-		const surviveMinSlider = screen.getByLabelText(/Survive Min:/i);
-		fireEvent.change(surviveMinSlider, { target: { value: '4' } });
-		expect(mocks.setSurviveMin).toHaveBeenCalledWith(4);
+		// Expand the Rules section
+		const rulesHeader = screen.getByTestId('section-header-rules');
+		if (rulesHeader.textContent?.includes('▼')) {
+			fireEvent.click(rulesHeader);
+		}
 
-		const birthMinSlider = screen.getByLabelText(/Birth Min:/i);
-		fireEvent.change(birthMinSlider, { target: { value: '5' } });
-		expect(mocks.setBirthMin).toHaveBeenCalledWith(5);
+		const surviveMinSlider = screen.getByTestId('rule-survive-min');
+		fireEvent.change(surviveMinSlider, { target: { value: '3' } });
+		expect(mocks.setSurviveMin).toHaveBeenCalledWith(3);
 
-		const checkbox = screen.getByLabelText('Faces');
-		fireEvent.click(checkbox);
+		const surviveMaxSlider = screen.getByTestId('rule-survive-max');
+		fireEvent.change(surviveMaxSlider, { target: { value: '4' } });
+		expect(mocks.setSurviveMax).toHaveBeenCalledWith(4);
+
+		const facesCheckbox = screen.getByLabelText('Faces');
+		fireEvent.click(facesCheckbox);
 		expect(mocks.setNeighborFaces).toHaveBeenCalledWith(false);
 	});
 
 	it('[UC-9] should handle Cursor Position controls', () => {
 		(useSimulation as any).mockReturnValue(baseSimulationValue);
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
-		fireEvent.click(screen.getByText(/Cursor Position/i));
+		const selectorHeader = screen.getByTestId('section-header-selector');
+		if (selectorHeader.textContent?.includes('▼')) {
+			fireEvent.click(selectorHeader);
+		}
 
-		// Coordinate inputs have labels X:, Y:, Z:
-		const xInput = screen.getByLabelText('X:');
+		// Use the new test-id for coordinate inputs
+		const xInput = screen.getByTestId('selector-x');
 		fireEvent.change(xInput, { target: { value: '15' } });
 		expect(mocks.setSelectorPos).toHaveBeenCalledWith([15, 10, 10]);
 
@@ -269,9 +321,17 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 		};
 		(useGenesisConfig as any).mockReturnValue(genesisValue);
 
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
-		fireEvent.click(screen.getByText(/Scene Management/i));
+		const sceneHeader = screen.getByTestId('section-header-scene-mgmt');
+		if (sceneHeader.textContent?.includes('▼')) {
+			fireEvent.click(sceneHeader);
+		}
 
 		const saveButton = screen.getByRole('button', {
 			name: 'Save Current',
@@ -294,7 +354,12 @@ describe('SettingsSidebar and AppHeaderPanel Integration Tests', () => {
 		};
 		(useSimulation as any).mockReturnValue(viewModeSimulationValue);
 
-		render(<SettingsSidebar isSmallScreen={false} />);
+		render(
+			<SettingsSidebar
+				isSmallScreen={false}
+				setIsSettingsDropdownOpen={vi.fn()}
+			/>,
+		);
 
 		fireEvent.click(screen.getByText(/Camera Controls/i));
 

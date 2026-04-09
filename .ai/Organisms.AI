@@ -1,0 +1,230 @@
+# Organisms
+
+## Overview
+
+This document specifies the full design and implementation requirements for **Organisms** — a new entity type in the 3D Game of Life. An AI agent with access to this codebase should be able to implement all features described here without further clarification.
+
+---
+
+## Concept
+
+An **Organism** is a special subclass of a Community. It is a group of connected living cells that:
+- Is surrounded by a **Cytoplasm** (a one-cell-deep buffer of inactive cells computed using the same face/edge/corner neighbor rules as the current simulation).
+- Is enclosed by a rendered **Skin** (a semi-transparent alpha mesh).
+- Has a persistent **name** and entry in the **Organisms list** for the duration of the session.
+- Is subject to special post-tick behavior (Juking and Rotation) to maintain its integrity.
+
+**Prerequisite:** There should be no Birth Margin Guard on Organism features.
+
+---
+
+## Naming
+
+- Each organism is assigned a unique **first name** chosen from a fixed constant array of 100 names spanning different cultures and genders.
+- If all 100 names are in use, append an incrementing integer suffix (e.g., `"Aiko 2"`) until the name is unique.
+- The name list should be defined as a constant exported from a new file:
+  `src/data/organism-names.ts`
+  Export it as: `export const ORGANISM_NAMES: string[]`
+  Include 50 female and 50 male names drawn from a mix of Western, East Asian, South Asian, African, Latin American, and Middle Eastern cultures.
+
+---
+
+## Data Model
+
+Create a new file: `src/core/Organism.ts`
+
+```typescript
+export interface Organism {
+  id: string;                                   // UUID, stable for the session
+  name: string;                                 // Unique human first name
+  livingCells: Set<string>;                     // Keys: "x,y,z" of living cells
+  cytoplasm: Set<string>;                       // Keys: "x,y,z" of buffer cells
+  skinColor: string;                            // Hex color, average of living cell colors
+}
+```
+
+An **OrganismRegistry** should be maintained in `SimulationContext` as a React ref:
+```typescript
+organismsRef: React.MutableRefObject<Map<string, Organism>>
+```
+
+It is NOT persisted to localStorage. It resets on `clear()`. On `reset()`, organisms that existed in the initial state (generation 0) are restored.
+
+---
+
+## Creating an Organism (Organize)
+
+### UI Trigger
+- In `SelectedCommunityPanel`, add an **Organize button** to the left of the existing "Activate Brush" button in the header actions row.
+- The button is only enabled when:
+  - A community is selected (`community.length > 0`)
+- Icon: use a wand/sparkle SVG (inline, consistent with existing icon style).
+
+### Creation Logic
+When the Organize button is clicked:
+1. Take the currently selected `community` cells (from `SimulationContext.state.community`).
+2. Compute the **Cytoplasm**: all inactive cells that are neighbors (using current face/edge/corner settings) of any living cell in the community, and are not themselves living. Exclude cells outside grid bounds.
+3. Compute the **skin color**: average the RGB values of the colors that `Cell.tsx` would assign to each living cell (using the same `chroma.hsl(240 - hue, saturation, 0.55)` formula, where `hue = (x / gridSize) * 300` and `saturation = 0.4 + ((gridSize - 1 - z) / gridSize) * 0.6`). Convert the average RGB to a hex string.
+4. Assign a unique name from `ORGANISM_NAMES` (or with numeric suffix).
+5. Add the organism to `organismsRef.current`.
+6. Trigger a re-render of the `SelectedCommunityPanel` and the 3D skin mesh.
+
+---
+
+## Cytoplasm (Buffer) Rules
+
+- The Cytoplasm is the set of all **inactive** grid cells that are neighbors of any living cell in the organism, using the same face/edge/corner adjacency rules currently in use by the simulation.
+- It is exactly **1 cell thick** (direct neighbors only, no transitive expansion).
+- It is **recalculated after every tick** from the new positions of the organism's living cells.
+- The Cytoplasm is NOT rendered; it is a logical boundary used for breach detection and Juking.
+
+---
+
+## Skin Rendering
+
+The Skin is rendered as an **alpha-transparent instanced mesh** placed at each Cytoplasm cell position.
+
+### Implementation
+- Add an `<OrganismSkins>` React component inside the Three.js `<Canvas>` scene in `Grid.tsx`, rendered after the `<Cells>` component.
+- It receives the organisms map as a prop.
+- For each organism, render an `<instancedMesh>` where each instance corresponds to one Cytoplasm cell:
+  - Geometry: `BoxGeometry` with size equal to `cellSize` (same as living cells, i.e., `1 - cellMargin`), **not** the edge size.
+  - Material: `MeshBasicMaterial` with:
+    - `color` = organism's `skinColor`
+    - `transparent = true`
+    - `opacity = 0.02`
+    - `depthWrite = false`
+  - Position each instance at the same coordinate transform used for living cells in `Cell.tsx`:
+    `position = (x - offset, y - offset, gridSize - 1 - z - offset)`
+- Each organism gets its own `instancedMesh` (not one shared mesh), for simplicity and clarity.
+- When the organism list changes, the skin meshes update accordingly.
+
+---
+
+## Community Panel Integration
+
+The `SelectedCommunityPanel` displays whichever community the user has clicked on. When that community belongs to an organism, it should additionally show:
+
+- The organism's **name** prominently (e.g., `h4` with an organism icon 🧬 or Organize emoji).
+- A label: `"Organism"` to distinguish it from a plain community.
+- The Cytoplasm cell count (e.g., `"Cytoplasm: 42 cells"`).
+- The skin color as a small color swatch.
+
+**Detection logic:** When a user clicks a living cell and a community is identified, check whether any living cell in that community belongs to a known organism (by checking `organismsRef.current`). If so, display the organism info.
+
+---
+
+## Post-Tick Organism Processing
+
+This logic runs **after** `Grid3D.tick()` completes and **before** any repaint. It is invoked inside `SimulationContext`'s `tick` callback.
+
+Process organisms **one at a time**, in insertion order.
+
+### Step 1 — Sync Living Cells
+For each organism, update `livingCells` to the new set of living cells that remain alive after the tick AND are still spatially connected (flood fill) to at least one of the organism's previous living cells. If no living cells remain, dissolve the organism.
+
+### Step 2 — Recalculate Cytoplasm
+Recompute `cytoplasm` from the new `livingCells`.
+
+### Step 3 — Check for Skin Breach
+A **skin breach** occurs if any living cell in `cytoplasm` (i.e., any cell that should be inactive as part of the buffer) is now alive in the grid AND belongs to a different organism or to no organism.
+
+Equivalently: check whether any cell in the organism's `cytoplasm` set is alive in the grid (`grid.get(x,y,z) === true`) and is NOT in the organism's own `livingCells`.
+
+If a breach is detected:
+- Remove the organism from `organismsRef.current`.
+- Do not attempt to Juke or Rotate.
+- Continue to the next organism.
+
+### Step 4 — Juke (Collision Avoidance)
+A **Juke** is needed if the Cytoplasm of this organism overlaps with any living cell that is NOT part of this organism.
+
+To Juke:
+1. For each of the 26 possible unit-offset vectors `(dx, dy, dz)` where each component ∈ `{-1, 0, 1}` and not all zero:
+   - Tentatively translate all living cells by `(dx, dy, dz)`.
+   - Check that:
+     a. All translated cells are within grid bounds.
+     b. None of the translated cells overlap with any living cell belonging to another organism or unowned community.
+     c. The new Cytoplasm (1-cell shell around new living cells) does not overlap with any external living cell.
+     d. The organism does not abut the cube boundary (treat the cube boundary as if there were a living cell just outside it).
+2. From all valid offsets, **prefer** those that also allow a subsequent random rotation (see Step 5). Among those, pick one randomly. If none allow a rotation, pick any valid juke randomly. If no juke is valid, dissolve the organism.
+3. Apply the juke: update `livingCells` and remove/add cells from the grid accordingly.
+   - Use `grid.set(x, y, z, false)` for vacated cells.
+   - Use `grid.set(x, y, z, true)` for new positions.
+   - Increment `grid.version` once after all cell mutations.
+
+### Step 5 — Random Rotation
+After a Juke (or even if no Juke was needed, but the organism is still alive):
+
+Attempt a random rotation around one of the 3 cardinal axes (X, Y, Z) by 90° in either direction. This gives 6 possible rotations.
+
+Rotation is applied to the organism's living cells around their **centroid** (rounded to nearest integer after rotation). For each candidate rotation:
+- All rotated cells must be within grid bounds.
+- None may overlap with living cells of another organism or unowned living cells.
+- The new Cytoplasm must not overlap any external living cell.
+- The organism must not abut the boundary (same rule as Juke).
+
+Pick one valid rotation randomly and apply it (updating `livingCells` and grid cells similarly to the Juke). If no rotation is valid, the organism simply stays in place (no dissolution).
+
+---
+
+## Boundary Avoidance
+
+In both Juking and Rotation, the organism must avoid abutting the cube's boundary, treating the boundary as if there were a living cell just outside every edge of the cube. This means the organism's Cytoplasm must not include any out-of-bounds cell (i.e., all Cytoplasm cells must be within `[0, gridSize-1]`).
+
+---
+
+## Organism Lifecycle
+
+| Event | Outcome |
+|---|---|
+| Organize button clicked | Organism created from current community |
+| Tick completes | Living cells synced; Cytoplasm recalculated; breach/juke/rotation run |
+| Skin breached | Organism dissolved (removed from list) |
+| No valid juke | Organism dissolved |
+| Grid `clear()` | All organisms dissolved |
+| Grid `reset()` | Organisms that existed at generation 0 are restored with their original cells |
+| Grid size changed | All organisms dissolved |
+
+---
+
+## SimulationContext Changes
+
+1. Add `organismsRef: React.MutableRefObject<Map<string, Organism>>` to `SimulationMeta`.
+2. Add `organisms: Map<string, Organism>` to `SimulationState` so React components can subscribe to changes (use a version counter to trigger re-renders, mirroring how `grid.version` works).
+3. Add action `convertCommunityToOrganism(community: Array<[number, number, number]>): void` to `SimulationActions`.
+4. Modify the `tick` callback in `SimulationContext` to call a new `processOrganisms(grid, organisms, gridSize, neighborFaces, neighborEdges, neighborCorners)` function after `grid.tick(...)` and before setting state.
+5. Modify `clear()` to dissolve all organisms.
+6. Modify `reset()` to restore organisms saved at generation 0.
+
+---
+
+## New Files
+
+| File | Purpose |
+|---|---|
+| `src/data/organism-names.ts` | Constant array of 100 first names |
+| `src/core/Organism.ts` | `Organism` interface and helper types |
+| `src/core/organism-processing.ts` | Pure function `processOrganisms(...)` containing all post-tick logic |
+| `src/components/OrganismSkins.tsx` | Three.js component rendering cytoplasm skin meshes |
+
+---
+
+## Modified Files
+
+| File | Change |
+|---|---|
+| `src/contexts/SimulationContext.tsx` | Add `organismsRef`, `organisms` state/version, `convertCommunityToOrganism` action, `processOrganisms` call in tick |
+| `src/components/SelectedCommunityPanel.tsx` | Add Organize button; show organism info when selected community is an organism |
+| `src/components/Grid.tsx` | Mount `<OrganismSkins>` inside the Canvas scene |
+
+---
+
+## Implementation Notes for AI Agent
+
+- **Do not** use React state for the organisms map itself — use a ref (`organismsRef`) for the data and a separate `organismsVersion` integer state to trigger re-renders when the map changes (same pattern as `grid.version` / `hasPastHistory`).
+- 
+- The `processOrganisms` function in `organism-processing.ts` must be a **pure function** (takes grid, organisms map, and settings; returns a new organisms map and the set of grid mutations to apply). This allows unit testing.
+- Use `crypto.randomUUID()` for organism IDs.
+- All existing tests must continue to pass.
+- There should be no Birth Margin Guard on Organism features. 

@@ -49,7 +49,7 @@ export interface BrushContextValue {
 	actions: BrushActions;
 }
 
-const BrushContext = createContext<BrushContextValue | null>(null);
+export const BrushContext = createContext<BrushContextValue | null>(null);
 
 export function BrushProvider({ children }: { children: ReactNode }) {
 	const [selectedShape, setSelectedShape] =

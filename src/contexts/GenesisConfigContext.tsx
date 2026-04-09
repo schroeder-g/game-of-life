@@ -35,7 +35,7 @@ export interface GenesisConfigContextValue {
 	actions: GenesisConfigActions;
 }
 
-const GenesisConfigContext =
+export const GenesisConfigContext =
 	createContext<GenesisConfigContextValue | null>(null);
 
 export function GenesisConfigProvider({

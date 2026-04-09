@@ -4,19 +4,20 @@
 	padding: 0;
 }
 
-/* Hides the community sidebar when in view-mode */
-body.view-mode .community-sidebar {
-	display: none !important;
-}
+
 
 /* Main container for the brush selector button wrapper */
-.scene-selector-dropdown {
+.scene-selector-dropdown,
+.dropdown-container {
+	position: relative;
+	display: inline-block;
 }
 
 /* The dropdown menu panel */
 .dropdown-menu {
 	position: absolute;
 	left: 0;
+	top: 100%;
 	z-index: 100000000000;
 	/* Ensures it floats above other content */
 
@@ -481,6 +482,21 @@ input[type="range"] {
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.menu-subsection-header {
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 0;
+	padding-bottom: 8px;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: #ffa500;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	user-select: none;
+}
+
 .button-group {
 	display: flex;
 	gap: 8px;
@@ -579,7 +595,8 @@ input[type="range"] {
 .control-label.row {
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: flex-start;
+	gap: 8px;
 }
 
 /* neighbor controls layout */
@@ -661,6 +678,8 @@ input[type="range"]::-webkit-slider-runnable-track {
 .glass-checkbox {
 	width: 16px;
 	height: 16px;
+	margin-top: 2px;
+	margin-bottom: 2px;
 	accent-color: #8ab4f8;
 	cursor: pointer;
 }
@@ -829,60 +848,68 @@ kbd {
 	top: 0;
 	width: 100%;
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 1.2rem 2rem;
+	flex-direction: column;
 	background: rgba(13, 17, 23, 0.95);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	flex-shrink: 0;
 	z-index: 300;
-	/* Ensure header is on top of most things */
 	overflow: visible;
-	/* Allow tooltips to escape bounds */
 }
 
-.orientation-status {
-	min-width: 150;
-}
-
-.app-header-panel .button-group {
+.header-top-row {
 	display: flex;
-	gap: 10px;
-}
-
-.dropdown-container {
-	position: relative;
-}
-
-.app-header-panel .speed-control {
-	width: 100px;
-	/* Set the desired width for the speed control */
-	display: flex;
-	flex-direction: column;
+	justify-content: space-between;
 	align-items: center;
-	justify-content: center;
-	gap: 4px;
-	font-size: 0.75rem;
-	color: #ccc;
-}
-
-.app-header-panel .speed-control span {
-	white-space: nowrap;
-}
-
-.app-header-panel .speed-control input[type="range"] {
+	padding: 1rem 2rem;
 	width: 100%;
-	margin: 0;
 }
 
-.orientation-status {
-	min-width: 150px;
-	font-size: 13px;
-	color: #8ab4f8;
+.status-bar-row {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
+	width: 100%;
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.status-segment {
+	padding: 8px 16px;
+	border-right: 1px solid rgba(255, 255, 255, 0.1);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.85rem;
+	color: #e6edf3;
+	min-height: 40px;
+}
+
+.status-segment:last-child {
+	border-right: none;
+}
+
+.status-segment .label {
+	color: #8b949e;
 	font-weight: 500;
 }
+
+.status-segment.scene {
+	color: #8ab4f8;
+	font-weight: 600;
+}
+
+.status-segment.orientation {
+	color: #d2a8ff;
+}
+
+
+.simulation-stats-display {
+	display: flex;
+	gap: 12px;
+	color: #79c0ff;
+}
+
 
 .shape-status {
 	font-size: 11px;
@@ -967,7 +994,7 @@ kbd {
 /* --------------------------------------------------------------------------
    Mobile & Responsive Tweaks 
 ----------------------------------------------------------------------------- */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
 	.app {
 		/* Remove overflow-y: auto; here. The main .app should not scroll. */
 		/* The overflow: hidden; from the global .app rule will apply. */
@@ -989,7 +1016,7 @@ kbd {
 		background: rgba(13, 17, 23, 0.8);
 		height: auto;
 		max-height: none;
-		overflow-y: auto; /* Allow the sidebar to scroll independently */
+		overflow-y: visible; /* Prevent independent scrolling conflict */
 	}
 
 	.brush-controls {
@@ -1013,6 +1040,10 @@ kbd {
 		align-items: center;
 		gap: 12px;
 		padding: 15px;
+	}
+
+	.hide-on-mobile {
+		display: none !important;
 	}
 
 	.app-header-panel:hover {
@@ -1726,4 +1757,65 @@ div.automated-tests-panel.glass-panel
 
 .index-overlay {
 	z-index: 2000000001 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile Scroll-To-Top Helper (Floating Circle)
+----------------------------------------------------------------------------- */
+.settings-scroll-top {
+	position: fixed;
+	top: 180px; /* Offset to overlap header bottom by exactly one radius */
+	left: 50%;
+	transform: translateX(-50%);
+	width: 48px;
+	height: 48px;
+	flex-shrink: 0; /* Ensure it stays circular */
+	background: transparent;
+	border: 2px solid rgba(255, 255, 255, 0.8);
+	border-radius: 50%;
+	z-index: 400; /* Exactly 100 higher than the header panel (300) */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+	animation: popIn 0.3s ease-out;
+}
+
+.settings-scroll-top:hover {
+	background: rgba(255, 255, 255, 0.1);
+	transform: translateX(-50%) scale(1.1);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.settings-scroll-top:active {
+	transform: translateX(-50%) scale(0.95);
+}
+
+.scroll-y-value {
+	font-size: 11px;
+	font-weight: 700;
+	color: #ffffff;
+	font-family: 'Courier New', Courier, monospace;
+}
+
+.triangle-up {
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+	border-bottom: 12px solid #ffffff;
+	margin-top: -3px; /* Optical center adjustment */
+}
+
+@keyframes popIn {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -20px) scale(0.5);
+	}
+	100% {
+		opacity: 1;
+		transform: translate(-50%, 0) scale(1);
+	}
 }

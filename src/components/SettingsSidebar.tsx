@@ -13,6 +13,7 @@ import {
 } from '../core/faceOrientationKeyMapping'; // Added
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
+import { serializeOrganism } from '../core/Organism'; // Added
 import { MANUAL_TESTS } from '../data/manual-tests';
 import { AutomatedTestsPanel } from './AutomatedTestsPanel';
 import { ManualTestsPanel } from './ManualTestsPanel';
@@ -20,6 +21,7 @@ import { ManualTestsPanel } from './ManualTestsPanel';
 interface SettingsSidebarProps {
 	isSmallScreen: boolean;
 	setIsSettingsDropdownOpen: (isOpen: boolean) => void;
+	setShowSettingsSidebar?: (show: boolean) => void;
 }
 
 function EnvironmentSection() {
@@ -53,6 +55,7 @@ function EnvironmentSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-environment'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -141,13 +144,11 @@ function EnvironmentSection() {
 								<button
 									className='glass-button'
 									onClick={randomize}
-									disabled={viewMode || hasLiveCells}
+									disabled={viewMode}
 									title={
 										viewMode
 											? 'Switch to Edit mode to randomize'
-											: hasLiveCells
-												? 'Clear board to randomize'
-												: undefined
+											: undefined
 									}
 									style={{ flexShrink: 0 }}
 								>
@@ -217,6 +218,7 @@ function RulesSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-rules'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -310,6 +312,7 @@ function RulesSection() {
 								min={0}
 								max={18}
 								step={1}
+								data-testid='rule-survive-min'
 								value={surviveMin}
 								onChange={e => setSurviveMin(Number(e.target.value))}
 							/>
@@ -321,6 +324,7 @@ function RulesSection() {
 								min={0}
 								max={18}
 								step={1}
+								data-testid='rule-survive-max'
 								value={surviveMax}
 								onChange={e => setSurviveMax(Number(e.target.value))}
 							/>
@@ -567,6 +571,7 @@ function SelectorPositionSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-selector'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -604,31 +609,34 @@ function SelectorPositionSection() {
 				<div className='selector-position-section'>
 					{(['X', 'Y', 'Z'] as const).map(axis => (
 						<div key={axis} className='coordinate-input-container'>
-							<label>{axis}</label>
-							<div className='coordinate-input-group'>
-								<input
-									type='number'
-									className='coordinate-input'
-									value={
-										selectorPos
-											? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]
-											: ''
-									}
-									onChange={e =>
-										handleCoordinateChange(axis, e.target.value)
-									}
-									min={0}
-									max={gridSize - 1}
-								/>
-								<div className='coord-buttons'>
-									<button onClick={() => increment(axis)}>▲</button>
-									<button onClick={() => decrement(axis)}>▼</button>
+							<label className='control-label'>
+								<span>{axis}:</span>
+								<div className='coordinate-input-group'>
+									<input
+										type='number'
+										className='coordinate-input tintable-input'
+										data-testid={`selector-${axis.toLowerCase()}`}
+										value={
+											selectorPos
+												? selectorPos[{ X: 0, Y: 1, Z: 2 }[axis]]
+												: ''
+										}
+										onChange={e =>
+											handleCoordinateChange(axis, e.target.value)
+										}
+										min={0}
+										max={gridSize - 1}
+									/>
+									<div className='coord-buttons'>
+										<button onClick={() => increment(axis)}>▲</button>
+										<button onClick={() => decrement(axis)}>▼</button>
+									</div>
 								</div>
-							</div>
-							<div className='coord-hints'>
-								<kbd>{keyMap[axis].inc}</kbd>
-								<kbd>{keyMap[axis].dec}</kbd>
-							</div>
+								<div className='coord-hints'>
+									<kbd>{keyMap[axis].inc}</kbd>
+									<kbd>{keyMap[axis].dec}</kbd>
+								</div>
+							</label>
 						</div>
 					))}
 				</div>
@@ -670,6 +678,7 @@ function CameraControlSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-rules'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -721,31 +730,31 @@ function CameraControlSection() {
 						/>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Yaw (Swivel)</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertYaw}
 							onChange={e => setInvertYaw(e.target.checked)}
 						/>
+						<span>Invert Yaw (Swivel)</span>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Roll</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertRoll}
 							onChange={e => setInvertRoll(e.target.checked)}
 						/>
+						<span>Invert Roll</span>
 					</label>
 					<label className='control-label row'>
-						<span>Invert Vertical (Pitch)</span>
 						<input
 							type='checkbox'
 							className='glass-checkbox'
 							checked={invertPitch}
 							onChange={e => setInvertPitch(e.target.checked)}
 						/>
+						<span>Invert Vertical (Pitch)</span>
 					</label>
 					<label className='control-label'>
 						<span>Ease In (accel): {easeIn.toFixed(1)}s</span>
@@ -799,6 +808,11 @@ function SceneManagementSection() {
 			birthMargin,
 			cellMargin,
 			gridSize,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+			organisms,
+			organismsVersion,
 		},
 		actions: {
 			applyCells,
@@ -838,10 +852,7 @@ function SceneManagementSection() {
 		(name: string) => {
 			return {
 				name,
-				cells:
-					initialStateRef.current.length > 0
-						? initialStateRef.current
-						: gridRef.current.getLivingCells(),
+				cells: gridRef.current.getLivingCells(),
 				settings: {
 					speed,
 					density,
@@ -852,13 +863,17 @@ function SceneManagementSection() {
 					birthMargin,
 					cellMargin,
 					gridSize,
+					neighborFaces,
+					neighborEdges,
+					neighborCorners,
 				},
+				organisms: Array.from(organisms.values()).map(serializeOrganism),
 				createdAt: new Date().toISOString(),
 			};
 		},
 		[
-			initialStateRef,
 			gridRef,
+			organisms,
 			speed,
 			density,
 			surviveMin,
@@ -868,6 +883,9 @@ function SceneManagementSection() {
 			birthMargin,
 			cellMargin,
 			gridSize,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
 		],
 	);
 
@@ -888,7 +906,7 @@ function SceneManagementSection() {
 
 	const handleImportConfig = () => {
 		importConfig(config => {
-			applyCells(config.cells, config.settings.gridSize);
+			applyCells(config, config.settings.gridSize);
 			// also apply saved settings
 			setSpeed(config.settings.speed);
 			setDensity(config.settings.density);
@@ -915,7 +933,7 @@ function SceneManagementSection() {
 		setSelectedConfigName(name);
 		if (name && savedConfigs[name]) {
 			const config = savedConfigs[name];
-			applyCells(config.cells, config.settings.gridSize);
+			applyCells(config, config.settings.gridSize);
 			// apply saved settings as well
 			setSpeed(config.settings.speed);
 			setDensity(config.settings.density);
@@ -941,6 +959,7 @@ function SceneManagementSection() {
 		<section className='menu-section'>
 			<h3
 				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-scene-mgmt'
 				style={{
 					cursor: 'pointer',
 					display: 'flex',
@@ -1077,6 +1096,7 @@ function SceneManagementSection() {
 export function SettingsSidebar({
 	isSmallScreen,
 	setIsSettingsDropdownOpen,
+	setShowSettingsSidebar,
 }: SettingsSidebarProps) {
 	const {
 		state: { running, viewMode, community, buildInfo },
@@ -1121,7 +1141,7 @@ export function SettingsSidebar({
 			setSelectedConfigName(name);
 			if (name && savedConfigs[name]) {
 				const config = savedConfigs[name];
-				applyCells(config.cells, config.settings.gridSize);
+				applyCells(config, config.settings.gridSize);
 				// apply saved settings as well
 				setSpeed(config.settings.speed);
 				setDensity(config.settings.density);
@@ -1199,6 +1219,17 @@ export function SettingsSidebar({
 						}}
 					>
 						<h2 style={{ margin: 0 }}>Settings</h2>
+						<button
+							className='glass-button danger'
+							onClick={() => {
+								setIsSettingsDropdownOpen(false);
+								if (setShowSettingsSidebar) setShowSettingsSidebar(false);
+							}}
+							style={{ padding: '2px 8px', fontSize: '0.9rem' }}
+							aria-label='Close settings'
+						>
+							X
+						</button>
 					</header>
 					<>
 						{viewMode && <CameraControlSection />}
@@ -1206,11 +1237,101 @@ export function SettingsSidebar({
 						{!viewMode && <EnvironmentSection />}
 						{!viewMode && <SelectorPositionSection />}
 						<RulesSection />
+						<OrganismsSection />
 						<TestsSection />
 					</>
 				</div>
 			</aside>
 		</>
+	);
+}
+
+function OrganismsSection() {
+	const {
+		state: { showCytoplasm, showSkin, enableOrganisms },
+		actions: { setShowCytoplasm, setShowSkin, setEnableOrganisms },
+	} = useSimulation();
+
+	const [isCollapsed, setIsCollapsed] = usePersistentState(
+		'gol_collapse_organisms',
+		false,
+	);
+	const [visCollapsed, setVisCollapsed] = usePersistentState(
+		'gol_collapse_organisms_vis',
+		false,
+	);
+
+	return (
+		<section className='menu-section'>
+			<h3
+				onClick={() => setIsCollapsed(!isCollapsed)}
+				style={{
+					cursor: 'pointer',
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					margin: 0,
+					paddingBottom: '8px',
+					marginBottom: isCollapsed ? 0 : '16px',
+				}}
+			>
+				Organisms
+				<span style={{ fontSize: '12px', opacity: 0.6 }}>
+					{isCollapsed ? '▼' : '▲'}
+				</span>
+			</h3>
+			{!isCollapsed && (
+				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
+					<label className='control-label row' style={{ marginBottom: enableOrganisms ? '16px' : '0' }}>
+						<input
+							type='checkbox'
+							className='glass-checkbox'
+							style={{ width: '18px', height: '18px' }}
+							checked={enableOrganisms}
+							onChange={e => setEnableOrganisms(e.target.checked)}
+						/>
+						<span>Enable Organisms</span>
+					</label>
+
+					{enableOrganisms && (
+						<>
+							<h4
+								onClick={() => setVisCollapsed(!visCollapsed)}
+								className='menu-subsection-header'
+								style={{ marginBottom: visCollapsed ? 0 : '12px' }}
+							>
+								Visualization
+								<span style={{ fontSize: '10px', opacity: 0.6 }}>
+									{visCollapsed ? '▼' : '▲'}
+								</span>
+							</h4>
+							{!visCollapsed && (
+								<>
+									<label className='control-label row'>
+										<input
+											type='checkbox'
+											className='glass-checkbox'
+											checked={showCytoplasm}
+											onChange={e => setShowCytoplasm(e.target.checked)}
+										/>
+										<span>Show Cytoplasm</span>
+									</label>
+									<label className='control-label row'>
+										<input
+											type='checkbox'
+											className='glass-checkbox'
+											checked={showSkin}
+											onChange={e => setShowSkin(e.target.checked)}
+										/>
+										<span>Show Skin</span>
+									</label>
+								</>
+							)}
+						</>
+					)}
+				</div>
+			)}
+		</section>
 	);
 }
 

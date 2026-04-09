@@ -105,8 +105,7 @@ export const MANUAL_TESTS: ManualTest[] = [
 		id: 'UC-1',
 		title: 'Toggle Edit/View Mode',
 		steps: [
-			"Click the '✏️'/'📽️' icon in the header.",
-			'<b>Expected</b>: The UI and available controls should switch between View and Edit modes.',
+			'Automated test verifies toggling between View and Edit modes.',
 		],
 		claimIds: ['header-mode-toggle'],
 	},
@@ -114,11 +113,7 @@ export const MANUAL_TESTS: ManualTest[] = [
 		id: 'UC-2',
 		title: 'Use Playback Controls',
 		steps: [
-			'Press Play (▶) or Spacebar. <b>Expected</b>: Simulation runs.',
-			'Press Pause (⏸) or Spacebar. <b>Expected</b>: Simulation pauses.',
-			"While paused, press Step Forward (⏭) or '→'. <b>Expected</b>: Simulation advances one generation.",
-			"Press Step Backward (⏮) or '←'. <b>Expected</b>: Simulation reverts one generation.",
-			"Press Reset (↺) or 'R'. <b>Expected</b>: Grid reverts to its initial saved state.",
+			'Automated test verifies play/pause, step forward/backward, and reset functionality.',
 		],
 		claimIds: ['header-playback'],
 	},

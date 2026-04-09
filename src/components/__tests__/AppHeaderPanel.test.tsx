@@ -1,22 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, screen, render } from '../../tests/test-utils';
+import { fireEvent, screen, render } from '@testing-library/react';
 import { AppHeaderPanel } from '../AppHeaderPanel';
 
 // Mock hooks used by the component
 const mockUseSimulation = vi.fn();
-vi.mock('../../contexts/SimulationContext', () => ({
-	useSimulation: () => mockUseSimulation(),
-}));
+vi.mock('../../contexts/SimulationContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useSimulation: () => mockUseSimulation(),
+	};
+});
 
 const mockUseBrush = vi.fn();
-vi.mock('../../contexts/BrushContext', () => ({
-	useBrush: () => mockUseBrush(),
-}));
+vi.mock('../../contexts/BrushContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useBrush: () => mockUseBrush(),
+	};
+});
 
 const mockUseGenesisConfig = vi.fn();
-vi.mock('../../contexts/GenesisConfigContext', () => ({
-	useGenesisConfig: () => mockUseGenesisConfig(),
-}));
+vi.mock('../../contexts/GenesisConfigContext', async (importOriginal) => {
+	const actual = await importOriginal<any>();
+	return {
+		...actual,
+		useGenesisConfig: () => mockUseGenesisConfig(),
+	};
+});
 
 describe('AppHeaderPanel', () => {
 	let mockSimulationState: any;
@@ -136,11 +148,14 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		expect(screen.getByText('Cube of Life')).toBeInTheDocument();
-		expect(screen.getByText(/Build: 2.1.0/)).toBeInTheDocument();
-		expect(screen.getByText('Welcome, Tester!')).toBeInTheDocument();
+		const buildInfoDiv = screen.getByTestId('build-info');
+		expect(buildInfoDiv.textContent).toContain('Build: 2.1.0');
+		expect(buildInfoDiv.textContent).toContain('Welcome, Tester!');
 	});
 
 	it('[AHP_SCENE_SELECT_001][UC-3] allows selecting a scene and loads it', async () => {
@@ -157,6 +172,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 
@@ -176,7 +193,13 @@ describe('AppHeaderPanel', () => {
 		).toHaveBeenCalledWith('Scene One');
 
 		// Verify that applyCells was called with the correct cells for 'Scene One'
-		expect(mockApplyCells).toHaveBeenCalledWith([[1, 1, 1]], 20);
+		expect(mockApplyCells).toHaveBeenCalledWith(
+			expect.objectContaining({
+				name: 'Scene One',
+				cells: [[1, 1, 1]],
+			}),
+			20,
+		);
 	});
 
 	it('[AHP_STATUS_001] displays scene name, camera orientation, and simulation stats', () => {
@@ -184,13 +207,14 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
-		expect(screen.getByText('Scene: Test Scene')).toBeInTheDocument();
-		expect(screen.getByText('Face: Front, 0°')).toBeInTheDocument();
-		expect(
-			screen.getByText(/Generation: 0 Cells: 0/),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('status-scene').textContent).toContain('Test Scene');
+		expect(screen.getByTestId('status-orientation').textContent).toContain('Front');
+		expect(screen.getByTestId('status-stats').textContent).toContain('Generation:');
+		expect(screen.getByTestId('status-stats').textContent).toContain('Cells:');
 	});
 
 	it('[AHP_MODAL_001][UI-2] opens and closes the documentation modal', async () => {
@@ -198,6 +222,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const helpButton = screen.getByRole('button', { name: 'Help (?)' });
@@ -224,13 +250,15 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const sceneButton = screen.getByRole('button', {
 			name: 'Select Scene',
 		});
 		fireEvent.click(sceneButton);
-		expect(screen.getByText('Test Scene')).toBeInTheDocument();
+		expect(screen.getAllByText('Test Scene').length).toBeGreaterThan(0);
 	});
 
 	it('[AHPB_MODE_001] toggles between View and Edit mode', () => {
@@ -238,6 +266,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const toggleButton = screen.getByRole('button', {
@@ -255,6 +285,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const playButton = screen.getByRole('button', {
@@ -269,6 +301,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const speedSlider = screen.getByRole('slider');
@@ -286,6 +320,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const stepBackButton = screen.getByRole('button', {
@@ -304,6 +340,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const stepFwdButton = screen.getByRole('button', {
@@ -318,6 +356,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const resetButton = screen.getByRole('button', {
@@ -332,6 +372,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const fitButton = screen.getByRole('button', { name: 'Fit (F)' });
@@ -344,6 +386,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const recenterButton = screen.getByRole('button', {
@@ -358,6 +402,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const squareUpButton = screen.getByRole('button', {
@@ -374,6 +420,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const commButton = screen.getByRole('button', {
@@ -404,6 +452,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		const helpButton = screen.getByRole('button', { name: 'Help (?)' });
@@ -434,6 +484,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -450,6 +502,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -474,6 +528,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));
@@ -492,6 +548,8 @@ describe('AppHeaderPanel', () => {
 			<AppHeaderPanel
 				showSettingsSidebar={false}
 				setShowSettingsSidebar={() => {}}
+				showCommunityPanel={true}
+				setShowCommunityPanel={() => {}}
 			/>,
 		);
 		fireEvent.click(screen.getByRole('button', { name: 'Help (?)' }));

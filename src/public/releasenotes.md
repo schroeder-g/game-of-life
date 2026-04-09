@@ -1,5 +1,24 @@
 # Release Notes
 
+### **Wednesday, April 8, 2026**
+- **Features**: 
+    - **Community Panel Redesign**: Streamlined stats into a three-row layout (Cells/Cytoplasm, Heading, and One-line Wall Distances) and removed redundant container boxes.
+    - **New Scene**: Added "**Four JEllies**" to preinstalled scenes, featuring Juno, Maya, Elara, and Freya with preserved AI states.
+    - **Auto-Selection**: Organisms are now automatically selected upon conversion from a community.
+    - **Responsive UI Defaults**: Settings sidebar now defaults to **ON** on desktop and **OFF** on mobile. Added a red "X" close button for easier sidebar dismissal on mobile.
+    - **Mobile Optimization**: Hid "Fit" and "Recenter" buttons on small screens to reduce header clutter.
+- **Bug Fixes**:
+    - Resolved a critical selection bug where clicking a community would immediately clear the selection state.
+    - Fixed the Community Panel disappearing on large screens when the sidebar was toggled.
+    - Standardized "Visualization" header font and unified checkbox margins (2px) and sizing.
+- **Refactoring**:
+    - Relocated the Community Panel to the root application layer in `App.tsx` for persistent visibility.
+- **Internal**:
+    - Updated `OrganismData` interface to support persistence of biological AI markers (`straightSteps`, `avoidanceSteps`, etc.).
+
+---
+
+
 ### **Thursday, April 2, 2026 (Version 1.9.0)**
 - **Features**:
     - Implemented custom build datetime format (YYYY.MM.DD.HH.NN).

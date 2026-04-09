@@ -31,6 +31,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	get(x: number, y: number, z: number): boolean {
 		if (
+			!Number.isFinite(x) ||
+			!Number.isFinite(y) ||
+			!Number.isFinite(z) ||
 			x < 0 ||
 			x >= this.size ||
 			y < 0 ||
@@ -45,6 +48,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	set(x: number, y: number, z: number, alive: boolean): void {
 		if (
+			Number.isFinite(x) &&
+			Number.isFinite(y) &&
+			Number.isFinite(z) &&
 			x >= 0 &&
 			x < this.size &&
 			y >= 0 &&
@@ -62,6 +68,9 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 
 	toggle(x: number, y: number, z: number): void {
 		if (
+			Number.isFinite(x) &&
+			Number.isFinite(y) &&
+			Number.isFinite(z) &&
 			x >= 0 &&
 			x < this.size &&
 			y >= 0 &&
@@ -402,12 +411,11 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 			visited.add(k);
 			community.push([x, y, z]);
 
-			// Check all 18 neighbors (face + edge, no corners - matching our rules)
+			// Check all 26 neighbors (face + edge + corner)
 			for (let dz = -1; dz <= 1; dz++) {
 				for (let dy = -1; dy <= 1; dy++) {
 					for (let dx = -1; dx <= 1; dx++) {
 						if (dx === 0 && dy === 0 && dz === 0) continue;
-						if (dx !== 0 && dy !== 0 && dz !== 0) continue; // Skip corners
 						const nx = x + dx,
 							ny = y + dy,
 							nz = z + dz;
