@@ -4,16 +4,17 @@
 // adding new keyboard control logic here. Instead, modify the mappings in
 // the source of truth file.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import {
 	getWASDMapping,
-	type CameraFace,
+	getExplicitRotationAxis,
+	getNextOrientation,
+	type CubeFace,
 	type CameraRotation,
 } from '../core/faceOrientationKeyMapping';
-// import { getNextOrientation } from "../components/Grid"; // Removed broken helper
 
 export function useAppShortcuts() {
 	const {
@@ -24,9 +25,6 @@ export function useAppShortcuts() {
 			isAnimatingInit,
 			hasInitialState,
 			hasPastHistory,
-			invertYaw,
-			invertPitch,
-			invertRoll,
 			gridSize,
 			squareUp,
 			selectedOrganismId,
@@ -41,8 +39,7 @@ export function useAppShortcuts() {
 			recenter,
 			setCell,
 			setSquareUp,
-			moveSelectedOrganism,
-			rotateSelectedOrganism,
+			snapToOrientation,
 		},
 		meta: { movement, eventBus, cameraActionsRef },
 	} = useSimulation();
@@ -67,8 +64,6 @@ export function useAppShortcuts() {
 				cameraActionsRef.current?.clearBrushCells();
 			}
 		}
-
-		// Update the ref for the next render.
 		prevPaintModeRef.current = paintMode;
 	}, [paintMode, selectorPos, brushState, cameraActionsRef]);
 
@@ -77,11 +72,23 @@ export function useAppShortcuts() {
 		if (!viewMode && !selectorPos) {
 			const center = Math.floor(gridSize / 2);
 			if (setSelectorPos) {
-				// Defensive check
 				setSelectorPos([center, center, center]);
 			}
 		}
 	}, [viewMode, selectorPos, setSelectorPos, gridSize]);
+
+	const getRotationAction = useCallback((keyOrCode: string): string | null => {
+		let action: string =
+			keyOrCode === 'Period'
+				? 'period'
+				: keyOrCode === 'Semicolon'
+					? 'semicolon'
+					: keyOrCode.replace('Key', '').toLowerCase();
+
+		if (!['o', 'k', 'period', 'semicolon', 'i', 'p'].includes(action))
+			return null;
+		return action;
+	}, []);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -100,13 +107,10 @@ export function useAppShortcuts() {
 				target.tagName === 'TEXTAREA' ||
 				target.isContentEditable;
 
-			// If a text input is focused, prevent any shortcut handling.
 			if (isTextBox) return;
 
 			const key = e.key.toLowerCase();
 			const code = e.code;
-
-			// Rotation keys: i, p, o, k, ., ;
 			const isRotationCode = [
 				'KeyO',
 				'KeyK',
@@ -121,77 +125,37 @@ export function useAppShortcuts() {
 			const hasValidOrientation =
 				face !== 'unknown' && rotation !== 'unknown';
 
-			// Logical rotation action resolver
-			const getRotationAction = (keyOrCode: string): string | null => {
-				// First normalize the base key name based on physical layout (code)
-				let action: string =
-					keyOrCode === 'Period'
-						? 'period'
-						: keyOrCode === 'Semicolon'
-							? 'semicolon'
-							: keyOrCode.replace('Key', '').toLowerCase();
-
-				if (
-					!['o', 'k', 'period', 'semicolon', 'i', 'p'].includes(action)
-				)
-					return null;
-
-				// Apply Inversion Swaps
-				if (invertPitch) {
-					if (action === 'o') action = 'period';
-					else if (action === 'period') action = 'o';
-				}
-				if (invertYaw) {
-					if (action === 'k') action = 'semicolon';
-					else if (action === 'semicolon') action = 'k';
-				}
-				if (invertRoll) {
-					if (action === 'i') action = 'p';
-					else if (action === 'p') action = 'i';
-				}
-				return action;
-			};
-
 			if (isRotationCode) {
+				const action = getRotationAction(code);
+				if (!action) return;
+
 				// 1. Step Rotation (Edit Mode with Brush)
-				if (!viewMode && shapeSize > 1 && !(e.ctrlKey && e.shiftKey)) {
-					let axis = new THREE.Vector3();
-					let angle = Math.PI / 2;
-					if (key === 'o') {
-						axis.set(1, 0, 0);
-						angle = -Math.PI / 2;
-					}
-					if (key === '.') {
-						axis.set(1, 0, 0);
-						angle = Math.PI / 2;
-					}
-					if (key === 'k') {
-						axis.set(0, 1, 0);
-						angle = -Math.PI / 2;
-					}
-					if (key === ';') {
-						axis.set(0, 1, 0);
-						angle = Math.PI / 2;
-					}
-					if (key === 'i') {
-						axis.set(0, 0, 1);
-						angle = paintMode === -1 ? Math.PI / 2 : -Math.PI / 2;
-					}
-					if (key === 'p') {
-						axis.set(0, 0, 1);
-						angle = paintMode === -1 ? -Math.PI / 2 : Math.PI / 2;
-					}
-					if (selectedOrganismId) {
-						rotateSelectedOrganism(axis, angle);
-					} else {
+				if (!viewMode && !e.ctrlKey) {
+					if (hasValidOrientation) {
+						const axis = getExplicitRotationAxis(
+							face as CubeFace,
+							rotation as CameraRotation,
+							action as any,
+						);
+						let angle = Math.PI / 2;
+						if (['period', 'semicolon', 'p'].includes(action)) angle = -Math.PI / 2;
 						cameraActionsRef.current?.rotateBrush(axis, angle);
 					}
 				} else {
-					// 2. Continuous Rotation (Standard OR Ctrl+Shift Override)
-					const action = getRotationAction(code);
-					if (action) {
-						const rotFlag = `rotate${action.charAt(0).toUpperCase() + action.slice(1)}`;
-						(movement.current as any)[rotFlag] = true;
+					// 2. Camera Rotation (View Mode OR Ctrl+Shift Override)
+					if (e.ctrlKey && e.shiftKey && squareUp) {
+						// DISCRETE SNAP
+						if (hasValidOrientation) {
+							const next = getNextOrientation(
+								face as CubeFace,
+								rotation as CameraRotation,
+								action as any
+							);
+							snapToOrientation(next.face, next.rotation as number);
+						}
+					} else {
+						// CONTINUOUS ROTATION
+						(movement.current as any)[action] = true;
 					}
 				}
 				e.preventDefault();
@@ -205,27 +169,15 @@ export function useAppShortcuts() {
 				// --- EDIT MODE CONTROLS ---
 				if (['w', 'x', 'a', 'd', 'q', 'z'].includes(key)) {
 					if (hasValidOrientation) {
-						const f = face as CameraFace;
+						const f = face as CubeFace;
 						const r = rotation as CameraRotation;
 						const keymapForOrientation = getWASDMapping(f, r);
 						if (key in keymapForOrientation) {
-							const delta = (keymapForOrientation as any)[key] as [
-								number,
-								number,
-								number,
-							];
-							if (selectedOrganismId) {
-								moveSelectedOrganism(delta);
-							} else {
-								eventBus.emit('moveSelector', { delta });
-							}
+							const delta = (keymapForOrientation as any)[key] as [number, number, number];
+							eventBus.emit('moveSelector', { delta });
 						}
 					}
-				} else if (
-					['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(
-						key,
-					)
-				) {
+				} else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
 					const arrowMap: { [key: string]: string } = {
 						arrowup: e.shiftKey ? 'q' : 'w',
 						arrowdown: e.shiftKey ? 'z' : 'x',
@@ -234,122 +186,55 @@ export function useAppShortcuts() {
 					};
 					const mappedKey = arrowMap[key];
 					if (mappedKey && hasValidOrientation) {
-						const f = face as CameraFace;
+						const f = face as CubeFace;
 						const r = rotation as CameraRotation;
 						const keymapForOrientation = getWASDMapping(f, r);
 						if (mappedKey in keymapForOrientation) {
-							const delta = (keymapForOrientation as any)[
-								mappedKey
-							] as [number, number, number];
-							if (selectedOrganismId) {
-								moveSelectedOrganism(delta);
-							} else {
-								eventBus.emit('moveSelector', { delta });
-							}
+							const delta = (keymapForOrientation as any)[mappedKey] as [number, number, number];
+							eventBus.emit('moveSelector', { delta });
 						}
 					}
 				} else {
 					switch (key) {
-						case '[':
-							changeSize(-1, 0);
-							break;
-						case ']':
-							changeSize(1, 0);
-							break;
-						case 'escape':
-							clearShape();
-							break;
-						case 'e':
-							setviewMode(false);
-							break;
-						case 'v':
-							setviewMode(true);
-							break;
-						case 'f':
-							fitDisplay();
-							break;
-						case 'l':
-							setSquareUp(prev => !prev);
-							break; // Changed 'l' to toggle squareUp
-						case 's':
-							recenter();
-							break;
-						case 'r':
-							if (hasInitialState) reset();
-							break;
-						case ' ':
-							if (!selectedOrganismId) {
-								setPaintMode(prev => (prev === 1 ? 0 : 1));
-							}
-							break;
+						case '[': changeSize(-1, 0); break;
+						case ']': changeSize(1, 0); break;
+						case 'escape': clearShape(); break;
+						case 'e': setviewMode(false); break;
+						case 'v': setviewMode(true); break;
+						case 'f': fitDisplay(); break;
+						case 'l': setSquareUp(prev => !prev); break;
+						case 's': recenter(); break;
+						case 'r': if (hasInitialState) reset(); break;
+						case ' ': if (!selectedOrganismId) setPaintMode(prev => (prev === 1 ? 0 : 1)); break;
 						case 'delete':
-						case 'backspace':
-							if (!selectedOrganismId) {
-								setPaintMode(prev => (prev === -1 ? 0 : -1));
-							}
-							break;
-						default:
-							handled = false;
+						case 'backspace': if (!selectedOrganismId) setPaintMode(prev => (prev === -1 ? 0 : -1)); break;
+						default: handled = false;
 					}
 				}
 			} else {
 				// --- VIEW MODE CONTROLS ---
-				switch (key) {
-					case 'e':
-						setviewMode(false);
-						break;
-					case 'v':
-						setviewMode(true);
-						break;
-					case 'f':
-						fitDisplay();
-						break;
-					case 'l':
-						setSquareUp(prev => !prev);
-						break; // Changed 'l' to toggle squareUp
-					case 's':
-						recenter();
-						break;
-					case 'r':
-						if (hasInitialState) reset();
-						break;
-					case ' ':
-						playStop();
-						break;
-					case 'arrowup':
-						if (e.shiftKey) movement.current.up = true;
-						else movement.current.forward = true;
-						break;
-					case 'arrowdown':
-						if (e.shiftKey) movement.current.down = true;
-						else movement.current.backward = true;
-						break;
-					case 'arrowleft':
-						movement.current.left = true;
-						break;
-					case 'arrowright':
-						movement.current.right = true;
-						break;
-					case 'w':
-						movement.current.forward = true;
-						break;
-					case 'x':
-						movement.current.backward = true;
-						break;
-					case 'a':
-						movement.current.left = true;
-						break;
-					case 'd':
-						movement.current.right = true;
-						break;
-					case 'q':
-						movement.current.up = true;
-						break;
-					case 'z':
-						movement.current.down = true;
-						break;
-					default:
-						handled = false;
+				if (['w', 'x', 'a', 'd', 'q', 'z'].includes(key)) {
+					movement.current[key] = true;
+				} else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+					const arrowMap: { [key: string]: string } = {
+						arrowup: e.shiftKey ? 'q' : 'w',
+						arrowdown: e.shiftKey ? 'z' : 'x',
+						arrowleft: 'a',
+						arrowright: 'd',
+					};
+					const mappedKey = arrowMap[key];
+					if (mappedKey) movement.current[mappedKey] = true;
+				} else {
+					switch (key) {
+						case 'e': setviewMode(false); break;
+						case 'v': setviewMode(true); break;
+						case 'f': fitDisplay(); break;
+						case 'l': setSquareUp(prev => !prev); break;
+						case 's': recenter(); break;
+						case 'r': if (hasInitialState) reset(); break;
+						case ' ': playStop(); break;
+						default: handled = false;
+					}
 				}
 			}
 
@@ -357,116 +242,34 @@ export function useAppShortcuts() {
 		};
 
 		const handleKeyUp = (e: KeyboardEvent) => {
-			// Ensure e.key is a string before calling toLowerCase()
-			if (typeof e.key !== 'string') return;
+			const target = e.target as HTMLElement;
+			if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
 
-			const key = e.key.toLowerCase();
 			const code = e.code;
-			const isRotationCode = [
-				'KeyO',
-				'KeyK',
-				'Period',
-				'Semicolon',
-				'KeyI',
-				'KeyP',
-			].includes(code);
+			const key = e.key.toLowerCase();
+			const isRotationCode = ['KeyO', 'KeyK', 'Period', 'Semicolon', 'KeyI', 'KeyP'].includes(code);
 
-			// Logical rotation action resolver (mirrors handleKeyDown)
-			const getRotationAction = (keyOrCode: string): string | null => {
-				let action: string =
-					keyOrCode === 'Period'
-						? 'period'
-						: keyOrCode === 'Semicolon'
-							? 'semicolon'
-							: keyOrCode.replace('Key', '').toLowerCase();
+			const action = getRotationAction(isRotationCode ? code : key) || key;
 
-				if (
-					!['o', 'k', 'period', 'semicolon', 'i', 'p'].includes(action)
-				)
-					return null;
-
-				if (invertPitch) {
-					if (action === 'o') action = 'period';
-					else if (action === 'period') action = 'o';
-				}
-				if (invertYaw) {
-					if (action === 'k') action = 'semicolon';
-					else if (action === 'semicolon') action = 'k';
-				}
-				if (invertRoll) {
-					if (action === 'i') action = 'p';
-					else if (action === 'p') action = 'i';
-				}
-				return action;
-			};
-
-			const rotKey =
-				getRotationAction(isRotationCode ? code : key) || key;
-			let handled = true;
-
-			// Handle common movement keys first
-			switch (rotKey) {
-				case 'w':
-					movement.current.forward = false;
-					break;
-				case 'x':
-					movement.current.backward = false;
-					break;
-				case 'a':
-					movement.current.left = false;
-					break;
-				case 'd':
-					movement.current.right = false;
-					break;
-				case 'q':
-					movement.current.up = false;
-					break;
-				case 'z':
-					movement.current.down = false;
-					break;
-				case 'arrowup':
-					movement.current.up = false;
-					movement.current.forward = false;
-					break;
-				case 'arrowdown':
-					movement.current.down = false;
-					movement.current.backward = false;
-					break;
-				case 'arrowleft':
-					movement.current.left = false;
-					break;
-				case 'arrowright':
-					movement.current.right = false;
-					break;
-				case 'semicolon':
-					movement.current.rotateSemicolon = false;
-					break;
-				case 'k':
-					movement.current.rotateK = false;
-					break;
-				case 'o':
-					movement.current.rotateO = false;
-					break;
-				case 'period':
-					movement.current.rotatePeriod = false;
-					break;
-				case 'i':
-					movement.current.rotateI = false;
-					break;
-				case 'p':
-					movement.current.rotateP = false;
-					break;
-				default:
-					handled = false;
+			// Release physical keys
+			if (['w', 'x', 'a', 'd', 'q', 'z', 'o', 'period', 'k', 'semicolon', 'i', 'p'].includes(action)) {
+				movement.current[action] = false;
+			} else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+				movement.current.w = false;
+				movement.current.x = false;
+				movement.current.a = false;
+				movement.current.d = false;
+				movement.current.q = false;
+				movement.current.z = false;
 			}
-			if (handled) e.preventDefault();
 		};
 
 		const handleBlur = () => {
-			// Reset all movement flags to prevent sticking
-			Object.keys(movement.current).forEach(k => {
-				movement.current[k] = false;
-			});
+			if (movement.current) {
+				Object.keys(movement.current).forEach(k => {
+					movement.current[k] = false;
+				});
+			}
 		};
 
 		window.addEventListener('keydown', handleKeyDown);
@@ -476,6 +279,8 @@ export function useAppShortcuts() {
 			window.removeEventListener('keydown', handleKeyDown);
 			window.removeEventListener('keyup', handleKeyUp);
 			window.removeEventListener('blur', handleBlur);
+			// Safety: Clear all movement on cleanup (e.g. mode switch)
+			handleBlur();
 		};
 	}, [
 		running,
@@ -483,9 +288,6 @@ export function useAppShortcuts() {
 		cameraOrientation,
 		hasInitialState,
 		hasPastHistory,
-		invertYaw,
-		invertPitch,
-		invertRoll,
 		setviewMode,
 		playStop,
 		step,
@@ -504,7 +306,12 @@ export function useAppShortcuts() {
 		selectedShape,
 		setCell,
 		setPaintMode,
+		setSquareUp,
 		paintMode,
 		isAnimatingInit,
+		squareUp,
+		selectedOrganismId,
+		getRotationAction,
+		snapToOrientation,
 	]);
 }

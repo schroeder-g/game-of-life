@@ -4,7 +4,7 @@ import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import {
 	getWASDMapping,
-	type CameraFace,
+	type CubeFace,
 	type CameraRotation,
 } from '../core/faceOrientationKeyMapping';
 import { SHAPES, ShapeType, supportsHollow } from '../core/shapes';
@@ -176,7 +176,7 @@ function BrushSelectorDrop() {
 			return;
 		}
 		const mapping = getWASDMapping(
-			face as CameraFace,
+			face as CubeFace,
 			rotation as CameraRotation,
 		) as any;
 		const right = mapping.d as number[];
@@ -328,7 +328,7 @@ export function BrushControls({
 			}
 
 			const mapping = getWASDMapping(
-				face as CameraFace,
+				face as CubeFace,
 				rotation as CameraRotation,
 			);
 			let delta: [number, number, number] = [0, 0, 0];

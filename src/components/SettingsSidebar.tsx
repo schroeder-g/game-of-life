@@ -7,7 +7,7 @@ import { useSimulation } from '../contexts/SimulationContext';
 
 import { isAnyBrushCellInside } from '../core/brushUtils'; // Added
 import {
-	type CameraFace,
+	type CubeFace,
 	type CameraRotation,
 	getWASDMapping,
 } from '../core/faceOrientationKeyMapping'; // Added
@@ -397,7 +397,7 @@ function SelectorPositionSection() {
 			};
 		}
 
-		const face = cameraOrientation.face as CameraFace;
+		const face = cameraOrientation.face as CubeFace;
 		const rotation = cameraOrientation.rotation as CameraRotation;
 		const mapping = getWASDMapping(face, rotation);
 
@@ -701,7 +701,7 @@ function CameraControlSection() {
 						<input
 							type='range'
 							min={1}
-							max={100}
+							max={5}
 							step={1}
 							value={panSpeed}
 							onChange={e => setPanSpeed(Number(e.target.value))}
@@ -723,7 +723,7 @@ function CameraControlSection() {
 						<input
 							type='range'
 							min={25}
-							max={100}
+							max={50}
 							step={1}
 							value={rollSpeed}
 							onChange={e => setRollSpeed(Number(e.target.value))}

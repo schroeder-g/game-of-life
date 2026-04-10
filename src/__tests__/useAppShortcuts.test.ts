@@ -111,7 +111,7 @@ describe('useAppShortcuts - UX Claims', () => {
 
 		renderHook(() => useAppShortcuts());
 
-		// Test 'i' key (should be +Math.PI/2 for Clear mode)
+		// Test 'i' key (should be Math.PI/2 - objective)
 		const eventI = new KeyboardEvent('keydown', {
 			code: 'KeyI',
 			key: 'i',
@@ -123,7 +123,7 @@ describe('useAppShortcuts - UX Claims', () => {
 		);
 		vi.clearAllMocks(); // Clear mock calls for the next assertion
 
-		// Test 'p' key (should be -Math.PI/2 for Clear mode)
+		// Test 'p' key (should be -Math.PI/2 - objective)
 		const eventP = new KeyboardEvent('keydown', {
 			code: 'KeyP',
 			key: 'p',
@@ -144,7 +144,7 @@ describe('useAppShortcuts - UX Claims', () => {
 
 		renderHook(() => useAppShortcuts());
 
-		// Test 'i' key (should be -Math.PI/2 for Birth mode)
+		// Test 'i' key (should be Math.PI/2 - objective)
 		const eventI = new KeyboardEvent('keydown', {
 			code: 'KeyI',
 			key: 'i',
@@ -152,11 +152,11 @@ describe('useAppShortcuts - UX Claims', () => {
 		window.dispatchEvent(eventI);
 		expect(mockRotateBrush).toHaveBeenCalledWith(
 			expect.anything(),
-			-Math.PI / 2,
+			Math.PI / 2,
 		);
 		vi.clearAllMocks();
 
-		// Test 'p' key (should be +Math.PI/2 for Birth mode)
+		// Test 'p' key (should be -Math.PI/2 - objective)
 		const eventP = new KeyboardEvent('keydown', {
 			code: 'KeyP',
 			key: 'p',
@@ -164,7 +164,7 @@ describe('useAppShortcuts - UX Claims', () => {
 		window.dispatchEvent(eventP);
 		expect(mockRotateBrush).toHaveBeenCalledWith(
 			expect.anything(),
-			Math.PI / 2,
+			-Math.PI / 2,
 		);
 	});
 
@@ -211,8 +211,8 @@ describe('useAppShortcuts - New Rotation Logic', () => {
 			shiftKey: true,
 		});
 		window.dispatchEvent(event);
-
-		expect((movementRef.current as any).rotateO).toBe(true);
+ 
+		expect((movementRef.current as any).o).toBe(true);
 		expect(mockStartSnapAnimation).not.toHaveBeenCalled();
 	});
 
