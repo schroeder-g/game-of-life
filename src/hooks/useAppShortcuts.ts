@@ -243,13 +243,17 @@ export function useAppShortcuts() {
 
 		const handleKeyUp = (e: KeyboardEvent) => {
 			const target = e.target as HTMLElement;
-			if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-
 			const code = e.code;
 			const key = e.key.toLowerCase();
 			const isRotationCode = ['KeyO', 'KeyK', 'Period', 'Semicolon', 'KeyI', 'KeyP'].includes(code);
 
 			const action = getRotationAction(isRotationCode ? code : key) || key;
+
+			// Always permit movement key releases, even if focused on an input,
+			// to ensure we don't "stick" movement if focus changed during interaction.
+			const isMovementKey = ['w', 'x', 'a', 'd', 'q', 'z', 'o', 'period', 'k', 'semicolon', 'i', 'p'].includes(action);
+
+			if (!isMovementKey && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
 
 			// Release physical keys
 			if (['w', 'x', 'a', 'd', 'q', 'z', 'o', 'period', 'k', 'semicolon', 'i', 'p'].includes(action)) {

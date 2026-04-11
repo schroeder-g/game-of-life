@@ -923,7 +923,7 @@ export function Scene() {
 				window.removeEventListener('pointercancel', handlePointerUp);
 			}
 		};
-	}, [gl, panSpeed, rotationSpeed, rollSpeed, invertYaw, invertPitch, velocity]);
+	}, [gl, panSpeed, rotationSpeed, rollSpeed, velocity]);
 
 
 
@@ -1341,26 +1341,80 @@ export function Scene() {
 		const rlSpeed = isSnapLockedRef.current ? 0 : rollSpeed * 0.05;
 
 		if (viewMode) {
-			// Linear Movement (wxadqz)
-			if (movement.current.a) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
-			else if (movement.current.d) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
-			else {
-				velocity.current.panX *= dampingVal;
-				if (Math.abs(velocity.current.panX) < VELOCITY_EPSILON) velocity.current.panX = 0;
-			}
+			const face = cameraOrientation.face;
+			const rotation = cameraOrientation.rotation;
+			const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
-			if (movement.current.w) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
-			else if (movement.current.x) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
-			else {
-				velocity.current.panY *= dampingVal;
-				if (Math.abs(velocity.current.panY) < VELOCITY_EPSILON) velocity.current.panY = 0;
-			}
+			if (hasValidOrientation) {
+				const mapping = getWASDMapping(face as CubeFace, rotation as CameraRotation);
+				const targetMoveWorld = new THREE.Vector3(0, 0, 0);
+				let activeKeys = 0;
 
-			if (movement.current.q) velocity.current.dolly = lerp(velocity.current.dolly, pSpeed, easeInVal);
-			else if (movement.current.z) velocity.current.dolly = lerp(velocity.current.dolly, -pSpeed, easeInVal);
-			else {
-				velocity.current.dolly *= dampingVal;
-				if (Math.abs(velocity.current.dolly) < VELOCITY_EPSILON) velocity.current.dolly = 0;
+				['w', 'x', 'a', 'd', 'q', 'z'].forEach(k => {
+					if (movement.current[k]) {
+						const v = mapping[k];
+						if (v) {
+							targetMoveWorld.add(new THREE.Vector3(v[0], v[1], v[2]));
+							activeKeys++;
+						}
+					}
+				});
+
+				if (activeKeys > 0) {
+					targetMoveWorld.normalize();
+				}
+
+				// Convert targetMoveWorld to camera-relative target velocities
+				const cam = cameraRef.current || camera;
+				const target = cameraTargetRef.current;
+
+				// Camera's local axes in world space:
+				const right = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0).normalize();
+				const up = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1).normalize();
+				const forward = new THREE.Vector3().subVectors(target, cam.position).normalize();
+
+				// Project world-space target movement onto these axes to get scalars
+				const targetPanX = targetMoveWorld.dot(right) * pSpeed;
+				const targetPanY = targetMoveWorld.dot(up) * pSpeed;
+				const targetDolly = targetMoveWorld.dot(forward) * pSpeed;
+
+				// Ease towards the target velocities
+				velocity.current.panX = lerp(velocity.current.panX, targetPanX, easeInVal);
+				velocity.current.panY = lerp(velocity.current.panY, targetPanY, easeInVal);
+				velocity.current.dolly = lerp(velocity.current.dolly, targetDolly, easeInVal);
+
+				if (activeKeys === 0) {
+					// Damping when no keys are pressed
+					velocity.current.panX *= dampingVal;
+					velocity.current.panY *= dampingVal;
+					velocity.current.dolly *= dampingVal;
+
+					if (Math.abs(velocity.current.panX) < VELOCITY_EPSILON) velocity.current.panX = 0;
+					if (Math.abs(velocity.current.panY) < VELOCITY_EPSILON) velocity.current.panY = 0;
+					if (Math.abs(velocity.current.dolly) < VELOCITY_EPSILON) velocity.current.dolly = 0;
+				}
+			} else {
+				// Fallback to simpler screen-relative movement if orientation is unknown
+				if (movement.current.a) velocity.current.panX = lerp(velocity.current.panX, -pSpeed, easeInVal);
+				else if (movement.current.d) velocity.current.panX = lerp(velocity.current.panX, pSpeed, easeInVal);
+				else {
+					velocity.current.panX *= dampingVal;
+					if (Math.abs(velocity.current.panX) < VELOCITY_EPSILON) velocity.current.panX = 0;
+				}
+
+				if (movement.current.w) velocity.current.panY = lerp(velocity.current.panY, pSpeed, easeInVal);
+				else if (movement.current.x) velocity.current.panY = lerp(velocity.current.panY, -pSpeed, easeInVal);
+				else {
+					velocity.current.panY *= dampingVal;
+					if (Math.abs(velocity.current.panY) < VELOCITY_EPSILON) velocity.current.panY = 0;
+				}
+
+				if (movement.current.q) velocity.current.dolly = lerp(velocity.current.dolly, pSpeed, easeInVal);
+				else if (movement.current.z) velocity.current.dolly = lerp(velocity.current.dolly, -pSpeed, easeInVal);
+				else {
+					velocity.current.dolly *= dampingVal;
+					if (Math.abs(velocity.current.dolly) < VELOCITY_EPSILON) velocity.current.dolly = 0;
+				}
 			}
 
 			// Continuous Rotation (o.k;ip)

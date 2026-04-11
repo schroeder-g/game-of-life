@@ -49,6 +49,27 @@ const FitIcon = () => (
 	</svg>
 );
 
+const SplatIcon = () => (
+	<svg
+		width='20'
+		height='20'
+		viewBox='0 0 36 36'
+		fill='currentColor'
+	>
+		{/* Central Glob (r=3.6) - Center at 18,18 */}
+		<circle cx='18' cy='18' r='3.6' />
+		{/* 4 Radiating Arms at 1, 5, 7, and 9 o'clock */}
+		{[30, 150, 210, 270].map(angle => (
+			<g key={angle} transform={`rotate(${angle}, 18, 18)`}>
+				{/* Terminal Swell (r=3.6, increased distance to 13) */}
+				<circle cx='18' cy='5' r='3.6' />
+				{/* Tangent-aligned fluted path - adjusted for 15% extra length */}
+				<path d='M 15.45 15.45 C 17.5 12.5, 17.5 10.5, 15.45 7.55 L 20.55 7.55 C 18.5 10.5, 18.5 12.5, 20.55 15.45 Z' />
+			</g>
+		))}
+	</svg>
+);
+
 const RecenterIcon = () => (
 	<svg
 		width='20'
@@ -160,23 +181,6 @@ const ImageIcon = () => (
 	</svg>
 );
 
-const UsersIcon = () => (
-	<svg
-		width='20'
-		height='20'
-		viewBox='0 0 24 24'
-		fill='none'
-		stroke='currentColor'
-		strokeWidth='2'
-		strokeLinecap='round'
-		strokeLinejoin='round'
-	>
-		<path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' />
-		<circle cx='9' cy='7' r='4' />
-		<path d='M22 21v-2a4 4 0 0 0-3-3.87' />
-		<path d='M16 3.13a4 4 0 0 1 0 7.75' />
-	</svg>
-);
 
 const DnaIcon = () => (
 	<svg
@@ -463,7 +467,7 @@ export function AppHeaderPanelButtons({
 				data-tooltip-bottom='Toggle Community Panel'
 				aria-label='Toggle Community Panel'
 			>
-				<UsersIcon />
+				<SplatIcon />
 			</button>
 			<BrushControls selectedOrganismId={selectedOrganismId} />
 			<button
@@ -494,7 +498,7 @@ export function AppHeaderPanelButtons({
 					<input
 						type='range'
 						min={1}
-						max={100}
+						max={500}
 						step={1}
 						value={speed}
 						onChange={e => setSpeed(Number(e.target.value))}

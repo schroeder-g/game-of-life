@@ -1,17 +1,10 @@
-Obey GENERAL RULES, at end.
+Always remember GENERAL RULES (Bottom)
 
-Add these new items, if they are not in the Active or Completed sections.
+**NEXT**
 
-1 Finalize implementing "Organisms" as a safe-to-fail interface connected to core game play and user features.
-Automated testing is failing. Start by running automated tests.
+If there are enumerated items in this section, add them to ACTIVE ITEMS section, and remove those lines from this section.
 
-FYI  
 
- 4 Refactoring and Centralizing Logic:                                                                           
-    • an OLD file, faceOrientationKeyMapping.ts, was created (long ago) to be the "single source of truth" for all keyboard  
-      controls related to orientation. It persists despite a long history of AI refusing to honor it and creating alternative sources of truth that are wrong.
-The goal of this task will be to understand the rules. Then to identify Orientations (Face,angle) where the keypresses are not working in the correct vectors.
-                                                              
 
 
 
@@ -19,13 +12,18 @@ The goal of this task will be to understand the rules. Then to identify Orientat
 
 **RECOMMENDED SEQUENCE**
  
-**ACTIVE ITEMS**
+
+
+
 
 
 
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-084:** [COMPLETED] Implement 'eating' behavior for organisms (BeforeTick consumption of non-organism cells) and track/display 'Eaten' count in the Community panel.
+*   **TODO-082:** [COMPLETED] Make the "Toggle Community Panel" button icon look like a "Splat" (thin lines connecting to a central glob, swelling into globs at their ends).
+*   **TODO-083:** [COMPLETED] Fix z-index issue where the Help Menu Dropdown is obscured by the Community Selection panel.
 *   **TODO-076:** [COMPLETED] Stop the glowing of organisms. Just make them reflective.
 *   **TODO-077:** [COMPLETED] Make the inside of the cube walls dark grey (lighter than the background). You should still be able to see through them from the outside.
 *   **TODO-078:** [COMPLETED] During organism initialization, determine its travel vector, and display an arrow of the direction of impending travel. Reassess travel vector on every tick.
@@ -41,6 +39,7 @@ Use this file to store TODO's as requested.
 Each item should be sufficiently articulated so that another AI with access to the project can perform the necessary actions.
 
 After completing an item move it (prepend it) into the COMPLETED ITEMS section
+Remove empty lines between items.
 
 If appropriate, make sure UI items will be documented, or their documentation will updated, by adding an AiReminder span. 
 
