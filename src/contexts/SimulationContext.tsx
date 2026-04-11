@@ -140,6 +140,7 @@ export interface SimulationActions {
 	setSelectedOrganismId: (id: string | null) => void;
 	disorganizeOrganism: (id: string) => void;
 	selectOrganism: (id: string | null) => void;
+	snapToOrientation: (face: string, rotation: number) => void;
 
 	playStop: () => void;
 	step: () => void;
@@ -187,6 +188,7 @@ export interface SimulationMeta {
 		rotateBrush: (axis: THREE.Vector3, angle: number) => void;
 		birthBrushCells: () => void;
 		clearBrushCells: () => void;
+		snapToOrientation: (face: string, rotation: number) => void;
 	} | null>;
 	eventBus: Emitter<AppEvents>;
 	movement: React.MutableRefObject<Record<string, boolean>>;
@@ -216,18 +218,18 @@ export function SimulationProvider({
 	const cameraActionsRef = useRef<any>(null);
 	const eventBusRef = useRef(new Emitter<AppEvents>());
 	const movement = useRef<Record<string, boolean>>({
-		forward: false,
-		backward: false,
-		left: false,
-		right: false,
-		up: false,
-		down: false,
-		rotateO: false,
-		rotatePeriod: false,
-		rotateK: false,
-		rotateSemicolon: false,
-		rotateI: false,
-		rotateP: false,
+		w: false,
+		x: false,
+		a: false,
+		d: false,
+		q: false,
+		z: false,
+		o: false,
+		period: false,
+		k: false,
+		semicolon: false,
+		i: false,
+		p: false,
 		space: false,
 		delete: false,
 	});
@@ -909,6 +911,10 @@ export function SimulationProvider({
 		[organismManagerRef],
 	);
 
+	const snapToOrientation = useCallback((face: string, rotation: number) => {
+		cameraActionsRef.current?.snapToOrientation(face, rotation);
+	}, []);
+
 	const setCommunity = useCallback(
 		(newCommunity: Array<[number, number, number]>) => {
 			_setCommunityInternal(newCommunity);
@@ -1145,6 +1151,7 @@ export function SimulationProvider({
 			setSelectedOrganismId,
 			disorganizeOrganism,
 			selectOrganism,
+			snapToOrientation,
 			playStop,
 			step,
 			stepBackward,

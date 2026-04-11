@@ -1,11 +1,11 @@
 // @documentation-skip
 import {
-	type CameraFace,
+	type CubeFace,
 	type CameraRotation,
 	getWASDMapping,
 } from '../core/faceOrientationKeyMapping';
 
-const faces: CameraFace[] = [
+const faces: CubeFace[] = [
 	'front',
 	'back',
 	'top',

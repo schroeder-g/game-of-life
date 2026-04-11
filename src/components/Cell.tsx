@@ -228,14 +228,16 @@ export function Cells({
 			}
 		});
 
-		meshRef.current.count = count;
-		edgesRef.current.count = count;
+		const MAX_INSTANCES = 50000;
+		const instancesToRender = Math.min(cellsToRender.length, MAX_INSTANCES);
+		meshRef.current.count = instancesToRender;
+		edgesRef.current.count = instancesToRender;
 
 		// Update attributes
 		if (!meshRef.current.instanceColor) {
 			meshRef.current.instanceColor =
 				new THREE.InstancedBufferAttribute(
-					new Float32Array(50000 * 3),
+					new Float32Array(MAX_INSTANCES * 3),
 					3,
 				);
 		}
@@ -245,7 +247,7 @@ export function Cells({
 		if (!meshRef.current.geometry.attributes.instanceOpacity) {
 			meshRef.current.geometry.setAttribute(
 				'instanceOpacity',
-				new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
+				new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1),
 			);
 		}
 		(
@@ -257,7 +259,7 @@ export function Cells({
 		if (!meshRef.current.geometry.attributes.instanceHighlight) {
 			meshRef.current.geometry.setAttribute(
 				'instanceHighlight',
-				new THREE.InstancedBufferAttribute(new Float32Array(50000), 1),
+				new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1),
 			);
 		}
 		(
@@ -269,7 +271,7 @@ export function Cells({
 		if (!edgesRef.current.instanceColor) {
 			edgesRef.current.instanceColor =
 				new THREE.InstancedBufferAttribute(
-					new Float32Array(50000 * 3),
+					new Float32Array(MAX_INSTANCES * 3),
 					3,
 				);
 		}
