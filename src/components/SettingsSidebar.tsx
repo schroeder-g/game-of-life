@@ -179,9 +179,9 @@ function EnvironmentSection() {
 	);
 }
 
-function RulesSection() {
+function EnvironmentRulesSection() {
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
-		'gol_collapse_rules',
+		'gol_collapse_environment_rules',
 		true,
 	);
 	const {
@@ -1236,7 +1236,7 @@ export function SettingsSidebar({
 						{!viewMode && <SceneManagementSection />}
 						{!viewMode && <EnvironmentSection />}
 						{!viewMode && <SelectorPositionSection />}
-						<RulesSection />
+						{!viewMode && <EnvironmentRulesSection />}
 						<OrganismsSection />
 						<TestsSection />
 					</>
