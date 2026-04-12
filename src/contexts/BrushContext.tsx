@@ -1,13 +1,17 @@
 import {
 	createContext,
 	ReactNode,
+	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
 import * as THREE from 'three';
+import { usePersistentState } from '../hooks/usePersistentState'; // Import usePersistentState
 import { ShapeType, supportsHollow } from '../core/shapes';
+import { OrganismBrush, makeKey } from '../core/Organism'; // Import OrganismBrush and makeKey
 
 export interface BrushState {
 	selectedShape: ShapeType;
@@ -20,6 +24,8 @@ export interface BrushState {
 	brushQuaternion: React.MutableRefObject<THREE.Quaternion>;
 	customOffsets: [number, number, number][];
 	paintMode: 1 | 0 | -1; // 1: Activate, 0: Idle, -1: Clear
+	organismBrushes: Map<string, OrganismBrush>; // Added for organism brushes
+	selectedOrganismBrushId: string | null; // Added for selected organism brush
 }
 
 export interface BrushActions {
@@ -42,6 +48,9 @@ export interface BrushActions {
 	setPaintMode: (
 		mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1),
 	) => void;
+	addOrganismBrush: (brush: OrganismBrush) => void; // Added action
+	removeOrganismBrush: (id: string) => void; // Added action
+	setSelectedOrganismBrushId: (id: string | null) => void; // Added action
 }
 
 export interface BrushContextValue {
@@ -71,12 +80,64 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	const [paintMode, setPaintMode] = useState<1 | 0 | -1>(0); // 1: Toggle, 0: Idle, -1: Clear
 	const brushQuaternion = useRef(new THREE.Quaternion());
 
+	// Persistent state for organism brushes
+	const [organismBrushesArray, setOrganismBrushesArray] = usePersistentState<
+		OrganismBrush[]
+	>([], 'gol_organism_brushes', {
+		serialize: brushes => JSON.stringify(brushes),
+		deserialize: json => JSON.parse(json),
+	});
+	const organismBrushes = useMemo(
+		() => new Map(organismBrushesArray.map(b => [b.id, b])),
+		[organismBrushesArray],
+	);
+	const setOrganismBrushes = useCallback(
+		(newBrushes: Map<string, OrganismBrush>) => {
+			setOrganismBrushesArray(Array.from(newBrushes.values()));
+		},
+		[setOrganismBrushesArray],
+	);
+
+	const [selectedOrganismBrushId, setSelectedOrganismBrushId] =
+		usePersistentState<string | null>(null, 'gol_selected_organism_brush');
+
 	// clear hollow when switching to an unsupported shape
 	useEffect(() => {
 		if (!supportsHollow(selectedShape) && isHollow) {
 			setIsHollow(false);
 		}
 	}, [selectedShape, isHollow]);
+
+	// Ensure selectedOrganismBrushId is valid
+	useEffect(() => {
+		if (
+			selectedOrganismBrushId &&
+			!organismBrushes.has(selectedOrganismBrushId)
+		) {
+			setSelectedOrganismBrushId(null);
+		}
+	}, [organismBrushes, selectedOrganismBrushId]);
+
+	const addOrganismBrush = useCallback(
+		(brush: OrganismBrush) => {
+			const newBrushes = new Map(organismBrushes);
+			newBrushes.set(brush.id, brush);
+			setOrganismBrushes(newBrushes);
+		},
+		[organismBrushes, setOrganismBrushes],
+	);
+
+	const removeOrganismBrush = useCallback(
+		(id: string) => {
+			const newBrushes = new Map(organismBrushes);
+			newBrushes.delete(id);
+			setOrganismBrushes(newBrushes);
+			if (selectedOrganismBrushId === id) {
+				setSelectedOrganismBrushId(null);
+			}
+		},
+		[organismBrushes, setOrganismBrushes, selectedOrganismBrushId],
+	);
 
 	const value: BrushContextValue = {
 		state: {
@@ -90,6 +151,8 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			brushQuaternion,
 			customOffsets,
 			paintMode,
+			organismBrushes, // Added to state
+			selectedOrganismBrushId, // Added to state
 		},
 		actions: {
 			setSelectedShape: (shape: ShapeType) => {
@@ -106,6 +169,8 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					}
 					return prev;
 				});
+				// When selecting a shape, deselect any organism brush
+				setSelectedOrganismBrushId(null);
 			},
 			setShapeSize,
 			setIsHollow,
@@ -116,6 +181,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				setSelectedShape('Single Cell');
 				setShapeSize(1);
 				setPaintMode(0);
+				setSelectedOrganismBrushId(null); // Clear selected organism brush
 			},
 			changeSize: (delta: number, maxGridSize: number) => {
 				if (
@@ -167,8 +233,12 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 
 				setCustomOffsets(offsets);
 				setSelectedShape('Selected Community');
+				setSelectedOrganismBrushId(null); // Clear selected organism brush
 			},
 			setPaintMode,
+			addOrganismBrush, // Added action
+			removeOrganismBrush, // Added action
+			setSelectedOrganismBrushId, // Added action
 		},
 	};
 
