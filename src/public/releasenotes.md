@@ -1,6 +1,6 @@
 # Release Notes
 
-### **Sunday, April 12, 2026 (Version 1.9.4)**
+### **Sunday, April 12, 2026 (Version 1.9.5)**
 - **Features**: 
     - **WAXDQZ Navigation Refinement**: Corrected the brush movement direction on the Z-axis in Edit mode. The brush now moves intuitively away from or towards the viewer by compensating for the renderer's coordinate inversion.
     - **Developer Utils**: Included `calc_keymap.js`, the core script used to calculate the project's orientation-aware keyboard mappings, in the internal scripts directory.
@@ -9,7 +9,7 @@
     - **Logic Polish**: Fixed a typo in the rotation control mapping for the **Bottom** face at **270°**.
     - **Type Safety**: Resolved multiple TypeScript "non-overlapping comparison" errors related to `'unknown'` camera orientation states, improving codebase robustness.
 - **Internal**:
-    - Synchronized package version to **1.9.4**.
+    - Synchronized package version to **1.9.5**.
 
 ---
 
