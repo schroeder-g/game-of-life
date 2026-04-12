@@ -1307,7 +1307,7 @@ export function SettingsSidebar({
 	setShowSettingsSidebar,
 }: SettingsSidebarProps) {
 	const {
-		state: { running, viewMode, community, buildInfo },
+		state: { running, viewMode, community, buildInfo, enableOrganisms },
 		actions: {
 			playStop,
 			step,
@@ -1329,6 +1329,7 @@ export function SettingsSidebar({
 			setNeighborEdges,
 			setNeighborCorners,
 			fitDisplay,
+			setEnableOrganisms, // Destructure setEnableOrganisms
 		},
 	} = useSimulation();
 	const {

@@ -122,6 +122,7 @@ export interface SimulationActions {
 	setCommunity: (community: Array<[number, number, number]>) => void;
 	setviewMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
 	setPanSpeed: (speed: number) => void;
+	setEnableOrganisms: (val: boolean) => void; // Add this action
 	setRotationSpeed: (speed: number) => void;
 	setRollSpeed: (speed: number) => void;
 	setInvertYaw: (val: boolean) => void;
@@ -317,6 +318,9 @@ export function SimulationProvider({
 	const [enableOrganisms, setEnableOrganisms] = useState(
 		Boolean(storedSettings.enableOrganisms),
 	);
+	// Add this state for organism brushes
+	const [organismBrushes, setOrganismBrushes] = useState<Map<string, OrganismBrush>>(new Map());
+	const [selectedOrganismBrushId, setSelectedOrganismBrushId] = useState<string | null>(null);
 
 
 	const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
@@ -1152,6 +1156,8 @@ export function SimulationProvider({
 			showCytoplasm,
 			showSkin,
 			enableOrganisms,
+			organismBrushes, // Add this state
+			selectedOrganismBrushId, // Add this state
 		},
 		actions: {
 			setSpeed,
@@ -1205,6 +1211,8 @@ export function SimulationProvider({
 			setShowCytoplasm,
 			setShowSkin,
 			setEnableOrganisms,
+			setOrganismBrushes, // Add this action
+			setSelectedOrganismBrushId, // Add this action
 		},
 		meta: {
 			gridRef,
