@@ -13,7 +13,7 @@
  * IF KEYBOARD CONTROLS ARE REVERSED OR BROKEN:
  * The issue is ALMOST CERTAINLY in the CONSUMPTION of these maps elsewhere, NOT in this file.
  * Ensure that Grid.tsx and useAppShortcuts.ts are correctly fetching and applying 
- * the vectors from getWASDMapping and getExplicitRotationAxis.
+ * the vectors from getWAXDQZMapping and getExplicitRotationAxis.
  * 
  * Modifications to this file require explicit user approval and a deep understanding 
  * of the 3D coordinate system. 
@@ -42,7 +42,7 @@ export const KEY_MAP = {
 	},
 	"right": {
 		0: { x: [0, 1, 0], w: [0, -1, 0], d: [0, 0, 1], a: [0, 0, -1], z: [-1, 0, 0], q: [1, 0, 0] },
-		90: { q: [0, 0, 1], w: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], z: [-1, 0, 0], q: [1, 0, 0] },
+		90: { x: [0, 0, 1], w: [0, 0, -1], a: [0, 1, 0], d: [0, -1, 0], z: [-1, 0, 0], q: [1, 0, 0] },
 		180: { x: [0, -1, 0], w: [0, 1, 0], d: [0, 0, -1], a: [0, 0, 1], z: [-1, 0, 0], q: [1, 0, 0] },
 		270: { x: [0, 0, -1], w: [0, 0, 1], a: [0, -1, 0], d: [0, 1, 0], z: [-1, 0, 0], q: [1, 0, 0] }
 	},
@@ -112,7 +112,7 @@ export const ROTATION_KEY_MAP = {
 		0: { semicolon: [0, 0, 1], k: [0, 0, -1], o: [-1, 0, 0], period: [1, 0, 0], i: [0, -1, 0], p: [0, 1, 0] },
 		90: { semicolon: [-1, 0, 0], k: [1, 0, 0], o: [0, 0, -1], period: [0, 0, 1], i: [0, -1, 0], p: [0, 1, 0] },
 		180: { semicolon: [0, 0, -1], k: [0, 0, 1], o: [1, 0, 0], period: [-1, 0, 0], i: [0, -1, 0], p: [0, 1, 0] },
-		270: { semicolon: [1, 0, 0], k: [-1, 0, 0], o: [0, 0, 1], periof: [0, 0, -1], i: [0, -1, 0], p: [0, 1, 0] }
+		270: { semicolon: [1, 0, 0], k: [-1, 0, 0], o: [0, 0, 1], period: [0, 0, -1], i: [0, -1, 0], p: [0, 1, 0] }
 	}
 };
 
@@ -166,9 +166,9 @@ export const nextSquareOrientationLookup = {
 
 
 
-export function getWASDMapping(
-	face: CubeFace,
-	rotation: CameraRotation,
+export function getWAXDQZMapping(
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 ): Record<string, number[]> {
 	const f = face === 'unknown' ? 'front' : face;
 	const r = rotation === 'unknown' ? 0 : rotation;
@@ -176,8 +176,8 @@ export function getWASDMapping(
 }
 
 export function getLocalQuaternion(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 ): THREE.Quaternion {
 	const f = face === 'unknown' ? 'front' : face;
 	const r = rotation === 'unknown' ? 0 : rotation;
@@ -193,8 +193,8 @@ export function getLocalQuaternion(
 }
 
 export function getExplicitRotationAxis(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 	key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p',
 ): THREE.Vector3 {
 	const f = face === 'unknown' ? 'front' : face;
@@ -208,8 +208,8 @@ export function getExplicitRotationAxis(
  * Still uses quaternion math for the step calculation, but derives candidate axes from lookup tables.
  */
 export function getNextOrientation(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 	key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p',
 ): CameraOrientation {
 	const worldAxis = getExplicitRotationAxis(face, rotation, key);

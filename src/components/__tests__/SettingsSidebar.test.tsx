@@ -22,7 +22,7 @@ import * as THREE from 'three';
 import '../../tests/setup-browser-env'; // Import the browser environment setup
 
 vi.mock('../../core/faceOrientationKeyMapping', () => {
-	const getWASDMapping = (face: string, rotation: number) => {
+	const getWAXDQZMapping = (face: string, rotation: number) => {
 		if (face === 'front' && rotation === 0) {
 			return {
 				w: [0, 1, 0],
@@ -53,7 +53,7 @@ vi.mock('../../core/faceOrientationKeyMapping', () => {
 		};
 	};
 	return {
-		getWASDMapping,
+		getWAXDQZMapping,
 	};
 });
 

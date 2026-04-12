@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import {
-	getWASDMapping,
+	getWAXDQZMapping,
 	getExplicitRotationAxis,
 	getLocalQuaternion,
 	type CubeFace,
@@ -538,7 +538,7 @@ function KeyboardSelector({
 		brushRotationVersion,
 		showProjectionGuides,
 	} = brushState;
-	
+
 	// Top-level bail out for missing refs
 	if (!gridRef?.current || !brushQuaternion?.current) return null;
 
@@ -1132,14 +1132,14 @@ export function Scene() {
 						const rz = Math.round(v.z * 2) / 2;
 						return [
 							selectorPos[0] +
-								(Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) +
-								rx,
+							(Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) +
+							rx,
 							selectorPos[1] +
-								(Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) +
-								ry,
+							(Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) +
+							ry,
 							selectorPos[2] +
-								(Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) +
-								rz,
+							(Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) +
+							rz,
 						] as [number, number, number];
 					})
 					.filter(
@@ -1183,14 +1183,14 @@ export function Scene() {
 						const rz = Math.round(v.z * 2) / 2;
 						return [
 							selectorPos[0] +
-								(Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) +
-								rx,
+							(Math.abs(rx % 1) >= 0.25 ? 0.5 : 0) +
+							rx,
 							selectorPos[1] +
-								(Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) +
-								ry,
+							(Math.abs(ry % 1) >= 0.25 ? 0.5 : 0) +
+							ry,
 							selectorPos[2] +
-								(Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) +
-								rz,
+							(Math.abs(rz % 1) >= 0.25 ? 0.5 : 0) +
+							rz,
 						] as [number, number, number];
 					})
 					.filter(
@@ -1217,7 +1217,7 @@ export function Scene() {
 
 				const targetOrientation = { face: face as CubeFace, rotation: rotation as CameraRotation };
 				const targetQuatWorld = getLocalQuaternion(targetOrientation.face, targetOrientation.rotation);
-				
+
 				// Calculate target position at same distance
 				const targetPos = new THREE.Vector3(0, 0, dist).applyQuaternion(targetQuatWorld);
 				const targetUp = new THREE.Vector3(0, 1, 0).applyQuaternion(targetQuatWorld);
@@ -1346,7 +1346,7 @@ export function Scene() {
 			const hasValidOrientation = face !== 'unknown' && rotation !== 'unknown';
 
 			if (hasValidOrientation) {
-				const mapping = getWASDMapping(face as CubeFace, rotation as CameraRotation);
+				const mapping = getWAXDQZMapping(face as CubeFace, rotation as CameraRotation);
 				const targetMoveWorld = new THREE.Vector3(0, 0, 0);
 				let activeKeys = 0;
 
@@ -1558,7 +1558,7 @@ export function Scene() {
 					const vecX = right.multiplyScalar(totalPanX * delta * dist);
 					const vecY = up.multiplyScalar(totalPanY * delta * dist);
 					const vecZ = forward.multiplyScalar(totalDolly * delta * dist);
-					
+
 					const move = vecX.add(vecY).add(vecZ);
 					cam.position.add(move);
 					target.add(move);
@@ -1576,17 +1576,17 @@ export function Scene() {
 
 					const f = cameraOrientation.face as CubeFace;
 					const r = cameraOrientation.rotation as CameraRotation;
-					
+
 					// Use camera axes for mouse drag (free interaction), 
 					// orientation axes for keyboard (locked interaction)
 					const useCamAxes = isDragging.current;
-					const axisPitch = useCamAxes 
+					const axisPitch = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0)
 						: getExplicitRotationAxis(f, r, 'o');
-					const axisYaw = useCamAxes 
+					const axisYaw = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1)
 						: getExplicitRotationAxis(f, r, 'k');
-					const axisRoll = useCamAxes 
+					const axisRoll = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2)
 						: getExplicitRotationAxis(f, r, 'i');
 
@@ -1642,13 +1642,13 @@ export function Scene() {
 
 					// Same logic as View Mode: Cam axes for drag, Truth axes for keys
 					const useCamAxes = isDragging.current;
-					const axisPitch = useCamAxes 
+					const axisPitch = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0)
 						: getExplicitRotationAxis(f, r, 'o');
-					const axisYaw = useCamAxes 
+					const axisYaw = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1)
 						: getExplicitRotationAxis(f, r, 'k');
-					const axisRoll = useCamAxes 
+					const axisRoll = useCamAxes
 						? new THREE.Vector3().setFromMatrixColumn(cam.matrix, 2)
 						: getExplicitRotationAxis(f, r, 'i');
 
@@ -1984,10 +1984,10 @@ export function Scene() {
 		<>
 			<ambientLight intensity={1.5} />
 			{/* Main Key Light */}
-			<directionalLight 
-				position={[10, 20, 10]} 
-				intensity={2.5} 
-				castShadow 
+			<directionalLight
+				position={[10, 20, 10]}
+				intensity={2.5}
+				castShadow
 				shadow-mapSize={[1024, 1024]}
 			/>
 			{/* Fill Light */}
@@ -2016,7 +2016,7 @@ export function Scene() {
 						if (cellPos) {
 							const [x, y, z] = cellPos;
 							setSelectorPos([x, y, z]);
-							
+
 							// Check if the clicked cell belongs to an organism
 							const clickedCellKey = makeKey(x, y, z);
 							let foundOrganism = null;

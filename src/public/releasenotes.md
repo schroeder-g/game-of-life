@@ -1,5 +1,18 @@
 # Release Notes
 
+### **Sunday, April 12, 2026 (Version 1.9.4)**
+- **Features**: 
+    - **WAXDQZ Navigation Refinement**: Corrected the brush movement direction on the Z-axis in Edit mode. The brush now moves intuitively away from or towards the viewer by compensating for the renderer's coordinate inversion.
+    - **Developer Utils**: Included `calc_keymap.js`, the core script used to calculate the project's orientation-aware keyboard mappings, in the internal scripts directory.
+- **Bug Fixes**:
+    - **Keyboard Mapping**: fixed a critical duplicate key bug and missing movement key on the **Right** face at **90°** rotation.
+    - **Logic Polish**: Fixed a typo in the rotation control mapping for the **Bottom** face at **270°**.
+    - **Type Safety**: Resolved multiple TypeScript "non-overlapping comparison" errors related to `'unknown'` camera orientation states, improving codebase robustness.
+- **Internal**:
+    - Synchronized package version to **1.9.4**.
+
+---
+
 ### **Wednesday, April 8, 2026**
 - **Features**: 
     - **Community Panel Redesign**: Streamlined stats into a three-row layout (Cells/Cytoplasm, Heading, and One-line Wall Distances) and removed redundant container boxes.

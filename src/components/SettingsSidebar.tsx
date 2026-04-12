@@ -9,7 +9,7 @@ import { isAnyBrushCellInside } from '../core/brushUtils'; // Added
 import {
 	type CubeFace,
 	type CameraRotation,
-	getWASDMapping,
+	getWAXDQZMapping,
 } from '../core/faceOrientationKeyMapping'; // Added
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
@@ -399,7 +399,7 @@ function SelectorPositionSection() {
 
 		const face = cameraOrientation.face as CubeFace;
 		const rotation = cameraOrientation.rotation as CameraRotation;
-		const mapping = getWASDMapping(face, rotation);
+		const mapping = getWAXDQZMapping(face, rotation);
 
 		const keys: Record<string, string> = {};
 		for (const key in mapping) {
@@ -510,9 +510,9 @@ function SelectorPositionSection() {
 			if (!currentPos) return; // Should not happen if selectorPos is initialized
 
 			const nextPos: [number, number, number] = [
-				currentPos[0] + delta[0],
-				currentPos[1] + delta[1],
-				currentPos[2] + delta[2],
+				currentPos[0] - delta[0],
+				currentPos[1] - delta[1],
+				currentPos[2] + delta[2], // ADD instead of SUBTRACT because Z-axis is inverted in renderer (gridSize - 1 - z)
 			];
 
 			const {
