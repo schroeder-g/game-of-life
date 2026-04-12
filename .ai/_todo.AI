@@ -4,11 +4,6 @@ Always remember GENERAL RULES (Bottom)
 If there are enumerated items in this section, add them to ACTIVE ITEMS section, and remove those lines from this section.
 
 **ACTIVE ITEMS**
-*   **TODO-087:** Refactor `SettingsSidebar.tsx`:
-    *   Rename `RulesSection` to `EnvironmentRulesSection`.
-    *   Implement "No Brush", "Shapes", and "Organisms" brush selection UI.
-    *   Add logic for creating organism brushes from selected organisms, inheriting their GOL rules.
-    *   Control visibility of "Organisms" brush section based on `enableOrganisms` setting.
 *   **TODO-088:** Implement organism brush management and persistence:
     *   Create a new type/interface for `OrganismBrush` (shape + GOL rules).
     *   Store organism brushes in local storage using `usePersistentState` or similar.
@@ -23,6 +18,13 @@ If there are enumerated items in this section, add them to ACTIVE ITEMS section,
     *   Provide methods for applying organism brushes to the grid.
 *   **TODO-091:** Update `OrganismManager.ts` to ensure new organisms inherit environment rules when created. (This might be handled in `SimulationContext` when calling `OrganismManager.addOrganism`).
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
+
+********COMPLETED ITEMS ************
+*   **TODO-087:** [COMPLETED] Refactor `SettingsSidebar.tsx`:
+    *   Rename `RulesSection` to `EnvironmentRulesSection`.
+    *   Implement "No Brush", "Shapes", and "Organisms" brush selection UI.
+    *   Add logic for creating organism brushes from selected organisms, inheriting their GOL rules.
+    *   Control visibility of "Organisms" brush section based on `enableOrganisms` setting.
 
 
 **RECOMMENDED SEQUENCE**

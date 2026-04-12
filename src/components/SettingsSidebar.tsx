@@ -1446,6 +1446,20 @@ export function SettingsSidebar({
 						{!viewMode && <BrushSection />} {/* Added BrushSection */}
 						{!viewMode && <SelectorPositionSection />}
 						{!viewMode && <EnvironmentRulesSection />}
+
+						{/* Organism Enable Toggle */}
+						<section className='menu-section'>
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={enableOrganisms}
+									onChange={e => setEnableOrganisms(e.target.checked)}
+								/>
+								<span>Enable Organisms</span>
+							</label>
+						</section>
+
 						<OrganismsSection />
 						<TestsSection />
 					</>
