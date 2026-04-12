@@ -85,7 +85,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		OrganismBrush[]
 	>([], 'gol_organism_brushes', {
 		serialize: brushes => JSON.stringify(brushes),
-		deserialize: json => JSON.parse(json),
+		deserialize: json => {
+			try {
+				const parsed = JSON.parse(json);
+				return Array.isArray(parsed) ? parsed : [];
+			} catch (e) {
+				console.error("Failed to parse organism brushes from local storage:", e);
+				return [];
+			}
+		},
 	});
 	const organismBrushes = useMemo(
 		() => new Map(organismBrushesArray.map(b => [b.id, b])),
