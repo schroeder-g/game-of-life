@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { useBrush } from '../contexts/BrushContext'; // Added
+import { useBrush } from '../contexts/BrushContext';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
 import { useSimulation } from '../contexts/SimulationContext';
 
-import { isAnyBrushCellInside } from '../core/brushUtils'; // Added
+import { isAnyBrushCellInside } from '../core/brushUtils';
 import {
 	type CubeFace,
 	type CameraRotation,
 	getWAXDQZMapping,
-} from '../core/faceOrientationKeyMapping'; // Added
+} from '../core/faceOrientationKeyMapping';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
-import { serializeOrganism } from '../core/Organism'; // Added
+import { serializeOrganism } from '../core/Organism';
 import { MANUAL_TESTS } from '../data/manual-tests';
+import { ShapeType } from '../core/shapes'; // Added
 import { AutomatedTestsPanel } from './AutomatedTestsPanel';
 import { ManualTestsPanel } from './ManualTestsPanel';
 
@@ -363,6 +364,213 @@ function EnvironmentRulesSection() {
 							/>
 						</label>
 					</div>
+				</>
+			)}
+		</section>
+	);
+}
+
+function BrushSection() {
+	const {
+		state: { selectedShape, shapeSize, isHollow, customOffsets },
+		actions: {
+			setSelectedShape,
+			setShapeSize,
+			setIsHollow,
+			setCustomBrush,
+			clearCustomBrush,
+		},
+	} = useBrush();
+	const {
+		state: { organisms, enableOrganisms },
+	} = useSimulation();
+
+	const [isCollapsed, setIsCollapsed] = usePersistentState(
+		'gol_collapse_brush',
+		true,
+	);
+	const [brushType, setBrushType] = usePersistentState<
+		'none' | 'shape' | 'organism'
+	>('shape', 'gol_brush_type');
+
+	const handleShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const newShape = e.target.value as ShapeType;
+		setSelectedShape(newShape);
+		clearCustomBrush(); // Clear custom brush when a shape is selected
+	};
+
+	const handleOrganismBrushChange = (
+		e: React.ChangeEvent<HTMLSelectElement>,
+	) => {
+		const organismId = e.target.value;
+		if (organismId === 'none') {
+			clearCustomBrush();
+			setSelectedShape('None');
+		} else {
+			const organism = organisms.get(organismId);
+			if (organism) {
+				setCustomBrush(organism);
+				setSelectedShape('Selected Community'); // Use a generic shape type for organism brushes
+			}
+		}
+	};
+
+	return (
+		<section className='menu-section'>
+			<h3
+				onClick={() => setIsCollapsed(!isCollapsed)}
+				data-testid='section-header-brush'
+				style={{
+					cursor: 'pointer',
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+					margin: 0,
+					paddingBottom: '8px',
+					marginBottom: isCollapsed ? 0 : '16px',
+				}}
+			>
+				Brush
+				<span style={{ fontSize: '12px', opacity: 0.6 }}>
+					{isCollapsed ? '▼' : '▲'}
+				</span>
+			</h3>
+			{!isCollapsed && (
+				<>
+					<div className='control-label'>
+						<span>Brush Type:</span>
+						<div className='radio-group'>
+							<label>
+								<input
+									type='radio'
+									value='none'
+									checked={brushType === 'none'}
+									onChange={() => {
+										setBrushType('none');
+										setSelectedShape('None');
+										clearCustomBrush();
+									}}
+								/>
+								No Brush
+							</label>
+							<label>
+								<input
+									type='radio'
+									value='shape'
+									checked={brushType === 'shape'}
+									onChange={() => {
+										setBrushType('shape');
+										setSelectedShape('Cube'); // Default shape
+										clearCustomBrush();
+									}}
+								/>
+								Shapes
+							</label>
+							{enableOrganisms && (
+								<label>
+									<input
+										type='radio'
+										value='organism'
+										checked={brushType === 'organism'}
+										onChange={() => {
+											setBrushType('organism');
+											// Default to first organism if available, otherwise 'None'
+											const firstOrgId = organisms.keys().next().value;
+											if (firstOrgId) {
+												const organism = organisms.get(firstOrgId);
+												if (organism) {
+													setCustomBrush(organism);
+													setSelectedShape('Selected Community');
+												}
+											} else {
+												setSelectedShape('None');
+											}
+										}}
+									/>
+									Organisms
+								</label>
+							)}
+						</div>
+					</div>
+
+					{brushType === 'shape' && (
+						<>
+							<label className='control-label'>
+								<span>Shape:</span>
+								<select
+									className='glass-select'
+									value={selectedShape}
+									onChange={handleShapeChange}
+								>
+									<option value='Cube'>Cube</option>
+									<option value='Square'>Square</option>
+									<option value='Circle'>Circle</option>
+									<option value='Sphere'>Sphere</option>
+									<option value='Triangle'>Triangle</option>
+									<option value='Pyramid'>Pyramid</option>
+								</select>
+							</label>
+							{selectedShape !== 'None' && (
+								<>
+									<label className='control-label'>
+										<span>Size: {shapeSize}</span>
+										<input
+											type='range'
+											min={1}
+											max={10}
+											step={1}
+											value={shapeSize}
+											onChange={e =>
+												setShapeSize(Number(e.target.value))
+											}
+										/>
+									</label>
+									{(selectedShape === 'Cube' ||
+										selectedShape === 'Sphere' ||
+										selectedShape === 'Pyramid') && (
+										<label className='control-label row'>
+											<input
+												type='checkbox'
+												className='glass-checkbox'
+												checked={isHollow}
+												onChange={e => setIsHollow(e.target.checked)}
+											/>
+											<span>Hollow</span>
+										</label>
+									)}
+								</>
+							)}
+						</>
+					)}
+
+					{brushType === 'organism' && enableOrganisms && (
+						<>
+							<label className='control-label'>
+								<span>Organism Brush:</span>
+								<select
+									className='glass-select'
+									value={selectedShape === 'None' ? 'none' : customOffsets?.id || 'none'}
+									onChange={handleOrganismBrushChange}
+								>
+									<option value='none'>None</option>
+									{Array.from(organisms.values()).map(org => (
+										<option key={org.id} value={org.id}>
+											{org.name}
+										</option>
+									))}
+								</select>
+							</label>
+							{customOffsets && (
+								<div className='organism-brush-details'>
+									{/* Display organism brush details here if needed */}
+									<p>
+										Size: {customOffsets.offsets.length} cells
+									</p>
+									{/* Add GOL rules display here later */}
+								</div>
+							)}
+						</>
+					)}
 				</>
 			)}
 		</section>
@@ -1235,6 +1443,7 @@ export function SettingsSidebar({
 						{viewMode && <CameraControlSection />}
 						{!viewMode && <SceneManagementSection />}
 						{!viewMode && <EnvironmentSection />}
+						{!viewMode && <BrushSection />} {/* Added BrushSection */}
 						{!viewMode && <SelectorPositionSection />}
 						{!viewMode && <EnvironmentRulesSection />}
 						<OrganismsSection />
@@ -1261,6 +1470,11 @@ function OrganismsSection() {
 		true,
 	);
 
+	// Only render this section if organisms are enabled
+	if (!enableOrganisms) {
+		return null;
+	}
+
 	return (
 		<section className={`menu-section ${isCollapsed ? 'collapsed' : ''}`}>
 			<h3
@@ -1282,51 +1496,36 @@ function OrganismsSection() {
 			</h3>
 			{!isCollapsed && (
 				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
-					<label className='control-label row' style={{ marginBottom: enableOrganisms ? '16px' : '0' }}>
-						<input
-							type='checkbox'
-							className='glass-checkbox'
-							style={{ width: '18px', height: '18px' }}
-							checked={enableOrganisms}
-							onChange={e => setEnableOrganisms(e.target.checked)}
-						/>
-						<span>Enable Organisms</span>
-					</label>
-
-					{enableOrganisms && (
+					<h4
+						onClick={() => setVisCollapsed(!visCollapsed)}
+						className='menu-subsection-header'
+						style={{ marginBottom: visCollapsed ? 0 : '12px' }}
+					>
+						Visualization
+						<span style={{ fontSize: '10px', opacity: 0.6 }}>
+							{visCollapsed ? '▼' : '▲'}
+						</span>
+					</h4>
+					{!visCollapsed && (
 						<>
-							<h4
-								onClick={() => setVisCollapsed(!visCollapsed)}
-								className='menu-subsection-header'
-								style={{ marginBottom: visCollapsed ? 0 : '12px' }}
-							>
-								Visualization
-								<span style={{ fontSize: '10px', opacity: 0.6 }}>
-									{visCollapsed ? '▼' : '▲'}
-								</span>
-							</h4>
-							{!visCollapsed && (
-								<>
-									<label className='control-label row'>
-										<input
-											type='checkbox'
-											className='glass-checkbox'
-											checked={showCytoplasm}
-											onChange={e => setShowCytoplasm(e.target.checked)}
-										/>
-										<span>Show Cytoplasm</span>
-									</label>
-									<label className='control-label row'>
-										<input
-											type='checkbox'
-											className='glass-checkbox'
-											checked={showSkin}
-											onChange={e => setShowSkin(e.target.checked)}
-										/>
-										<span>Show Skin</span>
-									</label>
-								</>
-							)}
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showCytoplasm}
+									onChange={e => setShowCytoplasm(e.target.checked)}
+								/>
+								<span>Show Cytoplasm</span>
+							</label>
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showSkin}
+									onChange={e => setShowSkin(e.target.checked)}
+								/>
+								<span>Show Skin</span>
+							</label>
 						</>
 					)}
 				</div>
