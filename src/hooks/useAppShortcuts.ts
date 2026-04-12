@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import {
-	getWASDMapping,
+	getWAXDQZMapping,
 	getExplicitRotationAxis,
 	getNextOrientation,
 	type CubeFace,
@@ -171,7 +171,7 @@ export function useAppShortcuts() {
 					if (hasValidOrientation) {
 						const f = face as CubeFace;
 						const r = rotation as CameraRotation;
-						const keymapForOrientation = getWASDMapping(f, r);
+						const keymapForOrientation = getWAXDQZMapping(f, r);
 						if (key in keymapForOrientation) {
 							const delta = (keymapForOrientation as any)[key] as [number, number, number];
 							eventBus.emit('moveSelector', { delta });
@@ -188,7 +188,7 @@ export function useAppShortcuts() {
 					if (mappedKey && hasValidOrientation) {
 						const f = face as CubeFace;
 						const r = rotation as CameraRotation;
-						const keymapForOrientation = getWASDMapping(f, r);
+						const keymapForOrientation = getWAXDQZMapping(f, r);
 						if (mappedKey in keymapForOrientation) {
 							const delta = (keymapForOrientation as any)[mappedKey] as [number, number, number];
 							eventBus.emit('moveSelector', { delta });

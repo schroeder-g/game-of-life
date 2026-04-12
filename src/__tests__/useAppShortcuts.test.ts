@@ -8,7 +8,7 @@ import '../tests/setup-browser-env'; // Import the browser environment setup
 import * as THREE from 'three';
 
 vi.mock('../core/faceOrientationKeyMapping', () => {
-	const getWASDMapping = (face: any, rotation: any) => {
+	const getWAXDQZMapping = (face: any, rotation: any) => {
 		return {
 			w: [0, 1, 0],
 			x: [0, -1, 0],
@@ -32,13 +32,13 @@ vi.mock('../core/faceOrientationKeyMapping', () => {
 	};
 
 	return {
-		getWASDMapping,
+		getWAXDQZMapping,
 		getRotationAxis: (
 			face: any,
 			rotation: any,
 			type: 'horizontal' | 'vertical' | 'roll',
 		) => {
-			const mapping = getWASDMapping(face, rotation);
+			const mapping = getWAXDQZMapping(face, rotation);
 			let axisArray;
 			if (type === 'vertical') axisArray = mapping.d;
 			else if (type === 'horizontal') axisArray = mapping.w;
@@ -211,7 +211,7 @@ describe('useAppShortcuts - New Rotation Logic', () => {
 			shiftKey: true,
 		});
 		window.dispatchEvent(event);
- 
+
 		expect((movementRef.current as any).o).toBe(true);
 		expect(mockStartSnapAnimation).not.toHaveBeenCalled();
 	});

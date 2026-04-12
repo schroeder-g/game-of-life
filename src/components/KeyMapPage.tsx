@@ -2,7 +2,7 @@
 import {
 	type CubeFace,
 	type CameraRotation,
-	getWASDMapping,
+	getWAXDQZMapping,
 } from '../core/faceOrientationKeyMapping';
 
 const faces: CubeFace[] = [
@@ -33,7 +33,7 @@ export function KeyMapPage() {
 							<div key={rotation} className='key-map-rotation-block'>
 								<h3>{rotation}°</h3>
 								<div className='key-map-keys'>
-									{Object.entries(getWASDMapping(face, rotation)).map(
+									{Object.entries(getWAXDQZMapping(face, rotation)).map(
 										([key, value]) => (
 											<KeyDisplay key={key} k={key} v={value} />
 										),

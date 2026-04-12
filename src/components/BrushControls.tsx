@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
 import {
-	getWASDMapping,
+	getWAXDQZMapping,
 	type CubeFace,
 	type CameraRotation,
 } from '../core/faceOrientationKeyMapping';
@@ -175,7 +175,7 @@ function BrushSelectorDrop() {
 			brushQuaternion.current.identity();
 			return;
 		}
-		const mapping = getWASDMapping(
+		const mapping = getWAXDQZMapping(
 			face as CubeFace,
 			rotation as CameraRotation,
 		) as any;
@@ -327,7 +327,7 @@ export function BrushControls({
 				return;
 			}
 
-			const mapping = getWASDMapping(
+			const mapping = getWAXDQZMapping(
 				face as CubeFace,
 				rotation as CameraRotation,
 			);
@@ -608,7 +608,7 @@ export function BrushControls({
 		} else {
 			window.removeEventListener('mousemove', handleMouseMove);
 			window.removeEventListener('mouseup', handleMouseUp);
-			window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener); 
+			window.removeEventListener('touchmove', handleTouchMove as unknown as EventListener);
 			window.removeEventListener('touchend', handleTouchEnd);
 		}
 
@@ -826,7 +826,7 @@ export function BrushControls({
 											type='range'
 											min={
 												selectedShape === 'Cube' ||
-												selectedShape === 'Square'
+													selectedShape === 'Square'
 													? 2
 													: 3
 											}
