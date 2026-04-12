@@ -15,6 +15,15 @@ export interface OrganismData {
 	parallelSteps?: number;
 	stuckTicks?: number;
 	eatenCount?: number;
+	// GOL Rules
+	surviveMin?: number;
+	surviveMax?: number;
+	birthMin?: number;
+	birthMax?: number;
+	birthMargin?: number;
+	neighborFaces?: boolean;
+	neighborEdges?: boolean;
+	neighborCorners?: boolean;
 }
 
 /**
@@ -52,6 +61,15 @@ export interface Organism {
 	stuckTicks: number;
 	/** Total cells consumed by grazing across the organism's lifetime. */
 	eatenCount: number;
+	// GOL Rules
+	surviveMin: number;
+	surviveMax: number;
+	birthMin: number;
+	birthMax: number;
+	birthMargin: number;
+	neighborFaces: boolean;
+	neighborEdges: boolean;
+	neighborCorners: boolean;
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
@@ -247,6 +265,14 @@ export function serializeOrganism(org: Organism): OrganismData {
 		parallelSteps: org.parallelSteps,
 		stuckTicks: org.stuckTicks,
 		eatenCount: org.eatenCount,
+		surviveMin: org.surviveMin,
+		surviveMax: org.surviveMax,
+		birthMin: org.birthMin,
+		birthMax: org.birthMax,
+		birthMargin: org.birthMargin,
+		neighborFaces: org.neighborFaces,
+		neighborEdges: org.neighborEdges,
+		neighborCorners: org.neighborCorners,
 	};
 }
 
@@ -267,6 +293,14 @@ export function deserializeOrganism(data: OrganismData, gridSize: number): Organ
 		parallelSteps: data.parallelSteps || 0,
 		stuckTicks: data.stuckTicks || 0,
 		eatenCount: data.eatenCount || 0,
+		surviveMin: data.surviveMin ?? 4, // Default values if not present
+		surviveMax: data.surviveMax ?? 5,
+		birthMin: data.birthMin ?? 5,
+		birthMax: data.birthMax ?? 5,
+		birthMargin: data.birthMargin ?? 0,
+		neighborFaces: data.neighborFaces ?? true,
+		neighborEdges: data.neighborEdges ?? true,
+		neighborCorners: data.neighborCorners ?? false,
 	};
 }
 
@@ -285,6 +319,14 @@ export function cloneOrganisms(orgs: Map<string, Organism>): Map<string, Organis
 			stuckTicks: org.stuckTicks,
 			eatenCount: org.eatenCount,
 			travelVector: org.travelVector ? [...org.travelVector] : undefined,
+			surviveMin: org.surviveMin,
+			surviveMax: org.surviveMax,
+			birthMin: org.birthMin,
+			birthMax: org.birthMax,
+			birthMargin: org.birthMargin,
+			neighborFaces: org.neighborFaces,
+			neighborEdges: org.neighborEdges,
+			neighborCorners: org.neighborCorners,
 		});
 	}
 	return newMap;
