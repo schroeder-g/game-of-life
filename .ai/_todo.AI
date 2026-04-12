@@ -32,16 +32,6 @@ If there are enumerated items in this section, add them to ACTIVE ITEMS section,
     *   Implement "No Brush", "Shapes", and "Organisms" brush selection UI.
     *   Add logic for creating organism brushes from selected organisms, inheriting their GOL rules.
     *   Control visibility of "Organisms" brush section based on `enableOrganisms` setting.
-
-
-**RECOMMENDED SEQUENCE**
- 
-
-
-
-
-
-********COMPLETED ITEMS ************
 *   **TODO-086:** [COMPLETED] Update `Grid3D.ts` `tick` method to accept `forbiddenBirths` (organism bodies + skins) to prevent non-organism cells from being born in organism territory.
 *   **TODO-085:** [COMPLETED] Implement refined Organism Grazing & Isolation logic:
     - Added `eatenCount` and apple-icon UI in Community Panel.
