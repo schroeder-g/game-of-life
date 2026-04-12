@@ -9,6 +9,7 @@ import {
 	getCentroid,
 	rotateCells,
 	deserializeOrganism,
+	computeSkin,
 } from './Organism';
 import { processOrganisms } from './organism-processing';
 
@@ -52,6 +53,10 @@ export class DefaultOrganismManager implements IOrganismManager {
 	private pastOrganisms: Map<string, Organism>[] = [];
 	private futureOrganisms: Map<string, Organism>[] = [];
 	private readonly historyLimit = 100;
+
+	// ROSTER: snapshot of each organism's living cells taken in beforeTick.
+	// Used in afterTick to identify non-organism cells birthed into organism territory by GOL.
+	private _beforeTickRosters = new Map<string, Set<string>>();
 
 	public get organisms() {
 		return this._organisms;
@@ -120,18 +125,42 @@ export class DefaultOrganismManager implements IOrganismManager {
 	public beforeTick(grid: Grid3D) {
 		if (this._organisms.size === 0) return;
 
+		const universalSpace = new Set<string>();
 		for (const [, org] of this._organisms) {
+			for (const key of org.livingCells) universalSpace.add(key);
+			for (const key of org.cytoplasm) universalSpace.add(key);
+		}
+
+		this._beforeTickRosters.clear();
+
+		for (const [id, org] of this._organisms) {
+			// Snapshot ROSTER: record which cells are legitimately this organism's DNA
+			this._beforeTickRosters.set(id, new Set(org.livingCells));
+
+			// 1. Clear organism's own living DNA from the grid (SILENT — these are its own cells from last tick)
 			for (const key of org.livingCells) {
 				const [x, y, z] = parseKey(key);
 				if (grid.get(x, y, z)) {
 					grid.set(x, y, z, false);
+					// NOT counted as eaten — this is the organism's own DNA
 				}
 			}
-			for (const key of org.cytoplasm) {
+
+			// 2. Skin grazing: clear foreign cells from the skin zone
+			let skinGrazingCount = 0;
+			const skin = computeSkin(org.cytoplasm, universalSpace, grid.size);
+			for (const key of skin) {
 				const [x, y, z] = parseKey(key);
 				if (grid.get(x, y, z)) {
 					grid.set(x, y, z, false);
+					skinGrazingCount++;
 				}
+			}
+
+			if (skinGrazingCount > 0) {
+				org.eatenCount += skinGrazingCount;
+				this.bumpVersion();
+				console.log(`[Grazing] ${org.name} found ${skinGrazingCount} cells in skin. Consuming...`);
 			}
 		}
 	}
@@ -140,6 +169,52 @@ export class DefaultOrganismManager implements IOrganismManager {
 		if (this._organisms.size === 0) return;
 
 		this.recordAction();
+
+		// ── ROSTER CHECK: Eat any GOL-birthed intruders within organism territory ──
+		// After the main GOL tick, any live cell within an organism's cytoplasm or skin
+		// that is NOT in that organism's beforeTick ROSTER is a non-organism birth.
+		const universalOrgSpace = new Set<string>();
+		for (const [, org] of this._organisms) {
+			for (const key of org.livingCells) universalOrgSpace.add(key);
+			for (const key of org.cytoplasm) universalOrgSpace.add(key);
+		}
+
+		for (const [id, org] of this._organisms) {
+			const roster = this._beforeTickRosters.get(id);
+			if (!roster) continue;
+
+			let intruderCount = 0;
+
+			// Scan cytoplasm for intruders (cells not in roster and not from another organism)
+			for (const key of org.cytoplasm) {
+				if (roster.has(key)) continue; // Own DNA — skip
+				if (universalOrgSpace.has(key) && !org.livingCells.has(key)) continue; // Other organism — skip
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					grid.set(x, y, z, false);
+					intruderCount++;
+				}
+			}
+
+			// Scan skin for intruders
+			const skin = computeSkin(org.cytoplasm, universalOrgSpace, grid.size);
+			for (const key of skin) {
+				if (roster.has(key)) continue;
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					grid.set(x, y, z, false);
+					intruderCount++;
+				}
+			}
+
+			if (intruderCount > 0) {
+				org.eatenCount += intruderCount;
+				this.bumpVersion();
+				console.log(`[Pollution] ${org.name} ate ${intruderCount} GOL-birthed intruders in territory.`);
+			}
+		}
+
+		this._beforeTickRosters.clear();
 
 		const { updatedOrganisms, gridMutations } = processOrganisms(
 			grid,

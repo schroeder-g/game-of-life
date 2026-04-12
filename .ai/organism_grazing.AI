@@ -1,0 +1,42 @@
+Organisms should move without regard for the state of non-organism-live-grid-cells.
+
+It is vital to keep live-non-organism cells out of an organism's cytoplasm, as this
+pollutes the organism's living "DNA" and causes it to grow out of control.
+
+At several stages of a tick, non-organism-live-grid-cells may potentially overlap 
+organism skin and cytoplasm cells.
+
+When that overlap happens, has happened, or is about to happen, the organism will "eat" those cells and 
+they will immediately die. This behavior writ large is called "Grazing."
+
+The Organism will track how many cells it has eaten and display that statistic in the 
+Community Selection panel.
+
+These instructions reiterate existing collision avoidance instructions. 
+Collision avoidance logic should NOT be changed, but GRAZING and ISOLATION support should be added 
+at each stage as follows:
+
+1. BEFORE TICK (OrganismManager):
+    - Take a snapshot of the organism's legitimate DNA cells (The "ROSTER").
+    - Silently clear the organism's own DNA from the grid.
+    - Graze: Eat any non-roster live cells within the skin and cytoplasm.
+2. ON TICK (SimulationContext / Grid3D):
+    - Prevent GOL births inside the organism's "Forbidden Zone" (DNA + Cytoplasm + Skin).
+    - This ensures that when ORGANISM SUPPORT is OFF, the simulation performs in its original fashion.
+3. AFTER TICK (processOrganisms):
+    - Sequence: Juke/Rotate -> Sanitization -> Isolated GOL -> Post-GOL Grazing.
+    - Movement Grazing: Preemptively eat non-organism cells in the Juke/Rotate paths.
+    - PRE-GOL SANITIZATION:
+        - Re-compute fresh Roster/Cytoplasm/Skin for the resolved (post-movement) position.
+        - THE SKIN MUST BE DEVOID OF LIVING CELLS (Eat ALL non-organism live cells in skin).
+        - Eat any non-roster live cells in the cytoplasm.
+    - ISOLATED GOL:
+        - Apply 3D-GOL rules ONLY among the organism's current roster and its own cytoplasm.
+        - EXTERNAL neighbors (non-organism cells) must NOT be counted in the organism's survival/birth logic.
+    - POST-GOL FILTERING:
+        - Keep only the SINGLE LARGEST connected component (≥3 cells). Discard smaller fragments.
+    - POST-GOL 2-CELL GRAZING:
+        - Re-compute final Roster from the GOL result.
+        - Eat any live non-roster cell WITHIN 2 CELLS of any cell in the new roster.
+    - RECONSTITUTE:
+        - Rebuild the permanent cytoplasm and skin around the final new roster.
