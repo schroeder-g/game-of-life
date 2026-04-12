@@ -122,14 +122,21 @@ export class DefaultOrganismManager implements IOrganismManager {
 		}
 	}
 
+	public getForbiddenBirths(): Set<string> {
+		const forbidden = new Set<string>();
+		for (const [, org] of this._organisms) {
+			for (const key of org.livingCells) forbidden.add(key);
+			for (const key of org.cytoplasm) forbidden.add(key);
+		}
+		return forbidden;
+	}
+
 	public beforeTick(grid: Grid3D) {
 		if (this._organisms.size === 0) return;
 
-		const universalSpace = new Set<string>();
-		for (const [, org] of this._organisms) {
-			for (const key of org.livingCells) universalSpace.add(key);
-			for (const key of org.cytoplasm) universalSpace.add(key);
-		}
+		// universalSpace is the union of all organism livingCells and cytoplasm
+		// It's used for skin grazing and determining what's "foreign"
+		const universalSpace = this.getForbiddenBirths();
 
 		this._beforeTickRosters.clear();
 

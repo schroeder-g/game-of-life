@@ -9,7 +9,8 @@ export type ShapeType =
 	| 'Sphere'
 	| 'Triangle'
 	| 'Pyramid'
-	| 'Selected Community';
+	| 'Selected Community'
+	| 'Organism Brush';
 
 export type Offset = [number, number, number];
 
@@ -237,4 +238,5 @@ export const SHAPES: ShapeType[] = [
 	'Sphere',
 	'Triangle',
 	'Pyramid',
+	// 'Organism Brush' is not directly selectable from the UI, it's set programmatically
 ];

@@ -48,9 +48,9 @@ export interface BrushActions {
 	setPaintMode: (
 		mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1),
 	) => void;
-	addOrganismBrush: (brush: OrganismBrush) => void; // Added action
-	removeOrganismBrush: (id: string) => void; // Added action
-	setSelectedOrganismBrushId: (id: string | null) => void; // Added action
+	addOrganismBrush: (brush: OrganismBrush) => void;
+	removeOrganismBrush: (id: string) => void;
+	selectOrganismBrush: (id: string | null) => void; // Renamed and modified
 }
 
 export interface BrushContextValue {
@@ -98,7 +98,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		[setOrganismBrushesArray],
 	);
 
-	const [selectedOrganismBrushId, setSelectedOrganismBrushId] =
+	const [selectedOrganismBrushId, _setSelectedOrganismBrushId] =
 		usePersistentState<string | null>(null, 'gol_selected_organism_brush');
 
 	// clear hollow when switching to an unsupported shape
@@ -108,15 +108,29 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		}
 	}, [selectedShape, isHollow]);
 
-	// Ensure selectedOrganismBrushId is valid
+	// Ensure selectedOrganismBrushId is valid and update shape/offsets if an organism brush is selected
 	useEffect(() => {
-		if (
-			selectedOrganismBrushId &&
-			!organismBrushes.has(selectedOrganismBrushId)
-		) {
-			setSelectedOrganismBrushId(null);
+		if (selectedOrganismBrushId) {
+			const brush = organismBrushes.get(selectedOrganismBrushId);
+			if (brush) {
+				// Set shape to 'Organism Brush' and custom offsets
+				setSelectedShape('Organism Brush');
+				setCustomOffsets(brush.cells);
+				// Organism brushes don't use shapeSize or isHollow
+				setShapeSize(1);
+				setIsHollow(false);
+			} else {
+				// If selected organism brush is no longer valid, clear it
+				_setSelectedOrganismBrushId(null);
+				setSelectedShape('Single Cell'); // Default to single cell
+				setCustomOffsets([]);
+			}
+		} else if (selectedShape === 'Organism Brush') {
+			// If no organism brush is selected but shape is 'Organism Brush', reset
+			setSelectedShape('Single Cell');
+			setCustomOffsets([]);
 		}
-	}, [organismBrushes, selectedOrganismBrushId]);
+	}, [selectedOrganismBrushId, organismBrushes, selectedShape]); // Added selectedShape to dependencies
 
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
@@ -133,10 +147,26 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			newBrushes.delete(id);
 			setOrganismBrushes(newBrushes);
 			if (selectedOrganismBrushId === id) {
-				setSelectedOrganismBrushId(null);
+				_setSelectedOrganismBrushId(null);
 			}
 		},
 		[organismBrushes, setOrganismBrushes, selectedOrganismBrushId],
+	);
+
+	const selectOrganismBrush = useCallback(
+		(id: string | null) => {
+			_setSelectedOrganismBrushId(id);
+			if (id) {
+				// When an organism brush is selected, set the shape type accordingly
+				setSelectedShape('Organism Brush');
+				// The useEffect above will handle setting customOffsets from the brush.cells
+			} else {
+				// If no organism brush is selected, revert to default shape
+				setSelectedShape('Single Cell');
+				setCustomOffsets([]);
+			}
+		},
+		[_setSelectedOrganismBrushId],
 	);
 
 	const value: BrushContextValue = {
@@ -151,15 +181,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			brushQuaternion,
 			customOffsets,
 			paintMode,
-			organismBrushes, // Added to state
-			selectedOrganismBrushId, // Added to state
+			organismBrushes,
+			selectedOrganismBrushId,
 		},
 		actions: {
 			setSelectedShape: (shape: ShapeType) => {
 				setShapeSelectionVersion(v => v + 1);
 				setSelectedShape(shape);
 				setShapeSize(prev => {
-					if (shape === 'Single Cell' || shape === 'None') {
+					if (shape === 'Single Cell' || shape === 'None' || shape === 'Organism Brush') {
 						return 1;
 					}
 					const minRequired =
@@ -169,8 +199,8 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					}
 					return prev;
 				});
-				// When selecting a shape, deselect any organism brush
-				setSelectedOrganismBrushId(null);
+				// When selecting a standard shape, deselect any organism brush
+				_setSelectedOrganismBrushId(null);
 			},
 			setShapeSize,
 			setIsHollow,
@@ -181,13 +211,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				setSelectedShape('Single Cell');
 				setShapeSize(1);
 				setPaintMode(0);
-				setSelectedOrganismBrushId(null); // Clear selected organism brush
+				_setSelectedOrganismBrushId(null); // Clear selected organism brush
+				setCustomOffsets([]); // Clear custom offsets
 			},
 			changeSize: (delta: number, maxGridSize: number) => {
 				if (
 					selectedShape === 'Single Cell' ||
 					selectedShape === 'None' ||
-					selectedShape === 'Selected Community'
+					selectedShape === 'Selected Community' ||
+					selectedShape === 'Organism Brush' // Organism brushes don't change size
 				)
 					return;
 				const minRequired =
@@ -233,12 +265,12 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 
 				setCustomOffsets(offsets);
 				setSelectedShape('Selected Community');
-				setSelectedOrganismBrushId(null); // Clear selected organism brush
+				_setSelectedOrganismBrushId(null); // Clear selected organism brush
 			},
 			setPaintMode,
-			addOrganismBrush, // Added action
-			removeOrganismBrush, // Added action
-			setSelectedOrganismBrushId, // Added action
+			addOrganismBrush,
+			removeOrganismBrush,
+			selectOrganismBrush, // Updated action name
 		},
 	};
 
