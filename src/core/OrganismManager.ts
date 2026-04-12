@@ -220,14 +220,6 @@ export class DefaultOrganismManager implements IOrganismManager {
 			grid,
 			this._organisms,
 			params.gridSize,
-			params.surviveMin,
-			params.surviveMax,
-			params.birthMin,
-			params.birthMax,
-			params.birthMargin,
-			params.neighborFaces,
-			params.neighborEdges,
-			params.neighborCorners,
 		);
 
 		if (gridMutations.length > 0) {
