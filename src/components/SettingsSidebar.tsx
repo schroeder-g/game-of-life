@@ -1446,7 +1446,7 @@ export function SettingsSidebar({
 						{!viewMode && <EnvironmentSection />}
 						{!viewMode && <BrushSection />} {/* Added BrushSection */}
 						{!viewMode && <SelectorPositionSection />}
-						{!viewMode && <EnvironmentRulesSection />}
+						<EnvironmentRulesSection />
 
 						{/* Organism Enable Toggle */}
 						<section className='menu-section'>
