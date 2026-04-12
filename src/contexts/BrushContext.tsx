@@ -96,7 +96,14 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		},
 	});
 	const organismBrushes = useMemo(
-		() => new Map(organismBrushesArray.map(b => [b.id, b])),
+		() => {
+			// Ensure organismBrushesArray is an array before calling map
+			if (!Array.isArray(organismBrushesArray)) {
+				console.error("organismBrushesArray is not an array, returning empty Map:", organismBrushesArray);
+				return new Map<string, OrganismBrush>();
+			}
+			return new Map(organismBrushesArray.map(b => [b.id, b]));
+		},
 		[organismBrushesArray],
 	);
 	const setOrganismBrushes = useCallback(
