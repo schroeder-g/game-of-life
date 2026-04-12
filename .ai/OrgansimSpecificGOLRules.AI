@@ -1,0 +1,80 @@
+The Brush list should include a brush called "No Brush" that hides the brush and disables the remainder of Brush controls.
+
+The Brush list will be divided into three main items:
+
+ No Brush
+ Shapes
+ Organisms
+
+Shapes and Organism Brush menu items will have submenu items: Shapes, of shapes (all current shape brushes). 
+
+Organisms, of organisms (to be added by user, later)
+
+
+ The Organisms Brush section will only be visible when Organism Support is ON in settings.
+
+
+GOL Rules consist of settings for 
+    Neighbors: Faces, Edges, and/or Corners ; 
+     Survive Min/Max; 
+     Birth Min/Max; 
+     Birth Margin.
+
+
+Organism and non-organism cells apply GOL rules separately, but presently and by default they obey the same rules (specified in settings)
+
+I would like individual Organisms to have different rules from one another, and from the non-organism cells in the cube  ("The Living Environment")
+
+When an organism is initially created through the "Create Organism" button, it would inherit the current rules of the environment (Settings > Rules), and then store them within the Organism data structure.
+
+If the Settings > Rules change, they would only change for the environment, not for any organisms.
+
+Furthermore, when using the Create Brush function for a selected Organism (Rather than just a Community that is not an organism), a new Brush record should be added to the Brush > Organisms list, and that record should record the Organism's governing GOL Rules.
+
+Then, when Adding an Organism to the cube via an Organism Brush, the new organism will inherit the GOL rules of that organism brush.
+
+When adding an Organism Brush with the same name as an existing Organism Brush, the existing brush will be overwritten.
+
+Organism Brushes added by the user will be stored in local storage. (Later I will give you brushes to pre-load)
+
+---
+
+## Technical & Design Questions
+
+### 1. Brush UI & Navigation
+- **"No Brush" Placement**: Should the "No Brush" item be a standalone button at the top of the Brush list, or the first item within a specific category?
+Standalone at the top, above Shapes and Organisms (if Organisms are enabled)
+
+
+- **Submenu UX**: How should the transition between "Shapes" and "Organisms" look and feel? (e.g., standard dropdown submenus, or a segmented control at the top of the panel?)
+Side-drop-down list.
+
+### 2. GOL Rules Architecture
+- **Organism State**: Should the `Organism` interface be extended to include its specific `surviveMin`, `surviveMax`, `birthMin`, and `birthMax` parameters?
+The Organism class/type should have capacity to store every rule setting (8 total)
+
+- **Rule Priorities**: If an environment cell is adjacent to both the "Environment" and an "Organism," which set of rules should govern its potential birth? (Currently, organisms prevent births in their territory, but the boundary logic might need refinement).
+A cell in non-organism space shall be subject only to the environment's current rules (which can be changed at any time via the Settings > Rules controls)
+A cell in organism space shall be subject only to that Organism's GOL rules.
+
+
+- **Rule Persistence**: When an organism is saved to a brush, should we also store the `neighborFaces/Edges/Corners` settings it was using, or only the count-based rules?
+Save all 8 rule data.
+
+
+### 3. Organism Brushes & Storage
+- **Offset Calculation**: For "Organism Brushes," should we store cells as absolute grid coordinates (tied to a specific spot in the world) or as relative offsets from a centroid (allowing the brush to be painted anywhere)?
+From a centroid.
+
+- **Naming Conflicts**: When overwriting an Organism Brush with the same name, should the user be prompted, or is it a silent overwrite?
+
+Silent 
+
+- **Metadata**: Should we store the organism's original `skinColor` and `name` within the brush record, or only its geometric shape and rules?
+Just its shape and the rules.
+
+### 4. Component Visibility
+- **Dynamic Hiding**: When "Organism Support" is OFF, should the entire "Organisms" brush section be completely removed from the DOM, or just disabled/greyed out?
+Hidden. If removed from the DOM, it should be possible to be reinserted if  Organism support is turned back ON.
+
+
