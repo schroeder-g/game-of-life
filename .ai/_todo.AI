@@ -4,18 +4,18 @@ Always remember GENERAL RULES (Bottom)
 If there are enumerated items in this section, add them to ACTIVE ITEMS section, and remove those lines from this section.
 
 **ACTIVE ITEMS**
-*   **TODO-089:** Update `SimulationContext` to:
-    *   Pass `forbiddenBirths` (union of all organism bodies and skins) to `grid.tick()`.
-    *   Ensure new organisms created via "Create Organism" button inherit current environment GOL rules.
-    *   Integrate organism brush selection and application logic.
-*   **TODO-090:** Update `BrushContext` to:
-    *   Manage the active brush type ("No Brush", "Shape", "Organism").
-    *   Store and retrieve organism brushes.
-    *   Provide methods for applying organism brushes to the grid.
-*   **TODO-091:** Update `OrganismManager.ts` to ensure new organisms inherit environment rules when created. (This might be handled in `SimulationContext` when calling `OrganismManager.addOrganism`).
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-091:** [COMPLETED] Update `OrganismManager.ts` to ensure new organisms inherit environment rules when created. (This was handled in `SimulationContext` when calling `OrganismManager.addOrganism`).
+*   **TODO-090:** [COMPLETED] Update `BrushContext` to:
+    *   Manage the active brush type ("No Brush", "Shape", "Organism").
+    *   Store and retrieve organism brushes.
+    *   Provide methods for applying organism brushes to the grid.
+*   **TODO-089:** [COMPLETED] Update `SimulationContext` to:
+    *   Pass `forbiddenBirths` (union of all organism bodies and skins) to `grid.tick()`.
+    *   Ensure new organisms created via "Create Organism" button inherit current environment GOL rules.
+    *   Integrate organism brush selection and application logic.
 *   **TODO-088:** [COMPLETED] Implement organism brush management and persistence:
     *   Create a new type/interface for `OrganismBrush` (shape + GOL rules).
     *   Store organism brushes in local storage using `usePersistentState` or similar.
