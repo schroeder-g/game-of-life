@@ -72,6 +72,23 @@ export interface Organism {
 	neighborCorners: boolean;
 }
 
+/**
+ * Represents a saved organism shape and its GOL rules, used as a brush.
+ */
+export interface OrganismBrush {
+	id: string;
+	name: string;
+	cells: Array<[number, number, number]>; // Relative offsets from centroid
+	surviveMin: number;
+	surviveMax: number;
+	birthMin: number;
+	birthMax: number;
+	birthMargin: number;
+	neighborFaces: boolean;
+	neighborEdges: boolean;
+	neighborCorners: boolean;
+}
+
 /** Parses "x,y,z" key to [x, y, z]. */
 export function parseKey(key: string): [number, number, number] {
 	const parts = key.split(',');
