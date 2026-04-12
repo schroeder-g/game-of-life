@@ -1460,7 +1460,7 @@ export function SettingsSidebar({
 							</label>
 						</section>
 
-						<OrganismsSection />
+						<OrganismsSection enableOrganisms={enableOrganisms} />
 						<TestsSection />
 					</>
 				</div>
@@ -1469,10 +1469,14 @@ export function SettingsSidebar({
 	);
 }
 
-function OrganismsSection() {
+interface OrganismsSectionProps {
+	enableOrganisms: boolean;
+}
+
+function OrganismsSection({ enableOrganisms }: OrganismsSectionProps) {
 	const {
-		state: { showCytoplasm, showSkin, enableOrganisms },
-		actions: { setShowCytoplasm, setShowSkin, setEnableOrganisms },
+		state: { showCytoplasm, showSkin },
+		actions: { setShowCytoplasm, setShowSkin },
 	} = useSimulation();
 
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
