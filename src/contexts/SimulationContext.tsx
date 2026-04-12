@@ -910,13 +910,35 @@ export function SimulationProvider({
 				stuckTicks: 0,
 				travelVector: [0, 0, 1], // Initial direction for new organisms
 				centroid: getCentroid(livingCells),
+				// Inherit current GOL rules from the environment
+				surviveMin: surviveMin,
+				surviveMax: surviveMax,
+				birthMin: birthMin,
+				birthMax: birthMax,
+				birthMargin: birthMargin,
+				neighborFaces: neighborFaces,
+				neighborEdges: neighborEdges,
+				neighborCorners: neighborCorners,
 			};
 
 			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
 			setSelectedOrganismId(newOrganism.id);
 		},
-		[gridSize, organismManagerRef, setOrganismsVersion, setSelectedOrganismId],
+		[
+			gridSize,
+			organismManagerRef,
+			setOrganismsVersion,
+			setSelectedOrganismId,
+			surviveMin,
+			surviveMax,
+			birthMin,
+			birthMax,
+			birthMargin,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		],
 	);
 
 	const disorganizeOrganism = useCallback(
