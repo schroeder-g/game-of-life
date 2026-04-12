@@ -718,6 +718,22 @@ export function SelectedCommunityPanel({
 													))}
 												</div>
 											</div>
+
+											{/* Row 4: Eaten Count */}
+											<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
+													{/* Apple body */}
+													<path d="M12 5C8.7 5 6 7.7 6 11s2.7 6 6 6 6-2.7 6-6c0-0.8-0.2-1.5-0.5-2.2" />
+													{/* Stem */}
+													<path d="M12 5V3" />
+													{/* Bite mark */}
+													<path d="M18 9.5c0.5 0.5 1 0.5 1.5 0" />
+													<path d="M17.5 11c0.5 0.5 1 0.5 1.5 0" />
+													<path d="M18 12.5c0.5 0.5 1 0.5 1.5 0" />
+												</svg>
+												<span style={{ opacity: 0.7 }}>Eaten:</span>
+												<span style={{ fontWeight: 'bold', color: '#ff4d4d' }}>{matchingOrganism.eatenCount || 0}</span>
+											</div>
 										</>
 									)}
 								</div>

@@ -14,6 +14,7 @@ export interface OrganismData {
 	avoidanceSteps?: number;
 	parallelSteps?: number;
 	stuckTicks?: number;
+	eatenCount?: number;
 }
 
 /**
@@ -49,6 +50,8 @@ export interface Organism {
 	parallelSteps: number;
 	/** Consecutive steps where the organism failed to move (blocked). */
 	stuckTicks: number;
+	/** Total cells consumed by grazing across the organism's lifetime. */
+	eatenCount: number;
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
@@ -61,6 +64,20 @@ export function parseKey(key: string): [number, number, number] {
 export function makeKey(x: number, y: number, z: number): string {
 	return `${x},${y},${z}`;
 }
+
+/** All 26 neighbor offsets. */
+export const UNIT_OFFSETS: Array<[number, number, number]> = (() => {
+	const offsets: Array<[number, number, number]> = [];
+	for (let dz = -1; dz <= 1; dz++) {
+		for (let dy = -1; dy <= 1; dy++) {
+			for (let dx = -1; dx <= 1; dx++) {
+				if (dx === 0 && dy === 0 && dz === 0) continue;
+				offsets.push([dx, dy, dz]);
+			}
+		}
+	}
+	return offsets;
+})();
 
 /**
  * Computes the Cytoplasm (1-cell-deep buffer) for a set of living cells.
@@ -105,6 +122,30 @@ export function computeCytoplasm(
 		}
 	}
 	return cytoplasm;
+}
+
+/**
+ * Skin = 1-cell neighbor ring around cytoplasm that is NOT part of any organism's space.
+ */
+export function computeSkin(
+	cytoplasmSpace: Set<string>,
+	allOrganismSpaces: Set<string>,
+	gridSize: number,
+): Set<string> {
+	const skin = new Set<string>();
+	for (const cytoKey of cytoplasmSpace) {
+		const [cx, cy, cz] = parseKey(cytoKey);
+		for (const [dx, dy, dz] of UNIT_OFFSETS) {
+			const nx = cx + dx,
+				ny = cy + dy,
+				nz = cz + dz;
+			const nk = makeKey(nx, ny, nz);
+			if (!allOrganismSpaces.has(nk)) {
+				skin.add(nk);
+			}
+		}
+	}
+	return skin;
 }
 
 /**
@@ -205,6 +246,7 @@ export function serializeOrganism(org: Organism): OrganismData {
 		avoidanceSteps: org.avoidanceSteps,
 		parallelSteps: org.parallelSteps,
 		stuckTicks: org.stuckTicks,
+		eatenCount: org.eatenCount,
 	};
 }
 
@@ -224,6 +266,7 @@ export function deserializeOrganism(data: OrganismData, gridSize: number): Organ
 		avoidanceSteps: data.avoidanceSteps || 0,
 		parallelSteps: data.parallelSteps || 0,
 		stuckTicks: data.stuckTicks || 0,
+		eatenCount: data.eatenCount || 0,
 	};
 }
 
@@ -240,6 +283,7 @@ export function cloneOrganisms(orgs: Map<string, Organism>): Map<string, Organis
 			avoidanceSteps: org.avoidanceSteps,
 			parallelSteps: org.parallelSteps,
 			stuckTicks: org.stuckTicks,
+			eatenCount: org.eatenCount,
 			travelVector: org.travelVector ? [...org.travelVector] : undefined,
 		});
 	}

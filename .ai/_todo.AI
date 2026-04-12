@@ -1,6 +1,5 @@
 Always remember GENERAL RULES (Bottom)
 
-**NEXT**
 
 If there are enumerated items in this section, add them to ACTIVE ITEMS section, and remove those lines from this section.
 
@@ -21,6 +20,11 @@ If there are enumerated items in this section, add them to ACTIVE ITEMS section,
 *   **TODO-056:** Review `MANUAL_TESTS` in `src/data/manual-tests.ts` to identify and implement automated versions for `UC-` and `UX-` tests. - **PARTIALLY DONE: Automated tests for UC-1 and UC-2 implemented in SimulationContext.test.tsx.**
 
 ********COMPLETED ITEMS ************
+*   **TODO-085:** [COMPLETED] Implement refined Organism Grazing & Isolation logic:
+    - Added `eatenCount` and apple-icon UI in Community Panel.
+    - Implemented `beforeTick` ROSTER snapshot and DNA clearing.
+    - Added `forbiddenBirths` zone (DNA + Cyto + Skin) to prevent GOL births inside organisms.
+    - Implemented **Step 4 Isolated GOL Protocol** in `processOrganisms`: Isolated GOL (no external cells), Single Largest Component filter, and 2-cell radius post-GOL grazing.
 *   **TODO-084:** [COMPLETED] Implement 'eating' behavior for organisms (BeforeTick consumption of non-organism cells) and track/display 'Eaten' count in the Community panel.
 *   **TODO-082:** [COMPLETED] Make the "Toggle Community Panel" button icon look like a "Splat" (thin lines connecting to a central glob, swelling into globs at their ends).
 *   **TODO-083:** [COMPLETED] Fix z-index issue where the Help Menu Dropdown is obscured by the Community Selection panel.

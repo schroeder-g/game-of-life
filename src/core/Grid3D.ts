@@ -255,6 +255,7 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 		birthMin: number,
 		birthMax: number,
 		birthMargin: number = 0,
+		forbiddenBirths?: Set<string>,
 	): void {
 		// When we tick forward, we clear any "future" states from rewinding
 		this.futureHistory = [];
@@ -282,6 +283,12 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 							neighbors >= surviveMin && neighbors <= surviveMax;
 					} else {
 						// Check birth conditions
+						const ck = key(x, y, z);
+						if (forbiddenBirths?.has(ck)) {
+							newCells[z][y][x] = false;
+							continue;
+						}
+
 						const wouldBeBorn =
 							neighbors >= birthMin && neighbors <= birthMax;
 

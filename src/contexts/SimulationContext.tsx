@@ -24,6 +24,7 @@ import {
 	getCentroid,
 	rotateCells,
 	rotateVector,
+	computeSkin,
 } from '../core/Organism';
 import { ORGANISM_NAMES } from '../data/organism-names';
 import { processOrganisms } from '../core/organism-processing';
@@ -631,10 +632,26 @@ export function SimulationProvider({
 			gridRef.current.neighborEdges = neighborEdges;
 			gridRef.current.neighborCorners = neighborCorners;
 			// GoL Phase 1: tick non-organism cells only
+			let forbiddenBirths: Set<string> | undefined = undefined;
 			if (enableOrganisms) { 
 				organismManagerRef.current.beforeTick(gridRef.current); 
+				forbiddenBirths = new Set<string>();
+				// Full organism territory = DNA + cytoplasm + skin
+				// No GOL births are allowed anywhere inside an organism's body or skin layer.
+				const orgUniversalSpace = new Set<string>();
+				for (const [, org] of organismManagerRef.current.organisms) {
+					for (const key of org.livingCells) orgUniversalSpace.add(key);
+					for (const key of org.cytoplasm) orgUniversalSpace.add(key);
+				}
+				for (const [, org] of organismManagerRef.current.organisms) {
+					for (const key of org.livingCells) forbiddenBirths.add(key);
+					for (const key of org.cytoplasm) forbiddenBirths.add(key);
+					// Also forbid the skin layer
+					const skin = computeSkin(org.cytoplasm, orgUniversalSpace, gridSize);
+					for (const key of skin) forbiddenBirths.add(key);
+				}
 			}
-			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin, forbiddenBirths);
 			if (enableOrganisms) { 
 				organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
 				setOrganismsVersion(organismManagerRef.current.version);
@@ -683,10 +700,24 @@ export function SimulationProvider({
 		gridRef.current.neighborEdges = neighborEdges;
 		gridRef.current.neighborCorners = neighborCorners;
 		// GoL Phase 1: tick non-organism cells only
+		let forbiddenBirths: Set<string> | undefined = undefined;
 		if (enableOrganisms) { 
 			organismManagerRef.current.beforeTick(gridRef.current); 
+			forbiddenBirths = new Set<string>();
+			// Full organism territory = DNA + cytoplasm + skin
+			const orgUniversalSpace2 = new Set<string>();
+			for (const [, org] of organismManagerRef.current.organisms) {
+				for (const key of org.livingCells) orgUniversalSpace2.add(key);
+				for (const key of org.cytoplasm) orgUniversalSpace2.add(key);
+			}
+			for (const [, org] of organismManagerRef.current.organisms) {
+				for (const key of org.livingCells) forbiddenBirths.add(key);
+				for (const key of org.cytoplasm) forbiddenBirths.add(key);
+				const skin = computeSkin(org.cytoplasm, orgUniversalSpace2, gridSize);
+				for (const key of skin) forbiddenBirths.add(key);
+			}
 		}
-		gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin);
+		gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin, forbiddenBirths);
 		if (enableOrganisms) { 
 			organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
 			setOrganismsVersion(organismManagerRef.current.version);

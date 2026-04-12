@@ -10,6 +10,8 @@ import {
 	getCentroid,
 	rotateVector,
 	rotateCells,
+	computeSkin,
+	UNIT_OFFSETS,
 } from './Organism';
 
 // ── All 24 unique 90-degree orientations ──────────────────────────────
@@ -50,37 +52,6 @@ interface ProcessOrganismsResult {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-
-function unitOffsets(): Array<[number, number, number]> {
-	const offsets: Array<[number, number, number]> = [];
-	for (let dz = -1; dz <= 1; dz++) {
-		for (let dy = -1; dy <= 1; dy++) {
-			for (let dx = -1; dx <= 1; dx++) {
-				if (dx === 0 && dy === 0 && dz === 0) continue;
-				offsets.push([dx, dy, dz]);
-			}
-		}
-	}
-	return offsets;
-}
-
-const UNIT_OFFSETS = unitOffsets();
-
-/** Skin = 1-cell neighbor ring around cytoplasm that is NOT part of any organism's space. */
-function computeSkin(cytoplasmSpace: Set<string>, allOrganismSpaces: Set<string>, gridSize: number): Set<string> {
-    const skin = new Set<string>();
-    for (const cytoKey of cytoplasmSpace) {
-        const [cx, cy, cz] = parseKey(cytoKey);
-        for (const [dx, dy, dz] of UNIT_OFFSETS) {
-            const nx = cx + dx, ny = cy + dy, nz = cz + dz;
-            const nk = makeKey(nx, ny, nz);
-            if (!allOrganismSpaces.has(nk)) {
-                skin.add(nk);
-            }
-        }
-    }
-    return skin;
-}
 
 /** Find skin cells that are outside the cube bounds [0, gridSize-1]. */
 function findSkinWallViolations(skin: Set<string>, gridSize: number): { violations: Set<string>; wallNormal: [number, number, number] } {
@@ -162,6 +133,17 @@ function simulateCytoplasmTick(
     const tempLiving = new Set<string>(otherLivingKeys);
     proposedCells.forEach(([x,y,z]) => tempLiving.add(makeKey(x,y,z)));
 
+    // ── Bounding box cap: births only allowed within original footprint + 1 cell margin ──
+    // This prevents cancerous growth where cytoplasm births expand DNA, which expands
+    // the cytoplasm zone next tick, enabling more births — exponential runaway.
+    let bbMinX = Infinity, bbMaxX = -Infinity, bbMinY = Infinity, bbMaxY = -Infinity, bbMinZ = Infinity, bbMaxZ = -Infinity;
+    for (const [x, y, z] of proposedCells) {
+        if (x < bbMinX) bbMinX = x; if (x > bbMaxX) bbMaxX = x;
+        if (y < bbMinY) bbMinY = y; if (y > bbMaxY) bbMaxY = y;
+        if (z < bbMinZ) bbMinZ = z; if (z > bbMaxZ) bbMaxZ = z;
+    }
+    bbMinX--; bbMaxX++; bbMinY--; bbMaxY++; bbMinZ--; bbMaxZ++;
+
     const proposedCytoplasm = computeCytoplasm(new Set(proposedCells.map(c => makeKey(...c))), gridSize);
     const testZone = new Set<string>([...proposedCells.map(c => makeKey(...c)), ...proposedCytoplasm]);
 
@@ -197,9 +179,13 @@ function simulateCytoplasmTick(
         const neighbors = countNeighbors(x, y, z);
         
         if (isAlive) {
+            // Existing DNA cells can survive freely
             if (neighbors >= surviveMin && neighbors <= surviveMax) nextLiving.push([x, y, z]);
         } else {
-            if (neighbors >= birthMin && neighbors <= birthMax) nextLiving.push([x, y, z]);
+            // Births ONLY within the original bounding box + 1 margin — prevents cancerous expansion
+            if (x >= bbMinX && x <= bbMaxX && y >= bbMinY && y <= bbMaxY && z >= bbMinZ && z <= bbMaxZ) {
+                if (neighbors >= birthMin && neighbors <= birthMax) nextLiving.push([x, y, z]);
+            }
         }
     }
     return nextLiving;
@@ -255,6 +241,13 @@ export function processOrganisms(
 	// Track the cells each organism will use going into GoL Phase 2.
 	const resolvedCells = new Map<string, Array<[number, number, number]>>();
 	const resolvedVectors = new Map<string, [number, number, number]>();
+	const movementGrazingCount = new Map<string, number>();
+
+	// Track all space currently occupied by any organism (Body: DNA + Cytoplasm)
+	const globalOrganismOccupied = new Set<string>();
+	for (const body of allOrganismBodies.values()) {
+		for (const k of body) globalOrganismOccupied.add(k);
+	}
 
 	for (const id of randomOrder) {
 		const organism = organismsMap.get(id)!;
@@ -455,6 +448,17 @@ export function processOrganisms(
 				const candidateOverlaps = findSkinOverlaps(candidateSkin, otherSkins);
 				const { violations: candidateWallViolations } = findSkinWallViolations(candidateSkin, gridSize);
 
+				// Identify grazing opportunities in the NEW position (non-organism cells)
+				let grazingOpportunities = 0;
+				// Body + Skin
+				const fullCandidateSpace = new Set([...candidateBody, ...candidateSkin]);
+				for (const key of fullCandidateSpace) {
+					const [x, y, z] = parseKey(key);
+					if (grid.get(x, y, z)) {
+						grazingOpportunities++;
+					}
+				}
+
 				const penalty = candidateWallViolations.size + candidateOverlaps.size;
 
 				// Skip if penalty is NOT improved AND it's not a perfect candidate
@@ -471,6 +475,7 @@ export function processOrganisms(
 					skinOutside: candidateWallViolations.size,
 					organismOverlaps: candidateOverlaps.size,
 					penalty,
+					grazingCount: grazingOpportunities,
 				};
 
 				if (penalty === 0) {
@@ -512,11 +517,43 @@ export function processOrganisms(
 			}
 			allOrganismSkins.set(id, computeSkin(newCyto, universalSpace, gridSize));
 		} else {
-			// FREEZE: no safe rotation found
-			console.log(`[NAV] ID:${id} FROZEN — no safe rotation found`);
-			frozenOrganisms.add(id);
 			resolvedCells.set(id, currentCells);
 			resolvedVectors.set(id, travelVector);
+		}
+
+		// Update global occupancy for movement
+		if (bestCandidate) {
+			const oldBody = allOrganismBodies.get(id);
+			if (oldBody) {
+				for (const k of oldBody) globalOrganismOccupied.delete(k);
+			}
+			const newLivingSet = new Set(bestCandidate.cells.map(c => makeKey(...c)));
+			const newCyto = computeCytoplasm(newLivingSet, gridSize);
+			for (const k of newLivingSet) globalOrganismOccupied.add(k);
+			for (const k of newCyto) globalOrganismOccupied.add(k);
+		}
+
+		// Store grazing count for Step 4
+		movementGrazingCount.set(id, bestCandidate?.grazingCount || 0);
+
+		// Apply movement grazing if any
+		if (bestCandidate && bestCandidate.grazingCount > 0) {
+			const body = new Set<string>();
+			const livingSet = new Set(bestCandidate.cells.map(c => makeKey(...c)));
+			const cyto = computeCytoplasm(livingSet, gridSize);
+			for (const k of livingSet) body.add(k);
+			for (const k of cyto) body.add(k);
+
+			const skin = computeSkin(cyto, allOrganismBodies.get(id) || new Set(), gridSize); // Approx
+			const fullSpace = new Set([...body, ...skin]);
+
+			for (const key of fullSpace) {
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					gridMutations.push([x, y, z, false]);
+					// We'll add this to org.eatenCount later when returning updatedOrganisms
+				}
+			}
 		}
 	}
 
@@ -537,7 +574,8 @@ export function processOrganisms(
 		const resolvedVector = resolvedVectors.get(id)!;
 		const isFrozen = frozenOrganisms.has(id);
 
-		// Clear the GoL-produced cells in the organism's PREVIOUS territory
+		// ── PRE-GOL STEP A: Clear previous territory ──────────────────
+		// Any GOL-produced cells in the organism's old space must be removed first.
 		const previousTerritory = new Set([...organism.previousLivingCells, ...organism.cytoplasm]);
 		for (const key of previousTerritory) {
 			if (globalLivingKeys.has(key)) {
@@ -547,52 +585,78 @@ export function processOrganisms(
 			}
 		}
 
-		let finalCells: Array<[number, number, number]>;
+		// ── PRE-GOL STEP 2: Fresh Roster, Cytoplasm, Skin from resolved DNA ──
+		// The ROSTER is the ground truth of what belongs to this organism.
+		const roster = new Set(resolvedCellsForOrg.map(c => makeKey(...c)));
+		const preCyto = computeCytoplasm(roster, gridSize);
+		const preSkin = computeSkin(preCyto, globalOrganismOccupied, gridSize);
 
-		if (isFrozen) {
-			// Frozen: keep original cells, skip GoL
-			finalCells = resolvedCellsForOrg;
-		} else {
-			// Non-frozen: apply GoL Phase 2 to resolved cells
-			const otherLiving = new Set(globalLivingKeys);
-			// Remove self from the "other" set
-			for (const c of resolvedCellsForOrg) {
-				otherLiving.delete(makeKey(...c));
+		// ── PRE-GOL STEP 3: THE SKIN MUST BE DEVOID OF LIVING CELLS ─────
+		// Eat ALL living cells in skin unconditionally (they do not belong there).
+		// Eat all non-roster living cells in cytoplasm.
+		let preGolEaten = 0;
+		for (const key of preSkin) {
+			if (globalOrganismOccupied.has(key)) continue; // respect other organisms
+			const [x, y, z] = parseKey(key);
+			if (grid.get(x, y, z)) {
+				grid.set(x, y, z, false);
+				globalLivingKeys.delete(key);
+				preGolEaten++;
 			}
-
-			const golResult = simulateCytoplasmTick(
-				resolvedCellsForOrg,
-				otherLiving,
-				gridSize,
-				surviveMin, surviveMax,
-				birthMin, birthMax, birthMargin,
-				neighborFaces, neighborEdges, neighborCorners,
-			);
-
-			// Keep only the largest connected component (≥3 cells)
-			const golSet = new Set(golResult.map(c => makeKey(...c)));
-			const allComps: Array<Set<string>> = [];
-			const visited = new Set<string>();
-			for (const seed of golSet) {
-				if (!visited.has(seed)) {
-					const comp = getConnectedComponent(seed, golSet);
-					if (comp.size > 2) allComps.push(comp);
-					comp.forEach(k => visited.add(k));
-				}
-			}
-
-			const mergedSet = new Set<string>();
-			for (const comp of allComps) comp.forEach(k => mergedSet.add(k));
-
-			if (mergedSet.size >= 3) {
-				finalCells = Array.from(mergedSet).map(parseKey);
-			} else {
-				// GoL killed the organism — fall back to resolved cells
-				finalCells = resolvedCellsForOrg;
+		}
+		for (const key of preCyto) {
+			if (roster.has(key)) continue; // own DNA — skip
+			if (globalOrganismOccupied.has(key)) continue; // other organism — skip
+			const [x, y, z] = parseKey(key);
+			if (grid.get(x, y, z)) {
+				grid.set(x, y, z, false);
+				globalLivingKeys.delete(key);
+				preGolEaten++;
 			}
 		}
 
-		// Place final cells on the grid
+		// ── STEP 4: ISOLATED GOL ─────────────────────────────────────
+		// 3D-GOL rules run ONLY among this organism's cytoplasm + roster.
+		// Pass EMPTY otherLivingKeys — the GOL universe is the organism's own cells only.
+		// External non-organism cells must NOT influence the organism's survival/birth.
+		const golResult = simulateCytoplasmTick(
+			resolvedCellsForOrg,
+			new Set<string>(), // ISOLATED: no external neighbors
+			gridSize,
+			surviveMin, surviveMax,
+			birthMin, birthMax, birthMargin,
+			neighborFaces, neighborEdges, neighborCorners,
+		);
+
+		// Keep only the SINGLE LARGEST connected component (≥3 cells).
+		// Merging all components ≥3 allows fragmented clusters spread across the grid
+		// to combine, creating a huge bounding box and therefore a huge cytoplasm. 
+		const golSet = new Set(golResult.map(c => makeKey(...c)));
+		let largestComp = new Set<string>();
+		const visited = new Set<string>();
+		for (const seed of golSet) {
+			if (!visited.has(seed)) {
+				const comp = getConnectedComponent(seed, golSet);
+				comp.forEach(k => visited.add(k));
+				if (comp.size > largestComp.size) largestComp = comp;
+			}
+		}
+
+		let finalCells: Array<[number, number, number]>;
+		if (largestComp.size >= 3) {
+			finalCells = Array.from(largestComp).map(parseKey);
+		} else {
+			// GOL killed the organism — allow death
+			finalCells = [];
+		}
+
+		if (finalCells.length === 0) {
+			const oldBody = allOrganismBodies.get(id);
+			if (oldBody) for (const k of oldBody) globalOrganismOccupied.delete(k);
+			continue;
+		}
+
+		// ── PLACE FINAL CELLS ON GRID ─────────────────────────────────
 		const roundedFinal: Array<[number, number, number]> = [];
 		for (const [x, y, z] of finalCells) {
 			const rx = Math.round(x), ry = Math.round(y), rz = Math.round(z);
@@ -603,8 +667,49 @@ export function processOrganisms(
 			}
 		}
 
+		// ── STEP 6: 2-CELL GRAZING ────────────────────────────────────
 		const finalLivingSet = new Set(roundedFinal.map(c => makeKey(...c)));
+
+		// Eat any living cell within 2 cells of the new roster that is not in
+		// the roster or another organism's space.
+		let postGolEaten = 0;
+		for (const key of finalLivingSet) {
+			const [cx, cy, cz] = parseKey(key);
+			for (let dz = -2; dz <= 2; dz++) {
+				for (let dy = -2; dy <= 2; dy++) {
+					for (let dx = -2; dx <= 2; dx++) {
+						if (dx === 0 && dy === 0 && dz === 0) continue;
+						const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+						if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize || nz < 0 || nz >= gridSize) continue;
+						const nk = makeKey(nx, ny, nz);
+						if (finalLivingSet.has(nk)) continue; // own DNA
+						if (globalOrganismOccupied.has(nk)) continue; // other organism
+						if (grid.get(nx, ny, nz)) {
+							grid.set(nx, ny, nz, false);
+							gridMutations.push([nx, ny, nz, false]);
+							globalLivingKeys.delete(nk);
+							postGolEaten++;
+						}
+					}
+				}
+			}
+		}
+
+		// ── STEP 7: RECONSTITUTE cytoplasm and skin ───────────────────
 		const finalCytoplasm = computeCytoplasm(finalLivingSet, gridSize);
+
+		// Update global occupancy with this organism's final footprint
+		const oldBody = allOrganismBodies.get(id);
+		if (oldBody) for (const k of oldBody) globalOrganismOccupied.delete(k);
+		finalLivingSet.forEach(k => globalOrganismOccupied.add(k));
+		finalCytoplasm.forEach(k => globalOrganismOccupied.add(k));
+
+		const finalSkin = computeSkin(finalCytoplasm, globalOrganismOccupied, gridSize);
+
+		const finalEatenCount = (organism.eatenCount || 0)
+			+ (movementGrazingCount.get(id) || 0)
+			+ preGolEaten
+			+ postGolEaten;
 
 		// Derive updated travel vector from centroid drift
 		let nextVector: [number, number, number] = resolvedVector;
@@ -626,8 +731,10 @@ export function processOrganisms(
 			centroid: newCentroid,
 			travelVector: nextVector,
 			straightSteps: 0, avoidanceSteps: 0, parallelSteps: 0, stuckTicks: isFrozen ? (organism.stuckTicks + 1) : 0,
+			eatenCount: finalEatenCount,
 		});
 	}
+
 
 	return { updatedOrganisms, gridMutations };
 }
