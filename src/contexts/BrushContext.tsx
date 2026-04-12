@@ -97,12 +97,21 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	});
 	const organismBrushes = useMemo(
 		() => {
-			// Ensure organismBrushesArray is an array before calling map
-			if (!Array.isArray(organismBrushesArray)) {
-				console.error("organismBrushesArray is not an array, returning empty Map:", organismBrushesArray);
-				return new Map<string, OrganismBrush>();
-			}
-			return new Map(organismBrushesArray.map(b => [b.id, b]));
+			// Explicitly ensure organismBrushesArray is an array before attempting to map.
+			// This handles cases where `usePersistentState` might return a non-array value
+			// that `Array.isArray` might incorrectly identify as an array (e.g., a custom object
+			// with a `Symbol.toStringTag` set to 'Array' but no `map` method), or if the
+			// line number in the error is misleading and the `if` check is bypassed.
+			const safeOrganismBrushesArray = Array.isArray(organismBrushesArray)
+				? organismBrushesArray
+				: []; // Fallback to an empty array if it's not a true array
+
+			// Filter out any non-object or malformed items before mapping to prevent further errors
+			const validBrushes = safeOrganismBrushesArray.filter(
+				(b): b is OrganismBrush =>
+					typeof b === 'object' && b !== null && 'id' in b && 'cells' in b
+			);
+			return new Map(validBrushes.map(b => [b.id, b]));
 		},
 		[organismBrushesArray],
 	);
