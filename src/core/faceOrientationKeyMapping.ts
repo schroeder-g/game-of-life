@@ -167,8 +167,8 @@ export const nextSquareOrientationLookup = {
 
 
 export function getWAXDQZMapping(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 ): Record<string, number[]> {
 	const f = face === 'unknown' ? 'front' : face;
 	const r = rotation === 'unknown' ? 0 : rotation;
@@ -176,8 +176,8 @@ export function getWAXDQZMapping(
 }
 
 export function getLocalQuaternion(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 ): THREE.Quaternion {
 	const f = face === 'unknown' ? 'front' : face;
 	const r = rotation === 'unknown' ? 0 : rotation;
@@ -193,8 +193,8 @@ export function getLocalQuaternion(
 }
 
 export function getExplicitRotationAxis(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 	key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p',
 ): THREE.Vector3 {
 	const f = face === 'unknown' ? 'front' : face;
@@ -208,8 +208,8 @@ export function getExplicitRotationAxis(
  * Still uses quaternion math for the step calculation, but derives candidate axes from lookup tables.
  */
 export function getNextOrientation(
-	face: CubeFace,
-	rotation: CameraRotation,
+	face: CubeFace | 'unknown',
+	rotation: CameraRotation | 'unknown',
 	key: 'o' | 'k' | 'period' | 'semicolon' | 'i' | 'p',
 ): CameraOrientation {
 	const worldAxis = getExplicitRotationAxis(face, rotation, key);
