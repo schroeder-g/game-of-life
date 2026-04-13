@@ -137,7 +137,7 @@ export function SelectedCommunityPanel({
 		},
 	} = useSimulation();
 	const {
-		actions: { setCustomBrush, setSelectedShape, setPaintMode },
+		actions: { setCommunityBrush, setSelectedShape, setPaintMode },
 	} = useBrush();
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [showTooltip, setShowTooltip] = useState(false); // Add this line
@@ -637,7 +637,7 @@ export function SelectedCommunityPanel({
 										title='Activate Brush'
 										onClick={e => {
 											e.stopPropagation();
-											setCustomBrush(community);
+											setCommunityBrush(community);
 											setSelectedShape('Selected Community');
 											setPaintMode(1);
 										}}

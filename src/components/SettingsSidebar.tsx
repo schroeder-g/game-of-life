@@ -372,13 +372,20 @@ function EnvironmentRulesSection() {
 
 function BrushSection() {
 	const {
-		state: { selectedShape, shapeSize, isHollow, customOffsets },
+		state: {
+			selectedShape,
+			shapeSize,
+			isHollow,
+			organismBrushes,
+			selectedOrganismBrushId,
+		},
 		actions: {
 			setSelectedShape,
 			setShapeSize,
 			setIsHollow,
-			setCustomBrush,
-			clearCustomBrush,
+			setCommunityBrush, // Renamed action
+			selectOrganismBrush, // New action for selecting organism brush
+			clearShape, // Use clearShape to reset brush state
 		},
 	} = useBrush();
 	const {
@@ -389,31 +396,42 @@ function BrushSection() {
 		'gol_collapse_brush',
 		true,
 	);
-	const [brushType, setBrushType] = usePersistentState<
+	const [brushCategory, setBrushCategory] = usePersistentState<
 		'none' | 'shape' | 'organism'
-	>('shape', 'gol_brush_type');
+	>('shape', 'gol_brush_category'); // Renamed brushType to brushCategory
+
+	// Effect to sync brushCategory with selectedShape
+	useEffect(() => {
+		if (selectedShape === 'None') {
+			setBrushCategory('none');
+		} else if (selectedShape === 'Organism Brush') {
+			setBrushCategory('organism');
+		} else {
+			setBrushCategory('shape');
+		}
+	}, [selectedShape, setBrushCategory]);
 
 	const handleShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newShape = e.target.value as ShapeType;
 		setSelectedShape(newShape);
-		clearCustomBrush(); // Clear custom brush when a shape is selected
+		// When a standard shape is selected, ensure no organism brush is active
+		selectOrganismBrush(null);
 	};
 
-	const handleOrganismBrushChange = (
+	const handleOrganismBrushSelection = (
 		e: React.ChangeEvent<HTMLSelectElement>,
 	) => {
-		const organismId = e.target.value;
-		if (organismId === 'none') {
-			clearCustomBrush();
-			setSelectedShape('None');
+		const brushId = e.target.value;
+		if (brushId === 'none') {
+			selectOrganismBrush(null);
 		} else {
-			const organism = organisms.get(organismId);
-			if (organism) {
-				setCustomBrush(organism);
-				setSelectedShape('Selected Community'); // Use a generic shape type for organism brushes
-			}
+			selectOrganismBrush(brushId);
 		}
 	};
+
+	const currentOrganismBrush = selectedOrganismBrushId
+		? organismBrushes.get(selectedOrganismBrushId)
+		: null;
 
 	return (
 		<section className='menu-section'>
@@ -444,11 +462,10 @@ function BrushSection() {
 								<input
 									type='radio'
 									value='none'
-									checked={brushType === 'none'}
+									checked={brushCategory === 'none'}
 									onChange={() => {
-										setBrushType('none');
-										setSelectedShape('None');
-										clearCustomBrush();
+										setBrushCategory('none');
+										clearShape(); // Clears selectedShape, organism brush, etc.
 									}}
 								/>
 								No Brush
@@ -457,11 +474,11 @@ function BrushSection() {
 								<input
 									type='radio'
 									value='shape'
-									checked={brushType === 'shape'}
+									checked={brushCategory === 'shape'}
 									onChange={() => {
-										setBrushType('shape');
+										setBrushCategory('shape');
 										setSelectedShape('Cube'); // Default shape
-										clearCustomBrush();
+										selectOrganismBrush(null); // Clear organism brush selection
 									}}
 								/>
 								Shapes
@@ -471,19 +488,15 @@ function BrushSection() {
 									<input
 										type='radio'
 										value='organism'
-										checked={brushType === 'organism'}
+										checked={brushCategory === 'organism'}
 										onChange={() => {
-											setBrushType('organism');
-											// Default to first organism if available, otherwise 'None'
-											const firstOrgId = organisms.keys().next().value;
-											if (firstOrgId) {
-												const organism = organisms.get(firstOrgId);
-												if (organism) {
-													setCustomBrush(organism);
-													setSelectedShape('Selected Community');
-												}
+											setBrushCategory('organism');
+											// Default to first organism brush if available, otherwise 'None'
+											const firstBrushId = organismBrushes.keys().next().value;
+											if (firstBrushId) {
+												selectOrganismBrush(firstBrushId);
 											} else {
-												setSelectedShape('None');
+												setSelectedShape('None'); // No organism brushes available
 											}
 										}}
 									/>
@@ -493,7 +506,7 @@ function BrushSection() {
 						</div>
 					</div>
 
-					{brushType === 'shape' && (
+					{brushCategory === 'shape' && (
 						<>
 							<label className='control-label'>
 								<span>Shape:</span>
@@ -502,12 +515,15 @@ function BrushSection() {
 									value={selectedShape}
 									onChange={handleShapeChange}
 								>
+									{/* Only show directly selectable shapes */}
+									<option value='Single Cell'>Single Cell</option>
 									<option value='Cube'>Cube</option>
 									<option value='Square'>Square</option>
 									<option value='Circle'>Circle</option>
 									<option value='Sphere'>Sphere</option>
 									<option value='Triangle'>Triangle</option>
 									<option value='Pyramid'>Pyramid</option>
+									{/* 'Selected Community' is set programmatically, not user-selectable here */}
 								</select>
 							</label>
 							{selectedShape !== 'None' && (
@@ -525,9 +541,7 @@ function BrushSection() {
 											}
 										/>
 									</label>
-									{(selectedShape === 'Cube' ||
-										selectedShape === 'Sphere' ||
-										selectedShape === 'Pyramid') && (
+									{supportsHollow(selectedShape) && (
 										<label className='control-label row'>
 											<input
 												type='checkbox'
@@ -543,31 +557,46 @@ function BrushSection() {
 						</>
 					)}
 
-					{brushType === 'organism' && enableOrganisms && (
+					{brushCategory === 'organism' && enableOrganisms && (
 						<>
 							<label className='control-label'>
 								<span>Organism Brush:</span>
 								<select
 									className='glass-select'
-									value={selectedShape === 'None' ? 'none' : customOffsets?.id || 'none'}
-									onChange={handleOrganismBrushChange}
+									value={selectedOrganismBrushId || 'none'}
+									onChange={handleOrganismBrushSelection}
 								>
 									<option value='none'>None</option>
-									{Array.from(organisms.values()).map(org => (
-										<option key={org.id} value={org.id}>
-											{org.name}
+									{Array.from(organismBrushes.values()).map(brush => (
+										<option key={brush.id} value={brush.id}>
+											{brush.name}
 										</option>
 									))}
 								</select>
 							</label>
-							{customOffsets && (
+							{currentOrganismBrush && (
 								<div className='organism-brush-details'>
-									{/* Display organism brush details here if needed */}
 									<p>
-										Size: {customOffsets.offsets.length} cells
+										Size: {currentOrganismBrush.cells.length} cells
 									</p>
-									{/* Add GOL rules display here later */}
+									<p>
+										Rules: S{currentOrganismBrush.surviveMin}-
+										{currentOrganismBrush.surviveMax}, B
+										{currentOrganismBrush.birthMin}-
+										{currentOrganismBrush.birthMax}
+									</p>
+									<p>
+										Neighbors:
+										{currentOrganismBrush.neighborFaces ? ' F' : ''}
+										{currentOrganismBrush.neighborEdges ? ' E' : ''}
+										{currentOrganismBrush.neighborCorners ? ' C' : ''}
+									</p>
 								</div>
+							)}
+							{organismBrushes.size === 0 && (
+								<p style={{ fontSize: '12px', opacity: 0.7, marginTop: '10px' }}>
+									No organism brushes saved. Select an organism in the Community Panel and click the 'Save as Brush' icon.
+								</p>
 							)}
 						</>
 					)}
