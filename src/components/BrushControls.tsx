@@ -340,7 +340,7 @@ function BrushSelectorDrop() {
 					<button
 						className={`dropdown-item ${activeCategory === 'none' ? 'selected' : ''}`}
 						onClick={() => handleSelectCategory('none')}
-						onMouseEnter={() => setHoveredCategory('none')}
+						onMouseEnter={() => { setHoveredCategory('none'); setShowShapesSubmenu(false); setShowOrganismsSubmenu(false); }}
 						onMouseLeave={() => setHoveredCategory(null)}
 					>
 						No Brush
