@@ -360,7 +360,7 @@ function BrushSelectorDrop() {
 							Shapes
 							<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 						</button>
-						{(showShapesSubmenu || activeCategory === 'shape') && (
+						{showShapesSubmenu && (
 							<div
 								className='dropdown-submenu'
 								onMouseEnter={() => setShowShapesSubmenu(true)} // Keep submenu open if mouse enters it
@@ -415,7 +415,7 @@ function BrushSelectorDrop() {
 								Organisms
 								<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 							</button>
-							{(showOrganismsSubmenu || activeCategory === 'organism') && (
+							{showOrganismsSubmenu && (
 								<div
 									className='dropdown-submenu'
 									onMouseEnter={() => setShowOrganismsSubmenu(true)} // Keep submenu open if mouse enters it
