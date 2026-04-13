@@ -44,13 +44,13 @@ export interface BrushActions {
 	clearShape: () => void;
 	changeSize: (delta: number, maxGridSize: number) => void;
 	incrementBrushRotationVersion: () => void;
-	setCustomBrush: (cells: [number, number, number][]) => void;
+	setCommunityBrush: (cells: [number, number, number][]) => void; // Renamed
 	setPaintMode: (
 		mode: 1 | 0 | -1 | ((prev: 1 | 0 | -1) => 1 | 0 | -1),
 	) => void;
 	addOrganismBrush: (brush: OrganismBrush) => void;
 	removeOrganismBrush: (id: string) => void;
-	selectOrganismBrush: (id: string | null) => void; // Renamed and modified
+	selectOrganismBrush: (id: string | null) => void;
 }
 
 export interface BrushContextValue {
@@ -256,7 +256,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			},
 			incrementBrushRotationVersion: () =>
 				setBrushRotationVersion(v => v + 1),
-			setCustomBrush: (cells: Array<[number, number, number]>) => {
+			setCommunityBrush: (cells: Array<[number, number, number]>) => { // Renamed
 				if (cells.length === 0) return;
 
 				// Always anchor to the community's own centroid for exact overlap.
@@ -294,7 +294,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			setPaintMode,
 			addOrganismBrush,
 			removeOrganismBrush,
-			selectOrganismBrush, // Updated action name
+			selectOrganismBrush,
 		},
 	};
 
