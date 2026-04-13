@@ -280,7 +280,8 @@ function BrushSelectorDrop() {
 
 	const handleSelectOrganismBrush = useCallback(
 		(brushId: string | null) => {
-			selectOrganismBrush(brushId);
+			const brush = brushId ? organismBrushes.get(brushId) : undefined;
+			selectOrganismBrush(brushId, brush); // Pass the brush object
 			if (brushId) {
 				setSelectedShape('Organism Brush'); // Indicate an organism brush is active
 			} else {
@@ -289,7 +290,7 @@ function BrushSelectorDrop() {
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[selectOrganismBrush, setSelectedShape, initBrushOrientation],
+		[selectOrganismBrush, setSelectedShape, initBrushOrientation, organismBrushes],
 	);
 
 	// Effect to close drop on outside click

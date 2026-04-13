@@ -64,7 +64,7 @@ export interface BrushActions {
 	) => void;
 	addOrganismBrush: (brush: OrganismBrush) => void;
 	removeOrganismBrush: (id: string) => void;
-	selectOrganismBrush: (id: string | null) => void;
+	selectOrganismBrush: (id: string | null, brush?: OrganismBrush) => void;
 }
 
 export interface BrushContextValue {
@@ -155,19 +155,24 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			const brush = organismBrushes.get(selectedOrganismBrushId);
 			if (brush) {
 				// Set shape to 'Organism Brush' and custom offsets
+				// Set shape to 'Organism Brush'
 				setSelectedShape('Organism Brush');
-				setCustomOffsets(brush.cells);
-				// Organism brushes don't use shapeSize or isHollow, but we might want to set rules
-				// For now, we just ensure they are not active.
-				setShapeSize(1);
-				setIsHollow(false);
-				setSelectedOrganismBrushRules(brush.rules); // Set rules from the selected brush
 				// Set selector position to the center of the grid when an organism brush is selected
 				setSelectorPos([
 					Math.floor(gridSize / 2),
 					Math.floor(gridSize / 2),
 					Math.floor(gridSize / 2),
 				]);
+				// Only set customOffsets and rules if they haven't been set by selectOrganismBrush already
+				// This avoids redundant updates and ensures consistency.
+				if (customOffsets.length === 0 || selectedOrganismBrushRules === null) {
+					setCustomOffsets(brush.cells);
+					setSelectedOrganismBrushRules(brush.rules); // Set rules from the selected brush
+				}
+				// Organism brushes don't use shapeSize or isHollow, but we might want to set rules
+				// For now, we just ensure they are not active.
+				setShapeSize(1);
+				setIsHollow(false);
 			} else {
 				// If selected organism brush is no longer valid, clear it
 				_setSelectedOrganismBrushId(null);
@@ -211,7 +216,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	);
 
 	const selectOrganismBrush = useCallback(
-		(id: string | null) => {
+		(id: string | null, brushToSelect?: OrganismBrush) => {
 			_setSelectedOrganismBrushId(id);
 			if (id) {
 				// When an organism brush is selected, set the shape type accordingly
@@ -222,15 +227,22 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					Math.floor(gridSize / 2),
 					Math.floor(gridSize / 2),
 				]);
+				// If the brush object is provided, use it directly to set customOffsets and rules
+				if (brushToSelect) {
+					setCustomOffsets(brushToSelect.cells);
+					setSelectedOrganismBrushRules(brushToSelect.rules);
+				}
 				// The useEffect above will handle setting customOffsets from the brush.cells
+				// if brushToSelect is not provided, or if the useEffect runs later.
 			} else {
 				// If no organism brush is selected, revert to default shape
 				setSelectedShape('Single Cell');
 				setCustomOffsets([]);
+				setSelectedOrganismBrushRules(null); // Clear rules
 				setSelectorPos(null); // Clear selector position
 			}
 		},
-		[_setSelectedOrganismBrushId, setSelectedShape, setSelectorPos, gridSize],
+		[_setSelectedOrganismBrushId, setSelectedShape, setSelectorPos, gridSize, setCustomOffsets, setSelectedOrganismBrushRules],
 	);
 
 	const saveOrganismAsBrush = useCallback(
@@ -278,7 +290,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				},
 			};
 			addOrganismBrush(newBrush);
-			selectOrganismBrush(newBrush.id); // Select the newly saved brush
+			selectOrganismBrush(newBrush.id, newBrush); // Select the newly saved brush, passing the brush object directly
 		},
 		[addOrganismBrush, selectOrganismBrush],
 	);
