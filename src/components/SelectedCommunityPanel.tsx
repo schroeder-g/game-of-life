@@ -736,15 +736,17 @@ export function SelectedCommunityPanel({
 											</div>
 
 											{/* Row 5: GOL Rules */}
-											<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-												<span style={{ opacity: 0.7 }}>Rules:</span>
-												<span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '10px' }}>
-													S{matchingOrganism.rules.surviveMin}-{matchingOrganism.rules.surviveMax}, B{matchingOrganism.rules.birthMin}-{matchingOrganism.rules.birthMax}
-													{matchingOrganism.rules.neighborFaces ? ' F' : ''}
-													{matchingOrganism.rules.neighborEdges ? ' E' : ''}
-													{matchingOrganism.rules.neighborCorners ? ' C' : ''}
-												</span>
-											</div>
+											{matchingOrganism.rules && ( // Add this check
+												<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+													<span style={{ opacity: 0.7 }}>Rules:</span>
+													<span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '10px' }}>
+														S{matchingOrganism.rules.surviveMin}-{matchingOrganism.rules.surviveMax}, B{matchingOrganism.rules.birthMin}-{matchingOrganism.rules.birthMax}
+														{matchingOrganism.rules.neighborFaces ? ' F' : ''}
+														{matchingOrganism.rules.neighborEdges ? ' E' : ''}
+														{matchingOrganism.rules.neighborCorners ? ' C' : ''}
+													</span>
+												</div>
+											)}
 										</>
 									)}
 								</div>
