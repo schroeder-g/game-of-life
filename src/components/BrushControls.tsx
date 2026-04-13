@@ -174,6 +174,7 @@ function BrushSelectorDrop() {
 			incrementBrushRotationVersion,
 			selectOrganismBrush,
 			clearShape,
+			setShapeSize, // Added setShapeSize
 		},
 	} = useBrush();
 
@@ -254,7 +255,7 @@ function BrushSelectorDrop() {
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[clearShape, selectOrganismBrush, setSelectedShape, organismBrushes, initBrushOrientation],
+		[clearShape, selectOrganismBrush, setSelectedShape, organismBrushes, initBrushOrientation, setShapeSize], // Added setShapeSize
 	);
 
 	const handleSelectShape = useCallback(
@@ -272,7 +273,7 @@ function BrushSelectorDrop() {
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize],
+		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize], // setShapeSize already present, no change needed here.
 	);
 
 	const handleSelectOrganismBrush = useCallback(
