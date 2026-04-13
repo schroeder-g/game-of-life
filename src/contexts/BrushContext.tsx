@@ -191,7 +191,54 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				setCustomOffsets([]);
 			}
 		},
-		[_setSelectedOrganismBrushId],
+		[_setSelectedOrganismBrushId, setSelectedShape],
+	);
+
+	const saveOrganismAsBrush = useCallback(
+		(organism: Organism) => {
+			// Calculate relative cell offsets from the organism's centroid
+			const communityCells = Array.from(organism.livingCells).map(parseKey);
+			if (communityCells.length === 0) return;
+
+			const minX = Math.min(...communityCells.map(c => c[0]));
+			const maxX = Math.max(...communityCells.map(c => c[0]));
+			const minY = Math.min(...communityCells.map(c => c[1]));
+			const maxY = Math.max(...communityCells.map(c => c[1]));
+			const minZ = Math.min(...communityCells.map(c => c[2]));
+			const maxZ = Math.max(...communityCells.map(c => c[2]));
+
+			const centerX = (minX + maxX) / 2;
+			const centerY = (minY + maxY) / 2;
+			const centerZ = (minZ + maxZ) / 2;
+
+			const relativeCells = communityCells.map(
+				([x, y, z]) =>
+					[x - centerX, y - centerY, z - centerZ] as [
+						number,
+						number,
+						number,
+					],
+			);
+
+			const newBrush: OrganismBrush = {
+				id: organism.id, // Use organism's ID as brush ID
+				name: organism.name,
+				cells: relativeCells,
+				rules: { // Group rules under a 'rules' object
+					surviveMin: organism.rules.surviveMin,
+					surviveMax: organism.rules.surviveMax,
+					birthMin: organism.rules.birthMin,
+					birthMax: organism.rules.birthMax,
+					birthMargin: organism.rules.birthMargin,
+					neighborFaces: organism.rules.neighborFaces,
+					neighborEdges: organism.rules.neighborEdges,
+					neighborCorners: organism.rules.neighborCorners,
+				},
+			};
+			addOrganismBrush(newBrush);
+			selectOrganismBrush(newBrush.id); // Select the newly saved brush
+		},
+		[addOrganismBrush, selectOrganismBrush],
 	);
 
 	const value: BrushContextValue = {
@@ -296,6 +343,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			addOrganismBrush,
 			removeOrganismBrush,
 			selectOrganismBrush,
+			saveOrganismAsBrush, // New action
 		},
 	};
 
