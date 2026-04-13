@@ -140,7 +140,8 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				// Set shape to 'Organism Brush' and custom offsets
 				setSelectedShape('Organism Brush');
 				setCustomOffsets(brush.cells);
-				// Organism brushes don't use shapeSize or isHollow
+				// Organism brushes don't use shapeSize or isHollow, but we might want to set rules
+				// For now, we just ensure they are not active.
 				setShapeSize(1);
 				setIsHollow(false);
 			} else {
@@ -154,7 +155,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			setSelectedShape('Single Cell');
 			setCustomOffsets([]);
 		}
-	}, [selectedOrganismBrushId, organismBrushes, selectedShape]); // Added selectedShape to dependencies
+	}, [selectedOrganismBrushId, organismBrushes, selectedShape, setCustomOffsets, setSelectedShape, setShapeSize, setIsHollow, _setSelectedOrganismBrushId]);
 
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
