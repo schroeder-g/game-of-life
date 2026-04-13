@@ -238,6 +238,7 @@ function BrushSelectorDrop() {
 				setSelectedShape('None');
 			} else if (category === 'shape') {
 				setSelectedShape('Cube'); // Default shape
+				setShapeSize(3); // Set a default size for shapes
 				selectOrganismBrush(null); // Clear organism brush selection
 			} else if (category === 'organism') {
 				// Default to first organism brush if available, otherwise 'None'
@@ -259,11 +260,19 @@ function BrushSelectorDrop() {
 	const handleSelectShape = useCallback(
 		(shape: ShapeType) => {
 			setSelectedShape(shape);
+			// Set a default size for shapes, considering min size for Cube/Square vs others
+			if (shape === 'Cube' || shape === 'Square') {
+				setShapeSize(3); // Default to 3 for hollow to be visible
+			} else if (shape !== 'Single Cell' && shape !== 'None' && shape !== 'Selected Community' && shape !== 'Organism Brush') {
+				setShapeSize(3); // Default to 3 for other shapes that have size
+			} else {
+				setShapeSize(1); // Default to 1 for Single Cell, None, etc.
+			}
 			selectOrganismBrush(null); // Ensure organism brush is deselected
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[setSelectedShape, selectOrganismBrush, initBrushOrientation],
+		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize],
 	);
 
 	const handleSelectOrganismBrush = useCallback(
