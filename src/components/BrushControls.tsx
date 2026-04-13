@@ -166,6 +166,8 @@ function BrushSelectorDrop() {
 	const [hoveredOrganismBrushId, setHoveredOrganismBrushId] = useState<
 		string | null
 	>(null);
+	const [showShapesSubmenu, setShowShapesSubmenu] = useState(false);
+	const [showOrganismsSubmenu, setShowOrganismsSubmenu] = useState(false);
 
 	const {
 		state: { selectedShape, brushQuaternion, organismBrushes, selectedOrganismBrushId },
@@ -337,6 +339,8 @@ function BrushSelectorDrop() {
 						setHoveredCategory(null);
 						setHoveredShapeName(null);
 						setHoveredOrganismBrushId(null);
+						setShowShapesSubmenu(false);
+						setShowOrganismsSubmenu(false);
 					}}
 				>
 					{/* No Brush */}
@@ -352,8 +356,8 @@ function BrushSelectorDrop() {
 					{/* Shapes */}
 					<div
 						className={`dropdown-item-with-submenu ${activeCategory === 'shape' ? 'selected' : ''}`}
-						onMouseEnter={() => setHoveredCategory('shape')}
-						onMouseLeave={() => setHoveredCategory(null)}
+						onMouseEnter={() => { setHoveredCategory('shape'); setShowShapesSubmenu(true); }}
+						onMouseLeave={() => { setHoveredCategory(null); setShowShapesSubmenu(false); }}
 						style={{ position: 'relative' }}
 					>
 						<button
@@ -363,10 +367,11 @@ function BrushSelectorDrop() {
 							Shapes
 							<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 						</button>
-						{(hoveredCategory === 'shape' || activeCategory === 'shape') && (
+						{(showShapesSubmenu || activeCategory === 'shape') && (
 							<div
 								className='dropdown-submenu'
-								onMouseLeave={() => setHoveredShapeName(null)}
+								onMouseEnter={() => setShowShapesSubmenu(true)} // Keep submenu open if mouse enters it
+								onMouseLeave={() => { setHoveredShapeName(null); setShowShapesSubmenu(false); }} // Close submenu if mouse leaves it
 								style={{
 									position: 'absolute',
 									left: '100%',
@@ -406,8 +411,8 @@ function BrushSelectorDrop() {
 					{enableOrganisms && (
 						<div
 							className={`dropdown-item-with-submenu ${activeCategory === 'organism' ? 'selected' : ''}`}
-							onMouseEnter={() => setHoveredCategory('organism')}
-							onMouseLeave={() => setHoveredCategory(null)}
+							onMouseEnter={() => { setHoveredCategory('organism'); setShowOrganismsSubmenu(true); }}
+							onMouseLeave={() => { setHoveredCategory(null); setShowOrganismsSubmenu(false); }}
 							style={{ position: 'relative' }}
 						>
 							<button
@@ -417,10 +422,11 @@ function BrushSelectorDrop() {
 								Organisms
 								<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 							</button>
-							{(hoveredCategory === 'organism' || activeCategory === 'organism') && (
+							{(showOrganismsSubmenu || activeCategory === 'organism') && (
 								<div
 									className='dropdown-submenu'
-									onMouseLeave={() => setHoveredOrganismBrushId(null)}
+									onMouseEnter={() => setShowOrganismsSubmenu(true)} // Keep submenu open if mouse enters it
+									onMouseLeave={() => { setHoveredOrganismBrushId(null); setShowOrganismsSubmenu(false); }} // Close submenu if mouse leaves it
 									style={{
 										position: 'absolute',
 										left: '100%',
@@ -858,7 +864,7 @@ export function BrushControls() { // Removed selectedOrganismId prop
 						}
 					}
 
-					setCustomBrush(selectedCommunityCells);
+					setCustomOffsets(selectedCommunityCells); // Corrected from setCustomBrush
 					setCommunity(selectedCommunityCells); // Set the community in SimulationContext
 					setSelectedShape('Selected Community'); // Keep this for internal state, but it won't be in dropdown
 					selectOrganismBrush(null); // Ensure no organism brush is selected when a community is selected

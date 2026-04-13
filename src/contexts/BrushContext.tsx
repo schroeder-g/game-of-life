@@ -234,11 +234,11 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 
 			const relativeCells = communityCells.map(
 				([x, y, z]) =>
-					[x - centerX, y - centerY, z - centerZ] as [
-						number,
-						number,
-						number,
-					],
+					[
+						Math.round(x - centerX),
+						Math.round(y - centerY),
+						Math.round(z - centerZ),
+					] as [number, number, number],
 			);
 
 			// Ensure organism.rules is defined, use defaults if not
