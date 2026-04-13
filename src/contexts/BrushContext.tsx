@@ -100,18 +100,11 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	// Persistent state for organism brushes
 	const [organismBrushesArray, setOrganismBrushesArray] = usePersistentState<
 		OrganismBrush[]
-	>([], 'gol_organism_brushes', {
-		serialize: brushes => JSON.stringify(brushes),
-		deserialize: json => {
-			try {
-				const parsed = JSON.parse(json);
-				return Array.isArray(parsed) ? parsed : [];
-			} catch (e) {
-				console.error("Failed to parse organism brushes from local storage:", e);
-				return [];
-			}
-		},
-	});
+	>(
+		'gol_organism_brush_collection_v5', 
+		[]
+	);
+
 	const organismBrushes = useMemo(
 		() => {
 			// Explicitly ensure organismBrushesArray is an array before attempting to map.
@@ -126,7 +119,14 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			// Filter out any non-object or malformed items before mapping to prevent further errors
 			const validBrushes = safeOrganismBrushesArray.filter(
 				(b): b is OrganismBrush =>
-					typeof b === 'object' && b !== null && 'id' in b && 'cells' in b
+					typeof b === 'object' && 
+					b !== null && 
+					typeof b.id === 'string' && 
+					typeof b.name === 'string' &&
+					Array.isArray(b.cells) &&
+					typeof b.rules === 'object' &&
+					b.rules !== null &&
+					typeof b.rules.surviveMin === 'number'
 			);
 			return new Map(validBrushes.map(b => [b.id, b]));
 		},
@@ -140,7 +140,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	);
 
 	const [selectedOrganismBrushId, _setSelectedOrganismBrushId] =
-		usePersistentState<string | null>(null, 'gol_selected_organism_brush');
+		usePersistentState<string | null>('gol_selected_organism_brush_v5', null);
 
 	// clear hollow when switching to an unsupported shape
 	useEffect(() => {
@@ -235,11 +235,13 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				// The useEffect above will handle setting customOffsets from the brush.cells
 				// if brushToSelect is not provided, or if the useEffect runs later.
 			} else {
-				// If no organism brush is selected, revert to default shape
-				setSelectedShape('Single Cell');
+				// If we're deselecting an organism brush, only revert to 'Single Cell'
+				// if the current shape was actually 'Organism Brush'.
+				if (selectedShape === 'Organism Brush') {
+					setSelectedShape('Single Cell');
+				}
 				setCustomOffsets([]);
 				setSelectedOrganismBrushRules(null); // Clear rules
-				setSelectorPos(null); // Clear selector position
 			}
 		},
 		[_setSelectedOrganismBrushId, setSelectedShape, setSelectorPos, gridSize, setCustomOffsets, setSelectedOrganismBrushRules],
@@ -319,6 +321,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					setSelectedOrganismBrushRules(null);
 				}
 				setSelectedShape(shape);
+
+				// Initialize selector position if it's currently null and we're selecting a valid shape
+				if (shape !== 'None' && selectorPos === null) {
+					setSelectorPos([
+						Math.floor(gridSize / 2),
+						Math.floor(gridSize / 2),
+						Math.floor(gridSize / 2),
+					]);
+				}
 				setShapeSize(prev => {
 					if (shape === 'Single Cell' || shape === 'None' || shape === 'Organism Brush') {
 						return 1;
@@ -331,12 +342,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					return prev;
 				});
 				// When selecting a standard shape, deselect any organism brush
-				_setSelectedOrganismBrushId(null);
+				if (shape !== 'Organism Brush') {
+					_setSelectedOrganismBrushId(null);
+				}
 			},
 			setShapeSize,
 			setIsHollow,
 			setShowProjectionGuides,
 			setSelectorPos,
+			setPaintMode,
 			clearShape: () => {
 				setShapeSelectionVersion(v => v + 1);
 				setSelectedShape('Single Cell');
@@ -345,6 +359,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				_setSelectedOrganismBrushId(null); // Clear selected organism brush
 				setCustomOffsets([]); // Clear custom offsets
 				setSelectedOrganismBrushRules(null); // Clear rules
+				setSelectorPos(null); // Clear selector position
 			},
 			changeSize: (delta: number, maxGridSize: number) => {
 				if (

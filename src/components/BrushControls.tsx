@@ -154,7 +154,7 @@ const CloserIcon = () => (
 	</svg>
 );
 
-function BrushSelectorDrop() {
+function BrushSelectorDrop({ side }: { side: 'left' | 'right' }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const dropRef = useRef<HTMLDivElement>(null);
 	const [hoveredCategory, setHoveredCategory] = useState<
@@ -166,8 +166,6 @@ function BrushSelectorDrop() {
 	const [hoveredOrganismBrushId, setHoveredOrganismBrushId] = useState<
 		string | null
 	>(null);
-	const [showShapesSubmenu, setShowShapesSubmenu] = useState(false);
-	const [showOrganismsSubmenu, setShowOrganismsSubmenu] = useState(false);
 
 	const {
 		state: { selectedShape, brushQuaternion, organismBrushes, selectedOrganismBrushId },
@@ -239,25 +237,32 @@ function BrushSelectorDrop() {
 				clearShape(); // Clears selectedShape, organism brush, etc.
 				selectOrganismBrush(null);
 				setSelectedShape('None');
+				setIsOpen(false);
 			} else if (category === 'shape') {
-				setSelectedShape('Cube'); // Default shape
-				setShapeSize(3); // Set a default size for shapes
-				selectOrganismBrush(null); // Clear organism brush selection
+				if (activeCategory !== 'shape') {
+					setSelectedShape('Cube'); // Default shape
+					setShapeSize(3); // Set a default size for shapes
+					selectOrganismBrush(null); // Clear organism brush selection
+				}
+				// On mobile or when clicking, stay open to show submenus
 			} else if (category === 'organism') {
-				// Default to first organism brush if available, otherwise 'None'
-				const firstBrushId = organismBrushes.keys().next().value;
-				if (firstBrushId) {
-					selectOrganismBrush(firstBrushId);
-					setSelectedShape('Organism Brush'); // Indicate an organism brush is active
-				} else {
-					setSelectedShape('None'); // No organism brushes available
-					selectOrganismBrush(null);
+				if (activeCategory !== 'organism') {
+					// Default to first organism brush if available, otherwise 'None'
+					const firstBrushId = organismBrushes.keys().next().value;
+					if (firstBrushId) {
+						selectOrganismBrush(firstBrushId);
+						setSelectedShape('Organism Brush'); // Indicate an organism brush is active
+					} else {
+						setSelectedShape('None'); // No organism brushes available
+						selectOrganismBrush(null);
+						setIsOpen(false);
+						return;
+					}
 				}
 			}
 			initBrushOrientation();
-			setIsOpen(false);
 		},
-		[clearShape, selectOrganismBrush, setSelectedShape, organismBrushes, initBrushOrientation, setShapeSize], // Added setShapeSize
+		[activeCategory, clearShape, selectOrganismBrush, setSelectedShape, organismBrushes, initBrushOrientation, setShapeSize], // Added activeCategory
 	);
 
 	const handleSelectShape = useCallback(
@@ -275,7 +280,7 @@ function BrushSelectorDrop() {
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize], // setShapeSize already present, no change needed here.
+		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize, setIsOpen],
 	);
 
 	const handleSelectOrganismBrush = useCallback(
@@ -290,7 +295,7 @@ function BrushSelectorDrop() {
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[selectOrganismBrush, setSelectedShape, initBrushOrientation, organismBrushes],
+		[selectOrganismBrush, setSelectedShape, initBrushOrientation, organismBrushes, setIsOpen],
 	);
 
 	// Effect to close drop on outside click
@@ -308,14 +313,6 @@ function BrushSelectorDrop() {
 		setHoveredOrganismBrushId(null);
 	};
 
-	const currentBrushLabel = useMemo(() => {
-		if (selectedShape === 'None') return 'No Brush';
-		if (selectedShape === 'Organism Brush' && selectedOrganismBrushId) {
-			const brush = organismBrushes.get(selectedOrganismBrushId);
-			return brush ? `Organism: ${brush.name}` : 'Organism Brush';
-		}
-		return `Shape: ${selectedShape}`;
-	}, [selectedShape, selectedOrganismBrushId, organismBrushes]);
 
 	return (
 		<div
@@ -330,7 +327,6 @@ function BrushSelectorDrop() {
 				data-tooltip-bottom='Select Brush Type'
 			>
 				<PaintBrushIcon />
-				<span style={{ marginLeft: '8px' }}>{currentBrushLabel}</span>
 			</button>
 			{isOpen && (
 				<div
@@ -340,8 +336,9 @@ function BrushSelectorDrop() {
 					{/* No Brush */}
 					<button
 						className={`dropdown-item ${activeCategory === 'none' ? 'selected' : ''}`}
-						onClick={() => handleSelectCategory('none')}
-						onMouseEnter={() => { setHoveredCategory('none'); setShowShapesSubmenu(false); setShowOrganismsSubmenu(false); }}
+						onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('none'); }}
+						onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('none'); }}
+						onMouseEnter={() => setHoveredCategory('none')}
 						onMouseLeave={() => setHoveredCategory(null)}
 					>
 						No Brush
@@ -350,31 +347,31 @@ function BrushSelectorDrop() {
 					{/* Shapes */}
 					<div
 						className={`dropdown-item-with-submenu ${activeCategory === 'shape' ? 'selected' : ''}`}
-						onMouseEnter={() => { setHoveredCategory('shape'); setShowShapesSubmenu(true); setShowOrganismsSubmenu(false); }}
-						onMouseLeave={() => { setHoveredCategory(null); setShowShapesSubmenu(false); }}
+						onMouseEnter={() => setHoveredCategory('shape')}
+						onMouseLeave={() => setHoveredCategory(null)}
 						style={{ position: 'relative' }}
 					>
 						<button
 							className='dropdown-item'
-							onClick={() => handleSelectCategory('shape')}
+							onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('shape'); }}
+							onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('shape'); }}
 						>
 							Shapes
 							<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 						</button>
-						{showShapesSubmenu && (
+						{hoveredCategory === 'shape' && (
 							<div
 								className='dropdown-submenu'
-								onMouseEnter={() => setShowShapesSubmenu(true)} // Keep submenu open if mouse enters it
-								onMouseLeave={() => { setHoveredShapeName(null); setShowShapesSubmenu(false); }} // Close submenu if mouse leaves it
+								onMouseLeave={() => setHoveredShapeName(null)}
 								style={{
 									position: 'absolute',
-									left: '100%',
-									top: 0,
+									...(side === 'right' ? { right: 'calc(100% - 2px)' } : { left: 'calc(100% - 2px)' }),
+									top: '-5px',
 									backgroundColor: 'rgba(13, 17, 23, 0.9)',
 									border: '1px solid rgba(255, 165, 0, 0.5)',
 									borderRadius: '4px',
-									minWidth: '150px',
-									zIndex: 1001,
+									minWidth: '160px',
+									zIndex: 10000,
 									display: 'flex',
 									flexDirection: 'column',
 								}}
@@ -389,7 +386,8 @@ function BrushSelectorDrop() {
 											<button
 												key={name}
 												className={`dropdown-item ${isActive ? 'selected' : ''}`}
-												onClick={() => handleSelectShape(name)}
+												onMouseDown={(e) => { e.stopPropagation(); handleSelectShape(name); }}
+												onTouchStart={(e) => { e.stopPropagation(); handleSelectShape(name); }}
 												onMouseEnter={() => setHoveredShapeName(name)}
 											>
 												{name}
@@ -405,31 +403,31 @@ function BrushSelectorDrop() {
 					{enableOrganisms && (
 						<div
 							className={`dropdown-item-with-submenu ${activeCategory === 'organism' ? 'selected' : ''}`}
-							onMouseEnter={() => { setHoveredCategory('organism'); setShowOrganismsSubmenu(true); setShowShapesSubmenu(false); }}
-							onMouseLeave={() => { setHoveredCategory(null); setShowOrganismsSubmenu(false); }}
+							onMouseEnter={() => setHoveredCategory('organism')}
+							onMouseLeave={() => setHoveredCategory(null)}
 							style={{ position: 'relative' }}
 						>
 							<button
 								className='dropdown-item'
-								onClick={() => handleSelectCategory('organism')}
+								onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('organism'); }}
+								onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('organism'); }}
 							>
 								Organisms
 								<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
 							</button>
-							{showOrganismsSubmenu && (
+							{hoveredCategory === 'organism' && (
 								<div
 									className='dropdown-submenu'
-									onMouseEnter={() => setShowOrganismsSubmenu(true)} // Keep submenu open if mouse enters it
-									onMouseLeave={() => { setHoveredOrganismBrushId(null); setShowOrganismsSubmenu(false); }} // Close submenu if mouse leaves it
+									onMouseLeave={() => setHoveredOrganismBrushId(null)}
 									style={{
 										position: 'absolute',
-										left: '100%',
-										top: 0,
+										...(side === 'right' ? { right: 'calc(100% - 2px)' } : { left: 'calc(100% - 2px)' }),
+										top: '-5px',
 										backgroundColor: 'rgba(13, 17, 23, 0.9)',
 										border: '1px solid rgba(255, 165, 0, 0.5)',
 										borderRadius: '4px',
-										minWidth: '150px',
-										zIndex: 1001,
+										minWidth: '160px',
+										zIndex: 10000,
 										display: 'flex',
 										flexDirection: 'column',
 									}}
@@ -448,7 +446,8 @@ function BrushSelectorDrop() {
 												<button
 													key={brush.id}
 													className={`dropdown-item ${isActive ? 'selected' : ''}`}
-													onClick={() => handleSelectOrganismBrush(brush.id)}
+													onMouseDown={(e) => { e.stopPropagation(); handleSelectOrganismBrush(brush.id); }}
+													onTouchStart={(e) => { e.stopPropagation(); handleSelectOrganismBrush(brush.id); }}
 													onMouseEnter={() => setHoveredOrganismBrushId(brush.id)}
 												>
 													{brush.name}
@@ -933,33 +932,38 @@ export function BrushControls() { // Removed selectedOrganismId prop
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
-				{/* The BrushSelectorDrop now displays the current brush label */}
-				{/* <span
-					id='Selected-Brush-Label'
-					style={{
-						fontWeight: 'bold',
-						color: '#FFA500', // Subtler orange color for text
-						cursor: 'inherit', // Inherit cursor from parent for dragging
-					}}
-				>
-					Brush: {selectedShape}
-				</span> */}
-				<span
-					id='brush-effect-label'
-					style={{
-						marginRight: '17px',
-						marginLeft: '4px', // Add space between shape and effect
-						fontWeight: 'bold',
-						color: '#FFA500', // Subtler orange color for text
-						cursor: 'inherit', // Inherit cursor from parent for dragging
-					}}
-				>
-					{paintMode === 1
-						? 'Activate'
-						: paintMode === -1
-							? 'Deactivate'
-							: '(No Effect)'}
-				</span>
+				<div style={{ display: 'flex', flexDirection: 'column', cursor: 'inherit' }}>
+					<span
+						id='Selected-Brush-Label'
+						style={{
+							fontWeight: 'bold',
+							color: '#FFA500', 
+							cursor: 'inherit',
+							fontSize: '0.9em'
+						}}
+					>
+						{selectedShape === 'None' ? 'No Brush' : 
+						 (selectedShape === 'Organism Brush' && selectedOrganismBrushId) ? 
+						 (`Org: ${organismBrushes.get(selectedOrganismBrushId)?.name || 'Brush'}`) : 
+						 (`Shape: ${selectedShape}`)}
+					</span>
+					<span
+						id='brush-effect-label'
+						style={{
+							fontWeight: 'bold',
+							color: '#FFA500', 
+							cursor: 'inherit',
+							fontSize: '0.8em',
+							opacity: 0.8
+						}}
+					>
+						{paintMode === 1
+							? 'Activate'
+							: paintMode === -1
+								? 'Deactivate'
+								: '(No Effect)'}
+					</span>
+				</div>
 				{/* Arrow indicator for expand/collapse */}
 				<span
 					id='brush-controls-toggle-button'
@@ -992,7 +996,7 @@ export function BrushControls() { // Removed selectedOrganismId prop
 					>
 						{/* Brush Selector Dropdown (now spans across the first 4 columns) */}
 						<div style={{ gridColumn: '1 / 5', gridRow: '1 / 2' }}>
-							<BrushSelectorDrop />
+							<BrushSelectorDrop side={position.x > window.innerWidth / 2 ? 'right' : 'left'} />
 						</div>
 						{(() => {
 							const showSizeControls =

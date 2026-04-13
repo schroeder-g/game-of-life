@@ -146,7 +146,7 @@ export interface SimulationActions {
 	snapToOrientation: (face: string, rotation: number) => void;
 	createOrganismFromBrush: (
 		brush: OrganismBrush,
-		position: [number, number, number],
+		finalCells: [number, number, number][],
 	) => void; // New action
 
 	playStop: () => void;
@@ -915,15 +915,16 @@ export function SimulationProvider({
 				stuckTicks: 0,
 				travelVector: [0, 0, 1], // Initial direction for new organisms
 				centroid: getCentroid(livingCells),
-				// Inherit current GOL rules from the environment
-				surviveMin: surviveMin,
-				surviveMax: surviveMax,
-				birthMin: birthMin,
-				birthMax: birthMax,
-				birthMargin: birthMargin,
-				neighborFaces: neighborFaces,
-				neighborEdges: neighborEdges,
-				neighborCorners: neighborCorners,
+				rules: {
+					surviveMin: surviveMin,
+					surviveMax: surviveMax,
+					birthMin: birthMin,
+					birthMax: birthMax,
+					birthMargin: birthMargin,
+					neighborFaces: neighborFaces,
+					neighborEdges: neighborEdges,
+					neighborCorners: neighborCorners,
+				},
 			};
 
 			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
@@ -947,8 +948,8 @@ export function SimulationProvider({
 	);
 
 	const createOrganismFromBrush = useCallback(
-		(brush: OrganismBrush, position: [number, number, number]) => {
-			if (brush.cells.length === 0) return;
+		(brush: OrganismBrush, finalCells: [number, number, number][]) => {
+			if (finalCells.length === 0) return;
 
 			// Generate a unique name
 			let baseName =
@@ -963,23 +964,8 @@ export function SimulationProvider({
 				name = `${baseName} ${counter}`;
 			}
 
-			// Apply brush offsets to the given position
-			const livingCellsCoords = brush.cells.map(([ox, oy, oz]) => [
-				position[0] + ox,
-				position[1] + oy,
-				position[2] + oz,
-			]);
-
-			// Filter out cells that are out of bounds
-			const validLivingCellsCoords = livingCellsCoords.filter(
-				([x, y, z]) =>
-					x >= 0 && x < gridSize && y >= 0 && y < gridSize && z >= 0 && z < gridSize,
-			);
-
-			if (validLivingCellsCoords.length === 0) return;
-
 			const livingCells = new Set(
-				validLivingCellsCoords.map(([x, y, z]) => makeKey(x, y, z)),
+				finalCells.map(([x, y, z]) => makeKey(x, y, z)),
 			);
 			const cytoplasm = computeCytoplasm(livingCells, gridSize);
 			const skinColor = computeSkinColor(livingCells, gridSize);
@@ -1000,15 +986,16 @@ export function SimulationProvider({
 				stuckTicks: 0,
 				travelVector: [0, 0, 1], // Initial direction for new organisms
 				centroid: getCentroid(livingCells),
-				// Inherit GOL rules from the brush
-				surviveMin: brush.surviveMin,
-				surviveMax: brush.surviveMax,
-				birthMin: brush.birthMin,
-				birthMax: brush.birthMax,
-				birthMargin: brush.birthMargin,
-				neighborFaces: brush.neighborFaces,
-				neighborEdges: brush.neighborEdges,
-				neighborCorners: brush.neighborCorners,
+				rules: {
+					surviveMin: brush.rules.surviveMin,
+					surviveMax: brush.rules.surviveMax,
+					birthMin: brush.rules.birthMin,
+					birthMax: brush.rules.birthMax,
+					birthMargin: brush.rules.birthMargin,
+					neighborFaces: brush.rules.neighborFaces,
+					neighborEdges: brush.rules.neighborEdges,
+					neighborCorners: brush.rules.neighborCorners,
+				},
 			};
 
 			organismManagerRef.current.recordAction(); // Record action for undo/redo
@@ -1018,7 +1005,7 @@ export function SimulationProvider({
 
 			// Also add the cells to the grid
 			gridRef.current.recordAction();
-			for (const [x, y, z] of validLivingCellsCoords) {
+			for (const [x, y, z] of finalCells) {
 				gridRef.current.set(x, y, z, true);
 			}
 		},

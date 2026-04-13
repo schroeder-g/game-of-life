@@ -677,7 +677,7 @@ export function Scene() {
 		actions,
 		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef, organismsRef, cameraActionsRef },
 	} = useSimulation();
-	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp, selectOrganism } =
+	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp, selectOrganism, createOrganismFromBrush, setCells, deleteCells } =
 		actions;
 	const {
 		speed,
@@ -1153,7 +1153,16 @@ export function Scene() {
 					);
 
 				if (cellsToActivate.length > 0) {
-					actions.setCells(cellsToActivate);
+					if (selectedShape === 'Organism Brush' && brushStateRef.current.selectedOrganismBrushId) {
+						const brush = brushStateRef.current.organismBrushes.get(brushStateRef.current.selectedOrganismBrushId);
+						if (brush) {
+							createOrganismFromBrush(brush, cellsToActivate);
+						} else {
+							setCells(cellsToActivate);
+						}
+					} else {
+						setCells(cellsToActivate);
+					}
 					setCommunity([]); // Clear community view when manually editing
 				}
 			},
@@ -1205,7 +1214,7 @@ export function Scene() {
 
 				if (cellsToClear.length > 0) {
 					setCommunity([]);
-					actions.deleteCells(cellsToClear);
+					deleteCells(cellsToClear);
 				}
 			},
 			snapToOrientation: (face: string, rotation: number) => {

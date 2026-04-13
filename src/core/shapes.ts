@@ -217,6 +217,7 @@ export function generateShape(
 		case 'Pyramid':
 			return generatePyramid(size, hollow);
 		case 'Selected Community':
+		case 'Organism Brush':
 			return customOffsets || [];
 		default:
 			return [];

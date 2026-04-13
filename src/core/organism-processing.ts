@@ -620,9 +620,9 @@ export function processOrganisms(
 			resolvedCellsForOrg,
 			new Set<string>(), // ISOLATED: no external neighbors
 			gridSize,
-			organism.surviveMin, organism.surviveMax,
-			organism.birthMin, organism.birthMax, organism.birthMargin,
-			organism.neighborFaces, organism.neighborEdges, organism.neighborCorners,
+			organism.rules.surviveMin, organism.rules.surviveMax,
+			organism.rules.birthMin, organism.rules.birthMax, organism.rules.birthMargin,
+			organism.rules.neighborFaces, organism.rules.neighborEdges, organism.rules.neighborCorners,
 		);
 
 		// Keep only the SINGLE LARGEST connected component (≥3 cells).
