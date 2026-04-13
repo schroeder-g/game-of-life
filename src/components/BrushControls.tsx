@@ -335,13 +335,6 @@ function BrushSelectorDrop() {
 				<div
 					id='brush-list'
 					className='dropdown-menu dropup'
-					onMouseLeave={() => {
-						setHoveredCategory(null);
-						setHoveredShapeName(null);
-						setHoveredOrganismBrushId(null);
-						setShowShapesSubmenu(false);
-						setShowOrganismsSubmenu(false);
-					}}
 				>
 					{/* No Brush */}
 					<button
@@ -357,7 +350,7 @@ function BrushSelectorDrop() {
 					<div
 						className={`dropdown-item-with-submenu ${activeCategory === 'shape' ? 'selected' : ''}`}
 						onMouseEnter={() => { setHoveredCategory('shape'); setShowShapesSubmenu(true); }}
-						onMouseLeave={() => { setHoveredCategory(null); setShowShapesSubmenu(false); }}
+						onMouseLeave={() => { setHoveredCategory(null); }}
 						style={{ position: 'relative' }}
 					>
 						<button
@@ -412,7 +405,7 @@ function BrushSelectorDrop() {
 						<div
 							className={`dropdown-item-with-submenu ${activeCategory === 'organism' ? 'selected' : ''}`}
 							onMouseEnter={() => { setHoveredCategory('organism'); setShowOrganismsSubmenu(true); }}
-							onMouseLeave={() => { setHoveredCategory(null); setShowOrganismsSubmenu(false); }}
+							onMouseLeave={() => { setHoveredCategory(null); }}
 							style={{ position: 'relative' }}
 						>
 							<button
