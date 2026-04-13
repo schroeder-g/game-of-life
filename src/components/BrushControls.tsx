@@ -349,7 +349,7 @@ function BrushSelectorDrop() {
 					{/* Shapes */}
 					<div
 						className={`dropdown-item-with-submenu ${activeCategory === 'shape' ? 'selected' : ''}`}
-						onMouseEnter={() => { setHoveredCategory('shape'); setShowShapesSubmenu(true); }}
+						onMouseEnter={() => { setHoveredCategory('shape'); setShowShapesSubmenu(true); setShowOrganismsSubmenu(false); }}
 						onMouseLeave={() => { setHoveredCategory(null); }}
 						style={{ position: 'relative' }}
 					>
@@ -404,7 +404,7 @@ function BrushSelectorDrop() {
 					{enableOrganisms && (
 						<div
 							className={`dropdown-item-with-submenu ${activeCategory === 'organism' ? 'selected' : ''}`}
-							onMouseEnter={() => { setHoveredCategory('organism'); setShowOrganismsSubmenu(true); }}
+							onMouseEnter={() => { setHoveredCategory('organism'); setShowOrganismsSubmenu(true); setShowShapesSubmenu(false); }}
 							onMouseLeave={() => { setHoveredCategory(null); }}
 							style={{ position: 'relative' }}
 						>
