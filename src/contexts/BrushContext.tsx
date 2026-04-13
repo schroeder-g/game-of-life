@@ -177,7 +177,9 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
 			setOrganismBrushesArray(prevBrushesArray => {
-				const prevBrushesMap = new Map(prevBrushesArray.map(b => [b.id, b]));
+				// Ensure prevBrushesArray is an array before mapping
+				const safePrevBrushesArray = Array.isArray(prevBrushesArray) ? prevBrushesArray : [];
+				const prevBrushesMap = new Map(safePrevBrushesArray.map(b => [b.id, b]));
 				prevBrushesMap.set(brush.id, brush);
 				return Array.from(prevBrushesMap.values());
 			});
