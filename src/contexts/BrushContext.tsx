@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { usePersistentState } from '../hooks/usePersistentState'; // Import usePersistentState
 import { ShapeType, supportsHollow } from '../core/shapes';
 import { OrganismBrush, makeKey, parseKey, Organism, OrganismRules } from '../core/Organism'; // Import OrganismBrush, makeKey, parseKey, Organism, OrganismRules
+import { useSimulation } from './SimulationContext'; // Import useSimulation
 
 // Default rules for organisms, consistent with deserializeOrganism
 const DEFAULT_ORGANISM_RULES: OrganismRules = {
@@ -74,6 +75,8 @@ export interface BrushContextValue {
 export const BrushContext = createContext<BrushContextValue | null>(null);
 
 export function BrushProvider({ children }: { children: ReactNode }) {
+	const { state: { gridSize } } = useSimulation(); // Get gridSize from SimulationContext
+
 	const [selectedShape, setSelectedShape] =
 		useState<ShapeType>('Single Cell');
 	const [shapeSize, setShapeSize] = useState<number>(1);
@@ -82,7 +85,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		useState<boolean>(true);
 	const [selectorPos, setSelectorPos] = useState<
 		[number, number, number] | null
-	>(null);
+	>(null); // Initialized to null, will be set to grid center when an organism brush is selected
 	const [brushRotationVersion, setBrushRotationVersion] =
 		useState<number>(0);
 	const [shapeSelectionVersion, setShapeSelectionVersion] =
@@ -159,20 +162,28 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				setShapeSize(1);
 				setIsHollow(false);
 				setSelectedOrganismBrushRules(brush.rules); // Set rules from the selected brush
+				// Set selector position to the center of the grid when an organism brush is selected
+				setSelectorPos([
+					Math.floor(gridSize / 2),
+					Math.floor(gridSize / 2),
+					Math.floor(gridSize / 2),
+				]);
 			} else {
 				// If selected organism brush is no longer valid, clear it
 				_setSelectedOrganismBrushId(null);
 				setSelectedShape('Single Cell'); // Default to single cell
 				setCustomOffsets([]);
 				setSelectedOrganismBrushRules(null); // Clear rules
+				setSelectorPos(null); // Clear selector position
 			}
 		} else if (selectedShape === 'Organism Brush') {
 			// If no organism brush is selected but shape is 'Organism Brush', reset
 			setSelectedShape('Single Cell');
 			setCustomOffsets([]);
 			setSelectedOrganismBrushRules(null); // Clear rules
+			setSelectorPos(null); // Clear selector position
 		}
-	}, [selectedOrganismBrushId, organismBrushes, selectedShape, setCustomOffsets, setSelectedShape, setShapeSize, setIsHollow, _setSelectedOrganismBrushId, setSelectedOrganismBrushRules]);
+	}, [selectedOrganismBrushId, organismBrushes, selectedShape, setCustomOffsets, setSelectedShape, setShapeSize, setIsHollow, _setSelectedOrganismBrushId, setSelectedOrganismBrushRules, gridSize, setSelectorPos]);
 
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
@@ -205,14 +216,21 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			if (id) {
 				// When an organism brush is selected, set the shape type accordingly
 				setSelectedShape('Organism Brush');
+				// Set selector position to the center of the grid
+				setSelectorPos([
+					Math.floor(gridSize / 2),
+					Math.floor(gridSize / 2),
+					Math.floor(gridSize / 2),
+				]);
 				// The useEffect above will handle setting customOffsets from the brush.cells
 			} else {
 				// If no organism brush is selected, revert to default shape
 				setSelectedShape('Single Cell');
 				setCustomOffsets([]);
+				setSelectorPos(null); // Clear selector position
 			}
 		},
-		[_setSelectedOrganismBrushId, setSelectedShape],
+		[_setSelectedOrganismBrushId, setSelectedShape, setSelectorPos, gridSize],
 	);
 
 	const saveOrganismAsBrush = useCallback(
