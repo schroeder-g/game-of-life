@@ -58,6 +58,13 @@ describe('BrushContext', () => {
 		expect(savedBrush?.name).toBe('Test Organism');
 		expect(savedBrush?.cells.length).toBe(2); // Based on livingCells
 		expect(savedBrush?.rules).toEqual(mockOrganism.rules);
+		// Centroid of (0,0,0), (0,0,1) is (0,0,0.5).
+		// Relative offsets rounded: (0,0,0) - (0,0,0.5) = (0,0,0)
+		// (0,0,1) - (0,0,0.5) = (0,0,0.5) -> (0,0,1)
+		expect(result.current.state.customOffsets).toEqual(
+			expect.arrayContaining([[0, 0, 0], [0, 0, 1]])
+		);
+		expect(result.current.state.customOffsets.length).toBe(2);
 	});
 
 	it('[UC-7] should persist organism brushes to localStorage', () => {
@@ -106,6 +113,49 @@ describe('BrushContext', () => {
 		const loadedBrush = newResult.current.state.organismBrushes.get('org2');
 		expect(loadedBrush?.name).toBe('Persistent Organism');
 		expect(loadedBrush?.rules).toEqual(mockOrganism.rules);
+	});
+
+	it('[UC-8] should correctly set customOffsets when an organism brush is selected', () => {
+		const { result } = renderHook(() => useBrush(), { wrapper });
+
+		const mockOrganism = {
+			id: 'org3',
+			name: 'Another Organism',
+			livingCells: new Set(['10,10,10', '10,10,11', '11,10,10']),
+			skinColor: '#FF00FF',
+			previousLivingCells: new Set(),
+			cytoplasm: new Set(),
+			straightSteps: 0,
+			avoidanceSteps: 0,
+			parallelSteps: 0,
+			stuckTicks: 0,
+			eatenCount: 0,
+			rules: {
+				surviveMin: 1, surviveMax: 2, birthMin: 2, birthMax: 2, birthMargin: 0,
+				neighborFaces: true, neighborEdges: false, neighborCorners: false,
+			},
+		};
+
+		act(() => {
+			result.current.actions.saveOrganismAsBrush(mockOrganism);
+		});
+
+		// The saveOrganismAsBrush action should automatically select it
+		expect(result.current.state.selectedOrganismBrushId).toBe('org3');
+		expect(result.current.state.selectedShape).toBe('Organism Brush');
+
+		// Expected relative offsets after rounding:
+		// Cells: (10,10,10), (10,10,11), (11,10,10)
+		// minX=10, maxX=11 => centerX = 10.5
+		// minY=10, maxY=10 => centerY = 10
+		// minZ=10, maxZ=11 => centerZ = 10.5
+		//
+		// (10-10.5, 10-10, 10-10.5) = (-0.5, 0, -0.5) => rounded: (0, 0, 0)
+		// (10-10.5, 10-10, 11-10.5) = (-0.5, 0, 0.5) => rounded: (0, 0, 1)
+		// (11-10.5, 10-10, 10-10.5) = (0.5, 0, -0.5) => rounded: (1, 0, 0)
+		const expectedOffsets: [number, number, number][] = [[0, 0, 0], [0, 0, 1], [1, 0, 0]];
+		expect(result.current.state.customOffsets).toEqual(expect.arrayContaining(expectedOffsets));
+		expect(result.current.state.customOffsets.length).toBe(expectedOffsets.length);
 	});
 
 	it('[UX-1] should change shape size correctly', () => {
