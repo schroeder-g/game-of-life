@@ -11,7 +11,7 @@ import {
 import * as THREE from 'three';
 import { usePersistentState } from '../hooks/usePersistentState'; // Import usePersistentState
 import { ShapeType, supportsHollow } from '../core/shapes';
-import { OrganismBrush, makeKey } from '../core/Organism'; // Import OrganismBrush and makeKey
+import { OrganismBrush, makeKey, parseKey, Organism, OrganismRules } from '../core/Organism'; // Import OrganismBrush, makeKey, parseKey, Organism, OrganismRules
 
 export interface BrushState {
 	selectedShape: ShapeType;
@@ -26,6 +26,7 @@ export interface BrushState {
 	paintMode: 1 | 0 | -1; // 1: Activate, 0: Idle, -1: Clear
 	organismBrushes: Map<string, OrganismBrush>; // Added for organism brushes
 	selectedOrganismBrushId: string | null; // Added for selected organism brush
+	selectedOrganismBrushRules: OrganismRules | null; // Added for selected organism brush rules
 }
 
 export interface BrushActions {
@@ -78,6 +79,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 		[number, number, number][]
 	>([]);
 	const [paintMode, setPaintMode] = useState<1 | 0 | -1>(0); // 1: Toggle, 0: Idle, -1: Clear
+	const [selectedOrganismBrushRules, setSelectedOrganismBrushRules] = useState<OrganismRules | null>(null); // State for selected organism brush rules
 	const brushQuaternion = useRef(new THREE.Quaternion());
 
 	// Persistent state for organism brushes
@@ -144,18 +146,21 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				// For now, we just ensure they are not active.
 				setShapeSize(1);
 				setIsHollow(false);
+				setSelectedOrganismBrushRules(brush.rules); // Set rules from the selected brush
 			} else {
 				// If selected organism brush is no longer valid, clear it
 				_setSelectedOrganismBrushId(null);
 				setSelectedShape('Single Cell'); // Default to single cell
 				setCustomOffsets([]);
+				setSelectedOrganismBrushRules(null); // Clear rules
 			}
 		} else if (selectedShape === 'Organism Brush') {
 			// If no organism brush is selected but shape is 'Organism Brush', reset
 			setSelectedShape('Single Cell');
 			setCustomOffsets([]);
+			setSelectedOrganismBrushRules(null); // Clear rules
 		}
-	}, [selectedOrganismBrushId, organismBrushes, selectedShape, setCustomOffsets, setSelectedShape, setShapeSize, setIsHollow, _setSelectedOrganismBrushId]);
+	}, [selectedOrganismBrushId, organismBrushes, selectedShape, setCustomOffsets, setSelectedShape, setShapeSize, setIsHollow, _setSelectedOrganismBrushId, setSelectedOrganismBrushRules]);
 
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
@@ -255,10 +260,15 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 			paintMode,
 			organismBrushes,
 			selectedOrganismBrushId,
+			selectedOrganismBrushRules, // Expose selected organism brush rules
 		},
 		actions: {
 			setSelectedShape: (shape: ShapeType) => {
 				setShapeSelectionVersion(v => v + 1);
+				// When selecting a non-organism shape, clear organism brush rules
+				if (shape !== 'Organism Brush') {
+					setSelectedOrganismBrushRules(null);
+				}
 				setSelectedShape(shape);
 				setShapeSize(prev => {
 					if (shape === 'Single Cell' || shape === 'None' || shape === 'Organism Brush') {
@@ -285,6 +295,7 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 				setPaintMode(0);
 				_setSelectedOrganismBrushId(null); // Clear selected organism brush
 				setCustomOffsets([]); // Clear custom offsets
+				setSelectedOrganismBrushRules(null); // Clear rules
 			},
 			changeSize: (delta: number, maxGridSize: number) => {
 				if (

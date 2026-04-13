@@ -137,7 +137,7 @@ export function SelectedCommunityPanel({
 		},
 	} = useSimulation();
 	const {
-		actions: { setCommunityBrush, setSelectedShape, setPaintMode },
+		actions: { setCommunityBrush, setSelectedShape, setPaintMode, saveOrganismAsBrush },
 	} = useBrush();
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [showTooltip, setShowTooltip] = useState(false); // Add this line
@@ -637,8 +637,12 @@ export function SelectedCommunityPanel({
 										title='Activate Brush'
 										onClick={e => {
 											e.stopPropagation();
-											setCommunityBrush(community);
-											setSelectedShape('Selected Community');
+											if (matchingOrganism) {
+												saveOrganismAsBrush(matchingOrganism);
+											} else {
+												setCommunityBrush(community);
+												setSelectedShape('Selected Community');
+											}
 											setPaintMode(1);
 										}}
 									>

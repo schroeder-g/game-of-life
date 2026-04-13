@@ -15,6 +15,49 @@ describe('BrushContext', () => {
 		expect(result.current.state.selectedShape).toBe('Single Cell');
 		expect(result.current.state.shapeSize).toBe(1);
 		expect(result.current.state.paintMode).toBe(0);
+		expect(result.current.state.selectedOrganismBrushRules).toBeNull();
+	});
+
+	it('[UC-6] should save an organism as a brush and select it', () => {
+		const { result } = renderHook(() => useBrush(), { wrapper });
+
+		const mockOrganism = {
+			id: 'org1',
+			name: 'Test Organism',
+			livingCells: new Set(['0,0,0', '0,0,1']),
+			skinColor: '#FFFFFF',
+			previousLivingCells: new Set(),
+			cytoplasm: new Set(),
+			straightSteps: 0,
+			avoidanceSteps: 0,
+			parallelSteps: 0,
+			stuckTicks: 0,
+			eatenCount: 0,
+			rules: {
+				surviveMin: 2,
+				surviveMax: 3,
+				birthMin: 3,
+				birthMax: 3,
+				birthMargin: 0,
+				neighborFaces: true,
+				neighborEdges: false,
+				neighborCorners: false,
+			},
+		};
+
+		act(() => {
+			result.current.actions.saveOrganismAsBrush(mockOrganism);
+		});
+
+		expect(result.current.state.organismBrushes.has('org1')).toBe(true);
+		expect(result.current.state.selectedOrganismBrushId).toBe('org1');
+		expect(result.current.state.selectedShape).toBe('Organism Brush');
+		expect(result.current.state.selectedOrganismBrushRules).toEqual(mockOrganism.rules);
+
+		const savedBrush = result.current.state.organismBrushes.get('org1');
+		expect(savedBrush?.name).toBe('Test Organism');
+		expect(savedBrush?.cells.length).toBe(2); // Based on livingCells
+		expect(savedBrush?.rules).toEqual(mockOrganism.rules);
 	});
 
 	it('[UX-1] should change shape size correctly', () => {
