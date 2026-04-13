@@ -411,6 +411,11 @@ function BrushSection() {
 		}
 	}, [selectedShape, setBrushCategory]);
 
+	// Temporary diagnostic log
+	useEffect(() => {
+		console.log('BrushSection state:', { isCollapsed, brushCategory, selectedShape, enableOrganisms });
+	}, [isCollapsed, brushCategory, selectedShape, enableOrganisms]);
+
 	const handleShapeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const newShape = e.target.value as ShapeType;
 		setSelectedShape(newShape);
@@ -457,7 +462,7 @@ function BrushSection() {
 				<>
 					<div className='control-label'>
 						<span>Brush Type:</span>
-						<div className='radio-group'>
+						<div className='radio-group' style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}> {/* Added inline style */}
 							<label>
 								<input
 									type='radio'
