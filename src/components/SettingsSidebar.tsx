@@ -15,7 +15,7 @@ import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
 import { serializeOrganism } from '../core/Organism';
 import { MANUAL_TESTS } from '../data/manual-tests';
-import { ShapeType } from '../core/shapes'; // Added
+import { ShapeType, supportsHollow } from '../core/shapes'; // Added supportsHollow
 import { AutomatedTestsPanel } from './AutomatedTestsPanel';
 import { ManualTestsPanel } from './ManualTestsPanel';
 
