@@ -60,6 +60,54 @@ describe('BrushContext', () => {
 		expect(savedBrush?.rules).toEqual(mockOrganism.rules);
 	});
 
+	it('[UC-7] should persist organism brushes to localStorage', () => {
+		const { result, unmount } = renderHook(() => useBrush(), { wrapper });
+
+		const mockOrganism = {
+			id: 'org2',
+			name: 'Persistent Organism',
+			livingCells: new Set(['1,1,1']),
+			skinColor: '#000000',
+			previousLivingCells: new Set(),
+			cytoplasm: new Set(),
+			straightSteps: 0,
+			avoidanceSteps: 0,
+			parallelSteps: 0,
+			stuckTicks: 0,
+			eatenCount: 0,
+			rules: {
+				surviveMin: 1,
+				surviveMax: 2,
+				birthMin: 2,
+				birthMax: 2,
+				birthMargin: 1,
+				neighborFaces: false,
+				neighborEdges: true,
+				neighborCorners: true,
+			},
+		};
+
+		// Save a brush
+		act(() => {
+			result.current.actions.saveOrganismAsBrush(mockOrganism);
+		});
+
+		// Verify it's in the current state
+		expect(result.current.state.organismBrushes.has('org2')).toBe(true);
+
+		// Unmount the component to trigger localStorage save
+		unmount();
+
+		// Re-render the hook to simulate a fresh load
+		const { result: newResult } = renderHook(() => useBrush(), { wrapper });
+
+		// Check if the brush is loaded from localStorage
+		expect(newResult.current.state.organismBrushes.has('org2')).toBe(true);
+		const loadedBrush = newResult.current.state.organismBrushes.get('org2');
+		expect(loadedBrush?.name).toBe('Persistent Organism');
+		expect(loadedBrush?.rules).toEqual(mockOrganism.rules);
+	});
+
 	it('[UX-1] should change shape size correctly', () => {
 		const { result } = renderHook(() => useBrush(), { wrapper });
 		// First switch to Cube so changeSize is not blocked

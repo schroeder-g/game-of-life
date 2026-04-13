@@ -164,11 +164,13 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 
 	const addOrganismBrush = useCallback(
 		(brush: OrganismBrush) => {
-			const newBrushes = new Map(organismBrushes);
-			newBrushes.set(brush.id, brush);
-			setOrganismBrushes(newBrushes);
+			setOrganismBrushesArray(prevBrushesArray => {
+				const prevBrushesMap = new Map(prevBrushesArray.map(b => [b.id, b]));
+				prevBrushesMap.set(brush.id, brush);
+				return Array.from(prevBrushesMap.values());
+			});
 		},
-		[organismBrushes, setOrganismBrushes],
+		[setOrganismBrushesArray],
 	);
 
 	const removeOrganismBrush = useCallback(
