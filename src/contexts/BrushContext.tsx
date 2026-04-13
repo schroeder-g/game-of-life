@@ -13,6 +13,18 @@ import { usePersistentState } from '../hooks/usePersistentState'; // Import useP
 import { ShapeType, supportsHollow } from '../core/shapes';
 import { OrganismBrush, makeKey, parseKey, Organism, OrganismRules } from '../core/Organism'; // Import OrganismBrush, makeKey, parseKey, Organism, OrganismRules
 
+// Default rules for organisms, consistent with deserializeOrganism
+const DEFAULT_ORGANISM_RULES: OrganismRules = {
+	surviveMin: 4,
+	surviveMax: 5,
+	birthMin: 5,
+	birthMax: 5,
+	birthMargin: 0,
+	neighborFaces: true,
+	neighborEdges: true,
+	neighborCorners: false,
+};
+
 export interface BrushState {
 	selectedShape: ShapeType;
 	shapeSize: number;
@@ -227,19 +239,22 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					],
 			);
 
+			// Ensure organism.rules is defined, use defaults if not
+			const organismRules = organism.rules || DEFAULT_ORGANISM_RULES;
+
 			const newBrush: OrganismBrush = {
 				id: organism.id, // Use organism's ID as brush ID
 				name: organism.name,
 				cells: relativeCells,
 				rules: { // Group rules under a 'rules' object
-					surviveMin: organism.rules.surviveMin,
-					surviveMax: organism.rules.surviveMax,
-					birthMin: organism.rules.birthMin,
-					birthMax: organism.rules.birthMax,
-					birthMargin: organism.rules.birthMargin,
-					neighborFaces: organism.rules.neighborFaces,
-					neighborEdges: organism.rules.neighborEdges,
-					neighborCorners: organism.rules.neighborCorners,
+					surviveMin: organismRules.surviveMin,
+					surviveMax: organismRules.surviveMax,
+					birthMin: organismRules.birthMin,
+					birthMax: organismRules.birthMax,
+					birthMargin: organismRules.birthMargin,
+					neighborFaces: organismRules.neighborFaces,
+					neighborEdges: organismRules.neighborEdges,
+					neighborCorners: organismRules.neighborCorners,
 				},
 			};
 			addOrganismBrush(newBrush);
