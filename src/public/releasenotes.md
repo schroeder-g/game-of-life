@@ -1,5 +1,22 @@
 # Release Notes
 
+### **Tuesday, April 14, 2026 (Version 1.9.6)**
+- **Features**: 
+    - **Organism Brush System**: Introduced the ability to capture any organism as a reusable brush. These brushes are persisted across sessions and include the organism's unique geometry and biological rules.
+    - **Per-Organism GOL Rules**: Enabled independent survival and birth rules for individual organisms. Biological settings are now inherited during creation and maintained regardless of changes to the global environment.
+    - **Community Selection Shortcut**: Added **Alt/Option-Click** functionality to manually append cells to the currently selected community brush, allowing for "surgical" community construction.
+    - **Consolidated Brush Controls**: Unified shape and organism brush selection into a single, draggable "Brush Controls" panel. Simplified the main brush button to an icon-only design with identification labels moved to the panel header.
+- **Bug Fixes**:
+    - **Persistence Stability**: Resolved a critical issue where legacy organism brushes would stubbornly re-appear after manual clearing due to a storage key collision and argument-order bug in the persistence hook.
+    - **Submenu Polish**: Fixed multiple UI issues in the brush selector, including submenu overlaps, premature closing, and inconsistent visibility during hovering.
+    - **Simulation Robustness**: Corrected data structure access for organism simulation ticks, preventing immediate organism death on the first step of the simulation.
+    - **Data Validation**: Implemented strict validation for stored organism data to prevent application crashes caused by malformed or legacy local storage entries.
+- **Internal**:
+    - Refactored organism architecture to group simulation rules into a dedicated `rules` object for better serialization and portability.
+    - Synchronized package version to **1.9.6**.
+
+---
+
 ### **Sunday, April 12, 2026 (Version 1.9.5)**
 - **Features**: 
     - **WAXDQZ Navigation Refinement**: Corrected the brush movement direction on the Z-axis in Edit mode. The brush now moves intuitively away from or towards the viewer by compensating for the renderer's coordinate inversion.
