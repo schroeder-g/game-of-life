@@ -33,10 +33,11 @@ export const STANDARD_ORGANISM_BRUSHES: OrganismBrush[] = [
 		id: 'std-gemini-coaster',
 		name: 'Gemini Coaster',
 		cells: [
-			[0, -1, -1],
+			[-1, 1, -1],
 			[1, 0, -1],
-			[1, -1, 0],
 			[1, 1, 0],
+			[0, -1, 1],
+			[1, -1, 0],
 			[1, 0, 1],
 		],
 		rules: {
@@ -76,7 +77,7 @@ export const STANDARD_ORGANISM_BRUSHES: OrganismBrush[] = [
 	},
 	{
 		id: 'std-pele-copter',
-		name: 'Gemini Pele-Copter',
+		name: 'Pelé-Copter',
 		cells: [
 			[0, 1, 1],
 			[0, 0, 0],
@@ -95,24 +96,19 @@ export const STANDARD_ORGANISM_BRUSHES: OrganismBrush[] = [
 		},
 	},
 	{
-		id: 'std-rhea',
-		name: 'Rhea',
+		id: 'std-fidget',
+		name: 'Fidget',
 		cells: [
-			[0, -1, 0],
-			[1, -1, 1],
-			[1, -1, 0],
-			[0, -1, 1],
-			[-1, 1, 0],
-			[-1, 1, 1],
-			[2, 1, 1],
-			[2, 1, 0],
+			[0, 1, 0],
+			[0, 0, 1],
+			[1, 1, 1],
 		],
 		rules: {
 			surviveMin: 2,
 			surviveMax: 2,
 			birthMin: 3,
 			birthMax: 3,
-			birthMargin: 0,
+			birthMargin: 2,
 			neighborFaces: true,
 			neighborEdges: true,
 			neighborCorners: false,
