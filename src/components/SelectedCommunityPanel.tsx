@@ -9,7 +9,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import chroma from 'chroma-js';
 import { useSimulation } from '../contexts/SimulationContext';
-import { makeKey } from '../core/Organism';
+import { makeKey, parseKey } from '../core/Organism';
 import { useBrush } from '../contexts/BrushContext';
 import { ClaimHint } from './ClaimHint';
 
@@ -142,6 +142,9 @@ export function SelectedCommunityPanel({
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [showTooltip, setShowTooltip] = useState(false); // Add this line
 	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 }); // Add this line
+	const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+	const [exportName, setExportName] = useState('');
+	const [exportResult, setExportResult] = useState<string | null>(null);
 
 	const matchingOrganism = useMemo(() => {
 		if (selectedOrganismId) return organisms.get(selectedOrganismId) || null;
@@ -360,6 +363,41 @@ export function SelectedCommunityPanel({
 		// Position the tooltip slightly offset from the cursor
 		setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
 	}, []);
+
+	const handleExport = useCallback(() => {
+		if (!matchingOrganism) return;
+
+		const communityCells = Array.from(matchingOrganism.livingCells).map(parseKey);
+		if (communityCells.length === 0) return;
+
+		const minX = Math.min(...communityCells.map(c => c[0]));
+		const maxX = Math.max(...communityCells.map(c => c[0]));
+		const minY = Math.min(...communityCells.map(c => c[1]));
+		const maxY = Math.max(...communityCells.map(c => c[1]));
+		const minZ = Math.min(...communityCells.map(c => c[2]));
+		const maxZ = Math.max(...communityCells.map(c => c[2]));
+
+		const centerX = (minX + maxX) / 2;
+		const centerY = (minY + maxY) / 2;
+		const centerZ = (minZ + maxZ) / 2;
+
+		const relativeCells = communityCells.map(
+			([x, y, z]) =>
+				[
+					Math.round(x - centerX),
+					Math.round(y - centerY),
+					Math.round(z - centerZ),
+				] as [number, number, number],
+		);
+
+		const exportData = {
+			name: exportName || matchingOrganism.name,
+			cells: relativeCells,
+			rules: matchingOrganism.rules,
+		};
+
+		setExportResult(JSON.stringify(exportData, null, 2));
+	}, [matchingOrganism, exportName]);
 
 	useEffect(() => {
 		if (isDragging) {
@@ -632,6 +670,33 @@ export function SelectedCommunityPanel({
 								</div>
 
 								<div style={{ display: 'flex', gap: '8px' }}>
+									{matchingOrganism && (
+										<button
+											className='icon-button'
+											title='Export Organism Data'
+											onClick={e => {
+												e.stopPropagation();
+												setExportName(matchingOrganism.name);
+												setIsExportModalOpen(true);
+												setExportResult(null);
+											}}
+										>
+											<svg
+												width='14'
+												height='14'
+												viewBox='0 0 24 24'
+												fill='none'
+												stroke='currentColor'
+												strokeWidth='2'
+												strokeLinecap='round'
+												strokeLinejoin='round'
+											>
+												<path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' />
+												<polyline points='7 10 12 15 17 10' />
+												<line x1='12' y1='15' x2='12' y2='3' />
+											</svg>
+										</button>
+									)}
 									<button
 										className='icon-button'
 										title='Activate Brush'
@@ -794,6 +859,146 @@ export function SelectedCommunityPanel({
 					}}
 				>
 					{matchingOrganism.name}
+				</div>
+			)}
+
+			{isExportModalOpen && (
+				<div 
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						backgroundColor: 'rgba(0,0,0,0.7)',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						zIndex: 2000,
+						pointerEvents: 'auto',
+					}}
+					onClick={() => setIsExportModalOpen(false)}
+				>
+					<div 
+						style={{
+							background: '#1a1a1a',
+							border: '1px solid #333',
+							borderRadius: '8px',
+							padding: '24px',
+							width: '90%',
+							maxWidth: '450px',
+							boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+						}}
+						onClick={e => e.stopPropagation()}
+					>
+						{!exportResult ? (
+							<>
+								<h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>Export Organism</h3>
+								<p style={{ fontSize: '13px', opacity: 0.7, marginBottom: '20px' }}>
+									Enter a name for the exported organism brush data.
+								</p>
+								<input
+									type="text"
+									className="glass-input"
+									value={exportName}
+									onChange={e => setExportName(e.target.value)}
+									placeholder="Organism Name"
+									autoFocus
+									style={{
+										width: '100%',
+										marginBottom: '20px',
+										padding: '8px 12px',
+										fontSize: '14px',
+									}}
+								/>
+								<div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+									<button 
+										className="glass-button" 
+										onClick={() => setIsExportModalOpen(false)}
+									>
+										Cancel
+									</button>
+									<button 
+										className="glass-button primary" 
+										onClick={handleExport}
+									>
+										Generate Export
+									</button>
+								</div>
+							</>
+						) : (
+							<>
+								<h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>Export Data Ready</h3>
+								<p style={{ fontSize: '13px', opacity: 0.7, marginBottom: '12px' }}>
+									Copy this JSON and give it to the AI to create a standard-issue Organism Brush.
+								</p>
+								<textarea
+									readOnly
+									className="glass-input"
+									value={exportResult}
+									style={{
+										width: '100%',
+										height: '200px',
+										fontFamily: 'monospace',
+										fontSize: '11px',
+										marginBottom: '20px',
+										padding: '8px',
+										resize: 'none',
+										backgroundColor: 'rgba(0,0,0,0.2)',
+									}}
+									onClick={e => (e.target as HTMLTextAreaElement).select()}
+								/>
+								<div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+									<button 
+										className="glass-button" 
+										onClick={() => setIsExportModalOpen(false)}
+									>
+										Done
+									</button>
+									<button 
+										className="glass-button primary" 
+										onClick={() => {
+											const copyToClipboard = (text: string) => {
+												if (navigator.clipboard && navigator.clipboard.writeText) {
+													navigator.clipboard.writeText(text).catch(err => {
+														console.error('Failed to copy: ', err);
+														// Fallback even if API exists but fails
+														legacyCopy(text);
+													});
+												} else {
+													legacyCopy(text);
+												}
+											};
+
+											const legacyCopy = (text: string) => {
+												try {
+													const textArea = document.createElement('textarea');
+													textArea.value = text;
+													// Ensure it's not visible but part of DOM
+													textArea.style.position = 'fixed';
+													textArea.style.left = '-9999px';
+													textArea.style.top = '0';
+													document.body.appendChild(textArea);
+													textArea.focus();
+													textArea.select();
+													const successful = document.execCommand('copy');
+													if (!successful) console.error('Legacy copy failed');
+													document.body.removeChild(textArea);
+												} catch (err) {
+													console.error('Legacy copy exception: ', err);
+												}
+											};
+
+											copyToClipboard(exportResult);
+											setIsExportModalOpen(false);
+										}}
+									>
+										Copy & Close
+									</button>
+								</div>
+							</>
+						)}
+					</div>
 				</div>
 			)}
 		</>

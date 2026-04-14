@@ -13,6 +13,7 @@ import { usePersistentState } from '../hooks/usePersistentState'; // Import useP
 import { ShapeType, supportsHollow } from '../core/shapes';
 import { OrganismBrush, makeKey, parseKey, Organism, OrganismRules } from '../core/Organism'; // Import OrganismBrush, makeKey, parseKey, Organism, OrganismRules
 import { useSimulation } from './SimulationContext'; // Import useSimulation
+import { STANDARD_ORGANISM_BRUSHES } from '../data/standard-organisms'; // Import standard brushes
 
 // Default rules for organisms, consistent with deserializeOrganism
 const DEFAULT_ORGANISM_RULES: OrganismRules = {
@@ -125,10 +126,12 @@ export function BrushProvider({ children }: { children: ReactNode }) {
 					typeof b.name === 'string' &&
 					Array.isArray(b.cells) &&
 					typeof b.rules === 'object' &&
-					b.rules !== null &&
-					typeof b.rules.surviveMin === 'number'
+					b.rules !== null
 			);
-			return new Map(validBrushes.map(b => [b.id, b]));
+
+			// Combine standard brushes with persistent user brushes
+			const allBrushes = [...STANDARD_ORGANISM_BRUSHES, ...validBrushes];
+			return new Map(allBrushes.map(b => [b.id, b]));
 		},
 		[organismBrushesArray],
 	);

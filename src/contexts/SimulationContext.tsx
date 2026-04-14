@@ -279,7 +279,6 @@ export function SimulationProvider({
 		localStorage.getItem('userName') || undefined,
 	);
 	const [showIntroduction, setShowIntroduction] = useState(true);
-
 	const [buildInfo, setBuildInfo] = useState<
 		SimulationState['buildInfo']
 	>({
@@ -295,11 +294,6 @@ export function SimulationProvider({
 		) {
 			setBuildInfo((window as any).__BUILD_INFO__);
 		}
-	}, []);
-
-	const setUserName = useCallback((name: string) => {
-		localStorage.setItem('userName', name);
-		setUserNameState(name);
 	}, []);
 
 	const [speed, setSpeed] = useState(storedSettings.speed);
@@ -326,7 +320,6 @@ export function SimulationProvider({
 	// Add this state for organism brushes
 	const [organismBrushes, setOrganismBrushes] = useState<Map<string, OrganismBrush>>(new Map());
 	const [selectedOrganismBrushId, setSelectedOrganismBrushId] = useState<string | null>(null);
-
 
 	const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
 	const [rotationSpeed, setRotationSpeed] = useState(
@@ -359,6 +352,36 @@ export function SimulationProvider({
 
 	const hasMounted = useRef(false);
 	const cellsInitializedRef = useRef(false);
+
+	const setUserName = useCallback((name: string) => {
+		localStorage.setItem('userName', name);
+		setUserNameState(name);
+	}, []);
+
+	const setCommunity = useCallback(
+		(newCommunity: Array<[number, number, number]>) => {
+			_setCommunityInternal(newCommunity);
+			if (newCommunity.length === 0) {
+				setSelectedOrganismId(null);
+			} else {
+				const communityKeys = new Set(
+					newCommunity.map(([x, y, z]) => makeKey(x, y, z)),
+				);
+				let foundId: string | null = null;
+				for (const [id, org] of organismManagerRef.current.organisms.entries()) {
+					for (const key of communityKeys) {
+						if (org.livingCells.has(key)) {
+							foundId = id;
+							break;
+						}
+					}
+					if (foundId) break;
+				}
+				setSelectedOrganismId(foundId);
+			}
+		},
+		[],
+	);
 
 	const runInitAnimation = useCallback(
 		async (cells?: Array<[number, number, number]>) => {
@@ -799,6 +822,13 @@ export function SimulationProvider({
 			}
 
 			setRunning(false);
+			
+			// IMMEDIATELY clear organisms and community to prevent ghosting during animation
+			organismManagerRef.current.organisms.clear();
+			setOrganismsVersion(v => v + 1);
+			setCommunity([]);
+			setSelectedOrganismId(null);
+
 			if (updateGridSize !== undefined && updateGridSize !== gridSize) {
 				gridRef.current = new Grid3D(updateGridSize);
 				gridRef.current.neighborFaces = neighborFaces;
@@ -812,13 +842,7 @@ export function SimulationProvider({
 			// Await the animation to ensure physical cells are on the grid before hydration
 			await runInitAnimation(cells);
 			
-			setCommunity([]);
-			
 			// Hydration Logic: Re-instantiate organisms from saved state
-			organismManagerRef.current.organisms.clear();
-			
-			
-			
 			if (savedOrgs && Array.isArray(savedOrgs)) {
 				for (const orgData of savedOrgs) {
 					organismManagerRef.current.organisms.set(orgData.id, deserializeOrganism(orgData, finalGridSize));
@@ -834,6 +858,8 @@ export function SimulationProvider({
 			neighborCorners,
 			runInitAnimation,
 			enableOrganisms,
+			setCommunity,
+			setSelectedOrganismId,
 		],
 	);
 
@@ -1043,30 +1069,6 @@ export function SimulationProvider({
 		cameraActionsRef.current?.snapToOrientation(face, rotation);
 	}, []);
 
-	const setCommunity = useCallback(
-		(newCommunity: Array<[number, number, number]>) => {
-			_setCommunityInternal(newCommunity);
-			if (newCommunity.length === 0) {
-				setSelectedOrganismId(null);
-			} else {
-				const communityKeys = new Set(
-					newCommunity.map(([x, y, z]) => makeKey(x, y, z)),
-				);
-				let foundId: string | null = null;
-				for (const [id, org] of organismManagerRef.current.organisms.entries()) {
-					for (const key of communityKeys) {
-						if (org.livingCells.has(key)) {
-							foundId = id;
-							break;
-						}
-					}
-					if (foundId) break;
-				}
-				setSelectedOrganismId(foundId);
-			}
-		},
-		[],
-	);
 
 	const moveSelectedOrganism = useCallback(
 		(delta: [number, number, number]) => {
