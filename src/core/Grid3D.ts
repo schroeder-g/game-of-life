@@ -255,7 +255,7 @@ export class Grid3D extends Emitter<{ tick: undefined }> {
 		birthMin: number,
 		birthMax: number,
 		birthMargin: number = 0,
-		forbiddenBirths?: Set<string>,
+		forbiddenBirths: Set<string> = new Set<string>(), // Default to empty set
 	): void {
 		// When we tick forward, we clear any "future" states from rewinding
 		this.futureHistory = [];

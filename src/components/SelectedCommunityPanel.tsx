@@ -137,7 +137,7 @@ export function SelectedCommunityPanel({
 		},
 	} = useSimulation();
 	const {
-		actions: { setCustomBrush, setSelectedShape, setPaintMode },
+		actions: { setCommunityBrush, setSelectedShape, setPaintMode, saveOrganismAsBrush },
 	} = useBrush();
 	const [isCollapsed, setIsCollapsed] = useState(true);
 	const [showTooltip, setShowTooltip] = useState(false); // Add this line
@@ -637,8 +637,12 @@ export function SelectedCommunityPanel({
 										title='Activate Brush'
 										onClick={e => {
 											e.stopPropagation();
-											setCustomBrush(community);
-											setSelectedShape('Selected Community');
+											if (matchingOrganism) {
+												saveOrganismAsBrush(matchingOrganism);
+											} else {
+												setCommunityBrush(community);
+												setSelectedShape('Selected Community');
+											}
 											setPaintMode(1);
 										}}
 									>
@@ -734,6 +738,19 @@ export function SelectedCommunityPanel({
 												<span style={{ opacity: 0.7 }}>Eaten:</span>
 												<span style={{ fontWeight: 'bold', color: '#ff4d4d' }}>{matchingOrganism.eatenCount || 0}</span>
 											</div>
+
+											{/* Row 5: GOL Rules */}
+											{matchingOrganism.rules && ( // Add this check
+												<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+													<span style={{ opacity: 0.7 }}>Rules:</span>
+													<span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '10px' }}>
+														S{matchingOrganism.rules.surviveMin}-{matchingOrganism.rules.surviveMax}, B{matchingOrganism.rules.birthMin}-{matchingOrganism.rules.birthMax}
+														{matchingOrganism.rules.neighborFaces ? ' F' : ''}
+														{matchingOrganism.rules.neighborEdges ? ' E' : ''}
+														{matchingOrganism.rules.neighborCorners ? ' C' : ''}
+													</span>
+												</div>
+											)}
 										</>
 									)}
 								</div>

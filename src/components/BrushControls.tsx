@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
 import { useBrush } from '../contexts/BrushContext';
 import { useSimulation } from '../contexts/SimulationContext';
@@ -8,6 +8,7 @@ import {
 	type CameraRotation,
 } from '../core/faceOrientationKeyMapping';
 import { SHAPES, ShapeType, supportsHollow } from '../core/shapes';
+import { OrganismData } from '../core/Organism'; // Import OrganismData
 import { useClickOutside } from '../hooks/useClickOutside';
 const PaintBrushIcon = () => (
 	<svg
@@ -153,20 +154,42 @@ const CloserIcon = () => (
 	</svg>
 );
 
-function BrushSelectorDrop() {
+function BrushSelectorDrop({ side }: { side: 'left' | 'right' }) {
 	const [isOpen, setIsOpen] = useState(false);
-	const dropRef = useRef<HTMLDivElement>(null); // Ref for the button wrapper
-	const menuRef = useRef<HTMLDivElement>(null); // Ref for the actual brush list menu
-	const [hoveredName, setHoveredName] = useState<string | null>(null);
+	const dropRef = useRef<HTMLDivElement>(null);
+	const [hoveredCategory, setHoveredCategory] = useState<
+		'none' | 'shape' | 'organism' | null
+	>(null);
+	const [hoveredShapeName, setHoveredShapeName] = useState<ShapeType | null>(
+		null,
+	);
+	const [hoveredOrganismBrushId, setHoveredOrganismBrushId] = useState<
+		string | null
+	>(null);
 
 	const {
-		state: { selectedShape, brushQuaternion },
-		actions: { setSelectedShape, incrementBrushRotationVersion },
+		state: { selectedShape, brushQuaternion, organismBrushes, selectedOrganismBrushId },
+		actions: {
+			setSelectedShape,
+			incrementBrushRotationVersion,
+			selectOrganismBrush,
+			clearShape,
+			setShapeSize, // Added setShapeSize
+		},
 	} = useBrush();
 
 	const {
-		state: { cameraOrientation },
+		state: { cameraOrientation, enableOrganisms },
 	} = useSimulation();
+
+	// Determine the currently active brush category for UI highlighting
+	const activeCategory = useMemo(() => {
+		if (selectedShape === 'None') return 'none';
+		if (selectedShape === 'Organism Brush' && selectedOrganismBrushId) return 'organism';
+		if (SHAPES.includes(selectedShape)) return 'shape';
+		return null;
+	}, [selectedShape, selectedOrganismBrushId]);
+
 
 	const initBrushOrientation = useCallback(() => {
 		const face = cameraOrientation.face;
@@ -208,62 +231,233 @@ function BrushSelectorDrop() {
 		incrementBrushRotationVersion,
 	]);
 
+	const handleSelectCategory = useCallback(
+		(category: 'none' | 'shape' | 'organism') => {
+			if (category === 'none') {
+				clearShape(); // Clears selectedShape, organism brush, etc.
+				selectOrganismBrush(null);
+				setSelectedShape('None');
+				setIsOpen(false);
+			} else if (category === 'shape') {
+				if (activeCategory !== 'shape') {
+					setSelectedShape('Cube'); // Default shape
+					setShapeSize(3); // Set a default size for shapes
+					selectOrganismBrush(null); // Clear organism brush selection
+				}
+				// On mobile or when clicking, stay open to show submenus
+			} else if (category === 'organism') {
+				if (activeCategory !== 'organism') {
+					// Default to first organism brush if available, otherwise 'None'
+					const firstBrushId = organismBrushes.keys().next().value;
+					if (firstBrushId) {
+						selectOrganismBrush(firstBrushId);
+						setSelectedShape('Organism Brush'); // Indicate an organism brush is active
+					} else {
+						setSelectedShape('None'); // No organism brushes available
+						selectOrganismBrush(null);
+						setIsOpen(false);
+						return;
+					}
+				}
+			}
+			initBrushOrientation();
+		},
+		[activeCategory, clearShape, selectOrganismBrush, setSelectedShape, organismBrushes, initBrushOrientation, setShapeSize], // Added activeCategory
+	);
+
 	const handleSelectShape = useCallback(
 		(shape: ShapeType) => {
 			setSelectedShape(shape);
+			// Set a default size for shapes, considering min size for Cube/Square vs others
+			if (shape === 'Cube' || shape === 'Square') {
+				setShapeSize(3); // Default to 3 for hollow to be visible
+			} else if (shape !== 'Single Cell' && shape !== 'None' && shape !== 'Selected Community' && shape !== 'Organism Brush') {
+				setShapeSize(3); // Default to 3 for other shapes that have size
+			} else {
+				setShapeSize(1); // Default to 1 for Single Cell, None, etc.
+			}
+			selectOrganismBrush(null); // Ensure organism brush is deselected
 			initBrushOrientation();
 			setIsOpen(false);
 		},
-		[setSelectedShape, initBrushOrientation],
+		[setSelectedShape, selectOrganismBrush, initBrushOrientation, setShapeSize, setIsOpen],
+	);
+
+	const handleSelectOrganismBrush = useCallback(
+		(brushId: string | null) => {
+			const brush = brushId ? organismBrushes.get(brushId) : undefined;
+			selectOrganismBrush(brushId, brush); // Pass the brush object
+			if (brushId) {
+				setSelectedShape('Organism Brush'); // Indicate an organism brush is active
+			} else {
+				setSelectedShape('None'); // No organism brush selected
+			}
+			initBrushOrientation();
+			setIsOpen(false);
+		},
+		[selectOrganismBrush, setSelectedShape, initBrushOrientation, organismBrushes, setIsOpen],
 	);
 
 	// Effect to close drop on outside click
-	useClickOutside(dropRef, () => setIsOpen(false));
+	useClickOutside(dropRef, () => {
+		setIsOpen(false);
+		setHoveredCategory(null);
+		setHoveredShapeName(null);
+		setHoveredOrganismBrushId(null);
+	});
 
 	const handleButtonClick = () => {
 		setIsOpen(prev => !prev);
+		setHoveredCategory(null); // Reset hovered state when opening/closing main menu
+		setHoveredShapeName(null);
+		setHoveredOrganismBrushId(null);
 	};
+
 
 	return (
 		<div
 			id='brush-selector-button-wrapper'
 			ref={dropRef}
-			style={{ position: 'relative' }} // Keep position: 'relative' here for the parent
+			style={{ position: 'relative' }}
 		>
 			<button
 				id='brush-selector-button'
 				className='glass-button'
 				onClick={handleButtonClick}
-				data-tooltip-bottom='Select Brush Shape'
+				data-tooltip-bottom='Select Brush Type'
 			>
 				<PaintBrushIcon />
 			</button>
 			{isOpen && (
 				<div
 					id='brush-list'
-					className='dropdown-menu dropup' // Apply dropdown-menu and dropup classes
-					onMouseLeave={() => setHoveredName(null)}
+					className='dropdown-menu dropup'
 				>
-					{SHAPES.filter(name => name !== 'Selected Community').map(
-						name => {
-							// Filter out "Selected Community"
-							const isSelected = name === selectedShape;
-							const isHovered = name === hoveredName;
+					{/* No Brush */}
+					<button
+						className={`dropdown-item ${activeCategory === 'none' ? 'selected' : ''}`}
+						onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('none'); }}
+						onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('none'); }}
+						onMouseEnter={() => setHoveredCategory('none')}
+						onMouseLeave={() => setHoveredCategory(null)}
+					>
+						No Brush
+					</button>
 
-							const isActive =
-								isHovered || (hoveredName === null && isSelected);
+					{/* Shapes */}
+					<div
+						className={`dropdown-item-with-submenu ${activeCategory === 'shape' ? 'selected' : ''}`}
+						onMouseEnter={() => setHoveredCategory('shape')}
+						onMouseLeave={() => setHoveredCategory(null)}
+						style={{ position: 'relative' }}
+					>
+						<button
+							className='dropdown-item'
+							onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('shape'); }}
+							onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('shape'); }}
+						>
+							Shapes
+							<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
+						</button>
+						{hoveredCategory === 'shape' && (
+							<div
+								className='dropdown-submenu'
+								onMouseLeave={() => setHoveredShapeName(null)}
+								style={{
+									position: 'absolute',
+									...(side === 'right' ? { right: 'calc(100% - 2px)' } : { left: 'calc(100% - 2px)' }),
+									top: '-5px',
+									backgroundColor: 'rgba(13, 17, 23, 0.9)',
+									border: '1px solid rgba(255, 165, 0, 0.5)',
+									borderRadius: '4px',
+									minWidth: '160px',
+									zIndex: 10000,
+									display: 'flex',
+									flexDirection: 'column',
+								}}
+							>
+								{SHAPES.filter(name => name !== 'Selected Community' && name !== 'None').map(
+									name => {
+										const isSelected = name === selectedShape;
+										const isHovered = name === hoveredShapeName;
+										const isActive = isHovered || (hoveredShapeName === null && isSelected);
 
-							return (
-								<button
-									key={name}
-									className={`dropdown-item ${isActive ? 'selected' : ''}`} // Apply dropdown-item class
-									onClick={() => handleSelectShape(name)}
-									onMouseEnter={() => setHoveredName(name)}
+										return (
+											<button
+												key={name}
+												className={`dropdown-item ${isActive ? 'selected' : ''}`}
+												onMouseDown={(e) => { e.stopPropagation(); handleSelectShape(name); }}
+												onTouchStart={(e) => { e.stopPropagation(); handleSelectShape(name); }}
+												onMouseEnter={() => setHoveredShapeName(name)}
+											>
+												{name}
+											</button>
+										);
+									},
+								)}
+							</div>
+						)}
+					</div>
+
+					{/* Organisms */}
+					{enableOrganisms && (
+						<div
+							className={`dropdown-item-with-submenu ${activeCategory === 'organism' ? 'selected' : ''}`}
+							onMouseEnter={() => setHoveredCategory('organism')}
+							onMouseLeave={() => setHoveredCategory(null)}
+							style={{ position: 'relative' }}
+						>
+							<button
+								className='dropdown-item'
+								onMouseDown={(e) => { e.stopPropagation(); handleSelectCategory('organism'); }}
+								onTouchStart={(e) => { e.stopPropagation(); handleSelectCategory('organism'); }}
+							>
+								Organisms
+								<span className='submenu-arrow' style={{ marginLeft: 'auto' }}>&gt;</span>
+							</button>
+							{hoveredCategory === 'organism' && (
+								<div
+									className='dropdown-submenu'
+									onMouseLeave={() => setHoveredOrganismBrushId(null)}
+									style={{
+										position: 'absolute',
+										...(side === 'right' ? { right: 'calc(100% - 2px)' } : { left: 'calc(100% - 2px)' }),
+										top: '-5px',
+										backgroundColor: 'rgba(13, 17, 23, 0.9)',
+										border: '1px solid rgba(255, 165, 0, 0.5)',
+										borderRadius: '4px',
+										minWidth: '160px',
+										zIndex: 10000,
+										display: 'flex',
+										flexDirection: 'column',
+									}}
 								>
-									{name}
-								</button>
-							);
-						},
+									{organismBrushes.size === 0 ? (
+										<span className='dropdown-item disabled' style={{ opacity: 0.7, cursor: 'default' }}>
+											No saved organisms
+										</span>
+									) : (
+										Array.from(organismBrushes.values()).map(brush => {
+											const isSelected = brush.id === selectedOrganismBrushId;
+											const isHovered = brush.id === hoveredOrganismBrushId;
+											const isActive = isHovered || (hoveredOrganismBrushId === null && isSelected);
+
+											return (
+												<button
+													key={brush.id}
+													className={`dropdown-item ${isActive ? 'selected' : ''}`}
+													onMouseDown={(e) => { e.stopPropagation(); handleSelectOrganismBrush(brush.id); }}
+													onTouchStart={(e) => { e.stopPropagation(); handleSelectOrganismBrush(brush.id); }}
+													onMouseEnter={() => setHoveredOrganismBrushId(brush.id)}
+												>
+													{brush.name}
+												</button>
+											);
+										})
+									)}
+								</div>
+							)}
+						</div>
 					)}
 				</div>
 			)}
@@ -271,19 +465,16 @@ function BrushSelectorDrop() {
 	);
 }
 
-export function BrushControls({
-	selectedOrganismId,
-}: {
-	selectedOrganismId: string | null;
-}) {
+export function BrushControls() { // Removed selectedOrganismId prop
 	const {
-		state: { selectedShape, shapeSize, isHollow, paintMode },
+		state: { selectedShape, shapeSize, isHollow, paintMode, selectedOrganismBrushId, organismBrushes }, // Added selectedOrganismBrushId, organismBrushes
 		actions: {
 			setShapeSize,
 			setIsHollow,
 			setPaintMode,
 			setSelectedShape,
 			setCustomBrush,
+			selectOrganismBrush, // Added selectOrganismBrush
 		},
 	} = useBrush();
 
@@ -635,7 +826,7 @@ export function BrushControls({
 			const { x, y, z } = payload;
 
 			// Only respond to clicks in edit mode
-			if (viewMode || selectedOrganismId) {
+			if (viewMode) { // Removed selectedOrganismId check here
 				return;
 			}
 
@@ -666,9 +857,10 @@ export function BrushControls({
 						}
 					}
 
-					setCustomBrush(selectedCommunityCells);
+					setCustomOffsets(selectedCommunityCells); // Corrected from setCustomBrush
 					setCommunity(selectedCommunityCells); // Set the community in SimulationContext
 					setSelectedShape('Selected Community'); // Keep this for internal state, but it won't be in dropdown
+					selectOrganismBrush(null); // Ensure no organism brush is selected when a community is selected
 					setPaintMode(1); // Set to Activate mode
 					eventBus.emit('showCommunityPanel', true); // Emit event to show the new panel
 				}
@@ -695,14 +887,15 @@ export function BrushControls({
 		setCustomBrush,
 		setSelectedShape,
 		setPaintMode,
-		selectedOrganismId,
+		setCommunity, // Added setCommunity to dependencies
+		selectOrganismBrush, // Added selectOrganismBrush to dependencies
 	]);
 
 	const toggleContentVisibility = useCallback(() => {
 		setIsContentVisible(prev => !prev);
 	}, []);
 
-	if (viewMode || selectedOrganismId) return null;
+	if (viewMode) return null; // Removed selectedOrganismId check
 
 	return (
 		<div
@@ -739,32 +932,38 @@ export function BrushControls({
 				onMouseDown={handleMouseDown}
 				onTouchStart={handleTouchStart}
 			>
-				<span
-					id='Selected-Brush-Label'
-					style={{
-						fontWeight: 'bold',
-						color: '#FFA500', // Subtler orange color for text
-						cursor: 'inherit', // Inherit cursor from parent for dragging
-					}}
-				>
-					Brush: {selectedShape}
-				</span>
-				<span
-					id='brush-effect-label'
-					style={{
-						marginRight: '17px',
-						marginLeft: '4px', // Add space between shape and effect
-						fontWeight: 'bold',
-						color: '#FFA500', // Subtler orange color for text
-						cursor: 'inherit', // Inherit cursor from parent for dragging
-					}}
-				>
-					{paintMode === 1
-						? 'Activate'
-						: paintMode === -1
-							? 'Deactivate'
-							: '(No Effect)'}
-				</span>
+				<div style={{ display: 'flex', flexDirection: 'column', cursor: 'inherit' }}>
+					<span
+						id='Selected-Brush-Label'
+						style={{
+							fontWeight: 'bold',
+							color: '#FFA500', 
+							cursor: 'inherit',
+							fontSize: '0.9em'
+						}}
+					>
+						{selectedShape === 'None' ? 'No Brush' : 
+						 (selectedShape === 'Organism Brush' && selectedOrganismBrushId) ? 
+						 (`Org: ${organismBrushes.get(selectedOrganismBrushId)?.name || 'Brush'}`) : 
+						 (`Shape: ${selectedShape}`)}
+					</span>
+					<span
+						id='brush-effect-label'
+						style={{
+							fontWeight: 'bold',
+							color: '#FFA500', 
+							cursor: 'inherit',
+							fontSize: '0.8em',
+							opacity: 0.8
+						}}
+					>
+						{paintMode === 1
+							? 'Activate'
+							: paintMode === -1
+								? 'Deactivate'
+								: '(No Effect)'}
+					</span>
+				</div>
 				{/* Arrow indicator for expand/collapse */}
 				<span
 					id='brush-controls-toggle-button'
@@ -787,38 +986,46 @@ export function BrushControls({
 					<div
 						style={{
 							display: 'grid',
-							gridTemplateColumns: 'auto auto auto auto 15px auto', // Columns size to content, with a 15px spacer in column 5
-							gridTemplateRows: 'repeat(4, auto)', // Adjusted rows for compactness
-							gap: '8px', // Slightly increased gap between controls
+							gridTemplateColumns: 'repeat(4, 1fr) 5px auto', // 4 flexible columns, a 5px spacer, and an auto column for paint/clear
+							gridTemplateRows: 'repeat(6, auto)', // 6 rows for more vertical space
+							gap: '8px',
 							alignItems: 'center',
-							userSelect: 'none', // Prevent highlighting buttons
+							userSelect: 'none',
 						}}
-						aria-label='Brush Controls Grid' // Added for accessibility in tests
+						aria-label='Brush Controls Grid'
 					>
-						<div style={{ gridColumn: '1 / 2', gridRow: '1 / 2' }}>
-							<BrushSelectorDrop />
+						{/* Brush Selector Dropdown (now spans across the first 4 columns) */}
+						<div style={{ gridColumn: '1 / 5', gridRow: '1 / 2' }}>
+							<BrushSelectorDrop side={position.x > window.innerWidth / 2 ? 'right' : 'left'} />
 						</div>
 						{(() => {
-							// "Selected Community" is no longer in the dropdown, but can still be the selectedShape
 							const showSizeControls =
-								selectedShape !== 'Selected Community' &&
+								selectedShape !== 'None' &&
 								selectedShape !== 'Single Cell' &&
-								selectedShape !== 'None';
+								selectedShape !== 'Selected Community' &&
+								selectedShape !== 'Organism Brush';
+
 							const showHollowCheckbox =
-								showSizeControls && shapeSize > 2; // New condition for hollow checkbox visibility
+								showSizeControls &&
+								supportsHollow(selectedShape) &&
+								shapeSize > 2;
+
 							return (
 								<>
-									{/* Size and Hollow controls: Always in DOM to preserve space, but hidden when not applicable */}
+									{/* Size control */}
 									<div
 										className='brush-size-control'
 										style={{
-											gridColumn: '2 / 5',
-											gridRow: '1 / 2',
+											gridColumn: '1 / 5',
+											gridRow: '2 / 3',
 											width: 'unset',
 											visibility: showSizeControls
 												? 'visible'
 												: 'hidden',
 											pointerEvents: showSizeControls ? 'auto' : 'none',
+											display: 'flex',
+											alignItems: 'center',
+											gap: '8px',
 										}}
 									>
 										<span>Size: {shapeSize}</span>
@@ -834,13 +1041,15 @@ export function BrushControls({
 											step={1}
 											value={shapeSize}
 											onChange={handleBrushSizeChange}
+											style={{ flexGrow: 1 }}
 										/>
 									</div>
+									{/* Hollow checkbox */}
 									<label
 										className='control-label row'
 										style={{
 											gridColumn: '1 / 5',
-											gridRow: '2 / 3',
+											gridRow: '3 / 4',
 											margin: 0,
 											display: 'flex',
 											alignItems: 'center',
@@ -849,10 +1058,10 @@ export function BrushControls({
 											color: '#8b949e',
 											visibility: showHollowCheckbox
 												? 'visible'
-												: 'hidden', // Use new condition
+												: 'hidden',
 											pointerEvents: showHollowCheckbox
 												? 'auto'
-												: 'none', // Use new condition
+												: 'none',
 										}}
 									>
 										<input
@@ -868,17 +1077,19 @@ export function BrushControls({
 							);
 						})()}
 
+						{/* Activate and Clear buttons (now span rows 1-3 in the last column) */}
 						<div
 							style={{
 								gridColumn: '6 / 7',
-								gridRow: '1 / 2',
+								gridRow: '1 / 4',
 								display: 'flex',
+								flexDirection: 'column',
 								gap: '5px',
+								justifyContent: 'space-around',
 							}}
 						>
-							{/* Activate and Clear buttons moved outside conditional rendering */}
 							<button
-								className={`glass-button   alive-button success ${paintMode === 1 ? 'active' : ''}`}
+								className={`glass-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
 								onClick={() =>
 									setPaintMode(prev => (prev === 1 ? 0 : 1))
 								}
@@ -902,7 +1113,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '3 / 4',
-								gridRow: '2 / 3',
+								gridRow: '4 / 5',
 								display: 'flex',
 								justifyContent: 'center',
 							}}
@@ -926,7 +1137,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '3 / 4',
-								gridRow: '4 / 5',
+								gridRow: '6 / 7',
 								display: 'flex',
 								justifyContent: 'center',
 							}}
@@ -950,7 +1161,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '2 / 3',
-								gridRow: '3 / 4',
+								gridRow: '5 / 6',
 								display: 'flex',
 								justifyContent: 'center',
 							}}
@@ -974,7 +1185,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '4 / 5',
-								gridRow: '3 / 4',
+								gridRow: '5 / 6',
 								display: 'flex',
 								justifyContent: 'center',
 							}}
@@ -998,7 +1209,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '6 / 7',
-								gridRow: '3 / 3',
+								gridRow: '4 / 5',
 								display: 'flex',
 								justifyContent: 'center',
 								alignItems: 'center',
@@ -1031,7 +1242,7 @@ export function BrushControls({
 						<div
 							style={{
 								gridColumn: '6 / 7',
-								gridRow: '4/ 4',
+								gridRow: '5 / 6',
 								display: 'flex',
 								justifyContent: 'center',
 								alignItems: 'center',

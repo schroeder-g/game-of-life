@@ -197,9 +197,6 @@ export function processOrganisms(
 	grid: Grid3D,
 	organismsMap: Map<string, Organism>,
 	gridSize: number,
-	surviveMin: number, surviveMax: number,
-	birthMin: number, birthMax: number, birthMargin: number,
-	neighborFaces: boolean, neighborEdges: boolean, neighborCorners: boolean,
 ): ProcessOrganismsResult {
 	const updatedOrganisms = new Map<string, Organism>();
 	const gridMutations: Array<[number, number, number, boolean]> = [];
@@ -623,9 +620,9 @@ export function processOrganisms(
 			resolvedCellsForOrg,
 			new Set<string>(), // ISOLATED: no external neighbors
 			gridSize,
-			surviveMin, surviveMax,
-			birthMin, birthMax, birthMargin,
-			neighborFaces, neighborEdges, neighborCorners,
+			organism.rules.surviveMin, organism.rules.surviveMax,
+			organism.rules.birthMin, organism.rules.birthMax, organism.rules.birthMargin,
+			organism.rules.neighborFaces, organism.rules.neighborEdges, organism.rules.neighborCorners,
 		);
 
 		// Keep only the SINGLE LARGEST connected component (≥3 cells).

@@ -15,6 +15,18 @@ export interface OrganismData {
 	parallelSteps?: number;
 	stuckTicks?: number;
 	eatenCount?: number;
+	rules?: OrganismRules; // GOL Rules
+}
+
+export interface OrganismRules {
+	surviveMin: number;
+	surviveMax: number;
+	birthMin: number;
+	birthMax: number;
+	birthMargin: number;
+	neighborFaces: boolean;
+	neighborEdges: boolean;
+	neighborCorners: boolean;
 }
 
 /**
@@ -52,6 +64,17 @@ export interface Organism {
 	stuckTicks: number;
 	/** Total cells consumed by grazing across the organism's lifetime. */
 	eatenCount: number;
+	rules: OrganismRules; // GOL Rules
+}
+
+/**
+ * Represents a saved organism shape and its GOL rules, used as a brush.
+ */
+export interface OrganismBrush {
+	id: string;
+	name: string;
+	cells: Array<[number, number, number]>; // Relative offsets from centroid
+	rules: OrganismRules; // GOL Rules
 }
 
 /** Parses "x,y,z" key to [x, y, z]. */
@@ -247,12 +270,24 @@ export function serializeOrganism(org: Organism): OrganismData {
 		parallelSteps: org.parallelSteps,
 		stuckTicks: org.stuckTicks,
 		eatenCount: org.eatenCount,
+		rules: org.rules,
 	};
 }
 
 /** Reconstructs an Organism instance from serialized data. */
 export function deserializeOrganism(data: OrganismData, gridSize: number): Organism {
 	const livingCells = new Set(data.livingCells);
+	const defaultRules: OrganismRules = {
+		surviveMin: 4,
+		surviveMax: 5,
+		birthMin: 5,
+		birthMax: 5,
+		birthMargin: 0,
+		neighborFaces: true,
+		neighborEdges: true,
+		neighborCorners: false,
+	};
+
 	return {
 		id: data.id,
 		name: data.name,
@@ -267,6 +302,7 @@ export function deserializeOrganism(data: OrganismData, gridSize: number): Organ
 		parallelSteps: data.parallelSteps || 0,
 		stuckTicks: data.stuckTicks || 0,
 		eatenCount: data.eatenCount || 0,
+		rules: data.rules || defaultRules, // Use provided rules or defaults
 	};
 }
 
@@ -285,6 +321,7 @@ export function cloneOrganisms(orgs: Map<string, Organism>): Map<string, Organis
 			stuckTicks: org.stuckTicks,
 			eatenCount: org.eatenCount,
 			travelVector: org.travelVector ? [...org.travelVector] : undefined,
+			rules: { ...org.rules }, // Deep clone rules object
 		});
 	}
 	return newMap;

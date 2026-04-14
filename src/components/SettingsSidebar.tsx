@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePersistentState } from '../hooks/usePersistentState';
 
-import { useBrush } from '../contexts/BrushContext'; // Added
+import { useBrush } from '../contexts/BrushContext';
 import { useGenesisConfig } from '../contexts/GenesisConfigContext';
 import { useSimulation } from '../contexts/SimulationContext';
 
-import { isAnyBrushCellInside } from '../core/brushUtils'; // Added
+import { isAnyBrushCellInside } from '../core/brushUtils';
 import {
 	type CubeFace,
 	type CameraRotation,
 	getWAXDQZMapping,
-} from '../core/faceOrientationKeyMapping'; // Added
+} from '../core/faceOrientationKeyMapping';
 import { AUTOMATED_TEST_IDS } from '../data/automated-tests';
 import { DEFAULT_CONFIGS } from '../data/default-configs';
-import { serializeOrganism } from '../core/Organism'; // Added
+import { serializeOrganism } from '../core/Organism';
 import { MANUAL_TESTS } from '../data/manual-tests';
+import { ShapeType, supportsHollow } from '../core/shapes'; // Added supportsHollow
 import { AutomatedTestsPanel } from './AutomatedTestsPanel';
 import { ManualTestsPanel } from './ManualTestsPanel';
 
@@ -179,9 +180,9 @@ function EnvironmentSection() {
 	);
 }
 
-function RulesSection() {
+function EnvironmentRulesSection() {
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
-		'gol_collapse_rules',
+		'gol_collapse_environment_rules',
 		true,
 	);
 	const {
@@ -368,6 +369,7 @@ function RulesSection() {
 		</section>
 	);
 }
+
 
 function SelectorPositionSection() {
 	const {
@@ -1099,7 +1101,7 @@ export function SettingsSidebar({
 	setShowSettingsSidebar,
 }: SettingsSidebarProps) {
 	const {
-		state: { running, viewMode, community, buildInfo },
+		state: { running, viewMode, community, buildInfo, enableOrganisms },
 		actions: {
 			playStop,
 			step,
@@ -1121,6 +1123,7 @@ export function SettingsSidebar({
 			setNeighborEdges,
 			setNeighborCorners,
 			fitDisplay,
+			setEnableOrganisms, // Destructure setEnableOrganisms
 		},
 	} = useSimulation();
 	const {
@@ -1236,8 +1239,22 @@ export function SettingsSidebar({
 						{!viewMode && <SceneManagementSection />}
 						{!viewMode && <EnvironmentSection />}
 						{!viewMode && <SelectorPositionSection />}
-						<RulesSection />
-						<OrganismsSection />
+						<EnvironmentRulesSection />
+
+						{/* Organism Enable Toggle */}
+						<section className='menu-section'>
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={enableOrganisms}
+									onChange={e => setEnableOrganisms(e.target.checked)}
+								/>
+								<span>Enable Organisms</span>
+							</label>
+						</section>
+
+						<OrganismsSection enableOrganisms={enableOrganisms} />
 						<TestsSection />
 					</>
 				</div>
@@ -1246,10 +1263,14 @@ export function SettingsSidebar({
 	);
 }
 
-function OrganismsSection() {
+interface OrganismsSectionProps {
+	enableOrganisms: boolean;
+}
+
+function OrganismsSection({ enableOrganisms }: OrganismsSectionProps) {
 	const {
-		state: { showCytoplasm, showSkin, enableOrganisms },
-		actions: { setShowCytoplasm, setShowSkin, setEnableOrganisms },
+		state: { showCytoplasm, showSkin },
+		actions: { setShowCytoplasm, setShowSkin },
 	} = useSimulation();
 
 	const [isCollapsed, setIsCollapsed] = usePersistentState(
@@ -1260,6 +1281,11 @@ function OrganismsSection() {
 		'gol_organisms_vis_collapsed_v2',
 		true,
 	);
+
+	// Only render this section if organisms are enabled
+	if (!enableOrganisms) {
+		return null;
+	}
 
 	return (
 		<section className={`menu-section ${isCollapsed ? 'collapsed' : ''}`}>
@@ -1282,51 +1308,36 @@ function OrganismsSection() {
 			</h3>
 			{!isCollapsed && (
 				<div style={{ marginLeft: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '8px' }}>
-					<label className='control-label row' style={{ marginBottom: enableOrganisms ? '16px' : '0' }}>
-						<input
-							type='checkbox'
-							className='glass-checkbox'
-							style={{ width: '18px', height: '18px' }}
-							checked={enableOrganisms}
-							onChange={e => setEnableOrganisms(e.target.checked)}
-						/>
-						<span>Enable Organisms</span>
-					</label>
-
-					{enableOrganisms && (
+					<h4
+						onClick={() => setVisCollapsed(!visCollapsed)}
+						className='menu-subsection-header'
+						style={{ marginBottom: visCollapsed ? 0 : '12px' }}
+					>
+						Visualization
+						<span style={{ fontSize: '10px', opacity: 0.6 }}>
+							{visCollapsed ? '▼' : '▲'}
+						</span>
+					</h4>
+					{!visCollapsed && (
 						<>
-							<h4
-								onClick={() => setVisCollapsed(!visCollapsed)}
-								className='menu-subsection-header'
-								style={{ marginBottom: visCollapsed ? 0 : '12px' }}
-							>
-								Visualization
-								<span style={{ fontSize: '10px', opacity: 0.6 }}>
-									{visCollapsed ? '▼' : '▲'}
-								</span>
-							</h4>
-							{!visCollapsed && (
-								<>
-									<label className='control-label row'>
-										<input
-											type='checkbox'
-											className='glass-checkbox'
-											checked={showCytoplasm}
-											onChange={e => setShowCytoplasm(e.target.checked)}
-										/>
-										<span>Show Cytoplasm</span>
-									</label>
-									<label className='control-label row'>
-										<input
-											type='checkbox'
-											className='glass-checkbox'
-											checked={showSkin}
-											onChange={e => setShowSkin(e.target.checked)}
-										/>
-										<span>Show Skin</span>
-									</label>
-								</>
-							)}
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showCytoplasm}
+									onChange={e => setShowCytoplasm(e.target.checked)}
+								/>
+								<span>Show Cytoplasm</span>
+							</label>
+							<label className='control-label row'>
+								<input
+									type='checkbox'
+									className='glass-checkbox'
+									checked={showSkin}
+									onChange={e => setShowSkin(e.target.checked)}
+								/>
+								<span>Show Skin</span>
+							</label>
 						</>
 					)}
 				</div>

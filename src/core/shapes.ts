@@ -9,7 +9,8 @@ export type ShapeType =
 	| 'Sphere'
 	| 'Triangle'
 	| 'Pyramid'
-	| 'Selected Community';
+	| 'Selected Community'
+	| 'Organism Brush';
 
 export type Offset = [number, number, number];
 
@@ -216,6 +217,7 @@ export function generateShape(
 		case 'Pyramid':
 			return generatePyramid(size, hollow);
 		case 'Selected Community':
+		case 'Organism Brush':
 			return customOffsets || [];
 		default:
 			return [];
@@ -237,4 +239,5 @@ export const SHAPES: ShapeType[] = [
 	'Sphere',
 	'Triangle',
 	'Pyramid',
+	// 'Organism Brush' is not directly selectable from the UI, it's set programmatically
 ];

@@ -677,7 +677,7 @@ export function Scene() {
 		actions,
 		meta: { gridRef, movement, velocity, eventBus, cameraTargetRef, organismsRef, cameraActionsRef },
 	} = useSimulation();
-	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp, selectOrganism } =
+	const { tick, setCommunity, setCameraOrientation, setIsSquaredUp, selectOrganism, createOrganismFromBrush, setCells, deleteCells } =
 		actions;
 	const {
 		speed,
@@ -1153,7 +1153,16 @@ export function Scene() {
 					);
 
 				if (cellsToActivate.length > 0) {
-					actions.setCells(cellsToActivate);
+					if (selectedShape === 'Organism Brush' && brushStateRef.current.selectedOrganismBrushId) {
+						const brush = brushStateRef.current.organismBrushes.get(brushStateRef.current.selectedOrganismBrushId);
+						if (brush) {
+							createOrganismFromBrush(brush, cellsToActivate);
+						} else {
+							setCells(cellsToActivate);
+						}
+					} else {
+						setCells(cellsToActivate);
+					}
 					setCommunity([]); // Clear community view when manually editing
 				}
 			},
@@ -1205,7 +1214,7 @@ export function Scene() {
 
 				if (cellsToClear.length > 0) {
 					setCommunity([]);
-					actions.deleteCells(cellsToClear);
+					deleteCells(cellsToClear);
 				}
 			},
 			snapToOrientation: (face: string, rotation: number) => {
@@ -2011,11 +2020,20 @@ export function Scene() {
 					onClick={(e: any) => {
 						if (!viewMode && running) return;
 						if (wasRotating.current) return;
-						e.stopPropagation();
-						const { cellPos } = e;
-						if (cellPos) {
-							const [x, y, z] = cellPos;
-							setSelectorPos([x, y, z]);
+						 e.stopPropagation();
+						 const { cellPos } = e;
+						 if (cellPos) {
+							 const [x, y, z] = cellPos;
+							 setSelectorPos([x, y, z]);
+
+							 // Support appending to community with Alt/Option+Click
+							 if (e.nativeEvent && e.nativeEvent.altKey) {
+								 const alreadyInCommunity = community.some(([cx, cy, cz]) => cx === x && cy === y && cz === z);
+								 if (!alreadyInCommunity) {
+									 setCommunity([...community, [x, y, z]]);
+								 }
+								 return; // Skip the standard community replacement logic
+							 }
 
 							// Check if the clicked cell belongs to an organism
 							const clickedCellKey = makeKey(x, y, z);

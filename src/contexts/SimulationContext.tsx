@@ -14,6 +14,7 @@ import { loadSettings, saveSettings } from '../hooks/useSettings';
 import { CameraOrientation } from '../core/faceOrientationKeyMapping';
 import {
 	Organism,
+	OrganismBrush, // Added OrganismBrush import
 	makeKey,
 	parseKey,
 	computeCytoplasm,
@@ -122,6 +123,7 @@ export interface SimulationActions {
 	setCommunity: (community: Array<[number, number, number]>) => void;
 	setviewMode: (mode: boolean | ((prev: boolean) => boolean)) => void;
 	setPanSpeed: (speed: number) => void;
+	setEnableOrganisms: (val: boolean) => void; // Add this action
 	setRotationSpeed: (speed: number) => void;
 	setRollSpeed: (speed: number) => void;
 	setInvertYaw: (val: boolean) => void;
@@ -142,6 +144,10 @@ export interface SimulationActions {
 	disorganizeOrganism: (id: string) => void;
 	selectOrganism: (id: string | null) => void;
 	snapToOrientation: (face: string, rotation: number) => void;
+	createOrganismFromBrush: (
+		brush: OrganismBrush,
+		finalCells: [number, number, number][],
+	) => void; // New action
 
 	playStop: () => void;
 	step: () => void;
@@ -317,6 +323,9 @@ export function SimulationProvider({
 	const [enableOrganisms, setEnableOrganisms] = useState(
 		Boolean(storedSettings.enableOrganisms),
 	);
+	// Add this state for organism brushes
+	const [organismBrushes, setOrganismBrushes] = useState<Map<string, OrganismBrush>>(new Map());
+	const [selectedOrganismBrushId, setSelectedOrganismBrushId] = useState<string | null>(null);
 
 
 	const [panSpeed, setPanSpeed] = useState(storedSettings.panSpeed);
@@ -906,11 +915,99 @@ export function SimulationProvider({
 				stuckTicks: 0,
 				travelVector: [0, 0, 1], // Initial direction for new organisms
 				centroid: getCentroid(livingCells),
+				rules: {
+					surviveMin: surviveMin,
+					surviveMax: surviveMax,
+					birthMin: birthMin,
+					birthMax: birthMax,
+					birthMargin: birthMargin,
+					neighborFaces: neighborFaces,
+					neighborEdges: neighborEdges,
+					neighborCorners: neighborCorners,
+				},
 			};
 
 			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
 			setOrganismsVersion(v => v + 1); // Trigger re-render
 			setSelectedOrganismId(newOrganism.id);
+		},
+		[
+			gridSize,
+			organismManagerRef,
+			setOrganismsVersion,
+			setSelectedOrganismId,
+			surviveMin,
+			surviveMax,
+			birthMin,
+			birthMax,
+			birthMargin,
+			neighborFaces,
+			neighborEdges,
+			neighborCorners,
+		],
+	);
+
+	const createOrganismFromBrush = useCallback(
+		(brush: OrganismBrush, finalCells: [number, number, number][]) => {
+			if (finalCells.length === 0) return;
+
+			// Generate a unique name
+			let baseName =
+				ORGANISM_NAMES[Math.floor(Math.random() * ORGANISM_NAMES.length)];
+			let name = baseName;
+			let counter = 1;
+			const existingNames = new Set(
+				Array.from(organismManagerRef.current.organisms.values()).map(o => o.name),
+			);
+			while (existingNames.has(name)) {
+				counter++;
+				name = `${baseName} ${counter}`;
+			}
+
+			const livingCells = new Set(
+				finalCells.map(([x, y, z]) => makeKey(x, y, z)),
+			);
+			const cytoplasm = computeCytoplasm(livingCells, gridSize);
+			const skinColor = computeSkinColor(livingCells, gridSize);
+
+			const newOrganism: Organism = {
+				id:
+					typeof crypto !== 'undefined' && crypto.randomUUID
+						? crypto.randomUUID()
+						: `org-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+				name,
+				livingCells,
+				cytoplasm,
+				skinColor,
+				previousLivingCells: new Set(livingCells),
+				straightSteps: 0,
+				avoidanceSteps: 0,
+				parallelSteps: 0,
+				stuckTicks: 0,
+				travelVector: [0, 0, 1], // Initial direction for new organisms
+				centroid: getCentroid(livingCells),
+				rules: {
+					surviveMin: brush.rules.surviveMin,
+					surviveMax: brush.rules.surviveMax,
+					birthMin: brush.rules.birthMin,
+					birthMax: brush.rules.birthMax,
+					birthMargin: brush.rules.birthMargin,
+					neighborFaces: brush.rules.neighborFaces,
+					neighborEdges: brush.rules.neighborEdges,
+					neighborCorners: brush.rules.neighborCorners,
+				},
+			};
+
+			organismManagerRef.current.recordAction(); // Record action for undo/redo
+			organismManagerRef.current.organisms.set(newOrganism.id, newOrganism);
+			setOrganismsVersion(v => v + 1); // Trigger re-render
+			setSelectedOrganismId(newOrganism.id);
+
+			// Also add the cells to the grid
+			gridRef.current.recordAction();
+			for (const [x, y, z] of finalCells) {
+				gridRef.current.set(x, y, z, true);
+			}
 		},
 		[gridSize, organismManagerRef, setOrganismsVersion, setSelectedOrganismId],
 	);
@@ -1152,6 +1249,8 @@ export function SimulationProvider({
 			showCytoplasm,
 			showSkin,
 			enableOrganisms,
+			organismBrushes, // Add this state
+			selectedOrganismBrushId, // Add this state
 		},
 		actions: {
 			setSpeed,
@@ -1183,6 +1282,7 @@ export function SimulationProvider({
 			disorganizeOrganism,
 			selectOrganism,
 			snapToOrientation,
+			createOrganismFromBrush, // New action
 			playStop,
 			step,
 			stepBackward,
@@ -1205,6 +1305,8 @@ export function SimulationProvider({
 			setShowCytoplasm,
 			setShowSkin,
 			setEnableOrganisms,
+			setOrganismBrushes, // Add this action
+			setSelectedOrganismBrushId, // Add this action
 		},
 		meta: {
 			gridRef,
