@@ -583,7 +583,6 @@ export function BrushControls() { // Removed selectedOrganismId prop
 		};
 	}, [activeKey, handleMove]);
 
-	// Effect to set initial position to top-right relative to its offset parent
 	useEffect(() => {
 		if (panelRef.current) {
 			const panelRect = panelRef.current.getBoundingClientRect();
@@ -597,6 +596,23 @@ export function BrushControls() { // Removed selectedOrganismId prop
 			setPosition({ x: initialX, y: initialY });
 		}
 	}, []); // Empty dependency array means it runs once after initial render
+
+	const pressStartTimeRef = useRef<number | null>(null);
+
+	const handleActionDown = useCallback((mode: 1 | -1) => {
+		pressStartTimeRef.current = Date.now();
+		setPaintMode(mode);
+	}, [setPaintMode]);
+
+	const handleActionUp = useCallback(() => {
+		if (pressStartTimeRef.current !== null) {
+			const duration = Date.now() - pressStartTimeRef.current;
+			if (duration < 2000) {
+				setPaintMode(0);
+			}
+			pressStartTimeRef.current = null;
+		}
+	}, [setPaintMode]);
 
 	// Effect to handle window resize and re-clamp position relative to its offset parent
 	useEffect(() => {
@@ -1090,18 +1106,22 @@ export function BrushControls() { // Removed selectedOrganismId prop
 						>
 							<button
 								className={`glass-button alive-button success ${paintMode === 1 ? 'active' : ''}`}
-								onClick={() =>
-									setPaintMode(prev => (prev === 1 ? 0 : 1))
-								}
+								onMouseDown={() => handleActionDown(1)}
+								onMouseUp={handleActionUp}
+								onMouseLeave={handleActionUp}
+								onTouchStart={(e) => { e.preventDefault(); handleActionDown(1); }}
+								onTouchEnd={handleActionUp}
 								data-tooltip-bottom='Activate (Paint) (Space)'
 							>
 								<PlusIcon />
 							</button>
 							<button
 								className={`glass-button edit-action-button clear-button danger ${paintMode === -1 ? 'active' : ''}`}
-								onClick={() =>
-									setPaintMode(prev => (prev === -1 ? 0 : -1))
-								}
+								onMouseDown={() => handleActionDown(-1)}
+								onMouseUp={handleActionUp}
+								onMouseLeave={handleActionUp}
+								onTouchStart={(e) => { e.preventDefault(); handleActionDown(-1); }}
+								onTouchEnd={handleActionUp}
 								data-tooltip-bottom='Clear (Delete)'
 							>
 								<MinusIcon />

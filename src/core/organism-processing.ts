@@ -631,11 +631,21 @@ export function processOrganisms(
 		const golSet = new Set(golResult.map(c => makeKey(...c)));
 		let largestComp = new Set<string>();
 		const visited = new Set<string>();
+		// To allow organisms like "Rhea" with intentional nuclear gaps to stay unified,
+		// we treat the cytoplasm (preCyto) as a "bridge" during the connectivity check.
+		const bridgeSpace = new Set([...golSet, ...preCyto]);
+
 		for (const seed of golSet) {
 			if (!visited.has(seed)) {
-				const comp = getConnectedComponent(seed, golSet);
-				comp.forEach(k => visited.add(k));
-				if (comp.size > largestComp.size) largestComp = comp;
+				const comp = getConnectedComponent(seed, bridgeSpace);
+				// Mark living cells in this component as visited
+				comp.forEach(k => { if (golSet.has(k)) visited.add(k); });
+				
+				// Final organism nucleus = the living cells in this connected component
+				const livingNucleus = new Set(Array.from(comp).filter(k => golSet.has(k)));
+				if (livingNucleus.size > largestComp.size) {
+					largestComp = livingNucleus;
+				}
 			}
 		}
 

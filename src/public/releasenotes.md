@@ -1,5 +1,20 @@
 # Release Notes
 
+### **Tuesday, April 14, 2026 (Version 1.9.7)**
+- **Features**: 
+    - **Standard Organism Library**: Expanded the built-in brush list with four new biology presets: "Gemini Coaster", "EZ Coaster", "Gemini Pele-Copter", and the multi-cluster "Rhea".
+    - **Structural Bridging**: Enhanced organism connectivity logic to treat cytoplasm as a structural "bridge." This allows organisms with non-contiguous nuclear clusters (like Rhea) to maintain their structural integrity across simulation ticks.
+    - **Clean Scene Loading**: Optimized the loading sequence to immediately clear organisms and community graphics when selecting a new scene configuration, preventing "ghosting" artifacts during initialization.
+- **Bug Fixes**:
+    - **Initialization Stability**: Resolved a critical `ReferenceError` during `SimulationProvider` startup by standardizing the declaration sequence of all internal state and action hooks.
+    - **Export Robustness**: Implemented a comprehensive fallback copy mechanism for the Organism Export tool to ensure reliability in hosting environments where the modern Clipboard API is restricted or unavailable.
+    - **Connectivity logic**: Fixed a bug where organisms with intentional nuclear gaps would erroneously split into separate clusters during the Game of Life phase.
+- **Internal**:
+    - Reorganized `SimulationContext.tsx` to group state, refs, and callbacks for better maintainability and to eliminate Temporal Dead Zone (TDZ) risks.
+    - Synchronized package version to **1.9.7**.
+
+---
+
 ### **Tuesday, April 14, 2026 (Version 1.9.6)**
 - **Features**: 
     - **Organism Brush System**: Introduced the ability to capture any organism as a reusable brush. These brushes are persisted across sessions and include the organism's unique geometry and biological rules.

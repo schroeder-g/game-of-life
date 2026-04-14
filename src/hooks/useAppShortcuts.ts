@@ -52,6 +52,8 @@ export function useAppShortcuts() {
 		brushState;
 
 	const prevPaintModeRef = useRef<1 | 0 | -1>();
+	const pressStartTimeRef = useRef<number | null>(null);
+	const activeKeyLabelRef = useRef<'activate' | 'clear' | null>(null);
 
 	useEffect(() => {
 		// If we just transitioned into a paint mode from an idle state...
@@ -205,9 +207,25 @@ export function useAppShortcuts() {
 						case 'l': setSquareUp(prev => !prev); break;
 						case 's': recenter(); break;
 						case 'r': if (hasInitialState) reset(); break;
-						case ' ': if (!selectedOrganismId) setPaintMode(prev => (prev === 1 ? 0 : 1)); break;
+						case ' ': 
+							if (!selectedOrganismId) {
+								if (!e.repeat) {
+									pressStartTimeRef.current = Date.now();
+									activeKeyLabelRef.current = 'activate';
+									setPaintMode(1);
+								}
+							}
+							break;
 						case 'delete':
-						case 'backspace': if (!selectedOrganismId) setPaintMode(prev => (prev === -1 ? 0 : -1)); break;
+						case 'backspace': 
+							if (!selectedOrganismId) {
+								if (!e.repeat) {
+									pressStartTimeRef.current = Date.now();
+									activeKeyLabelRef.current = 'clear';
+									setPaintMode(-1);
+								}
+							}
+							break;
 						default: handled = false;
 					}
 				}
@@ -265,6 +283,19 @@ export function useAppShortcuts() {
 				movement.current.d = false;
 				movement.current.q = false;
 				movement.current.z = false;
+			}
+
+			// Handle paint mode release with 2-second hold logic
+			if ((key === ' ' && activeKeyLabelRef.current === 'activate') ||
+				((key === 'delete' || key === 'backspace') && activeKeyLabelRef.current === 'clear')) {
+				if (pressStartTimeRef.current !== null) {
+					const duration = Date.now() - pressStartTimeRef.current;
+					if (duration < 2000) {
+						setPaintMode(0);
+					}
+					pressStartTimeRef.current = null;
+					activeKeyLabelRef.current = null;
+				}
 			}
 		};
 
