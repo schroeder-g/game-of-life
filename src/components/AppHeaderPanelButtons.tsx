@@ -7,6 +7,22 @@ import { useClickOutside } from '../hooks/useClickOutside';
 import { BrushControls } from './BrushControls';
 import { ShapeType } from '../core/shapes';
 
+const HouseIcon = () => (
+	<svg
+		width='20'
+		height='20'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+	>
+		<path d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' />
+		<polyline points='9 22 9 12 15 12 15 22' />
+	</svg>
+);
+
 const GearIcon = () => (
 	<svg
 		width='20'
@@ -446,6 +462,21 @@ export function AppHeaderPanelButtons({
 }: AppHeaderPanelButtonsProps) {
 	return (
 		<div className='button-group panel-actions'>
+
+			<button
+				type='button'
+				className='glass-button mode-toggle-button'
+				onClick={() => window.open('https://blog.cubeoflife.net', '_blank')}
+				data-tooltip-bottom={'Blog'
+				}
+				aria-label={
+					'Visit blog.cubeoflife.net'
+				}
+			>
+
+				<HouseIcon />
+			</button>
+
 			<SceneSelectorDropdown />
 			<button
 				type='button'
