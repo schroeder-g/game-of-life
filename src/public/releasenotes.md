@@ -1,5 +1,16 @@
 # Release Notes
 
+### **Thursday, April 16, 2026 (Version 1.9.9)**
+- **Features**: 
+    - **Blog Navigation**: Added a dedicated "Blog" link to the header panel, featuring a custom Home icon for quick access to the Cube of Life community updates.
+- **Bug Fixes**:
+    - **Favicon Resolution**: Fixed a persistent issue where the site icon was not appearing. The file was identified as a PNG data blob incorrectly named as an `.ico`; I've renamed it to `favicon.png` and updated the HTML meta tags with the correct MIME type for maximum browser compatibility.
+    - **Iconography Polish**: Standardized internal SVG components to ensure clean rendering on high-DPI displays.
+- **Internal**:
+    - Synchronized package version to **1.9.9**.
+
+---
+
 ### **Tuesday, April 14, 2026 (Version 1.9.7)**
 - **Features**: 
     - **Standard Organism Library**: Expanded the built-in brush list with four new biology presets: "Gemini Coaster", "EZ Coaster", "Gemini Pele-Copter", and the multi-cluster "Rhea".

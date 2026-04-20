@@ -104,11 +104,16 @@ export class DefaultOrganismManager implements IOrganismManager {
 		}
 	}
 
-	public applyOrganisms(savedOrgs: any[], gridSize: number) {
+	public applyOrganisms(savedOrgs: any[], gridSize: number, sceneRules?: any) {
 		this.clear();
 		if (savedOrgs && Array.isArray(savedOrgs)) {
 			for (const orgData of savedOrgs) {
-				this._organisms.set(orgData.id, deserializeOrganism(orgData, gridSize));
+				// If the organism data doesn't have its own rules, inject the scene rules
+				const dataWithRules = {
+					...orgData,
+					rules: orgData.rules || sceneRules
+				};
+				this._organisms.set(orgData.id, deserializeOrganism(dataWithRules, gridSize));
 			}
 		}
 		this.bumpVersion();
@@ -144,12 +149,18 @@ export class DefaultOrganismManager implements IOrganismManager {
 			// Snapshot ROSTER: record which cells are legitimately this organism's DNA
 			this._beforeTickRosters.set(id, new Set(org.livingCells));
 
-			// 1. Clear organism's own living DNA from the grid (SILENT — these are its own cells from last tick)
+			// 1. Clear organism's own living territory from the grid (DNA + Cytoplasm)
+			// We clear both to ensure no intruders catch a "free ride" in the cytoplasm during the GoL tick.
 			for (const key of org.livingCells) {
 				const [x, y, z] = parseKey(key);
 				if (grid.get(x, y, z)) {
 					grid.set(x, y, z, false);
-					// NOT counted as eaten — this is the organism's own DNA
+				}
+			}
+			for (const key of org.cytoplasm) {
+				const [x, y, z] = parseKey(key);
+				if (grid.get(x, y, z)) {
+					grid.set(x, y, z, false);
 				}
 			}
 
