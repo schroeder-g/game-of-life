@@ -282,7 +282,7 @@ export function SimulationProvider({
 	const [buildInfo, setBuildInfo] = useState<
 		SimulationState['buildInfo']
 	>({
-		version: '1.7.0',
+		version: '1.9.9',
 		buildTime: '',
 		distribution: 'prod',
 	});
@@ -504,9 +504,22 @@ export function SimulationProvider({
 					initialStateRef.current = defaultConfig.cells;
 					setHasInitialState(defaultConfig.cells.length > 0);
 					
-					// Hydrate default organisms
+					// Hydrate default organisms with inherited scene rules
 					if (defaultConfig.organisms) {
-						organismManagerRef.current.applyOrganisms(defaultConfig.organisms, defaultConfig.settings.gridSize);
+						organismManagerRef.current.applyOrganisms(
+							defaultConfig.organisms, 
+							defaultConfig.settings.gridSize,
+							{
+								surviveMin: defaultConfig.settings.surviveMin,
+								surviveMax: defaultConfig.settings.surviveMax,
+								birthMin: defaultConfig.settings.birthMin,
+								birthMax: defaultConfig.settings.birthMax,
+								birthMargin: defaultConfig.settings.birthMargin,
+								neighborFaces: !!defaultConfig.settings.neighborFaces,
+								neighborEdges: !!defaultConfig.settings.neighborEdges,
+								neighborCorners: !!defaultConfig.settings.neighborCorners,
+							}
+						);
 						setOrganismsVersion(organismManagerRef.current.version);
 					}
 					
@@ -652,7 +665,43 @@ export function SimulationProvider({
 			organismManagerRef.current.stepBackward();
 			setOrganismsVersion(organismManagerRef.current.version);
 		}
-	}, []);
+	}, []);	const tick = useCallback(() => {
+		if (enableOrganisms) {
+			organismManagerRef.current.beforeTick(gridRef.current);
+		}
+
+		// GoL Phase 1: tick non-organism cells only
+		let forbiddenBirths: Set<string> | undefined = undefined;
+		if (enableOrganisms) {
+			// Get forbidden zone (DNA + Cytoplasm + Skin) in one pass
+			forbiddenBirths = organismManagerRef.current.getForbiddenBirths();
+		}
+
+		gridRef.current.neighborFaces = neighborFaces;
+		gridRef.current.neighborEdges = neighborEdges;
+		gridRef.current.neighborCorners = neighborCorners;
+		
+		// Advance the grid
+		gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin, forbiddenBirths);
+
+		// GoL Phase 2: Process organisms
+		if (enableOrganisms) {
+			organismManagerRef.current.afterTick(gridRef.current, { 
+				surviveMin, surviveMax, birthMin, birthMax, birthMargin, 
+				neighborFaces, neighborEdges, neighborCorners, gridSize 
+			});
+			// Sync React state with the manager's internal version after all updates are done
+			setOrganismsVersion(organismManagerRef.current.version);
+		}
+
+		if (gridRef.current.getLivingCells().length === 0) {
+			setRunning(false);
+		}
+	}, [
+		enableOrganisms, gridSize, 
+		surviveMin, surviveMax, birthMin, birthMax, birthMargin,
+		neighborFaces, neighborEdges, neighborCorners
+	]);
 
 	const step = useCallback(() => {
 		if (!running) {
@@ -660,48 +709,9 @@ export function SimulationProvider({
 				organismManagerRef.current.saveInitialState();
 				setHasInitialState(initialStateRef.current.length > 0);
 			}
-			gridRef.current.neighborFaces = neighborFaces;
-			gridRef.current.neighborEdges = neighborEdges;
-			gridRef.current.neighborCorners = neighborCorners;
-			// GoL Phase 1: tick non-organism cells only
-			let forbiddenBirths: Set<string> | undefined = undefined;
-			if (enableOrganisms) { 
-				organismManagerRef.current.beforeTick(gridRef.current); 
-				forbiddenBirths = new Set<string>();
-				// Full organism territory = DNA + cytoplasm + skin
-				// No GOL births are allowed anywhere inside an organism's body or skin layer.
-				const orgUniversalSpace = new Set<string>();
-				for (const [, org] of organismManagerRef.current.organisms) {
-					for (const key of org.livingCells) orgUniversalSpace.add(key);
-					for (const key of org.cytoplasm) orgUniversalSpace.add(key);
-				}
-				for (const [, org] of organismManagerRef.current.organisms) {
-					for (const key of org.livingCells) forbiddenBirths.add(key);
-					for (const key of org.cytoplasm) forbiddenBirths.add(key);
-					// Also forbid the skin layer
-					const skin = computeSkin(org.cytoplasm, orgUniversalSpace, gridSize);
-					for (const key of skin) forbiddenBirths.add(key);
-				}
-			}
-			gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin, forbiddenBirths);
-			if (enableOrganisms) { 
-				organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
-				setOrganismsVersion(organismManagerRef.current.version);
-			}
+			tick();
 		}
-	}, [
-		running,
-		surviveMin,
-		surviveMax,
-		birthMin,
-		birthMax,
-		birthMargin,
-		neighborFaces,
-		neighborEdges,
-		neighborCorners,
-		
-		
-	]);
+	}, [running, tick]);
 
 	const randomize = useCallback(() => {
 		gridRef.current.randomize(density);
@@ -726,50 +736,6 @@ export function SimulationProvider({
 		setOrganismsVersion(organismManagerRef.current.version);
 		setHasInitialState(false);
 	}, []);
-
-	const tick = useCallback(() => {
-		gridRef.current.neighborFaces = neighborFaces;
-		gridRef.current.neighborEdges = neighborEdges;
-		gridRef.current.neighborCorners = neighborCorners;
-		// GoL Phase 1: tick non-organism cells only
-		let forbiddenBirths: Set<string> | undefined = undefined;
-		if (enableOrganisms) { 
-			organismManagerRef.current.beforeTick(gridRef.current); 
-			forbiddenBirths = new Set<string>();
-			// Full organism territory = DNA + cytoplasm + skin
-			const orgUniversalSpace2 = new Set<string>();
-			for (const [, org] of organismManagerRef.current.organisms) {
-				for (const key of org.livingCells) orgUniversalSpace2.add(key);
-				for (const key of org.cytoplasm) orgUniversalSpace2.add(key);
-			}
-			for (const [, org] of organismManagerRef.current.organisms) {
-				for (const key of org.livingCells) forbiddenBirths.add(key);
-				for (const key of org.cytoplasm) forbiddenBirths.add(key);
-				const skin = computeSkin(org.cytoplasm, orgUniversalSpace2, gridSize);
-				for (const key of skin) forbiddenBirths.add(key);
-			}
-		}
-		gridRef.current.tick(surviveMin, surviveMax, birthMin, birthMax, birthMargin, forbiddenBirths);
-		if (enableOrganisms) { 
-			organismManagerRef.current.afterTick(gridRef.current, { surviveMin, surviveMax, birthMin, birthMax, birthMargin, neighborFaces, neighborEdges, neighborCorners, gridSize }); 
-			setOrganismsVersion(organismManagerRef.current.version);
-		}
-
-		if (gridRef.current.getLivingCells().length === 0) {
-			setRunning(false);
-		}
-	}, [
-		surviveMin,
-		surviveMax,
-		birthMin,
-		birthMax,
-		birthMargin,
-		neighborFaces,
-		neighborEdges,
-		neighborCorners,
-		
-		
-	]);
 
 	const toggleCell = useCallback((x: number, y: number, z: number) => {
 		organismManagerRef.current.recordAction();
@@ -843,13 +809,20 @@ export function SimulationProvider({
 			await runInitAnimation(cells);
 			
 			// Hydration Logic: Re-instantiate organisms from saved state
-			if (savedOrgs && Array.isArray(savedOrgs)) {
-				for (const orgData of savedOrgs) {
-					organismManagerRef.current.organisms.set(orgData.id, deserializeOrganism(orgData, finalGridSize));
-				}
+			if (savedOrgs && savedOrgs.length > 0) {
+				const sceneRules = {
+					surviveMin: config.settings?.surviveMin ?? surviveMin,
+					surviveMax: config.settings?.surviveMax ?? surviveMax,
+					birthMin: config.settings?.birthMin ?? birthMin,
+					birthMax: config.settings?.birthMax ?? birthMax,
+					birthMargin: config.settings?.birthMargin ?? birthMargin,
+					neighborFaces: config.settings?.neighborFaces ?? neighborFaces,
+					neighborEdges: config.settings?.neighborEdges ?? neighborEdges,
+					neighborCorners: config.settings?.neighborCorners ?? neighborCorners,
+				};
+				organismManagerRef.current.applyOrganisms(savedOrgs, finalGridSize, sceneRules);
+				setOrganismsVersion(organismManagerRef.current.version);
 			}
-			
-			setOrganismsVersion(v => v + 1);
 		},
 		[
 			gridSize,

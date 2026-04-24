@@ -180,7 +180,9 @@ function simulateCytoplasmTick(
         
         if (isAlive) {
             // Existing DNA cells can survive freely
-            if (neighbors >= surviveMin && neighbors <= surviveMax) nextLiving.push([x, y, z]);
+            if (neighbors >= surviveMin && neighbors <= surviveMax) {
+                nextLiving.push([x, y, z]);
+            }
         } else {
             // Births ONLY within the original bounding box + 1 margin — prevents cancerous expansion
             if (x >= bbMinX && x <= bbMaxX && y >= bbMinY && y <= bbMaxY && z >= bbMinZ && z <= bbMaxZ) {
@@ -567,31 +569,47 @@ export function processOrganisms(
 
 	for (const id of randomOrder) {
 		const organism = organismsMap.get(id)!;
-		const resolvedCellsForOrg = resolvedCells.get(id)!;
+		const rawCells = resolvedCells.get(id)!;
+		// Ensure cells are rounded to grid integers before GoL processing
+		const resolvedCellsForOrg = rawCells.map(([x, y, z]) => [
+			Math.round(x),
+			Math.round(y),
+			Math.round(z)
+		] as [number, number, number]);
+		
 		const resolvedVector = resolvedVectors.get(id)!;
 		const isFrozen = frozenOrganisms.has(id);
 
-		// ── PRE-GOL STEP A: Clear previous territory ──────────────────
-		// Any GOL-produced cells in the organism's old space must be removed first.
-		const previousTerritory = new Set([...organism.previousLivingCells, ...organism.cytoplasm]);
-		for (const key of previousTerritory) {
+		// ── PRE-GOL STEP A: Clear both old and new territory ──────────
+		// We must clear where the organism WAS and where it is NOW (after movement).
+		// This prevents "ghost" cells from remaining on the grid when moving into crowded space.
+		const oldTerritory = new Set([...organism.livingCells, ...organism.cytoplasm]);
+		const roster = new Set(resolvedCellsForOrg.map(c => makeKey(...c)));
+		const preCyto = computeCytoplasm(roster, gridSize);
+		const newTerritory = new Set([...roster, ...preCyto]);
+		
+		const totalClearZone = new Set([...oldTerritory, ...newTerritory]);
+
+		let territoryEaten = 0;
+		for (const key of totalClearZone) {
 			if (globalLivingKeys.has(key)) {
+				// Any cell here that isn't our own DNA (roster) is an intruder
+				if (!roster.has(key)) {
+					territoryEaten++;
+				}
 				const [x, y, z] = parseKey(key);
 				gridMutations.push([x, y, z, false]);
 				globalLivingKeys.delete(key);
 			}
 		}
 
-		// ── PRE-GOL STEP 2: Fresh Roster, Cytoplasm, Skin from resolved DNA ──
-		// The ROSTER is the ground truth of what belongs to this organism.
-		const roster = new Set(resolvedCellsForOrg.map(c => makeKey(...c)));
-		const preCyto = computeCytoplasm(roster, gridSize);
+		// ── PRE-GOL STEP 2: Fresh Skin from resolved DNA ──
 		const preSkin = computeSkin(preCyto, globalOrganismOccupied, gridSize);
 
 		// ── PRE-GOL STEP 3: THE SKIN MUST BE DEVOID OF LIVING CELLS ─────
 		// Eat ALL living cells in skin unconditionally (they do not belong there).
 		// Eat all non-roster living cells in cytoplasm.
-		let preGolEaten = 0;
+		let preGolEaten = territoryEaten;
 		for (const key of preSkin) {
 			if (globalOrganismOccupied.has(key)) continue; // respect other organisms
 			const [x, y, z] = parseKey(key);
@@ -601,21 +619,9 @@ export function processOrganisms(
 				preGolEaten++;
 			}
 		}
-		for (const key of preCyto) {
-			if (roster.has(key)) continue; // own DNA — skip
-			if (globalOrganismOccupied.has(key)) continue; // other organism — skip
-			const [x, y, z] = parseKey(key);
-			if (grid.get(x, y, z)) {
-				grid.set(x, y, z, false);
-				globalLivingKeys.delete(key);
-				preGolEaten++;
-			}
-		}
+		// (preCyto was already cleared by totalClearZone loop above)
 
 		// ── STEP 4: ISOLATED GOL ─────────────────────────────────────
-		// 3D-GOL rules run ONLY among this organism's cytoplasm + roster.
-		// Pass EMPTY otherLivingKeys — the GOL universe is the organism's own cells only.
-		// External non-organism cells must NOT influence the organism's survival/birth.
 		const golResult = simulateCytoplasmTick(
 			resolvedCellsForOrg,
 			new Set<string>(), // ISOLATED: no external neighbors
@@ -625,23 +631,17 @@ export function processOrganisms(
 			organism.rules.neighborFaces, organism.rules.neighborEdges, organism.rules.neighborCorners,
 		);
 
-		// Keep only the SINGLE LARGEST connected component (≥3 cells).
-		// Merging all components ≥3 allows fragmented clusters spread across the grid
-		// to combine, creating a huge bounding box and therefore a huge cytoplasm. 
 		const golSet = new Set(golResult.map(c => makeKey(...c)));
+
+		// Keep only the SINGLE LARGEST connected component (≥3 cells).
 		let largestComp = new Set<string>();
 		const visited = new Set<string>();
-		// To allow organisms like "Rhea" with intentional nuclear gaps to stay unified,
-		// we treat the cytoplasm (preCyto) as a "bridge" during the connectivity check.
 		const bridgeSpace = new Set([...golSet, ...preCyto]);
 
 		for (const seed of golSet) {
 			if (!visited.has(seed)) {
 				const comp = getConnectedComponent(seed, bridgeSpace);
-				// Mark living cells in this component as visited
 				comp.forEach(k => { if (golSet.has(k)) visited.add(k); });
-				
-				// Final organism nucleus = the living cells in this connected component
 				const livingNucleus = new Set(Array.from(comp).filter(k => golSet.has(k)));
 				if (livingNucleus.size > largestComp.size) {
 					largestComp = livingNucleus;
@@ -653,7 +653,6 @@ export function processOrganisms(
 		if (largestComp.size >= 3) {
 			finalCells = Array.from(largestComp).map(parseKey);
 		} else {
-			// GOL killed the organism — allow death
 			finalCells = [];
 		}
 
@@ -734,7 +733,7 @@ export function processOrganisms(
 			livingCells: finalLivingSet,
 			cytoplasm: finalCytoplasm,
 			skinColor: computeSkinColor(finalLivingSet, gridSize),
-			previousLivingCells: finalLivingSet,
+			previousLivingCells: organism.livingCells, // Correctly preserve the state from start of tick
 			centroid: newCentroid,
 			travelVector: nextVector,
 			straightSteps: 0, avoidanceSteps: 0, parallelSteps: 0, stuckTicks: isFrozen ? (organism.stuckTicks + 1) : 0,

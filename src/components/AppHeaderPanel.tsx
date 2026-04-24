@@ -8,6 +8,21 @@ import { DocumentationModal } from './DocumentationModal';
 import { IntroductionModal } from './IntroductionModal';
 import { ReleaseNotesModal } from './ReleaseNotesModal';
 import { ShortcutOverlay } from './ShortcutOverlay';
+const HouseIcon = () => (
+	<svg
+		width='20'
+		height='20'
+		viewBox='0 0 24 24'
+		fill='none'
+		stroke='currentColor'
+		strokeWidth='2'
+		strokeLinecap='round'
+		strokeLinejoin='round'
+	>
+		<path d='m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' />
+		<polyline points='9 22 9 12 15 12 15 22' />
+	</svg>
+);
 
 function GenerationDisplay() {
 	const {
@@ -143,7 +158,20 @@ export function AppHeaderPanel({
 		<div className='app-header-panel'>
 			<div className='header-top-row'>
 				<div className='title-section'>
-					<h1>Cube of Life</h1>
+					<h1><button
+						style={{ display: 'inline-block' }}
+						type='button'
+						className='glass-button mode-toggle-button'
+						onClick={() => window.open('https://blog.cubeoflife.net', '_blank')}
+						data-tooltip-bottom={'Blog'
+						}
+						aria-label={
+							'Visit blog.cubeoflife.net'
+						}
+					>
+
+						<HouseIcon />
+					</button> Cube of Life</h1>
 
 				</div>
 
